@@ -1,0 +1,151 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{52003A75-2AD7-44C0-B8FC-08605C0E25E5}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <RootNamespace>_FrameworkProgress</RootNamespace>
+    <ProjectName>Xturos</ProjectName>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v120</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v120</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <LinkIncremental>true</LinkIncremental>
+    <TargetName>$(ProjectName)-dbg</TargetName>
+    <OutDir>$(SolutionDir)\bin</OutDir>
+    <IncludePath>F:\Data\Libraries\stb-master;F:\Data\Libraries\SDL2-2.0.3\include;F:\Data\Libraries\SDL2_ttf-2.0.12\include;F:\Data\Libraries\SDL2_mixer-2.0.0\include;$(IncludePath)</IncludePath>
+    <LibraryPath>F:\Data\Libraries\SDL2-2.0.3\debug_lib\x86;F:\Data\Libraries\SDL2_ttf-2.0.12\lib\x86;F:\Data\Libraries\SDL2_mixer-2.0.0\lib\x86;$(LibraryPath)</LibraryPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <LinkIncremental>false</LinkIncremental>
+    <OutDir>$(SolutionDir)\bin</OutDir>
+    <IncludePath>F:\Data\Libraries\stb-master;F:\Data\Libraries\SDL2-2.0.3\include;F:\Data\Libraries\SDL2_ttf-2.0.12\include;F:\Data\Libraries\SDL2_mixer-2.0.0\include;$(IncludePath)</IncludePath>
+    <LibraryPath>F:\Data\Libraries\SDL2-2.0.3\debug_lib\x86;F:\Data\Libraries\SDL2_ttf-2.0.12\lib\x86;F:\Data\Libraries\SDL2_mixer-2.0.0\lib\x86;$(LibraryPath)</LibraryPath>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level4</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;_LIB;GLEW_STATIC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <TreatWarningAsError>true</TreatWarningAsError>
+      <ExceptionHandling>false</ExceptionHandling>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <DisableSpecificWarnings>4100;4189;4201;4996;4127</DisableSpecificWarnings>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>SDL2.lib;SDL2main.lib;SDL2_ttf.lib;SDL2_mixer.lib;opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <IgnoreSpecificDefaultLibraries>msvcrt.lib</IgnoreSpecificDefaultLibraries>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level4</WarningLevel>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;GLEW_STATIC;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <TreatWarningAsError>true</TreatWarningAsError>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <DisableSpecificWarnings>4100;4189;4201;4996;4127</DisableSpecificWarnings>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <AdditionalDependencies>SDL2.lib;SDL2main.lib;SDL2_ttf.lib;SDL2_mixer.lib;opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClInclude Include="src\button.h" />
+    <ClInclude Include="src\collisionDetection.h" />
+    <ClInclude Include="src\gameState.h" />
+    <ClInclude Include="src\Game\gameScreen.h" />
+    <ClInclude Include="src\Graphics\atlas.h" />
+    <ClInclude Include="src\Graphics\camera.h" />
+    <ClInclude Include="src\Graphics\color.h" />
+    <ClInclude Include="src\Graphics\graphics.h" />
+    <ClInclude Include="src\Graphics\shaderManager.h" />
+    <ClInclude Include="src\Graphics\sprites.h" />
+    <ClInclude Include="src\Math\mathUtil.h" />
+    <ClInclude Include="src\Math\matrix4.h" />
+    <ClInclude Include="src\Math\vector2.h" />
+    <ClInclude Include="src\Math\vector3.h" />
+    <ClInclude Include="src\music.h" />
+    <ClInclude Include="src\Others\glew.h" />
+    <ClInclude Include="src\Others\glxew.h" />
+    <ClInclude Include="src\Others\wglew.h" />
+    <ClInclude Include="src\particles.h" />
+    <ClInclude Include="src\sound.h" />
+    <ClInclude Include="src\System\memory.h" />
+    <ClInclude Include="src\tween.h" />
+    <ClInclude Include="src\Utils\cfgParser.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\button.c" />
+    <ClCompile Include="src\collisionDetection.c" />
+    <ClCompile Include="src\gameState.c" />
+    <ClCompile Include="src\Game\gameScreen.c" />
+    <ClCompile Include="src\Graphics\atlas.c" />
+    <ClCompile Include="src\Graphics\camera.c" />
+    <ClCompile Include="src\Graphics\color.c" />
+    <ClCompile Include="src\Graphics\graphics.c" />
+    <ClCompile Include="src\Graphics\shaderManager.c" />
+    <ClCompile Include="src\Graphics\sprites.c" />
+    <ClCompile Include="src\main.c" />
+    <ClCompile Include="src\Math\mathUtil.c" />
+    <ClCompile Include="src\Math\matrix4.c" />
+    <ClCompile Include="src\Math\vector2.c" />
+    <ClCompile Include="src\Math\vector3.c" />
+    <ClCompile Include="src\Others\glew.c" />
+    <ClCompile Include="src\particles.c" />
+    <ClCompile Include="src\sound.c" />
+    <ClCompile Include="src\System\memory.c" />
+    <ClCompile Include="src\tween.c" />
+    <ClCompile Include="src\Utils\cfgParser.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="todo.txt" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>
