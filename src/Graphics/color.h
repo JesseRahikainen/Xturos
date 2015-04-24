@@ -19,6 +19,15 @@ typedef struct {
 	};
 } Color;
 
-Color* col_Lerp( const Color* from, const Color* to, float t, Color* out );
+static const Color CLR_BLACK = { 0.0f, 0.0f, 0.0f, 1.0f };
+static const Color CLR_RED = { 1.0f, 0.0f, 0.0f, 1.0f };
+static const Color CLR_GREEN = { 0.0f, 1.0f, 0.0f, 1.0f };
+static const Color CLR_BLUE = { 0.0f, 0.0f, 1.0f, 1.0f };
+static const Color CLR_YELLOW = { 1.0f, 1.0f, 0.0f, 1.0f };
+static const Color CLR_MAGENTA = { 1.0f, 0.0f, 1.0f, 1.0f };
+static const Color CLR_CYAN = { 0.0f, 1.0f, 1.0f, 1.0f };
+static const Color CLR_WHITE = { 1.0f, 1.0f, 1.0f, 1.0f };
+
+Color* clr_Lerp( const Color* from, const Color* to, float t, Color* out );
 
 #endif // inclusion guard

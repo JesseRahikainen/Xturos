@@ -85,6 +85,15 @@ maybe have three separate renderers that are all processed by the graphics
 so you'd have the sprite, debug, and geometry renderers that all expected
 different data, the only problem with that is any transparency in the sprite
 and geometry data
+
+Everything is triangles!
+Move out most of the current rendering stuff to an image based rendering system
+This will feed triangles to the triangle rendering
+Sprites are a special case of images, images are a special case of triangles
+Once we get spine in it can also use the triangle rendering
+We can also just feed triangles to it directly, can do procedural shapes
+
+Different shaders per triangle? Allow different types of rendering?
 */
 
 static const RenderInstruction DEFAULT_RENDER_INSTRUCTION = {
@@ -799,167 +808,134 @@ static RenderInstruction* GetNextRenderInstruction( int imgObj, unsigned int cam
 Adds a render instruction to the buffer.
  Returns 0 on success. Prints an error message to the log if it fails.
 */
+#define RENDER_INSTRUCTION_QUEUE_START \
+	RenderInstruction* ri = GetNextRenderInstruction( imgID, camFlags, startPos, endPos, depth ); \
+	if( ri == NULL ) { return -1; }
+
+#define RENDER_INSTRUCTION_QUEUE_END \
+	return 0;
+
+#define SET_RENDER_INSTRUCTION_SCALE( startX, startY, endX, endY ) \
+	ri->start.scaleSize.x *= startX; \
+	ri->start.scaleSize.y *= startY; \
+	ri->end.scaleSize.x *= endX; \
+	ri->end.scaleSize.y *= endY;
+
+#define SET_RENDER_INSTRUCTION_COLOR( startColor, endColor ) \
+	ri->start.color = startColor; \
+	ri->end.color = endColor; \
+	if( ( ( startColor.a > 0 ) && ( startColor.a < 1.0f ) ) || \
+		( ( endColor.a > 0 ) && ( endColor.a < 1.0f ) )) { \
+		ri->flags |= IMGFLAG_HAS_TRANSPARENCY; }
+
+#define SET_RENDER_INSTRUCTION_ROT( startRot, endRot ) \
+	ri->start.rotation = startRot; \
+	ri->end.rotation = endRot;
+
 int queueRenderImage( int imgID, unsigned int camFlags, Vector2 startPos, Vector2 endPos, char depth )
 {
-	RenderInstruction* ri = GetNextRenderInstruction( imgID, camFlags, startPos, endPos, depth );
-	if( ri == NULL ) {
-		return -1;
-	}
-	return 0;
+	RENDER_INSTRUCTION_QUEUE_START;
+	RENDER_INSTRUCTION_QUEUE_END;
 }
 
 int queueRenderImage_s( int imgID, unsigned int camFlags, Vector2 startPos, Vector2 endPos, float startScale, float endScale, char depth )
 {
-	RenderInstruction* ri = GetNextRenderInstruction( imgID, camFlags, startPos, endPos, depth );
-	if( ri == NULL ) {
-		return -1;
-	}
-
-	vec2_Scale( &( ri->start.scaleSize ), startScale, &( ri->start.scaleSize ) );
-	vec2_Scale( &( ri->end.scaleSize ), endScale, &( ri->end.scaleSize ) );
-
-	return 0;
+	RENDER_INSTRUCTION_QUEUE_START;
+	SET_RENDER_INSTRUCTION_SCALE( startScale, startScale, endScale, endScale );
+	RENDER_INSTRUCTION_QUEUE_END;
 }
 
 int queueRenderImage_sv( int imgID, unsigned int camFlags, Vector2 startPos, Vector2 endPos, Vector2 startScale, Vector2 endScale, char depth )
 {
-	RenderInstruction* ri = GetNextRenderInstruction( imgID, camFlags, startPos, endPos, depth );
-	if( ri == NULL ) {
-		return -1;
-	}
-
-	vec2_HadamardProd( &startScale, &( ri->start.scaleSize ), &( ri->start.scaleSize ) );
-	vec2_HadamardProd( &endScale, &( ri->start.scaleSize ), &( ri->end.scaleSize ) );
-
-	return 0;
+	RENDER_INSTRUCTION_QUEUE_START;
+	SET_RENDER_INSTRUCTION_SCALE( startScale.x, startScale.y, endScale.x, endScale.y );
+	RENDER_INSTRUCTION_QUEUE_END;
 }
 
 int queueRenderImage_c( int imgID, unsigned int camFlags, Vector2 startPos, Vector2 endPos, Color startColor, Color endColor, char depth )
 {
-	RenderInstruction* ri = GetNextRenderInstruction( imgID, camFlags, startPos, endPos, depth );
-	if( ri == NULL ) {
-		return -1;
-	}
+	RENDER_INSTRUCTION_QUEUE_START;
+	SET_RENDER_INSTRUCTION_COLOR( startColor, endColor );
+	RENDER_INSTRUCTION_QUEUE_END;
+}
 
-	ri->start.color = startColor;
-	ri->end.color = endColor;
-
-	if( ( ( startColor.a > 0 ) && ( startColor.a < 0xFF ) ) ||
-		( ( endColor.a > 0 ) && ( endColor.a < 0xFF ) )) {
-		ri->flags |= IMGFLAG_HAS_TRANSPARENCY;
-	}
-
-	return 0;
+int queueRenderImage_r( int imgID, unsigned int camFlags, Vector2 startPos, Vector2 endPos, float startRot, float endRot, char depth )
+{
+	RENDER_INSTRUCTION_QUEUE_START;
+	SET_RENDER_INSTRUCTION_ROT( startRot, endRot );
+	RENDER_INSTRUCTION_QUEUE_END;
 }
 
 int queueRenderImage_s_c( int imgID, unsigned int camFlags, Vector2 startPos, Vector2 endPos, float startScale, float endScale,
 	Color startColor, Color endColor, char depth )
 {
-	RenderInstruction* ri = GetNextRenderInstruction( imgID, camFlags, startPos, endPos, depth );
-	if( ri == NULL ) {
-		return -1;
-	}
-
-	vec2_Scale( &( ri->start.scaleSize ), startScale, &( ri->start.scaleSize ) );
-	vec2_Scale( &( ri->end.scaleSize ), endScale, &( ri->end.scaleSize ) );
-	ri->start.color = startColor;
-	ri->end.color = endColor;
-
-	if( ( ( startColor.a > 0 ) && ( startColor.a < 0xFF ) ) ||
-		( ( endColor.a > 0 ) && ( endColor.a < 0xFF ) )) {
-		ri->flags |= IMGFLAG_HAS_TRANSPARENCY;
-	}
-
-	return 0;
-}
-
-int queueRenderImage_r( int imgID, unsigned int camFlags, Vector2 startPos, Vector2 endPos, float startRot, float endRot, char depth )
-{
-	RenderInstruction* ri = GetNextRenderInstruction( imgID, camFlags, startPos, endPos, depth );
-	if( ri == NULL ) {
-		return -1;
-	}
-
-	ri->start.rotation = startRot;
-	ri->end.rotation = endRot;
-
-	return 0;
+	RENDER_INSTRUCTION_QUEUE_START;
+	SET_RENDER_INSTRUCTION_SCALE( startScale, startScale, endScale, endScale );
+	SET_RENDER_INSTRUCTION_COLOR( startColor, endColor );
+	RENDER_INSTRUCTION_QUEUE_END;
 }
 
 int queueRenderImage_s_r( int imgID, unsigned int camFlags, Vector2 startPos, Vector2 endPos, float startScale, float endScale,
 	float startRot, float endRot, char depth )
 {
-	RenderInstruction* ri = GetNextRenderInstruction( imgID, camFlags, startPos, endPos, depth );
-	if( ri == NULL ) {
-		return -1;
-	}
+	RENDER_INSTRUCTION_QUEUE_START;
+	SET_RENDER_INSTRUCTION_SCALE( startScale, startScale, endScale, endScale );
+	SET_RENDER_INSTRUCTION_ROT( startRot, endRot );
+	RENDER_INSTRUCTION_QUEUE_END;
+}
 
-	vec2_Scale( &( ri->start.scaleSize ), startScale, &( ri->start.scaleSize ) );
-	vec2_Scale( &( ri->end.scaleSize ), endScale, &( ri->end.scaleSize ) );
-	ri->start.rotation = startRot;
-	ri->end.rotation = endRot;
-
-	return 0;
+int queueRenderImage_sv_c( int imgID, unsigned int camFlags, Vector2 startPos, Vector2 endPos, Vector2 startScale, Vector2 endScale,
+	Color startColor, Color endColor, char depth )
+{
+	RENDER_INSTRUCTION_QUEUE_START;
+	SET_RENDER_INSTRUCTION_SCALE( startScale.x, startScale.y, endScale.x, endScale.y );
+	SET_RENDER_INSTRUCTION_COLOR( startColor, endColor );
+	RENDER_INSTRUCTION_QUEUE_END;
 }
 
 int queueRenderImage_sv_r( int imgID, unsigned int camFlags, Vector2 startPos, Vector2 endPos, Vector2 startScale, Vector2 endScale,
 	float startRot, float endRot, char depth )
 {
-	RenderInstruction* ri = GetNextRenderInstruction( imgID, camFlags, startPos, endPos, depth );
-	if( ri == NULL ) {
-		return -1;
-	}
-
-	vec2_HadamardProd( &startScale, &( ri->start.scaleSize ), &( ri->start.scaleSize ) );
-	vec2_HadamardProd( &endScale, &( ri->start.scaleSize ), &( ri->end.scaleSize ) );
-	ri->start.rotation = startRot;
-	ri->end.rotation = endRot;
-
-	return 0;
+	RENDER_INSTRUCTION_QUEUE_START;
+	SET_RENDER_INSTRUCTION_SCALE( startScale.x, startScale.y, endScale.x, endScale.y );
+	SET_RENDER_INSTRUCTION_ROT( startRot, endRot );
+	RENDER_INSTRUCTION_QUEUE_END;
 }
 
-int queueRenderImage_r_c( int imgID, unsigned int camFlags, Vector2 startPos, Vector2 endPos, float startRot, float endRot, Color startColor, Color endColor, char depth )
+int queueRenderImage_c_r( int imgID, unsigned int camFlags, Vector2 startPos, Vector2 endPos, Color startColor, Color endColor,
+	float startRot, float endRot, char depth )
 {
-	RenderInstruction* ri = GetNextRenderInstruction( imgID, camFlags, startPos, endPos, depth );
-	if( ri == NULL ) {
-		return -1;
-	}
+	RENDER_INSTRUCTION_QUEUE_START;
+	SET_RENDER_INSTRUCTION_COLOR( startColor, endColor );
+	SET_RENDER_INSTRUCTION_ROT( startRot, endRot );
+	RENDER_INSTRUCTION_QUEUE_END;
+}
 
-	ri->start.color = startColor;
-	ri->end.color = endColor;
-	ri->start.rotation = startRot;
-	ri->end.rotation = endRot;
-
-	if( ( ( startColor.a > 0 ) && ( startColor.a < 0xFF ) ) ||
-		( ( endColor.a > 0 ) && ( endColor.a < 0xFF ) )) {
-		ri->flags |= IMGFLAG_HAS_TRANSPARENCY;
-	}
-
-	return 0;
+int queueRenderImage_s_c_r( int imgID, unsigned int camFlags, Vector2 startPos, Vector2 endPos, float startScale, float endScale,
+	Color startColor, Color endColor, float startRot, float endRot, char depth )
+{
+	RENDER_INSTRUCTION_QUEUE_START;
+	SET_RENDER_INSTRUCTION_SCALE( startScale, startScale, endScale, endScale );
+	SET_RENDER_INSTRUCTION_COLOR( startColor, endColor );
+	SET_RENDER_INSTRUCTION_ROT( startRot, endRot );
+	RENDER_INSTRUCTION_QUEUE_END;
 }
 
 int queueRenderImage_sv_c_r( int imgID, unsigned int camFlags, Vector2 startPos, Vector2 endPos, Vector2 startScale, Vector2 endScale,
-	float startRot, float endRot, Color startColor, Color endColor, char depth )
+	Color startColor, Color endColor, float startRot, float endRot, char depth )
 {
-	RenderInstruction* ri = GetNextRenderInstruction( imgID, camFlags, startPos, endPos, depth );
-	if( ri == NULL ) {
-		return -1;
-	}
-
-	ri->start.color = startColor;
-	ri->end.color = endColor;
-	ri->start.rotation = startRot;
-	ri->end.rotation = endRot;
-	ri->start.scaleSize = startScale;
-	ri->end.scaleSize = endScale;
-
-	if( ( ( startColor.a > 0 ) && ( startColor.a < 0xFF ) ) ||
-		( ( endColor.a > 0 ) && ( endColor.a < 0xFF ) )) {
-		ri->flags |= IMGFLAG_HAS_TRANSPARENCY;
-	}
-
-	return 0;
+	RENDER_INSTRUCTION_QUEUE_START;
+	SET_RENDER_INSTRUCTION_SCALE( startScale.x, startScale.y, endScale.x, endScale.y );
+	SET_RENDER_INSTRUCTION_COLOR( startColor, endColor );
+	SET_RENDER_INSTRUCTION_ROT( startRot, endRot );
+	RENDER_INSTRUCTION_QUEUE_END;
 }
+
+#undef RENDER_INSTRUCTION_QUEUE_START
+#undef RENDER_INSTRUCTION_QUEUE_END
+#undef SET_RENDER_INSTRUCTION_SCALE
+#undef SET_RENDER_INSTRUCTION_COLOR
+#undef SET_RENDER_INSTRUCTION_ROT
 
 static int sortRenderInstructions( const void* p1, const void* p2 )
 {
@@ -1147,9 +1123,10 @@ void renderImages( float dt )
 			vec3_Lerp( &( renderBuffer[idx].start.pos ), &( renderBuffer[idx].end.pos ), t, &pos );
 			vec2ToVec3( &( renderBuffer[idx].start.scaleSize ), 1.0f, &startSclSz );
 			vec2ToVec3( &( renderBuffer[idx].end.scaleSize ), 1.0f, &endSclSz );
-			col_Lerp( &( renderBuffer[idx].start.color ), &( renderBuffer[idx].end.color ), t, &col );
+			clr_Lerp( &( renderBuffer[idx].start.color ), &( renderBuffer[idx].end.color ), t, &col );
 			vec3_Lerp( &startSclSz, &endSclSz, t, &sclSz );
-			rot = lerp( renderBuffer[idx].start.rotation, renderBuffer[idx].end.rotation, t );
+
+			rot = radianRotLerp( renderBuffer[idx].start.rotation, renderBuffer[idx].end.rotation, t );
 			createRenderTransform( &pos, &sclSz, rot, &renderBuffer[idx].offset, &modelTf );
 
 			mat4_Multiply( &vpMat, &modelTf, &mvpMat );
@@ -1188,7 +1165,7 @@ void renderImages( float dt )
 
 			// build the index array and render use it
 			int lastDebugIndex = -1;
-			for( int i = 0; i < MAX_DEBUG_VERTS; ++i ) {
+			for( int i = 0; i <= lastDebugVert; ++i ) {
 				if( ( debugBuffer[i].camFlags & camFlags ) != 0 ) {
 					++lastDebugIndex;
 					debugIndicesBuffer[lastDebugIndex] = i;

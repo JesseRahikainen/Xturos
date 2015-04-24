@@ -43,13 +43,13 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
     <TargetName>$(ProjectName)-dbg</TargetName>
-    <OutDir>$(SolutionDir)\bin</OutDir>
+    <OutDir>$(SolutionDir)\bin\</OutDir>
     <IncludePath>F:\Data\Libraries\stb-master;F:\Data\Libraries\SDL2-2.0.3\include;F:\Data\Libraries\SDL2_ttf-2.0.12\include;F:\Data\Libraries\SDL2_mixer-2.0.0\include;$(IncludePath)</IncludePath>
     <LibraryPath>F:\Data\Libraries\SDL2-2.0.3\debug_lib\x86;F:\Data\Libraries\SDL2_ttf-2.0.12\lib\x86;F:\Data\Libraries\SDL2_mixer-2.0.0\lib\x86;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <OutDir>$(SolutionDir)\bin</OutDir>
+    <OutDir>$(SolutionDir)\bin\</OutDir>
     <IncludePath>F:\Data\Libraries\stb-master;F:\Data\Libraries\SDL2-2.0.3\include;F:\Data\Libraries\SDL2_ttf-2.0.12\include;F:\Data\Libraries\SDL2_mixer-2.0.0\include;$(IncludePath)</IncludePath>
     <LibraryPath>F:\Data\Libraries\SDL2-2.0.3\debug_lib\x86;F:\Data\Libraries\SDL2_ttf-2.0.12\lib\x86;F:\Data\Libraries\SDL2_mixer-2.0.0\lib\x86;$(LibraryPath)</LibraryPath>
   </PropertyGroup>

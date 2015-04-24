@@ -2,7 +2,7 @@
 #include <assert.h>
 #include "../Math/mathUtil.h"
 
-Color* col_Lerp( const Color* from, const Color* to, float t, Color* out )
+Color* clr_Lerp( const Color* from, const Color* to, float t, Color* out )
 {
 	assert( from );
 	assert( to );

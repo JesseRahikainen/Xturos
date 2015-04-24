@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <assert.h>
+#include <math.h>
 #include "mathUtil.h"
 
 int isPowerOfTwo( int x )
@@ -10,6 +11,21 @@ int isPowerOfTwo( int x )
 float lerp( float from, float to, float t )
 {
 	return ( from + ( ( to - from ) * clamp( 0.0f, 1.0f, t ) ) );
+}
+
+float radianRotLerp( float from, float to, float t )
+{
+	// always use the shortest angle
+	float diff = to - from;
+	float sgn = sign( diff );
+	diff = fabsf( diff );
+	
+	if( diff > M_PI_F ) {
+		diff = ( 2.0f * M_PI_F ) - diff;
+		sgn = -sgn;
+	}
+	
+	return ( from + ( diff * sgn * clamp( 0.0f, 1.0f, t ) ) );
 }
 
 uint8_t lerp_uint8_t( uint8_t from, uint8_t to, float t )

@@ -13,7 +13,7 @@
 /*
 Determines if the collider primary overlaps with fixed, and if they do how much primary has to be moved to stop colliding.
 */
-int AABBvAABB( union Collider* primary, union Collider* fixed, Vector2* outSeparation )
+int AABBvAABB( Collider* primary, Collider* fixed, Vector2* outSeparation )
 {
 	Vector2 penetration;
 	Vector2 sumDim;
@@ -49,7 +49,7 @@ int AABBvAABB( union Collider* primary, union Collider* fixed, Vector2* outSepar
 	return 1;
 }
 
-int CirclevAABB( union Collider* primary, union Collider* fixed, Vector2* outSeparation  )
+int CirclevAABB( Collider* primary, Collider* fixed, Vector2* outSeparation  )
 {
 	float xPenetration;
 	float yPenetration;
@@ -125,7 +125,7 @@ int CirclevAABB( union Collider* primary, union Collider* fixed, Vector2* outSep
 	return 1;
 }
 
-int AABBvCircle( union Collider* primary, union Collider* fixed, Vector2* outSeparation  )
+int AABBvCircle( Collider* primary, Collider* fixed, Vector2* outSeparation  )
 {
 	/* use existing code and just flip the separation */
 	if( CirclevAABB( fixed, primary, outSeparation ) ) {
@@ -137,7 +137,7 @@ int AABBvCircle( union Collider* primary, union Collider* fixed, Vector2* outSep
 	return 0;
 }
 
-int CirclevCircle( union Collider* primary, union Collider* fixed, Vector2* outSeparation )
+int CirclevCircle( Collider* primary, Collider* fixed, Vector2* outSeparation )
 {
 	float radiiSum;
 	float dist;
@@ -161,7 +161,7 @@ int CirclevCircle( union Collider* primary, union Collider* fixed, Vector2* outS
 }
 
 /* define all the collider functions, the first should always be the responding object, the second the fixed object */
-typedef int(*CollisionCheck)( union Collider* primary, union Collider* fixed, Vector2* outSeparation );
+typedef int(*CollisionCheck)( Collider* primary, Collider* fixed, Vector2* outSeparation );
 CollisionCheck collisionChecks[NUM_COLLIDER_TYPES][NUM_COLLIDER_TYPES] = {
 	{ AABBvAABB, AABBvCircle },
 	{ CirclevAABB, CirclevCircle }
@@ -204,7 +204,7 @@ int RayCastvAABBAxis( float rayStart, float dir, float boxMin, float boxMax, flo
 	return 1;
 }
 
-int RayCastvAABB( Vector2* start, Vector2* dir, union Collider* collider, float* t, Vector2* pt )
+int RayCastvAABB( Vector2* start, Vector2* dir, Collider* collider, float* t, Vector2* pt )
 {
 	float tMin, tMax;
 
@@ -229,7 +229,7 @@ int RayCastvAABB( Vector2* start, Vector2* dir, union Collider* collider, float*
 	return 1;
 }
 
-int RayCastvCircle( Vector2* start, Vector2* dir, union Collider* collider, float* t, Vector2* pt )
+int RayCastvCircle( Vector2* start, Vector2* dir, Collider* collider, float* t, Vector2* pt )
 {
 	Vector2 startCircOrig;
 	float a, b, c, discr;
@@ -265,31 +265,65 @@ int RayCastvCircle( Vector2* start, Vector2* dir, union Collider* collider, floa
 	return 1;
 }
 
-typedef int(*RayCastCheck)( Vector2* start, Vector2* dir, union Collider* collider, float* t, Vector2* pt );
+typedef int(*RayCastCheck)( Vector2* start, Vector2* dir, Collider* collider, float* t, Vector2* pt );
 RayCastCheck rayCastChecks[NUM_COLLIDER_TYPES] = { RayCastvAABB, RayCastvCircle };
 
 /*
 Finds and handles the all collisions between mainCollider and the colliders in the list.
  NOTE: You shouldn't modify the passed in list in the response.
 */
-void detectCollisions( union Collider* mainCollider, union Collider* listFirst, size_t listStride, int listCount,
-	CollisionResponse response, int passThroughIdx )
+void collision_Detect( Collider* mainCollider, ColliderCollection collection, CollisionResponse response, int passThroughIdx )
 {
 	Vector2 separation = VEC2_ZERO;
 	int idx;
-	union Collider* current;
-	char* data = (char*)listFirst;
+	Collider* current;
+	char* data = (char*)collection.firstCollider;
 
-	/* if there's no response then there's no reason to detect any collisions */
-	if( response == NULL ) {
+	if( ( mainCollider == NULL ) || ( mainCollider->type == CT_DEACTIVATED ) || ( data == NULL ) || ( response == NULL ) ) {
 		return;
 	}
 
-	for( idx = 0; idx < listCount; ++idx ) {
-		current = (union Collider*)( data + ( idx * listStride ) );
+	for( idx = 0; idx < collection.count; ++idx ) {
+		current = (Collider*)( data + ( idx * collection.stride ) );
+
+		if( current->type == CT_DEACTIVATED ) {
+			continue;
+		}
 
 		if( collisionChecks[mainCollider->type][current->type]( mainCollider, current, &separation ) ) {
 			response( passThroughIdx, idx, separation );
+		}
+	}
+}
+
+void collision_DetectAll( ColliderCollection firstCollection, ColliderCollection secondCollection, CollisionResponse response )
+{
+	Vector2 separation = VEC2_ZERO;
+	Collider* firstCurrent;
+	Collider* secondCurrent;
+	char* firstData = (char*)firstCollection.firstCollider;
+	char* secondData = (char*)secondCollection.firstCollider;
+
+	/* if there's no response then there's no reason to detect any collisions */
+	if( ( firstData == NULL ) || ( secondData == NULL ) || ( response == NULL ) ) {
+		return;
+	}
+
+	for( int i = 0; i < firstCollection.count; ++i ) {
+		firstCurrent = (Collider*)( firstData + ( i * firstCollection.stride ) );
+		if( ( firstCurrent == NULL ) || ( firstCurrent->type == CT_DEACTIVATED ) ) {
+			continue;
+		}
+
+		for( int j = 0; j < secondCollection.count; ++i ) {
+			secondCurrent = (Collider*)( secondData + ( j * secondCollection.stride ) );
+			if( ( secondCurrent == NULL ) || ( secondCurrent->type == CT_DEACTIVATED ) ) {
+				continue;
+			}
+
+			if( collisionChecks[firstCurrent->type][secondCurrent->type]( firstCurrent, secondCurrent, &separation ) ) {
+				response( i, j, separation );
+			}
 		}
 	}
 }
@@ -298,12 +332,12 @@ void detectCollisions( union Collider* mainCollider, union Collider* listFirst, 
 Finds if the specified line segment hits anything in the list. Returns 1 if it did, 0 otherwise. Puts the
  collision point into out, if out is NULL it'll exit once it detects any collision instead of finding the first.
 */
-int detectRayCastHit( Vector2 start, Vector2 end, union Collider* listFirst, size_t listStride, int listCount, Vector2* out )
+int collision_RayCast( Vector2 start, Vector2 end, ColliderCollection collection, Vector2* out)
 {
 	int idx;
-	union Collider* current;
+	Collider* current;
 	Vector2 dir;
-	char* data = (char*)listFirst;
+	char* data = (char*)collection.firstCollider;
 	float t = 0.0f;
 	Vector2 collPt = VEC2_ZERO;
 	float currClosestT = 1.0f;
@@ -311,8 +345,11 @@ int detectRayCastHit( Vector2 start, Vector2 end, union Collider* listFirst, siz
 
 	vec2_Subtract( &end, &start, &dir );
 
-	for( idx = 0; idx < listCount; ++idx ) {
-		current = (union Collider*)( data + ( idx * listStride ) );
+	for( idx = 0; idx < collection.count; ++idx ) {
+		current = (Collider*)( data + ( idx * collection.stride ) );
+		if( ( current == NULL ) || ( current->type == CT_DEACTIVATED ) ) {
+			continue;
+		}
 
 		if( rayCastChecks[current->type]( &start, &dir, current, &t, &collPt ) ) {
 			if( t <= currClosestT ) {
@@ -330,30 +367,32 @@ int detectRayCastHit( Vector2 start, Vector2 end, union Collider* listFirst, siz
 }
 
 /*
-Renders all the collider boxes.
+Renders collision shapes.
 */
-void collisionDebugRendering( union Collider* first, unsigned int camFlags, size_t stride, int count,
-	char red, char green, char blue )
+void collision_DebugDrawing( Collider* collision, unsigned int camFlags, Color color )
 {
-	int idx;
-	union Collider* current;
-	char* data = (char*)first;
 	Vector2 size;
 	Vector2 position;
 
-	for( idx = 0; idx < count; ++idx ) {
-		current = (union Collider*)( data + ( idx * stride ) );
-		switch( current->type ) {
-		case CT_AABB:
-			size.v[0] = current->aabb.halfDim.v[0] * 2.0f;
-			size.v[1] = current->aabb.halfDim.v[1] * 2.0f;
-			position.v[0] = current->aabb.center.v[0] - current->aabb.halfDim.v[0];
-			position.v[1] = current->aabb.center.v[1] - current->aabb.halfDim.v[1];
-			queueDebugDraw_AABB( camFlags, position, size, red, green, blue );
-			break;
-		case CT_CIRCLE:
-			queueDebugDraw_Circle( camFlags, current->circle.center, current->circle.radius, red, green, blue );
-			break;
-		}
+	switch( collision->type ) {
+	case CT_AABB:
+		vec2_Scale( &( collision->aabb.halfDim ), 2.0f, &size );
+		vec2_Subtract( &( collision->aabb.center ), &( collision->aabb.halfDim ), &position );
+		queueDebugDraw_AABB( camFlags, position, size, color.r, color.g, color.b );
+		break;
+	case CT_CIRCLE:
+		queueDebugDraw_Circle( camFlags, collision->circle.center, collision->circle.radius, color.r, color.g, color.b );
+		break;
+	}
+}
+
+void collision_CollectionDebugDrawing( ColliderCollection collection, unsigned int camFlags, Color color )
+{
+	Collider* current;
+	char* data = (char*)collection.firstCollider;
+
+	for( int i = 0; i < collection.count; ++i ) {
+		current = (Collider*)( data + ( i * collection.stride ) );
+		collision_DebugDrawing( current, camFlags, color );
 	}
 }

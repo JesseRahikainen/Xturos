@@ -1,11 +1,5 @@
 #include "gameScreen.h"
 
-#include <math.h>
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include <assert.h>
-
 static int gameScreen_Enter( void )
 {
 	return 1;

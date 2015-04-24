@@ -5,14 +5,17 @@
 #include "vector3.h"
 #include <stdint.h>
 
-#define DEG_TO_RAD( d ) ( ( ( d ) * ( (float)M_PI / 180.0f ) ) )
-#define RAD_TO_DEG( d ) ( ( ( d ) * ( 180.0f / (float)M_PI ) ) )
+#define M_PI_F 3.14159265359f
+
+#define DEG_TO_RAD( d ) ( ( ( d ) * ( M_PI_F / 180.0f ) ) )
+#define RAD_TO_DEG( d ) ( ( ( d ) * ( 180.0f / M_PI_F ) ) )
 
 #define MIN( a, b ) ( ((a)>(b))?(b):(a) )
 #define MAX( a, b ) ( ((a)>(b))?(a):(b) )
 
 int isPowerOfTwo( int x );
 float lerp( float from, float to, float t );
+float radianRotLerp( float from, float to, float t );
 uint8_t lerp_uint8_t( uint8_t from, uint8_t to, float t );
 float inverseLerp( float from, float to, float val );
 float clamp( float min, float max, float val );

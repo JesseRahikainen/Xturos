@@ -80,17 +80,21 @@ int queueRenderImage( int imgID, unsigned int camFlags, Vector2 startPos, Vector
 int queueRenderImage_s( int imgID, unsigned int camFlags, Vector2 startPos, Vector2 endPos, float startScale, float endScale, char depth );
 int queueRenderImage_sv( int imgID, unsigned int camFlags, Vector2 startPos, Vector2 endPos, Vector2 startScale, Vector2 endScale, char depth );
 int queueRenderImage_c( int imgID, unsigned int camFlags, Vector2 startPos, Vector2 endPos, Color startColor, Color endColor, char depth );
+int queueRenderImage_r( int imgID, unsigned int camFlags, Vector2 startPos, Vector2 endPos, float startRot, float endRot, char depth );
 int queueRenderImage_s_c( int imgID, unsigned int camFlags, Vector2 startPos, Vector2 endPos, float startScale, float endScale,
 	Color startColor, Color endColor, char depth );
-int queueRenderImage_r( int imgID, unsigned int camFlags, Vector2 startPos, Vector2 endPos, float startRot, float endRot, char depth );
 int queueRenderImage_s_r( int imgID, unsigned int camFlags, Vector2 startPos, Vector2 endPos, float startScale, float endScale,
 	float startRot, float endRot, char depth );
+int queueRenderImage_sv_c( int imgID, unsigned int camFlags, Vector2 startPos, Vector2 endPos, Vector2 startScale, Vector2 endScale,
+	Color startColor, Color endColor, char depth );
 int queueRenderImage_sv_r( int imgID, unsigned int camFlags, Vector2 startPos, Vector2 endPos, Vector2 startScale, Vector2 endScale,
 	float startRot, float endRot, char depth );
-int queueRenderImage_r_c( int imgID, unsigned int camFlags, Vector2 startPos, Vector2 endPos, float startRot, float endRot,
-	Color startColor, Color endColor, char depth );
+int queueRenderImage_c_r( int imgID, unsigned int camFlags, Vector2 startPos, Vector2 endPos, Color startColor, Color endColor,
+	float startRot, float endRot, char depth );
+int queueRenderImage_s_c_r( int imgID, unsigned int camFlags, Vector2 startPos, Vector2 endPos, float startScale, float endScale,
+	Color startColor, Color endColor, float startRot, float endRot, char depth );
 int queueRenderImage_sv_c_r( int imgID, unsigned int camFlags, Vector2 startPos, Vector2 endPos, Vector2 startScale, Vector2 endScale,
-	float startRot, float endRot, Color startColor, Color endColor, char depth );
+	Color startColor, Color endColor, float startRot, float endRot, char depth );
 
 /*
 Some basic debug drawing functions.

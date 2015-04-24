@@ -50,10 +50,10 @@ void spawnParticle( Vector2 startPos, Vector2 startVel, Vector2 gravity,
 	particles[lastParticle].layer = layer;
 	particles[lastParticle].camFlags = camFlags;
 
-	particles[lastParticle].currColor.r = particles[lastParticle].futureColor.r = 255;
-	particles[lastParticle].currColor.g = particles[lastParticle].futureColor.g = 255;
-	particles[lastParticle].currColor.b = particles[lastParticle].futureColor.b = 255;
-	particles[lastParticle].currColor.a = particles[lastParticle].futureColor.a = 255;
+	particles[lastParticle].currColor.r = particles[lastParticle].futureColor.r = 1.0f;
+	particles[lastParticle].currColor.g = particles[lastParticle].futureColor.g = 1.0f;
+	particles[lastParticle].currColor.b = particles[lastParticle].futureColor.b = 1.0f;
+	particles[lastParticle].currColor.a = particles[lastParticle].futureColor.a = 1.0f;
 
 	particles[lastParticle].currScale = particles[lastParticle].futureScale = 1.0f;
 }
@@ -68,7 +68,7 @@ void particlesPhysicsTick( float dt )
 		particles[i].lifeElapsed += dt;
 
 		fadeAmt = inverseLerp( particles[i].fadeStart, particles[i].lifeTime, particles[i].lifeElapsed );
-		particles[i].futureColor.a = lerp_uint8_t( 255, 0, fadeAmt );
+		particles[i].futureColor.a = lerp( 1.0f, 0.0f, fadeAmt );
 		particles[i].futureScale = lerp( 1.0f, 0.0f, fadeAmt );
 
 		particles[i].currRenderPos = particles[i].futureRenderPos;
@@ -89,12 +89,7 @@ void particlesPhysicsTick( float dt )
 
 void particlesDraw( )
 {
-	int i;
-	Color color = { 255, 255, 255, 255 };
-
-	for( i = 0; i <= lastParticle; ++i ) {
-		//queueRenderImage_c( particles[i].image, particles[i].currRenderPos, particles[i].futureRenderPos,
-		//	particles[i].currColor, particles[i].futureColor, particles[i].layer );
+	for( int i = 0; i <= lastParticle; ++i ) {
 		queueRenderImage_s( particles[i].image, particles[i].camFlags, particles[i].currRenderPos, particles[i].futureRenderPos,
 			particles[i].currScale, particles[i].futureScale, particles[i].layer );
 		particles[i].currRenderPos = particles[i].futureRenderPos;
