@@ -102,9 +102,13 @@
     <ClInclude Include="src\Graphics\atlas.h" />
     <ClInclude Include="src\Graphics\camera.h" />
     <ClInclude Include="src\Graphics\color.h" />
+    <ClInclude Include="src\Graphics\debugRendering.h" />
+    <ClInclude Include="src\Graphics\glDebugging.h" />
     <ClInclude Include="src\Graphics\graphics.h" />
+    <ClInclude Include="src\Graphics\images.h" />
     <ClInclude Include="src\Graphics\shaderManager.h" />
     <ClInclude Include="src\Graphics\sprites.h" />
+    <ClInclude Include="src\Graphics\triRendering.h" />
     <ClInclude Include="src\Math\mathUtil.h" />
     <ClInclude Include="src\Math\matrix4.h" />
     <ClInclude Include="src\Math\vector2.h" />
@@ -127,9 +131,13 @@
     <ClCompile Include="src\Graphics\atlas.c" />
     <ClCompile Include="src\Graphics\camera.c" />
     <ClCompile Include="src\Graphics\color.c" />
+    <ClCompile Include="src\Graphics\debugRendering.c" />
+    <ClCompile Include="src\Graphics\glDebugging.c" />
     <ClCompile Include="src\Graphics\graphics.c" />
+    <ClCompile Include="src\Graphics\images.c" />
     <ClCompile Include="src\Graphics\shaderManager.c" />
     <ClCompile Include="src\Graphics\sprites.c" />
+    <ClCompile Include="src\Graphics\triRendering.c" />
     <ClCompile Include="src\main.c" />
     <ClCompile Include="src\Math\mathUtil.c" />
     <ClCompile Include="src\Math\matrix4.c" />

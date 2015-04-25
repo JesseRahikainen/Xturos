@@ -10,6 +10,7 @@ Switch image rendering over to a generic quad rendering system
 Frame based animations - copy existing stuff, allow offsets per frame (maybe just use Spine for this?)
 Spine animations working
 Custom geometry
+Come up with some way to configure and store OpenGL states, so we can make sure everything is in order when starting to render specific things
 
 Want to get the atlas working for the frame based and spine animations.
 

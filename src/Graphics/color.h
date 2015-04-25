@@ -1,11 +1,11 @@
 #ifndef COLOR_H
 #define COLOR_H
 
+#include <SDL_pixels.h>
+
 /*
 Standard 32-bit colors. Doesn't handle HDR or any fancy stuff.
 */
-
-#include <stdint.h>
 
 typedef struct {
 	union {
@@ -29,5 +29,6 @@ static const Color CLR_CYAN = { 0.0f, 1.0f, 1.0f, 1.0f };
 static const Color CLR_WHITE = { 1.0f, 1.0f, 1.0f, 1.0f };
 
 Color* clr_Lerp( const Color* from, const Color* to, float t, Color* out );
+SDL_Color clr_ToSDLColor( const Color* color );
 
 #endif // inclusion guard

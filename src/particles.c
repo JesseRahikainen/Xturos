@@ -1,5 +1,6 @@
 #include "particles.h"
-#include "Graphics/graphics.h"
+#include "Graphics/images.h"
+#include "Graphics/color.h"
 #include "Math/MathUtil.h"
 
 #include <string.h>
@@ -90,7 +91,7 @@ void particlesPhysicsTick( float dt )
 void particlesDraw( )
 {
 	for( int i = 0; i <= lastParticle; ++i ) {
-		queueRenderImage_s( particles[i].image, particles[i].camFlags, particles[i].currRenderPos, particles[i].futureRenderPos,
+		img_Draw_s( particles[i].image, particles[i].camFlags, particles[i].currRenderPos, particles[i].futureRenderPos,
 			particles[i].currScale, particles[i].futureScale, particles[i].layer );
 		particles[i].currRenderPos = particles[i].futureRenderPos;
 		particles[i].currColor = particles[i].futureColor;

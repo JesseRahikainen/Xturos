@@ -6,7 +6,7 @@
 #include <stdlib.h>
 #include <float.h>
 
-#include "Graphics/graphics.h"
+#include "Graphics/debugRendering.h"
 #include "Math/vector2.h"
 #include "Math/MathUtil.h"
 
@@ -378,10 +378,10 @@ void collision_DebugDrawing( Collider* collision, unsigned int camFlags, Color c
 	case CT_AABB:
 		vec2_Scale( &( collision->aabb.halfDim ), 2.0f, &size );
 		vec2_Subtract( &( collision->aabb.center ), &( collision->aabb.halfDim ), &position );
-		queueDebugDraw_AABB( camFlags, position, size, color.r, color.g, color.b );
+		debugRenderer_AABB( camFlags, position, size, color );
 		break;
 	case CT_CIRCLE:
-		queueDebugDraw_Circle( camFlags, collision->circle.center, collision->circle.radius, color.r, color.g, color.b );
+		debugRenderer_Circle( camFlags, collision->circle.center, collision->circle.radius, color );
 		break;
 	}
 }

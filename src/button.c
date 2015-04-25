@@ -5,7 +5,7 @@
 #include <memory.h>
 #include <assert.h>
 
-#include "Graphics/graphics.h"
+#include "Graphics/images.h"
 #include "Math/vector3.h"
 #include "Graphics/camera.h"
 
@@ -103,7 +103,7 @@ void drawButtons( )
 				img = buttons[i].clickedImdId;
 				break;
 			}
-			queueRenderImage( img, buttons[i].camFlags, buttons[i].position, buttons[i].position, buttons[i].layer );
+			img_Draw( img, buttons[i].camFlags, buttons[i].position, buttons[i].position, buttons[i].layer );
 		}
 	}
 }

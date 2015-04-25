@@ -129,16 +129,10 @@ int initEverything( void )
 	SDL_LogInfo( SDL_LOG_CATEGORY_APPLICATION, "SDL OpenGL window successfully created" );
 
 	/* Load and create images */
-	if( initRendering( window ) < 0 ) {
+	if( gfx_Init( window ) < 0 ) {
 		return -1;
 	}
 	SDL_LogInfo( SDL_LOG_CATEGORY_APPLICATION, "Rendering successfully initialized" );
-
-	/* Initialize image loading types */
-	if( initImages( ) != 0 ) {
-		return -1;
-	}
-	SDL_LogInfo( SDL_LOG_CATEGORY_APPLICATION, "Image loading successfully initialized" );
 
 	/* Load and create sounds and music */
 	if( initMixer( ) < 0 ) {
@@ -219,7 +213,7 @@ int main( int argc, char** argv )
 		if( numPhysicsProcesses > 0 ) {
 			/* set the new render positions */
 			renderDelta = PHYSICS_DELTA * (float)numPhysicsProcesses;
-			clearRenderQueue( renderDelta );
+			gfx_ClearDrawCommands( renderDelta );
 			cam_FinalizeStates( renderDelta );
 
 			/* render all the things */
@@ -228,7 +222,7 @@ int main( int argc, char** argv )
 
 		float dt = (float)tickDelta / 1000.0f;
 		cam_Update( dt );
-		renderImages( dt );
+		gfx_Render( dt );
 		// flip here so we don't have to store the window anywhere else
 		SDL_GL_SwapWindow( window );
 	}

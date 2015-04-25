@@ -1,8 +1,8 @@
 #ifndef MATRIX_4_H
 #define MATRIX_4_H
 
-#include "Vector3.h"
-#include "MathUtil.h"
+#include "vector3.h"
+#include "mathUtil.h"
 
 /* Column-major 4x4 matrix
   [ 0 4  8 12 ]

@@ -1,5 +1,6 @@
 #include "sprites.h"
-#include "graphics.h"
+#include "images.h"
+#include "color.h"
 #include <assert.h>
 #include <SDL.h>
 
@@ -37,7 +38,7 @@ void drawSprites( void )
 {
 	for( int i = 0; i < ( sizeof( sprites ) / sizeof( sprites[0] ) ); ++i ) {
 		if( sprites[i].image != -1 ) {
-			queueRenderImage_c_r( sprites[i].image, sprites[i].camFlags, sprites[i].oldState.pos, sprites[i].newState.pos,
+			img_Draw_c_r( sprites[i].image, sprites[i].camFlags, sprites[i].oldState.pos, sprites[i].newState.pos,
 				sprites[i].oldState.col, sprites[i].newState.col, sprites[i].oldState.rot, sprites[i].newState.rot, sprites[i].depth );
 			sprites[i].oldState = sprites[i].newState;
 		}
