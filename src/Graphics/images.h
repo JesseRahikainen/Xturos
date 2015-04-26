@@ -87,13 +87,8 @@ Clears the image draw list.
 void img_ClearDrawInstructions( void );
 
 /*
-Does all the stuff that needs to be done before img_Render is called.
-*/
-void img_PreRender( void );
-
-/*
 Draw all the images.
 */
-void img_Render( int camera, float timeElapsed );
+void img_Render( float normTimeElapsed );
 
 #endif /* inclusion guard */

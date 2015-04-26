@@ -22,6 +22,7 @@ TODO: Split off into different cameras. Each camera will be set when it's render
 
 #include "images.h"
 #include "debugRendering.h"
+#include "triRendering.h"
 
 static SDL_GLContext glContext;
 
@@ -76,6 +77,10 @@ int gfx_Init( SDL_Window* window )
 		return -1;
 	}
 
+	if( triRenderer_Init( ) < 0 ) {
+		return -1;
+	}
+
 	clearColor = CLR_MAGENTA;
 
 	return 0;
@@ -114,22 +119,13 @@ void gfx_Render( float dt )
 
 	// clear the screen
 	glClearColor( clearColor.r, clearColor.g, clearColor.b, clearColor.a);
-	glDepthMask( GL_TRUE );
 	glColorMask( GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE );
 	glClear( GL_COLOR_BUFFER_BIT );
-
-	glDisable( GL_CULL_FACE );
-
-	glEnable( GL_DEPTH_TEST );
-	glEnable( GL_BLEND );
-	glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
 	
-	// draw all the game play stuff
-	img_PreRender( );
-	for( int currCamera = cam_StartIteration( ); currCamera != -1; currCamera = cam_GetNextActiveCam( ) ) {
-		glClear( GL_DEPTH_BUFFER_BIT );
-		img_Render( currCamera, t );
-	}
+	// draw all the stuff that routes through the triangle rendering
+	triRenderer_Clear( );
+		img_Render( t );
+	triRenderer_Render( );
 
 	// now draw all the debug stuff over everything
 	debugRenderer_Render( );

@@ -73,8 +73,8 @@ void destroySprite( int sprite )
 
 void updateSprite( int sprite, const Vector2* newPos, const Vector2* newScale, float newRot )
 {
-	SDL_assert( newPos != NULL );
-	SDL_assert( newScale != NULL );
+	assert( newPos != NULL );
+	assert( newScale != NULL );
 
 	sprites[sprite].newState.pos = *newPos;
 	sprites[sprite].newState.rot = newRot;
@@ -83,8 +83,8 @@ void updateSprite( int sprite, const Vector2* newPos, const Vector2* newScale, f
 
 void updateSprite_Add( int sprite, const Vector2* posOffset, const Vector2* scaleOffset, float rotOffset )
 {
-	SDL_assert( posOffset != NULL );
-	SDL_assert( scaleOffset != NULL );
+	assert( posOffset != NULL );
+	assert( scaleOffset != NULL );
 
 	vec2_Add( &( sprites[sprite].newState.pos ), posOffset, &( sprites[sprite].newState.pos ) );
 	vec2_Add( &( sprites[sprite].newState.scale ), scaleOffset, &( sprites[sprite].newState.scale ) );

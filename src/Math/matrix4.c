@@ -348,6 +348,19 @@ Vector3* mat4_TransformVec3Pos_InPlace( const Matrix4* m, Vector3* v )
 	return v;
 }
 
+Vector2* mat4_TransformVec2Pos( const Matrix4* m, const Vector2* v, Vector2* out )
+{
+	assert( m != NULL );
+	assert( v != NULL );
+	assert( out != NULL );
+	assert( v != out );
+
+	out->v[0] = ( m->m[0] * v->v[0] ) + ( m->m[4] * v->v[1] ) + m->m[12];
+	out->v[1] = ( m->m[1] * v->v[0] ) + ( m->m[5] * v->v[1] ) + m->m[13];
+
+	return out;
+}
+
 int mat4_Compare( Matrix4* m, Matrix4* n )
 {
 	assert( m != NULL );

@@ -21,6 +21,8 @@ Support different resolutions and dynamic changing of resolutions
 
 Better input support, including binding
 
+Render to image
+
 eventually:
 Find a better way to enumerate all the combinations of stuff that can go into a render instruction.
 Write own audio mixer

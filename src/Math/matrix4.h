@@ -58,6 +58,7 @@ Matrix4* mat4_FPSView( const Vector3* eyePos, float yaw, float pitch, Matrix4* o
 Vector3* mat4_TransformVec3Dir( const Matrix4* m, const Vector3* v, Vector3* out );
 Vector3* mat4_TransformVec3Pos( const Matrix4* m, const Vector3* v, Vector3* out );
 Vector3* mat4_TransformVec3Pos_InPlace( const Matrix4* m, Vector3* v );
+Vector2* mat4_TransformVec2Pos( const Matrix4* m, const Vector2* v, Vector2* out );
 
 int mat4_Compare( Matrix4* m, Matrix4* n );
 

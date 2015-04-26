@@ -8,6 +8,10 @@ typedef struct {
 			float x;
 			float y;
 		};
+		struct {
+			float s;
+			float t;
+		};
 		float v[2];
 	};
 } Vector2;

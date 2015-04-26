@@ -1,6 +1,7 @@
 #include "memory.h"
 
 #include <SDL.h>
+#include <assert.h>
 #include <stdint.h>
 
 #define GUARD_VALUE 0xDEADBEEF
@@ -48,8 +49,8 @@ static void testingSetMemory( void* start, size_t size, uint8_t val ) { }
 // returns the remaining block after the condensation
 static MemoryBlockHeader* condenseMemoryBlocks( MemoryBlockHeader* start )
 {
-	SDL_assert( start != NULL );
-	SDL_assert( !( start->flags & IN_USE_FLAG ) );
+	assert( start != NULL );
+	assert( !( start->flags & IN_USE_FLAG ) );
 
 	// find the earliest block that's not in use
 	while( ( start->prev != NULL ) && !( start->prev->flags & IN_USE_FLAG ) ) {
@@ -92,8 +93,8 @@ static MemoryBlockHeader* createNewBlock( void* start, MemoryBlockHeader* prev, 
 
 static void* growBlock( MemoryBlockHeader* header, size_t newSize )
 {
-	SDL_assert( header != NULL );
-	SDL_assert( header->size < newSize );
+	assert( header != NULL );
+	assert( header->size < newSize );
 
 	void* result = NULL;
 
@@ -140,8 +141,8 @@ static void* growBlock( MemoryBlockHeader* header, size_t newSize )
 
 static void* shrinkBlock( MemoryBlockHeader* header, size_t newSize )
 {
-	SDL_assert( header != NULL );
-	SDL_assert( header->size > newSize );
+	assert( header != NULL );
+	assert( header->size > newSize );
 
 	// see if there's enough left after the shrink for a new block, if there is
 	//  then make it and condense it
@@ -180,7 +181,7 @@ void cleanUpMemory( void )
 
 void* mem_allocate( size_t size )
 {
-	SDL_assert( memoryBlock.memory != NULL );
+	assert( memoryBlock.memory != NULL );
 
 	// we'll just do first fit, if we can't find a spot we'll just return NULL
 	char* result = NULL;
@@ -221,7 +222,7 @@ void* mem_allocate( size_t size )
 
 void* mem_resize( void* memory, size_t newSize )
 {
-	SDL_assert( memoryBlock.memory != NULL );
+	assert( memoryBlock.memory != NULL );
 
 	if( newSize == 0 ) {
 		mem_release( memory );
@@ -253,15 +254,15 @@ void* mem_resize( void* memory, size_t newSize )
 
 void mem_release( void* memory )
 {
-	SDL_assert( memoryBlock.memory != NULL );
-	SDL_assert( memory != NULL );
+	assert( memoryBlock.memory != NULL );
+	assert( memory != NULL );
 	
 	// set the associated block as not in use, and merge with nearby blocks if they're
 	//  not in use
 	MemoryBlockHeader* header = (MemoryBlockHeader*)( ((char*)memory) - sizeof( MemoryBlockHeader ) );
 	header->flags &= ~IN_USE_FLAG;
 
-	SDL_assert( header->guardValue == GUARD_VALUE );
+	assert( header->guardValue == GUARD_VALUE );
 	
 	header = condenseMemoryBlocks( header );
 	testingSetMemory( (void*)( ( (char*)header ) + sizeof( MemoryBlockHeader ) ), header->size, 0xFF );

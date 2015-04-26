@@ -1,12 +1,12 @@
 #include "color.h"
-#include <SDL_assert.h>
+#include <assert.h>
 #include "../Math/mathUtil.h"
 
 Color* clr_Lerp( const Color* from, const Color* to, float t, Color* out )
 {
-	SDL_assert( from );
-	SDL_assert( to );
-	SDL_assert( out );
+	assert( from != NULL );
+	assert( to != NULL );
+	assert( out != NULL );
 
 	out->r = lerp( from->r, to->r, t );
 	out->g = lerp( from->g, to->g, t );
@@ -18,7 +18,7 @@ Color* clr_Lerp( const Color* from, const Color* to, float t, Color* out )
 
 SDL_Color clr_ToSDLColor( const Color* color )
 {
-	SDL_assert( color );
+	assert( color );
 
 	SDL_Color out;
 
