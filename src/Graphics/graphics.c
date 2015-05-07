@@ -116,6 +116,8 @@ void gfx_Render( float dt )
 	glClearColor( clearColor.r, clearColor.g, clearColor.b, clearColor.a);
 	glColorMask( GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE );
 	glClear( GL_COLOR_BUFFER_BIT );
+
+	spine_UpdateInstances( dt );
 	
 	// draw all the stuff that routes through the triangle rendering
 	triRenderer_Clear( );
