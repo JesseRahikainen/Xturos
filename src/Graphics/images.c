@@ -13,6 +13,7 @@
 #include "shaderManager.h"
 #include "camera.h"
 #include "triRendering.h"
+#include "gfxUtil.h"
 
 /* Image loading types and variables */
 #define MAX_IMAGES 512
@@ -171,7 +172,6 @@ Loads the image stored at file name.
 */
 int img_Load( const char* fileName )
 {
-	int width, height, comp;
 	SDL_Surface* loadSurface = NULL;
 	unsigned char* imageData = NULL;
 	int newIdx = -1;
@@ -183,35 +183,19 @@ int img_Load( const char* fileName )
 		goto clean_up;
 	}
 
-	// load and convert file to pixel data
-	imageData = stbi_load( fileName, &width, &height, &comp, 4 );
-	if( imageData == NULL ) {
-		SDL_LogInfo( SDL_LOG_CATEGORY_VIDEO, "Unable to load image %s! STB Error: %s", fileName, stbi_failure_reason( ) );
-		newIdx = -1;
-		goto clean_up;
-	}
-	
-	int bitsPerPixel = comp * 8;
-	loadSurface = SDL_CreateRGBSurfaceFrom( (void*)imageData, width, height, bitsPerPixel, ( width * bitsPerPixel ), 0x000000FF, 0x0000FF00, 0x00FF0000, 0xFF000000 );
-	if( loadSurface == NULL ) {
-		SDL_LogInfo( SDL_LOG_CATEGORY_VIDEO, "Unable to create RGB surface for %s! SDL Error: %s", fileName, SDL_GetError( ) );
+	Texture texture;
+	if( gfxUtil_LoadTexture( fileName, &texture ) < 0 ) {
+		SDL_LogInfo( SDL_LOG_CATEGORY_VIDEO, "Unable to load image %s!", fileName );
 		newIdx = -1;
 		goto clean_up;
 	}
 
-	if( bindSDLSurface( loadSurface, &( images[newIdx].textureObj ) ) < 0 ) {
-		SDL_LogInfo( SDL_LOG_CATEGORY_VIDEO, "Unable to convert surface to texture for %s! SDL Error: %s", fileName, SDL_GetError( ) );
-		newIdx = -1;
-		goto clean_up;
-	} 
-
-	images[newIdx].size.v[0] = (float)width;
-	images[newIdx].size.v[1] = (float)height;
+	images[newIdx].size.v[0] = (float)texture.width;
+	images[newIdx].size.v[1] = (float)texture.height;
 	images[newIdx].offset = VEC2_ZERO;
 	images[newIdx].packageID = -1;
 	images[newIdx].flags = IMGFLAG_IN_USE;
-	//if( testSurfaceTransparency( loadSurface ) ) {
-	if( testSurfaceTransparency( loadSurface ) ) {
+	if( texture.flags & TF_IS_TRANSPARENT ) {
 		images[newIdx].flags |= IMGFLAG_HAS_TRANSPARENCY;
 	}
 
@@ -236,16 +220,17 @@ int img_Create( SDL_Surface* surface )
 		return -1;
 	}
 
-	if( bindSDLSurface( surface, &( images[newIdx].textureObj ) ) < 0 ) {
+	Texture texture;
+	if( gfxUtil_CreateTextureFromSurface( surface, &texture ) < 0 ) {
 		SDL_LogInfo( SDL_LOG_CATEGORY_VIDEO, "Unable to convert surface to texture! SDL Error: %s", SDL_GetError( ) );
 		return -1;
 	} else {
-		images[newIdx].size.v[0] = (float)surface->w;
-		images[newIdx].size.v[1] = (float)surface->h;
+		images[newIdx].size.v[0] = (float)texture.width;
+		images[newIdx].size.v[1] = (float)texture.height;
 		images[newIdx].offset = VEC2_ZERO;
 		images[newIdx].packageID = -1;
 		images[newIdx].flags = IMGFLAG_IN_USE;
-		if( testSurfaceTransparency( surface ) ) {
+		if( texture.flags & TF_IS_TRANSPARENT ) {
 			images[newIdx].flags |= IMGFLAG_HAS_TRANSPARENCY;
 		}
 	}
@@ -303,19 +288,23 @@ int img_UpdateText( const char* text, const char* fontName, int pointSize, Color
 		textSurface = TTF_RenderText_Blended_Wrapped( font, text, clr_ToSDLColor( &color ), wrapLen );
 	}
 
+	Texture texture;
 	if( textSurface == NULL ) {
 		SDL_LogInfo( SDL_LOG_CATEGORY_VIDEO, "Unable to render text! SDL Error: %s", TTF_GetError( ) );
 		newIdx = -1;
 	} else {
-		if( bindSDLSurface( textSurface, &( images[newIdx].textureObj ) ) < 0 ) {
+		if( gfxUtil_CreateTextureFromSurface( textSurface, &texture ) < 0 ) {
 			SDL_LogInfo( SDL_LOG_CATEGORY_VIDEO, "Unable to convert surface to texture for text! SDL Error: %s", SDL_GetError( ) );
 			newIdx = -1;
 		} else {
-			images[newIdx].size.v[0] = (float)textSurface->w;
-			images[newIdx].size.v[1] = (float)textSurface->h;
+			images[newIdx].size.v[0] = (float)texture.width;
+			images[newIdx].size.v[1] = (float)texture.height;
 			images[newIdx].offset = VEC2_ZERO;
-			images[newIdx].flags = IMGFLAG_IN_USE;
 			images[newIdx].packageID = -1;
+			images[newIdx].flags = IMGFLAG_IN_USE;
+			if( texture.flags & TF_IS_TRANSPARENT ) {
+				images[newIdx].flags |= IMGFLAG_HAS_TRANSPARENCY;
+			}
 		}
 		SDL_FreeSurface( textSurface );
 	}

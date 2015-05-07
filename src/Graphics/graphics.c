@@ -1,13 +1,5 @@
 #include "graphics.h"
 
-/*
-TODO: Split off into different cameras. Each camera will be set when it's rendering.
-*/
-
-//#include <SDL_image.h>
-#define STB_IMAGE_IMPLEMENTATION
-#include <stb_image.h>
-
 #include <SDL_ttf.h>
 #include <stdlib.h>
 #include <assert.h>
@@ -22,6 +14,7 @@ TODO: Split off into different cameras. Each camera will be set when it's render
 
 #include "images.h"
 #include "debugRendering.h"
+#include "spineGfx.h"
 #include "triRendering.h"
 
 static SDL_GLContext glContext;
@@ -77,6 +70,8 @@ int gfx_Init( SDL_Window* window )
 		return -1;
 	}
 
+	spine_Init( );
+
 	if( triRenderer_Init( ) < 0 ) {
 		return -1;
 	}
@@ -125,6 +120,7 @@ void gfx_Render( float dt )
 	// draw all the stuff that routes through the triangle rendering
 	triRenderer_Clear( );
 		img_Render( t );
+		spine_RenderInstances( );
 	triRenderer_Render( );
 
 	// now draw all the debug stuff over everything

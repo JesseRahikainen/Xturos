@@ -83,6 +83,9 @@ static int createShader( void )
 								"	if( outCol.w <= 0.0f ) {\n"
 								"		discard;\n"
 								"	}\n"
+								/*"	outCol = vec4( 1.0f, 1.0f, 1.0f, 1.0f );\n"
+								"   outCol.r = vTex.s;\n"
+								"	outCol.g = vTex.t;\n"*/
 								"}\n";
 
 	progDef.fragmentShader = 1;
@@ -235,7 +238,7 @@ static int sortByDepth( const void* p1, const void* p2 )
 {
 	Triangle* tri1 = (Triangle*)p1;
 	Triangle* tri2 = (Triangle*)p2;
-	return ( ( ( tri2->zPos ) - ( tri1->zPos ) ) > 0.0f ) ? 1 : -1;
+	return ( ( ( tri1->zPos ) - ( tri2->zPos ) ) > 0.0f ) ? 1 : -1;
 }
 
 static void generateVertexArray( TriangleList* triList )
