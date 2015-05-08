@@ -82,10 +82,10 @@ static int createShader( void )
 								"	outCol = texture2D(textureUnit0, vTex) * vCol;\n"
 								"	if( outCol.w <= 0.0f ) {\n"
 								"		discard;\n"
-								"	}\n"
+								"	}\n"//*/
 								/*"	outCol = vec4( 1.0f, 1.0f, 1.0f, 1.0f );\n"
 								"   outCol.r = vTex.s;\n"
-								"	outCol.g = vTex.t;\n"*/
+								"	outCol.g = vTex.t;\n"//*/
 								"}\n";
 
 	progDef.fragmentShader = 1;

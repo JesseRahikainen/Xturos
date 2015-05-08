@@ -25,6 +25,8 @@ enum {
 
 typedef struct {
 	GLuint textureObj;
+	Vector2 uvMin;
+	Vector2 uvMax;
 	Vector2 size;
 	Vector2 offset;
 	int flags;
@@ -92,40 +94,6 @@ static int findAvailableImageIndex( )
 	return newIdx;
 }
 
-
-/*
-Binds a surface to an OpenGL texture. Returns 0 if it's successful, -1 on failure.
-*/
-static int bindSDLSurface( SDL_Surface* surface, GLuint* texObjID )
-{
-	// convert the pixels into a texture
-	GLenum texFormat;
-
-	if( surface->format->BytesPerPixel == 4 ) {
-		texFormat = GL_RGBA;
-	} else if( surface->format->BytesPerPixel == 3 ) {
-		texFormat = GL_RGB;
-	} else {
-		SDL_LogInfo( SDL_LOG_CATEGORY_VIDEO, "Unable to handle format!" );
-		return -1;
-	}
-
-	glGenTextures( 1, texObjID );
-
-	glBindTexture( GL_TEXTURE_2D, *texObjID );
-
-	// assuming these will look good for now, we shouldn't be too much resizing, but if we do we can go over these again
-	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST );
-	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST );
-
-	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
-	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
-
-	glTexImage2D( GL_TEXTURE_2D, 0, texFormat, surface->w, surface->h, 0, texFormat, GL_UNSIGNED_BYTE, surface->pixels );
-
-	return 0;
-}
-
 /*
 Tests for any alpha values on the SDL_Surface that are > 0 and < 255.
  Returns if there is any transparency in the object.
@@ -172,24 +140,23 @@ Loads the image stored at file name.
 */
 int img_Load( const char* fileName )
 {
-	SDL_Surface* loadSurface = NULL;
-	unsigned char* imageData = NULL;
 	int newIdx = -1;
 
 	// find the first empty spot, make sure we won't go over our maximum
 	newIdx = findAvailableImageIndex( );
 	if( newIdx < 0 ) {
 		SDL_LogInfo( SDL_LOG_CATEGORY_VIDEO, "Unable to load image %s! Image storage full.", fileName );
-		goto clean_up;
+		return -1;
 	}
 
 	Texture texture;
 	if( gfxUtil_LoadTexture( fileName, &texture ) < 0 ) {
 		SDL_LogInfo( SDL_LOG_CATEGORY_VIDEO, "Unable to load image %s!", fileName );
 		newIdx = -1;
-		goto clean_up;
+		return -1;
 	}
 
+	images[newIdx].textureObj = texture.textureID;
 	images[newIdx].size.v[0] = (float)texture.width;
 	images[newIdx].size.v[1] = (float)texture.height;
 	images[newIdx].offset = VEC2_ZERO;
@@ -199,9 +166,6 @@ int img_Load( const char* fileName )
 		images[newIdx].flags |= IMGFLAG_HAS_TRANSPARENCY;
 	}
 
-clean_up:
-	SDL_FreeSurface( loadSurface );
-	stbi_image_free( imageData );
 	return newIdx;
 }
 
