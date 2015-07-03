@@ -52,6 +52,8 @@ void cleanUp( void )
 		SDL_RWclose( logFile );
 	}
 
+	mem_CleanUp( );
+
 	atexit( NULL );
 }
 
@@ -75,8 +77,8 @@ int initEverything( void )
 	}
 #endif
 
-	// memory first, won't be used everywhere at first so lets keep the initial allocation low, 1 MB
-	initMemory( 1024 * 1024 );
+	// memory first, won't be used everywhere at first so lets keep the initial allocation low, 64 MB
+	mem_Init( 64 * 1024 * 1024 );
 
 	/* then SDL */
 	SDL_SetMainReady( );

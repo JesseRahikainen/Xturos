@@ -6,7 +6,9 @@
 // some error check dumping, returns < 0 if there was an error
 int checkAndLogErrors( const char* extraInfo )
 {
+#ifdef _DEBUG
 	char* errorMsg;
+#endif
 	int ret = 0;
 	GLenum error = glGetError( );
 

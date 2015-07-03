@@ -22,6 +22,7 @@
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v120</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
+    <CLRSupport>false</CLRSupport>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
@@ -65,6 +66,7 @@
       <ExceptionHandling>false</ExceptionHandling>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <DisableSpecificWarnings>4100;4189;4201;4996;4127</DisableSpecificWarnings>
+      <PreprocessToFile>false</PreprocessToFile>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -99,7 +101,6 @@
     <ClInclude Include="src\collisionDetection.h" />
     <ClInclude Include="src\gameState.h" />
     <ClInclude Include="src\Game\gameScreen.h" />
-    <ClInclude Include="src\Graphics\atlas.h" />
     <ClInclude Include="src\Graphics\camera.h" />
     <ClInclude Include="src\Graphics\color.h" />
     <ClInclude Include="src\Graphics\debugRendering.h" />
@@ -110,6 +111,7 @@
     <ClInclude Include="src\Graphics\shaderManager.h" />
     <ClInclude Include="src\Graphics\spineGfx.h" />
     <ClInclude Include="src\Graphics\sprites.h" />
+    <ClInclude Include="src\Graphics\imageSheets.h" />
     <ClInclude Include="src\Graphics\triRendering.h" />
     <ClInclude Include="src\Math\mathUtil.h" />
     <ClInclude Include="src\Math\matrix4.h" />
@@ -124,13 +126,13 @@
     <ClInclude Include="src\System\memory.h" />
     <ClInclude Include="src\tween.h" />
     <ClInclude Include="src\Utils\cfgParser.h" />
+    <ClInclude Include="src\Utils\stretchyBuffer.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\button.c" />
     <ClCompile Include="src\collisionDetection.c" />
     <ClCompile Include="src\gameState.c" />
     <ClCompile Include="src\Game\gameScreen.c" />
-    <ClCompile Include="src\Graphics\atlas.c" />
     <ClCompile Include="src\Graphics\camera.c" />
     <ClCompile Include="src\Graphics\color.c" />
     <ClCompile Include="src\Graphics\debugRendering.c" />
@@ -141,6 +143,7 @@
     <ClCompile Include="src\Graphics\shaderManager.c" />
     <ClCompile Include="src\Graphics\spineGfx.c" />
     <ClCompile Include="src\Graphics\sprites.c" />
+    <ClCompile Include="src\Graphics\imageSheets.c" />
     <ClCompile Include="src\Graphics\triRendering.c" />
     <ClCompile Include="src\main.c" />
     <ClCompile Include="src\Math\mathUtil.c" />

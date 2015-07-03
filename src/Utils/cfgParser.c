@@ -1,7 +1,8 @@
 #include "CfgParser.h"
 #include <SDL_rwops.h>
-#include <stretchy_buffer.h>
 #include <string.h>
+
+#include "../Utils/stretchyBuffer.h"
 
 // TODO: make this better overall, this is just a quick hack to test some stuff
 
@@ -19,7 +20,7 @@ typedef struct {
 // opens the file, returns NULL if it fails.
 void* cfg_OpenFile( const char* fileName )
 {
-	CFGFile* newFile = (CFGFile*)SDL_malloc( sizeof( CFGFile ) );
+	CFGFile* newFile = (CFGFile*)mem_Allocate( sizeof( CFGFile ) );
 	if( newFile == NULL ) {
 		return NULL;
 	}
@@ -36,12 +37,12 @@ void* cfg_OpenFile( const char* fileName )
 	size_t numRead;
 	char* fileText = NULL;
 	while( ( numRead = SDL_RWread( rwopsFile, (void*)buffer, sizeof( char ), sizeof( buffer ) ) ) != 0 ) {
-		char* c = sb_add( fileText, (int)numRead );
+		char* c = sb_Add( fileText, (int)numRead );
 		for( size_t i = 0; i < numRead; ++i ) {
 			*c++ = buffer[i];
 		}
 	}
-	sb_push( fileText, 0 ); // make this c-string compatible
+	sb_Push( fileText, 0 ); // make this c-string compatible
 
 	// got the entire file text, now tokenize and parse
 	//  only tokens we're worried about are '=' and '/r/n'
@@ -61,14 +62,14 @@ void* cfg_OpenFile( const char* fileName )
 			gettingAttrName = 0;
 		} else {
 			attr.value = SDL_atoi( token );
-			sb_push( newFile->attributes, attr );
+			sb_Push( newFile->attributes, attr );
 			gettingAttrName = 1;
 		}
 
 		token = strtok( NULL, delimiters );
 	}
 
-	sb_free( fileText );
+	sb_Release( fileText );
 	SDL_RWclose( rwopsFile );
 
 	return newFile;
@@ -82,8 +83,8 @@ void cfg_CloseFile( void* cfgFile )
 		return;
 	}
 
-	sb_free( data->attributes );
-	SDL_free( data );
+	sb_Release( data->attributes );
+	mem_Release( data );
 }
 
 // Accessors. Pass them a valid config file pointer, the name of the attribute you want, the default value for the
@@ -97,7 +98,7 @@ int cfg_GetInt( void* cfgFile, const char* attrName, int defaultVal, int* retVal
 		return -1;
 	}
 
-	int size = sb_count( data->attributes );
+	int size = sb_Count( data->attributes );
 	int result = defaultVal;
 	int i = 0;
 	while( ( i < size ) && ( SDL_strncasecmp( attrName, data->attributes[i].name, sizeof( data->attributes[i].name ) - 1 ) != 0 ) ) {

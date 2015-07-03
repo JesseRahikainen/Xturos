@@ -108,9 +108,6 @@
     <ClInclude Include="src\Graphics\color.h">
       <Filter>Header Files\Graphics</Filter>
     </ClInclude>
-    <ClInclude Include="src\Graphics\atlas.h">
-      <Filter>Header Files\Graphics</Filter>
-    </ClInclude>
     <ClInclude Include="src\System\memory.h">
       <Filter>Header Files\System</Filter>
     </ClInclude>
@@ -139,6 +136,12 @@
       <Filter>Header Files\Graphics</Filter>
     </ClInclude>
     <ClInclude Include="src\Graphics\gfxUtil.h">
+      <Filter>Header Files\Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Utils\stretchyBuffer.h">
+      <Filter>Header Files\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Graphics\imageSheets.h">
       <Filter>Header Files\Graphics</Filter>
     </ClInclude>
   </ItemGroup>
@@ -191,9 +194,6 @@
     <ClCompile Include="src\Graphics\color.c">
       <Filter>Source Files\Graphics</Filter>
     </ClCompile>
-    <ClCompile Include="src\Graphics\atlas.c">
-      <Filter>Source Files\Graphics</Filter>
-    </ClCompile>
     <ClCompile Include="src\System\memory.c">
       <Filter>Source Files\System</Filter>
     </ClCompile>
@@ -222,6 +222,9 @@
       <Filter>Source Files\Graphics</Filter>
     </ClCompile>
     <ClCompile Include="src\Graphics\gfxUtil.c">
+      <Filter>Source Files\Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Graphics\imageSheets.c">
       <Filter>Source Files\Graphics</Filter>
     </ClCompile>
   </ItemGroup>

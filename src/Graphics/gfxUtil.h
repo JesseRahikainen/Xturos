@@ -2,6 +2,7 @@
 #define GFX_UTIL_H
 
 #include "../Others/glew.h"
+#include "../Math/vector2.h"
 #include <SDL_surface.h>
 
 // some basic texture handling things.
@@ -15,6 +16,12 @@ typedef struct {
 	int height;
 	int flags;
 } Texture;
+
+typedef struct {
+	Vector2 minUV;
+	Vector2 maxUV;
+	Texture texture;
+} AtlasResult;
 
 /*
 Loads the image at the file name. Takes in a pointer to a Texture structure that it puts all the generated data into.

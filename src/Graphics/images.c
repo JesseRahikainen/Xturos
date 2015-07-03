@@ -3,15 +3,12 @@
 #include "../Others/glew.h"
 #include <SDL_opengl.h>
 #include <assert.h>
-#include <stb_image.h>
 #include <SDL_ttf.h>
 #include <SDL_log.h>
 #include <math.h>
 #include <stdlib.h>
 
 #include "../Math/matrix4.h"
-#include "shaderManager.h"
-#include "camera.h"
 #include "triRendering.h"
 #include "gfxUtil.h"
 
@@ -31,6 +28,7 @@ typedef struct {
 	Vector2 offset;
 	int flags;
 	int packageID;
+	int nextInPackage;
 } Image;
 
 static Image images[MAX_IMAGES];
@@ -48,6 +46,7 @@ typedef struct {
 	GLuint textureObj;
 	int imageObj;
 	Vector2 offset;
+	Vector2 uvs[4];
 	DrawInstructionState start;
 	DrawInstructionState end;
 	int flags;
@@ -60,10 +59,13 @@ static int lastDrawInstruction;
 
 static const DrawInstruction DEFAULT_DRAW_INSTRUCTION = {
 	0, -1, { 0.0f, 0.0f },
+	{ { 0.0f, 0.0f }, { 0.0f, 1.0f }, { 1.0f, 0.0f }, { 1.0f, 1.0f } },
 	{ { 0.0f, 0.0f }, { 1.0f, 1.0f }, { 1.0f, 1.0f, 1.0f, 1.0f }, 0.0f },
 	{ { 0.0f, 0.0f }, { 1.0f, 1.0f }, { 1.0f, 1.0f, 1.0f, 1.0f }, 0.0f },
 	0, 0, 0
 };
+
+static GLint maxTextureSize;
 
 /*
 Initializes images.
@@ -71,6 +73,7 @@ Initializes images.
 */
 int img_Init( void )
 {
+	glGetIntegerv( GL_MAX_TEXTURE_SIZE, &maxTextureSize );
 	memset( images, 0, sizeof(images) );
 	return 0;
 }
@@ -92,45 +95,6 @@ static int findAvailableImageIndex( )
 	}
 
 	return newIdx;
-}
-
-/*
-Tests for any alpha values on the SDL_Surface that are > 0 and < 255.
- Returns if there is any transparency in the object.
-*/
-int testSurfaceTransparency( SDL_Surface* surface )
-{
-	Uint8 r, g, b, a;
-	int bpp = surface->format->BytesPerPixel;
-
-	for( int y = 0; y < surface->h; ++y ) {
-		for( int x = 0; x < surface->w; ++x ) {
-			Uint32 pixel;
-			// pitch seems to be in bits, not bytes as the documentation says it should be
-			Uint8 *pos = ( ( (Uint8*)surface->pixels ) + ( ( y * ( surface->pitch / 8 ) ) + ( x * bpp ) ) );
-			switch( bpp ) {
-			case 3:
-				if( SDL_BYTEORDER == SDL_BIG_ENDIAN ) {
-					pixel = ( pos[0] << 16 ) | ( pos[1] << 8 ) | pos[2];
-				} else {
-					pixel = pos[0] | ( pos[1] << 8 ) | ( pos[2] << 16 );
-				}
-				break;
-			case 4:
-				pixel = *( (Uint32*)pos );
-				break;
-			default:
-				pixel = 0;
-				break;
-			}
-			SDL_GetRGBA( pixel, surface->format, &r, &g, &b, &a );
-			if( ( a > 0x00 ) && ( a < 0xFF ) ) {
-				return 1;
-			}
-		}
-	}
-
-	return 0;
 }
 
 /*
@@ -162,6 +126,9 @@ int img_Load( const char* fileName )
 	images[newIdx].offset = VEC2_ZERO;
 	images[newIdx].packageID = -1;
 	images[newIdx].flags = IMGFLAG_IN_USE;
+	images[newIdx].nextInPackage = -1;
+	images[newIdx].uvMin = VEC2_ZERO;
+	images[newIdx].uvMax = VEC2_ONE;
 	if( texture.flags & TF_IS_TRANSPARENT ) {
 		images[newIdx].flags |= IMGFLAG_HAS_TRANSPARENCY;
 	}
@@ -194,6 +161,9 @@ int img_Create( SDL_Surface* surface )
 		images[newIdx].offset = VEC2_ZERO;
 		images[newIdx].packageID = -1;
 		images[newIdx].flags = IMGFLAG_IN_USE;
+		images[newIdx].nextInPackage = -1;
+		images[newIdx].uvMin = VEC2_ZERO;
+		images[newIdx].uvMax = VEC2_ONE;
 		if( texture.flags & TF_IS_TRANSPARENT ) {
 			images[newIdx].flags |= IMGFLAG_HAS_TRANSPARENCY;
 		}
@@ -266,6 +236,9 @@ int img_UpdateText( const char* text, const char* fontName, int pointSize, Color
 			images[newIdx].offset = VEC2_ZERO;
 			images[newIdx].packageID = -1;
 			images[newIdx].flags = IMGFLAG_IN_USE;
+			images[newIdx].nextInPackage = -1;
+			images[newIdx].uvMin = VEC2_ZERO;
+			images[newIdx].uvMax = VEC2_ONE;
 			if( texture.flags & TF_IS_TRANSPARENT ) {
 				images[newIdx].flags |= IMGFLAG_HAS_TRANSPARENCY;
 			}
@@ -302,11 +275,24 @@ void img_Clean( int idx )
 		}
 	}
 
-	glDeleteTextures( 1, &( images[idx].textureObj ) );
-	images[idx].size.v[0] = 0.0f;
-	images[idx].size.v[1] = 0.0f;
+	// see if this is the last image using that texture
+	//  TODO: See if this needs to be sped up
+	int deleteTexture = 1;
+	for( int i = 0; ( i < MAX_IMAGES ) && deleteTexture; ++i ) {
+		if( ( images[i].flags & IMGFLAG_IN_USE ) && ( images[i].textureObj == images[idx].textureObj ) ) {
+			deleteTexture = 0;
+		}
+	}
+
+	if( deleteTexture ) {
+		glDeleteTextures( 1, &( images[idx].textureObj ) );
+	}
+	images[idx].size = VEC2_ZERO;
 	images[idx].flags = 0;
 	images[idx].packageID = -1;
+	images[idx].nextInPackage = -1;
+	images[idx].uvMin = VEC2_ZERO;
+	images[idx].uvMax = VEC2_ZERO;
 }
 
 /*
@@ -324,19 +310,60 @@ int img_LoadPackage( int count, char** fileNames, int* retIDs )
 	}
 
 	if( currPackageID < 0 ) {
+		SDL_LogError( SDL_LOG_CATEGORY_RENDER, "Unable to find valid package ID." );
 		return -1;
 	}
 
-	for( int i = 0; i < count; ++i ) {
-		retIDs[i] = img_Load( fileNames[i] );
-		if( retIDs[i] >= 0 ) {
-			images[retIDs[i]].packageID = currPackageID;
-		} else {
-			SDL_LogError( SDL_LOG_CATEGORY_RENDER, "Problem loading image %s into a package.", fileNames[i] );
+	return currPackageID;
+}
+
+/*
+Takes in a file name and some rectangles. It's assumed the length of mins, maxes, and retIDs equals count.
+ Returns package ID used to clean up later, returns -1 if there's a problem.
+*/
+int img_SplitImage( char* fileName, int count, Vector2* mins, Vector2* maxes, int* retIDs )
+{
+	int currPackageID = 0;
+	for( int i = 0; i < MAX_IMAGES; ++i ) {
+		if( ( images[i].flags & IMGFLAG_IN_USE ) && ( images[i].packageID <= currPackageID ) ) {
+			currPackageID = images[i].packageID + 1;
 		}
 	}
 
-	return currPackageID;
+	Texture texture;
+	Vector2 inverseSize;
+	if( gfxUtil_LoadTexture( fileName, &texture ) < 0 ) {
+		SDL_LogError( SDL_LOG_CATEGORY_RENDER, "Problem loading image %s", fileName );
+		return -1;
+	}
+
+	inverseSize.x = 1.0f / (float)texture.width;
+	inverseSize.y = 1.0f / (float)texture.height;
+
+	for( int i = 0; i < count; ++i ) {
+		int newIdx = findAvailableImageIndex( );
+		if( newIdx < 0 ) {
+			SDL_LogError( SDL_LOG_CATEGORY_RENDER, "Problem finding available image to split into." );
+			img_CleanPackage( currPackageID );
+			return -1;
+		}
+
+		images[newIdx].textureObj = texture.textureID;
+		vec2_Subtract( &( maxes[i] ), &( mins[i] ), &( images[newIdx].size ) );
+		images[newIdx].offset = VEC2_ZERO;
+		images[newIdx].packageID = currPackageID;
+		images[newIdx].flags = IMGFLAG_IN_USE;
+		vec2_HadamardProd( &( mins[i] ), &inverseSize, &( images[newIdx].uvMin ) );
+		vec2_HadamardProd( &( maxes[i] ), &inverseSize, &( images[newIdx].uvMax ) );
+		if( texture.flags & TF_IS_TRANSPARENT ) {
+			images[newIdx].flags |= IMGFLAG_HAS_TRANSPARENCY;
+		}
+
+
+		retIDs[i] = newIdx;
+	}
+
+	return 0;
 }
 
 /*
@@ -393,8 +420,6 @@ static DrawInstruction* GetNextRenderInstruction( int imgObj, unsigned int camFl
 	ri->imageObj = imgObj;
 	ri->start.pos = startPos;
 	ri->end.pos = endPos;
-	//vec2ToVec3( &startPos, (float)depth + ( Z_ORDER_OFFSET * lastDrawInstruction ), &( ri->start.pos ) );
-	//vec2ToVec3( &endPos, (float)depth + ( Z_ORDER_OFFSET * lastDrawInstruction ), &( ri->end.pos ) );
 	ri->start.scaleSize = images[imgObj].size;
 	ri->end.scaleSize = images[imgObj].size;
 	ri->start.color = CLR_WHITE;
@@ -404,6 +429,17 @@ static DrawInstruction* GetNextRenderInstruction( int imgObj, unsigned int camFl
 	ri->offset = images[imgObj].offset;
 	ri->flags = images[imgObj].flags;
 	ri->camFlags = camFlags;
+	memcpy( ri->uvs, DEFAULT_DRAW_INSTRUCTION.uvs, sizeof( ri->uvs ) );
+
+	ri->uvs[0] = images[imgObj].uvMin;
+
+	ri->uvs[1].x = images[imgObj].uvMin.x;
+	ri->uvs[1].y = images[imgObj].uvMax.y;
+
+	ri->uvs[2].x = images[imgObj].uvMax.x;
+	ri->uvs[2].y = images[imgObj].uvMin.y;
+
+	ri->uvs[3] = images[imgObj].uvMax;
 
 	return ri;
 }
@@ -575,7 +611,6 @@ Draw all the images.
 void img_Render( float normTimeElapsed )
 {
 	Vector2 unitSqVertPos[] = { { -0.5f, -0.5f }, { -0.5f, 0.5f }, { 0.5f, -0.5f }, { 0.5f, 0.5f } };
-	Vector2 unitSqVertUV[] = { { 0.0f, 0.0f }, { 0.0f, 1.0f }, { 1.0f, 0.0f }, { 1.0f, 1.0f } };
 	GLuint indices[] = {
 		0, 1, 2,
 		1, 2, 3,
@@ -604,11 +639,11 @@ void img_Render( float normTimeElapsed )
 		int transparent = ( renderBuffer[idx].flags & IMGFLAG_HAS_TRANSPARENCY ) != 0;
 
 		triRenderer_Add( verts[indices[0]], verts[indices[1]], verts[indices[2]],
-			unitSqVertUV[indices[0]], unitSqVertUV[indices[1]], unitSqVertUV[indices[2]],
+			renderBuffer[idx].uvs[indices[0]], renderBuffer[idx].uvs[indices[1]], renderBuffer[idx].uvs[indices[2]],
 			renderBuffer[idx].textureObj, col, renderBuffer[idx].camFlags, renderBuffer[idx].depth,
 			transparent );
 		triRenderer_Add( verts[indices[3]], verts[indices[4]], verts[indices[5]],
-			unitSqVertUV[indices[3]], unitSqVertUV[indices[4]], unitSqVertUV[indices[5]],
+			renderBuffer[idx].uvs[indices[3]], renderBuffer[idx].uvs[indices[4]], renderBuffer[idx].uvs[indices[5]],
 			renderBuffer[idx].textureObj, col, renderBuffer[idx].camFlags, renderBuffer[idx].depth,
 			transparent );
 	}

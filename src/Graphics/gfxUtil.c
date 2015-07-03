@@ -1,10 +1,70 @@
 #include "gfxUtil.h"
 
-#define STB_IMAGE_IMPLEMENTATION
-#include <stb_image.h>
-
 #include <SDL_log.h>
 #include <SDL_endian.h>
+
+
+// gets sbt_image.h to use our custom memory allocation
+#include <stdlib.h>
+#include "../System/memory.h"
+#define free(ptr) mem_Release(ptr)
+#define realloc(ptr,size) mem_Resize(ptr,size)
+#define malloc(size) mem_Allocate(size)
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb_image.h>
+#undef malloc
+#undef free
+#undef realloc
+
+#define STB_RECT_PACK_IMPLEMENTATION
+#include <stb_rect_pack.h>
+
+#include "glDebugging.h"
+
+typedef struct {
+	unsigned char* data;
+	int width, height, reqComp, comp;
+} LoadedImage;
+
+/*
+Converts the LoadedImage into a texture, putting everything in outTexture. All LoadedImages are assumed to be in RGBA format.
+ Returns >= 0 if everything went fine, < 0 if something went wrong.
+*/
+int createTextureFromLoadedImage( LoadedImage* image, Texture* outTexture )
+{
+	GLenum texFormat = GL_RGBA;
+
+	GL( glGenTextures( 1, &( outTexture->textureID ) ) );
+
+	if( outTexture->textureID == 0 ) {
+		SDL_LogInfo( SDL_LOG_CATEGORY_VIDEO, "Unable to create texture object." );
+		return -1;
+	}
+
+	GL( glBindTexture( GL_TEXTURE_2D, outTexture->textureID ) );
+
+	// assuming these will look good for now, we shouldn't be too much resizing, but if we do we can go over these again
+	GL( glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST ) );
+	GL( glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST ) );
+
+	GL( glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE ) );
+	GL( glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE ) );
+
+	GL( glTexImage2D( GL_TEXTURE_2D, 0, texFormat, image->width, image->height, 0, texFormat, GL_UNSIGNED_BYTE, image->data ) );
+
+	outTexture->width = image->width;
+	outTexture->height = image->height;
+	outTexture->flags = 0;
+
+	// check to see if there are any translucent pixels in the image
+	for( int i = 3; ( i < ( image->width * image->height ) ) && !( outTexture->flags & TF_IS_TRANSPARENT ); i += 4 ) {
+		if( ( image->data[i] > 0x00 ) && ( image->data[i] < 0xFF ) ) {
+			outTexture->flags |= TF_IS_TRANSPARENT;
+		}
+	}
+
+	return 0;
+}
 
 /*
 Loads the image at the file name. Takes in a pointer to a Texture structure that it puts all the generated data into.
@@ -12,9 +72,7 @@ Loads the image at the file name. Takes in a pointer to a Texture structure that
 */
 int gfxUtil_LoadTexture( const char* fileName, Texture* outTexture )
 {
-	int width, height, comp;
-	SDL_Surface* loadSurface = NULL;
-	unsigned char* imageData = NULL;
+	LoadedImage image = { 0 };
 	int returnCode = 0;
 
 	if( outTexture == NULL ) {
@@ -23,30 +81,22 @@ int gfxUtil_LoadTexture( const char* fileName, Texture* outTexture )
 	}
 
 	// load and convert file to pixel data
-	imageData = stbi_load( fileName, &width, &height, &comp, 4 );
-	if( imageData == NULL ) {
+	image.reqComp = 4;
+	image.data = stbi_load( fileName, &( image.width ), &( image.height ), &( image.comp ), image.reqComp );
+	if( image.data == NULL ) {
 		SDL_LogInfo( SDL_LOG_CATEGORY_VIDEO, "Unable to load image %s! STB Error: %s", fileName, stbi_failure_reason( ) );
 		returnCode = -1;
 		goto clean_up;
 	}
-	
-	int bitsPerPixel = comp * 8;
-	loadSurface = SDL_CreateRGBSurfaceFrom( (void*)imageData, width, height, bitsPerPixel, ( width * bitsPerPixel ), 0x000000FF, 0x0000FF00, 0x00FF0000, 0xFF000000 );
-	if( loadSurface == NULL ) {
-		SDL_LogInfo( SDL_LOG_CATEGORY_VIDEO, "Unable to create RGB surface for %s! SDL Error: %s", fileName, SDL_GetError( ) );
-		returnCode = -1;
-		goto clean_up;
-	}
 
-	if( gfxUtil_CreateTextureFromSurface( loadSurface, outTexture ) < 0 ) {
-		SDL_LogInfo( SDL_LOG_CATEGORY_VIDEO, "Unable to convert surface to texture for %s! SDL Error: %s", fileName, SDL_GetError( ) );
+	if( createTextureFromLoadedImage( &image, outTexture ) < 0 ) {
 		returnCode = -1;
 		goto clean_up;
 	}
 
 clean_up:
-	SDL_FreeSurface( loadSurface );
-	stbi_image_free( imageData );
+	//SDL_FreeSurface( loadSurface );
+	stbi_image_free( image.data );
 	return returnCode;
 }
 

@@ -49,6 +49,12 @@ Takes in a list of file names and loads them together. It's assumed the length o
 int img_LoadPackage( int count, char** fileNames, int* retIDs );
 
 /*
+Takes in a file name and some rectangles. It's assumed the length of mins, maxes, and retIDs equals count.
+ Returns package ID used to clean up later, returns -1 if there's a problem.
+*/
+int img_SplitImage( char* fileName, int count, Vector2* mins, Vector2* maxes, int* retIDs );
+
+/*
 Cleans up all the images in an image package.
 */
 void img_CleanPackage( int packageID );

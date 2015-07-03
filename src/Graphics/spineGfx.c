@@ -2,12 +2,12 @@
 
 #include <SDL.h>
 #include <assert.h>
-#include <stb_image.h>
 #include <spine/extension.h>
 
 #include "triRendering.h"
 #include "debugRendering.h"
 #include "gfxUtil.h"
+#include "../System/memory.h"
 
 // templates
 typedef struct {
@@ -43,7 +43,7 @@ void _spAtlasPage_createTexture( spAtlasPage* self, const char* path )
 {
 	// TODO: Get the memory allocation working and set up here, or is there some way to do this without allocation?
 	//   Do we really want to use the whole Texture struct? we only need the texture object and whether it's transparent
-	Texture* newTexture = malloc( sizeof( Texture ) );
+	Texture* newTexture = mem_Allocate( sizeof( Texture ) );
 	if( newTexture == NULL ) {
 		self->rendererObject = NULL;
 		SDL_LogError( SDL_LOG_CATEGORY_VIDEO, "Error allocating memory for spine atlas %s.", path );
@@ -71,11 +71,24 @@ char* _spUtil_readFile( const char* path, int* length )
 	return _readFile(path, length);
 }
 
+void* Allocate_Spine( size_t size )
+{
+	return mem_Allocate_Data( size, __FILE__, __LINE__ );
+}
+
+void Release_Spine( void* data )
+{
+	mem_Release_Data( data, __FILE__, __LINE__ );
+}
+
 // general system functions
 void spine_Init( void )
 {
 	memset( templates, 0, sizeof( templates ) );
 	memset( instances, 0, sizeof( instances ) );
+
+	_setMalloc( Allocate_Spine );
+	_setFree( Release_Spine );
 
 	lastInstance = -1;
 }
@@ -107,9 +120,9 @@ int spine_LoadTemplate( const char* fileNameBase )
 		return -1;
 	}
 
-	sprintf_s( atlasName, sizeof( atlasName ), "%s.atlas", fileNameBase );
-	sprintf_s( jsonName, sizeof( jsonName ), "%s.json", fileNameBase );
-	sprintf_s( pngName, sizeof( pngName ), "%s.png", fileNameBase );
+	SDL_snprintf( atlasName, sizeof( atlasName ), "%s.atlas", fileNameBase );
+	SDL_snprintf( jsonName, sizeof( jsonName ), "%s.json", fileNameBase );
+	SDL_snprintf( pngName, sizeof( pngName ), "%s.png", fileNameBase );
 
 	templates[idx].atlas = spAtlas_createFromFile( atlasName, 0 );
 	if( templates[idx].atlas == NULL ) {
