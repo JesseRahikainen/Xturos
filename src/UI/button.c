@@ -4,19 +4,24 @@
 #include <SDL_mouse.h>
 #include <memory.h>
 #include <assert.h>
+#include <math.h>
 
-#include "Graphics/images.h"
-#include "Math/vector3.h"
-#include "Graphics/camera.h"
+#include "../Graphics/images.h"
+#include "../Math/vector3.h"
+#include "../Graphics/camera.h"
+#include "text.h"
 
 #define MAX_BUTTONS 32
-
+#define BUTTON_TEXT_LEN 32
 static enum ButtonState { BS_NORMAL, BS_FOCUSED, BS_CLICKED };
 
 static struct Button {
 	int normalImgId;
 	int focusImgId;
 	int clickedImdId;
+
+	int fontID;
+	char text[BUTTON_TEXT_LEN+1];
 
 	enum ButtonState state;
 	ButtonResponse response;
@@ -26,7 +31,7 @@ static struct Button {
 
 	char layer;
 	Vector2 position;
-	Vector2 size;
+	Vector2 halfSize;
 
 	char inUse;
 
@@ -36,14 +41,14 @@ static struct Button {
 static struct Button buttons[MAX_BUTTONS];
 static char mouseDown;
 
-void initButtons( )
+void btn_Init( )
 {
 	memset( buttons, 0, sizeof( buttons ) );
 	mouseDown = 0;
 }
 
-int createButton( Vector2 position, Vector2 size, int normalImg, int focusedImg, int clickedImg, unsigned int camFlags,
-	char layer, ButtonResponse pressResponse, ButtonResponse releaseResponse )
+int btn_Create( Vector2 position, Vector2 size, const char* text, int fontID, int normalImg, int focusedImg, int clickedImg,
+	unsigned int camFlags, char layer, ButtonResponse pressResponse, ButtonResponse releaseResponse )
 {
 	int newIdx;
 
@@ -57,22 +62,31 @@ int createButton( Vector2 position, Vector2 size, int normalImg, int focusedImg,
 		return -1;
 	}
 
+	vec2_Scale( &size, 0.5f, &( buttons[newIdx].halfSize ) );
+	buttons[newIdx].position = position;
+	
 	buttons[newIdx].normalImgId = normalImg;
 	buttons[newIdx].focusImgId = focusedImg;
 	buttons[newIdx].clickedImdId = clickedImg;
-	buttons[newIdx].position = position;
-	buttons[newIdx].size = size;
 	buttons[newIdx].layer = layer;
 	buttons[newIdx].inUse = 1;
 	buttons[newIdx].pressResponse = pressResponse;
 	buttons[newIdx].releaseResponse = releaseResponse;
 	buttons[newIdx].state = BS_NORMAL;
 	buttons[newIdx].camFlags = camFlags;
+	buttons[newIdx].fontID = fontID;
+
+	if( text != NULL ) {
+		strncpy( buttons[newIdx].text, text, BUTTON_TEXT_LEN );
+		buttons[newIdx].text[BUTTON_TEXT_LEN] = 0;
+	} else {
+		memset( buttons[newIdx].text, 0, sizeof( buttons[newIdx].text ) );
+	}
 
 	return newIdx;
 }
 
-void clearButton( int idx )
+void btn_Destroy( int idx )
 {
 	if( ( idx < 0 ) || ( idx >= MAX_BUTTONS ) ) {
 		return;
@@ -80,18 +94,18 @@ void clearButton( int idx )
 	buttons[idx].inUse = 0;
 }
 
-void clearAllButtons( )
+void btn_DestroyAll( void )
 {
 	memset( buttons, 0, sizeof( buttons ) );
 }
 
-void drawButtons( )
+void btn_Draw( void )
 {
 	int i;
 	int img = -1;
 
 	for( i = 0; i < MAX_BUTTONS; ++i ) {
-		if( buttons[i].inUse == 1 ) {
+		if( buttons[i].inUse ) {
 			switch( buttons[i].state ) {
 			case BS_NORMAL:
 				img = buttons[i].normalImgId;
@@ -104,16 +118,21 @@ void drawButtons( )
 				break;
 			}
 			img_Draw( img, buttons[i].camFlags, buttons[i].position, buttons[i].position, buttons[i].layer );
+			if( ( buttons[i].text[0] != 0 ) && ( buttons[i].fontID >= 0 ) ) {
+				txt_DisplayString( buttons[i].text, buttons[i].position, CLR_WHITE, HORIZ_ALIGN_CENTER, VERT_ALIGN_CENTER,
+									buttons[i].fontID, buttons[i].camFlags, buttons[i].layer );
+			}
 		}
 	}
 }
 
-void processButtons( )
+void btn_Process( void )
 {
 	int i;
 	int mouseX, mouseY;
 	Vector3 mousePos = { 0.0f, 0.0f, 0.0f };
 	Vector3 transMousePos = { 0.0f, 0.0f, 0.0f };
+	Vector2 diff;
 	enum ButtonState prevState;
 
 	/* see if the mouse is positioned over any buttons */
@@ -138,8 +157,9 @@ void processButtons( )
 
 			/* see if mouse pos is within the buttons borders */
 			prevState = buttons[i].state;
-			if( ( transMousePos.v[0] >= buttons[i].position.v[0] ) && ( transMousePos.v[0] <= ( buttons[i].position.v[0] + buttons[i].size.v[0] ) ) &&
-				( transMousePos.v[1] >= buttons[i].position.v[1] ) && ( transMousePos.v[1] <= ( buttons[i].position.v[1] + buttons[i].size.v[1] ) ) ) {
+			diff.x = buttons[i].position.x - transMousePos.x;
+			diff.y = buttons[i].position.y - transMousePos.y;
+			if( ( fabsf( diff.x ) <= buttons[i].halfSize.x ) && ( fabsf( diff.y ) <= buttons[i].halfSize.y ) ) {
 				if( mouseDown ) {
 					buttons[i].state = BS_CLICKED;
 				} else {
@@ -158,7 +178,7 @@ void processButtons( )
 	}
 }
 
-void processButtonEvents( SDL_Event* sdlEvent )
+void btn_ProcessEvents( SDL_Event* sdlEvent )
 {
 	if( ( sdlEvent->type == SDL_MOUSEBUTTONDOWN ) && ( sdlEvent->button.button == SDL_BUTTON_LEFT ) ) {
 		mouseDown = 1;

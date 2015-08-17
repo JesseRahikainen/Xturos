@@ -3,13 +3,11 @@
 #include "../Others/glew.h"
 #include <SDL_opengl.h>
 #include <assert.h>
-#include <SDL_ttf.h>
 #include <SDL_log.h>
 #include <math.h>
 #include <stdlib.h>
 
 #include "../Math/matrix4.h"
-#include "triRendering.h"
 #include "gfxUtil.h"
 
 /* Image loading types and variables */
@@ -29,6 +27,7 @@ typedef struct {
 	int flags;
 	int packageID;
 	int nextInPackage;
+	ShaderType shaderType;
 } Image;
 
 static Image images[MAX_IMAGES];
@@ -52,6 +51,7 @@ typedef struct {
 	int flags;
 	int camFlags;
 	char depth;
+	ShaderType shaderType;
 } DrawInstruction;
 
 static DrawInstruction renderBuffer[MAX_RENDER_INSTRUCTIONS];
@@ -102,7 +102,7 @@ Loads the image stored at file name.
  Returns the index of the image on success.
  Returns -1 on failure, and prints a message to the log.
 */
-int img_Load( const char* fileName )
+int img_Load( const char* fileName, ShaderType shaderType )
 {
 	int newIdx = -1;
 
@@ -129,6 +129,7 @@ int img_Load( const char* fileName )
 	images[newIdx].nextInPackage = -1;
 	images[newIdx].uvMin = VEC2_ZERO;
 	images[newIdx].uvMax = VEC2_ONE;
+	images[newIdx].shaderType = shaderType;
 	if( texture.flags & TF_IS_TRANSPARENT ) {
 		images[newIdx].flags |= IMGFLAG_HAS_TRANSPARENCY;
 	}
@@ -139,7 +140,7 @@ int img_Load( const char* fileName )
 /*
 Creates an image from a surface.
 */
-int img_Create( SDL_Surface* surface )
+int img_Create( SDL_Surface* surface, ShaderType shaderType )
 {
 	int newIdx;
 
@@ -164,86 +165,10 @@ int img_Create( SDL_Surface* surface )
 		images[newIdx].nextInPackage = -1;
 		images[newIdx].uvMin = VEC2_ZERO;
 		images[newIdx].uvMax = VEC2_ONE;
+		images[newIdx].shaderType = shaderType;
 		if( texture.flags & TF_IS_TRANSPARENT ) {
 			images[newIdx].flags |= IMGFLAG_HAS_TRANSPARENCY;
 		}
-	}
-
-	return newIdx;
-}
-
-/*
-Creates an image from a string, used for rendering text.
- Returns the index of the image on success.
- Reutrns -1 on failure, prints a message to the log, and doesn't overwrite if a valid existing image id is passed in.
-*/
-int img_CreateText( const char* text, const char* fontName, int pointSize, Color color, Uint32 wrapLen )
-{
-	return img_UpdateText( text, fontName, pointSize, color, wrapLen, -1 );
-}
-
-/*
-Changes the existing image instead of trying to create a new one.
- Returns the index of the image on success.
- Reutrns -1 on failure, prints a message to the log, and doesn't overwrite if a valid existing image id is passed in.
-*/
-int img_UpdateText( const char* text, const char* fontName, int pointSize, Color color, Uint32 wrapLen, int existingImage )
-{
-	assert( existingImage < MAX_IMAGES );
-	assert( images[existingImage].flags & IMGFLAG_IN_USE );
-	assert( text != NULL );
-	assert( fontName != NULL );
-
-	int newIdx;
-	TTF_Font* font;
-	SDL_Surface* textSurface;
-
-	/* doesn't already exist, find the first empty spot, make sure we won't go over our maximum */
-	if( existingImage < 0 ) {
-		newIdx = findAvailableImageIndex( );
-		if( newIdx < 0 ) {
-			SDL_LogInfo( SDL_LOG_CATEGORY_VIDEO, "Unable to create text image! Image storage full." );
-			return -1;
-		}
-	} else {
-		newIdx = existingImage;
-	}
-
-	/* screw performance, just load the font every single time, can change this later */
-	font = TTF_OpenFont( fontName, pointSize );
-	if( font == NULL ) {
-		SDL_LogInfo( SDL_LOG_CATEGORY_VIDEO, TTF_GetError( ) );
-		return -1;
-	}
-
-	if( wrapLen == 0 ) {
-		textSurface = TTF_RenderText_Blended( font, text, clr_ToSDLColor( &color ) );
-	} else {
-		textSurface = TTF_RenderText_Blended_Wrapped( font, text, clr_ToSDLColor( &color ), wrapLen );
-	}
-
-	Texture texture;
-	if( textSurface == NULL ) {
-		SDL_LogInfo( SDL_LOG_CATEGORY_VIDEO, "Unable to render text! SDL Error: %s", TTF_GetError( ) );
-		newIdx = -1;
-	} else {
-		if( gfxUtil_CreateTextureFromSurface( textSurface, &texture ) < 0 ) {
-			SDL_LogInfo( SDL_LOG_CATEGORY_VIDEO, "Unable to convert surface to texture for text! SDL Error: %s", SDL_GetError( ) );
-			newIdx = -1;
-		} else {
-			images[newIdx].size.v[0] = (float)texture.width;
-			images[newIdx].size.v[1] = (float)texture.height;
-			images[newIdx].offset = VEC2_ZERO;
-			images[newIdx].packageID = -1;
-			images[newIdx].flags = IMGFLAG_IN_USE;
-			images[newIdx].nextInPackage = -1;
-			images[newIdx].uvMin = VEC2_ZERO;
-			images[newIdx].uvMax = VEC2_ONE;
-			if( texture.flags & TF_IS_TRANSPARENT ) {
-				images[newIdx].flags |= IMGFLAG_HAS_TRANSPARENCY;
-			}
-		}
-		SDL_FreeSurface( textSurface );
 	}
 
 	return newIdx;
@@ -293,24 +218,73 @@ void img_Clean( int idx )
 	images[idx].nextInPackage = -1;
 	images[idx].uvMin = VEC2_ZERO;
 	images[idx].uvMax = VEC2_ZERO;
+	images[idx].shaderType = ST_DEFAULT;
 }
 
 /*
-Takes in a list of file names and loads them together. It's assumed the length of fileNames and retIDs equals count.
- Returns the package ID used to clean up later, returns -1 if there's a problem.
+Finds the next unused package ID.
 */
-int img_LoadPackage( int count, char** fileNames, int* retIDs )
+int findUnusedPackage( void )
 {
-	// TODO: switch this over to loading everything into an atlas
-	int currPackageID = 0;
+	int packageID = 0;
 	for( int i = 0; i < MAX_IMAGES; ++i ) {
-		if( ( images[i].flags & IMGFLAG_IN_USE ) && ( images[i].packageID <= currPackageID ) ) {
-			currPackageID = images[i].packageID + 1;
+		if( ( images[i].flags & IMGFLAG_IN_USE ) && ( images[i].packageID <= packageID ) ) {
+			packageID = images[i].packageID + 1;
 		}
 	}
+	return packageID;
+}
 
-	if( currPackageID < 0 ) {
-		SDL_LogError( SDL_LOG_CATEGORY_RENDER, "Unable to find valid package ID." );
+/*
+Splits the texture. Returns a negative number if there's a problem.
+*/
+int split( Texture* texture, int packageID, ShaderType shaderType, int count, Vector2* mins, Vector2* maxes, int* retIDs )
+{
+	Vector2 inverseSize;
+	inverseSize.x = 1.0f / (float)texture->width;
+	inverseSize.y = 1.0f / (float)texture->height;
+
+	for( int i = 0; i < count; ++i ) {
+		int newIdx = findAvailableImageIndex( );
+		if( newIdx < 0 ) {
+			SDL_LogError( SDL_LOG_CATEGORY_RENDER, "Problem finding available image to split into." );
+			img_CleanPackage( packageID );
+			return -1;
+		}
+
+		images[newIdx].textureObj = texture->textureID;
+		vec2_Subtract( &( maxes[i] ), &( mins[i] ), &( images[newIdx].size ) );
+		images[newIdx].offset = VEC2_ZERO;
+		images[newIdx].packageID = packageID;
+		images[newIdx].flags = IMGFLAG_IN_USE;
+		vec2_HadamardProd( &( mins[i] ), &inverseSize, &( images[newIdx].uvMin ) );
+		vec2_HadamardProd( &( maxes[i] ), &inverseSize, &( images[newIdx].uvMax ) );
+		images[newIdx].shaderType = shaderType;
+		if( texture->flags & TF_IS_TRANSPARENT ) {
+			images[newIdx].flags |= IMGFLAG_HAS_TRANSPARENCY;
+		}
+
+		retIDs[i] = newIdx;
+	}
+
+	return 0;
+}
+
+/*
+Takes in a file name and some rectangles. It's assumed the length of mins, maxes, and retIDs equals count.
+ Returns package ID used to clean up later, returns -1 if there's a problem.
+*/
+int img_SplitImageFile( char* fileName, int count, ShaderType shaderType, Vector2* mins, Vector2* maxes, int* retIDs )
+{
+	int currPackageID = findUnusedPackage( );
+
+	Texture texture;
+	if( gfxUtil_LoadTexture( fileName, &texture ) < 0 ) {
+		SDL_LogError( SDL_LOG_CATEGORY_RENDER, "Problem loading image %s", fileName );
+		return -1;
+	}
+
+	if( split( &texture, currPackageID, shaderType, count, mins, maxes, retIDs ) < 0 ) {
 		return -1;
 	}
 
@@ -318,52 +292,45 @@ int img_LoadPackage( int count, char** fileNames, int* retIDs )
 }
 
 /*
-Takes in a file name and some rectangles. It's assumed the length of mins, maxes, and retIDs equals count.
+Takes in an RGBA bitmap and some rectangles. It's assumed the length of mins, maxes, and retIDs equals count.
  Returns package ID used to clean up later, returns -1 if there's a problem.
 */
-int img_SplitImage( char* fileName, int count, Vector2* mins, Vector2* maxes, int* retIDs )
+int img_SplitRGBABitmap( uint8_t* data, int width, int height, int count, ShaderType shaderType, Vector2* mins, Vector2* maxes, int* retIDs )
 {
-	int currPackageID = 0;
-	for( int i = 0; i < MAX_IMAGES; ++i ) {
-		if( ( images[i].flags & IMGFLAG_IN_USE ) && ( images[i].packageID <= currPackageID ) ) {
-			currPackageID = images[i].packageID + 1;
-		}
-	}
+	int currPackageID = findUnusedPackage( );
 
 	Texture texture;
-	Vector2 inverseSize;
-	if( gfxUtil_LoadTexture( fileName, &texture ) < 0 ) {
-		SDL_LogError( SDL_LOG_CATEGORY_RENDER, "Problem loading image %s", fileName );
+	if( gfxUtil_CreateTextureFromRGBABitmap( data, width, height, &texture ) < 0 ) {
+		SDL_LogError( SDL_LOG_CATEGORY_RENDER, "Problem creating RGBA bitmap texture." );
 		return -1;
 	}
 
-	inverseSize.x = 1.0f / (float)texture.width;
-	inverseSize.y = 1.0f / (float)texture.height;
-
-	for( int i = 0; i < count; ++i ) {
-		int newIdx = findAvailableImageIndex( );
-		if( newIdx < 0 ) {
-			SDL_LogError( SDL_LOG_CATEGORY_RENDER, "Problem finding available image to split into." );
-			img_CleanPackage( currPackageID );
-			return -1;
-		}
-
-		images[newIdx].textureObj = texture.textureID;
-		vec2_Subtract( &( maxes[i] ), &( mins[i] ), &( images[newIdx].size ) );
-		images[newIdx].offset = VEC2_ZERO;
-		images[newIdx].packageID = currPackageID;
-		images[newIdx].flags = IMGFLAG_IN_USE;
-		vec2_HadamardProd( &( mins[i] ), &inverseSize, &( images[newIdx].uvMin ) );
-		vec2_HadamardProd( &( maxes[i] ), &inverseSize, &( images[newIdx].uvMax ) );
-		if( texture.flags & TF_IS_TRANSPARENT ) {
-			images[newIdx].flags |= IMGFLAG_HAS_TRANSPARENCY;
-		}
-
-
-		retIDs[i] = newIdx;
+	if( split( &texture, currPackageID, shaderType, count, mins, maxes, retIDs ) < 0 ) {
+		return -1;
 	}
 
-	return 0;
+	return currPackageID;
+}
+
+/*
+Takes in a one channel bitmap and some rectangles. It's assume the length of the mins, maxes, and retIDs equal scount.
+ Returns package ID used to clean up later, returns -1 if there's a problem.
+*/
+int img_SplitAlphaBitmap( uint8_t* data, int width, int height, int count, ShaderType shaderType, Vector2* mins, Vector2* maxes, int* retIDs )
+{
+	int currPackageID = findUnusedPackage( );
+
+	Texture texture;
+	if( gfxUtil_CreateTextureFromAlphaBitmap( data, width, height, &texture ) < 0 ) {
+		SDL_LogError( SDL_LOG_CATEGORY_RENDER, "Problem creating alpha bitmap texture." );
+		return -1;
+	}
+
+	if( split( &texture, currPackageID, shaderType, count, mins, maxes, retIDs ) < 0 ) {
+		return -1;
+	}
+
+	return currPackageID;
 }
 
 /*
@@ -385,13 +352,29 @@ void img_SetOffset( int idx, Vector2 offset )
 {
 	assert( idx < MAX_IMAGES );
 	assert( idx >= 0 );
-	assert( images[idx].flags & IMGFLAG_IN_USE );
 
 	if( ( idx < 0 ) || ( !( images[idx].flags & IMGFLAG_IN_USE ) ) || ( idx >= MAX_IMAGES ) ) {
 		return;
 	}
 
 	images[idx].offset = offset;
+}
+
+/*
+Gets the size of the image, putting it into the out Vector2. Returns a negative number if there's an issue.
+*/
+int img_GetSize( int idx, Vector2* out )
+{
+	assert( out != NULL );
+	assert( idx < MAX_IMAGES );
+	assert( idx >= 0 );
+
+	if( ( idx < 0 ) || ( !( images[idx].flags & IMGFLAG_IN_USE ) ) || ( idx >= MAX_IMAGES ) ) {
+		return -1;
+	}
+
+	(*out) = images[idx].size;
+	return 0;
 }
 
 /*
@@ -429,6 +412,8 @@ static DrawInstruction* GetNextRenderInstruction( int imgObj, unsigned int camFl
 	ri->offset = images[imgObj].offset;
 	ri->flags = images[imgObj].flags;
 	ri->camFlags = camFlags;
+	ri->shaderType = images[imgObj].shaderType;
+	ri->depth = depth;
 	memcpy( ri->uvs, DEFAULT_DRAW_INSTRUCTION.uvs, sizeof( ri->uvs ) );
 
 	ri->uvs[0] = images[imgObj].uvMin;
@@ -640,11 +625,11 @@ void img_Render( float normTimeElapsed )
 
 		triRenderer_Add( verts[indices[0]], verts[indices[1]], verts[indices[2]],
 			renderBuffer[idx].uvs[indices[0]], renderBuffer[idx].uvs[indices[1]], renderBuffer[idx].uvs[indices[2]],
-			renderBuffer[idx].textureObj, col, renderBuffer[idx].camFlags, renderBuffer[idx].depth,
+			renderBuffer[idx].shaderType, renderBuffer[idx].textureObj, col, renderBuffer[idx].camFlags, renderBuffer[idx].depth,
 			transparent );
 		triRenderer_Add( verts[indices[3]], verts[indices[4]], verts[indices[5]],
 			renderBuffer[idx].uvs[indices[3]], renderBuffer[idx].uvs[indices[4]], renderBuffer[idx].uvs[indices[5]],
-			renderBuffer[idx].textureObj, col, renderBuffer[idx].camFlags, renderBuffer[idx].depth,
+			renderBuffer[idx].shaderType, renderBuffer[idx].textureObj, col, renderBuffer[idx].camFlags, renderBuffer[idx].depth,
 			transparent );
 	}
 }

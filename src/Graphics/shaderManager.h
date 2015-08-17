@@ -45,10 +45,15 @@ typedef struct {
 /* You create an array of ShaderDefinitions and ShaderProgramDefinitions that determine what is loaded.
 You also create an empty array of GLuints to use as the final indices for the generated shader programs.
 Returns the number of shader programs successfully created. */
-size_t loadShaders( const ShaderDefinition* shaderDefs, size_t numShaderDefs,
+size_t shaders_Load( const ShaderDefinition* shaderDefs, size_t numShaderDefs,
 			const ShaderProgramDefinition* shaderProgDefs, ShaderProgram* shaderPrograms, size_t numShaderPrograms );
 
+/*
+Destroys all the shader programs in the list, and invalidates their structures.
+*/
+void shaders_Destroy( ShaderProgram* shaderPrograms, size_t numShaderPrograms );
+
 // These are used for diagnostic purposes
-void listUniforms( GLuint shaderID );
+void shaders_ListUniforms( GLuint shaderID );
 
 #endif

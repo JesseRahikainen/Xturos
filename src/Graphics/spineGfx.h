@@ -23,6 +23,15 @@ Cleans up a template, freeing it's spot.
 */
 void spine_CleanTemplate( int idx );
 
+/*
+Sets the duration of the blending between the fromName to the toName animation. The templateIdx passed in should be a
+value returned from spine_LoadTemplate that hasn't been cleaned up yet.
+*/
+void spine_SetTemplateMix( int templateIdx, const char* fromName, const char* toName, float duration );
+
+// TODO:
+//   1. Add a way to get the animations so we don't have to keep using the name
+
 // instance handling
 /*
 Creates an instance of a template. The templateIdx passed in should be a value returns from spine_LoadTemplate that
@@ -42,7 +51,18 @@ Cleans up all instances.
 void spine_CleanAllInstances( void );
 
 /*
+Sets the future position of the spine instance.
+*/
+void spine_SetInstancePosition( int id, const Vector2* pos );
+
+/*
+Flips the positions used for rendering the instances.
+*/
+void spine_FlipInstancePositions( void );
+
+/*
 Returns the skeleton of the spine instance, if there's an issue returns NULL.
+ Note: Adjustments to the skeletons x and y are overwritten in spine_RenderInstances( ).
 */
 spSkeleton* spine_GetInstanceSkeleton( int id );
 
@@ -59,6 +79,6 @@ void spine_UpdateInstances( float dt );
 /*
 Draws all the spine instances.
 */
-void spine_RenderInstances( void );
+void spine_RenderInstances( float normTimeElapsed );
 
 #endif

@@ -9,26 +9,26 @@
 #include <float.h>
 #include <math.h>
 
-#include <SDL_ttf.h>
-
 #include "Math/Vector2.h"
 #include "Graphics/camera.h"
 #include "Graphics/graphics.h"
 #include "Math/MathUtil.h"
 #include "sound.h"
-#include "Utils/cfgParser.h"
+#include "Utils/cfgFile.h"
 
-#include "button.h"
+#include "UI/text.h"
 
 #include "gameState.h"
 #include "Game/gameScreen.h"
 
 #include "System/memory.h"
+#include "System/systems.h"
 
-#define WINDOW_WIDTH 600
+#define WINDOW_WIDTH 800
 #define WINDOW_HEIGHT 600
 
 static int running;
+static int focused;
 static unsigned int lastTicks;
 static SDL_Window* window;
 static SDL_RWops* logFile;
@@ -36,7 +36,8 @@ static const char* windowName = "TESTING STUFF";
 
 /* making PHYSICS_TICK to something that will result in a whole number should lead to better results
 the second number is how many times per second it will update */
-#define PHYSICS_TICK ( 1000 / 30 )
+//#define PHYSICS_TICK ( 1000 / 5 )
+#define PHYSICS_TICK ( 1000 / 60 )
 #define PHYSICS_DELTA ( (float)PHYSICS_TICK / 1000.0f )
 
 void cleanUp( void )
@@ -123,7 +124,7 @@ int initEverything( void )
     SDL_GL_SetAttribute( SDL_GL_DOUBLEBUFFER, 1 );
 
 	window = SDL_CreateWindow( windowName, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
-		WINDOW_WIDTH, WINDOW_HEIGHT, SDL_WINDOW_SHOWN | SDL_WINDOW_OPENGL );
+		WINDOW_WIDTH, WINDOW_HEIGHT, SDL_WINDOW_SHOWN | SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE );
 	if( window == NULL ) {
 		SDL_LogError( SDL_LOG_CATEGORY_VIDEO, SDL_GetError( ) );
 		return -1;
@@ -150,15 +151,35 @@ int initEverything( void )
 }
 
 /* input processing */
-void processEvents( void )
+void processEvents( int systemOnly )
 {
 	SDL_Event e;
 	while( SDL_PollEvent( &e ) != 0 ) {
+		if( e.type == SDL_WINDOWEVENT ) {
+			switch( e.window.event ) {
+			case SDL_WINDOWEVENT_FOCUS_GAINED:
+				focused = 1;
+				SDL_Log("Window %d gained keyboard focus",
+						e.window.windowID);
+				break;
+			case SDL_WINDOWEVENT_FOCUS_LOST:
+				focused = 0;
+				SDL_Log("Window %d lost keyboard focus",
+						e.window.windowID);
+				break;
+			}
+		}
+
 		if( e.type == SDL_QUIT ) {
 			running = 0;
 		}
 
-		gsmProcessEvents( &globalGSM, &e );
+		if( systemOnly ) {
+			continue;
+		}
+
+		sys_ProcessEvents( &e );
+		gsmProcessEvents( &globalFSM, &e );
 	}
 }
 
@@ -189,9 +210,14 @@ int main( int argc, char** argv )
 	lastTicks = SDL_GetTicks( );
 	physicsTickAcc = 0;
 
-	gsmEnterState( &globalGSM, &gameScreenState );
+	gsmEnterState( &globalFSM, &gameScreenState );
 
 	while( running ) {
+
+		if( !focused ) {
+			processEvents( 1 );
+			continue;
+		}
 
 		currTicks = SDL_GetTicks( );
 		tickDelta = currTicks - lastTicks;
@@ -200,13 +226,15 @@ int main( int argc, char** argv )
 		physicsTickAcc += tickDelta;
 
 		/* process input */
-		processEvents( );
-		gsmProcess( &globalGSM );
+		processEvents( 0 );
+		sys_Process( );
+		gsmProcess( &globalFSM );
 
 		/* process movement and collision */
 		numPhysicsProcesses = 0;
 		while( physicsTickAcc > PHYSICS_TICK ) {
-			gsmPhysicsTick( &globalGSM, PHYSICS_DELTA );
+			sys_PhysicsTick( PHYSICS_DELTA );
+			gsmPhysicsTick( &globalFSM, PHYSICS_DELTA );
 			physicsTickAcc -= PHYSICS_TICK;
 			++numPhysicsProcesses;
 		}
@@ -219,7 +247,8 @@ int main( int argc, char** argv )
 			cam_FinalizeStates( renderDelta );
 
 			/* render all the things */
-			gsmDraw( &globalGSM );
+			sys_Draw( );
+			gsmDraw( &globalFSM );
 		}
 
 		float dt = (float)tickDelta / 1000.0f;

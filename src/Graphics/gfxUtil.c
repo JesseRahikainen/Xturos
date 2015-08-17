@@ -30,9 +30,9 @@ typedef struct {
 Converts the LoadedImage into a texture, putting everything in outTexture. All LoadedImages are assumed to be in RGBA format.
  Returns >= 0 if everything went fine, < 0 if something went wrong.
 */
-int createTextureFromLoadedImage( LoadedImage* image, Texture* outTexture )
+int createTextureFromLoadedImage( GLenum texFormat, LoadedImage* image, Texture* outTexture )
 {
-	GLenum texFormat = GL_RGBA;
+	//GLenum texFormat = GL_RGBA;
 
 	GL( glGenTextures( 1, &( outTexture->textureID ) ) );
 
@@ -89,7 +89,7 @@ int gfxUtil_LoadTexture( const char* fileName, Texture* outTexture )
 		goto clean_up;
 	}
 
-	if( createTextureFromLoadedImage( &image, outTexture ) < 0 ) {
+	if( createTextureFromLoadedImage( GL_RGBA, &image, outTexture ) < 0 ) {
 		returnCode = -1;
 		goto clean_up;
 	}
@@ -118,6 +118,7 @@ int gfxUtil_CreateTextureFromSurface( SDL_Surface* surface, Texture* outTexture 
 		return -1;
 	}
 
+	// TODO: Get this working with createTextureFromLoadedImage( ), just need to make an SDL_Surface into a LoadedImage
 	glGenTextures( 1, &( outTexture->textureID ) );
 
 	if( outTexture->textureID == 0 ) {
@@ -139,11 +140,76 @@ int gfxUtil_CreateTextureFromSurface( SDL_Surface* surface, Texture* outTexture 
 	outTexture->width = surface->w;
 	outTexture->height = surface->h;
 	outTexture->flags = 0;
+	// the reason this isn't using the createTextureFromLoadedImage is this primarily
 	if( gfxUtil_SurfaceIsTranslucent( surface ) ) {
 		outTexture->flags |= TF_IS_TRANSPARENT;
 	}
 
 	return 0;
+}
+
+/*
+Turns an RGBA bitmap into a texture.  Takes in a pointer to a Texture structure that it puts all the generated data into.
+ Returns >= 0 on success, < 0 on failure.
+*/
+int gfxUtil_CreateTextureFromRGBABitmap( uint8_t* data, int width, int height, Texture* outTexture )
+{
+	assert( data != NULL );
+	assert( width > 0 );
+	assert( height > 0 );
+
+	int returnCode = 0;
+
+	LoadedImage image = { 0 };
+	image.data = data;
+	image.width = width;
+	image.height = height;
+	image.reqComp = image.comp = 4;
+
+	if( outTexture == NULL ) {
+		SDL_LogInfo( SDL_LOG_CATEGORY_VIDEO, "Null outTexture passed for bitmap!" );
+		goto clean_up;
+	}
+
+	if( createTextureFromLoadedImage( GL_RGBA, &image, outTexture ) < 0 ) {
+		returnCode = -1;
+		goto clean_up;
+	}
+
+clean_up:
+	return returnCode;
+}
+
+/*
+Turns a single channel bitmap into a texture. Takes in a pointer to a Texture structure that it puts all the generated data into.
+ Returns >= 0 on success, < 0 on failure.
+*/
+int gfxUtil_CreateTextureFromAlphaBitmap( uint8_t* data, int width, int height, Texture* outTexture )
+{
+	assert( data != NULL );
+	assert( width > 0 );
+	assert( height > 0 );
+
+	int returnCode = 0;
+
+	LoadedImage image = { 0 };
+	image.data = data;
+	image.width = width;
+	image.height = height;
+	image.reqComp = image.comp = 1;
+
+	if( outTexture == NULL ) {
+		SDL_LogInfo( SDL_LOG_CATEGORY_VIDEO, "Null outTexture passed for bitmap!" );
+		goto clean_up;
+	}
+
+	if( createTextureFromLoadedImage( GL_ALPHA, &image, outTexture ) < 0 ) {
+		returnCode = -1;
+		goto clean_up;
+	}
+
+clean_up:
+	return returnCode;
 }
 
 /*

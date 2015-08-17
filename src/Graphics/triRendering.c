@@ -19,6 +19,8 @@ typedef struct {
 	float zPos;
 	unsigned int camFlags;
 	GLuint texture;
+
+	ShaderType shaderType;
 } Triangle;
 
 /*
@@ -46,12 +48,14 @@ TriangleList transparentTriangles;
 
 #define Z_ORDER_OFFSET ( 1.0f / (float)( 2 * ( MAX_TRIS + 1 ) ) )
 
-static ShaderProgram shaderProgram;
+static ShaderProgram shaderPrograms[NUM_SHADERS];
 
-static int createShader( void )
+int triRenderer_LoadShaders( void )
 {
-	ShaderDefinition shaderDefs[2];
-	ShaderProgramDefinition progDef;
+	ShaderDefinition shaderDefs[3];
+	ShaderProgramDefinition progDefs[NUM_SHADERS];
+
+	shaders_Destroy( shaderPrograms, NUM_SHADERS );
 
 	// Sprite shader
 	shaderDefs[0].fileName = NULL;
@@ -82,19 +86,37 @@ static int createShader( void )
 								"	outCol = texture2D(textureUnit0, vTex) * vCol;\n"
 								"	if( outCol.w <= 0.0f ) {\n"
 								"		discard;\n"
-								"	}\n"//*/
-								/*"	outCol = vec4( 1.0f, 1.0f, 1.0f, 1.0f );\n"
-								"   outCol.r = vTex.s;\n"
-								"	outCol.g = vTex.t;\n"//*/
+								"	}\n"
 								"}\n";
 
-	progDef.fragmentShader = 1;
-	progDef.vertexShader = 0;
-	progDef.geometryShader = -1;
-	progDef.uniformNames = "vpMatrix textureUnit0";
+	// for rendering fonts
+	shaderDefs[2].fileName = NULL;
+	shaderDefs[2].type = GL_FRAGMENT_SHADER;
+	shaderDefs[2].shaderText =	"#version 330\n"
+								"in vec2 vTex;\n"
+								"in vec4 vCol;\n"
+								"uniform sampler2D textureUnit0;\n"
+								"out vec4 outCol;\n"
+								"void main( void )\n"
+								"{\n"
+								"	outCol = vec4( vCol.r, vCol.g, vCol.b, texture2D(textureUnit0, vTex).a * vCol.a );\n"
+								"	if( outCol.w <= 0.0f ) {\n"
+								"		discard;\n"
+								"	}\n"
+								"}\n";
 
-	if( loadShaders( &( shaderDefs[0] ), sizeof( shaderDefs ) / sizeof( ShaderDefinition ),
-		&progDef, &shaderProgram, 1 ) <= 0 ) {
+	progDefs[0].fragmentShader = 1;
+	progDefs[0].vertexShader = 0;
+	progDefs[0].geometryShader = -1;
+	progDefs[0].uniformNames = "vpMatrix textureUnit0";
+
+	progDefs[1].fragmentShader = 2;
+	progDefs[1].vertexShader = 0;
+	progDefs[1].geometryShader = -1;
+	progDefs[1].uniformNames = "vpMatrix textureUnit0";
+
+	if( shaders_Load( &( shaderDefs[0] ), sizeof( shaderDefs ) / sizeof( ShaderDefinition ),
+		progDefs, shaderPrograms, NUM_SHADERS ) <= 0 ) {
 		SDL_LogInfo( SDL_LOG_CATEGORY_VIDEO, "Error compiling image shaders.\n" );
 		return -1;
 	}
@@ -144,7 +166,11 @@ Initializes all the stuff needed for rendering the triangles.
 */
 int triRenderer_Init( void )
 {
-	if( createShader( ) < 0 ) {
+	for( int i = 0; i < NUM_SHADERS; ++i ) {
+		shaderPrograms[i].programID = 0;
+	}
+
+	if( triRenderer_LoadShaders( ) < 0 ) {
 		return -1;
 	}
 
@@ -157,7 +183,7 @@ int triRenderer_Init( void )
 }
 
 int addTriangle( TriangleList* triList, Vector2 pos0, Vector2 pos1, Vector2 pos2, Vector2 uv0, Vector2 uv1, Vector2 uv2,
-	GLuint texture, Color color, int camFlags, char depth )
+	ShaderType shader, GLuint texture, Color color, int camFlags, char depth )
 {
 	if( triList->lastTriIndex >= ( MAX_TRIS - 1 ) ) {
 		SDL_LogVerbose( SDL_LOG_CATEGORY_RENDER, "Triangle list full." );
@@ -171,6 +197,7 @@ int addTriangle( TriangleList* triList, Vector2 pos0, Vector2 pos1, Vector2 pos2
 	triList->triangles[idx].camFlags = camFlags;
 	triList->triangles[idx].texture = texture;
 	triList->triangles[idx].zPos = z;
+	triList->triangles[idx].shaderType = shader;
 	int baseIdx = idx * 3;
 
 	vec2ToVec3( &( pos0 ), z, &( triList->vertices[baseIdx].pos ) );
@@ -195,19 +222,19 @@ int addTriangle( TriangleList* triList, Vector2 pos0, Vector2 pos1, Vector2 pos2
 We'll assume the array has three vertices in it.
  Return a value < 0 if there's a problem.
 */
-int triRenderer_AddVertices( Vector2* positions, Vector2* uvs, GLuint texture, Color color, int camFlags, char depth, int transparent )
+int triRenderer_AddVertices( Vector2* positions, Vector2* uvs, ShaderType shader, GLuint texture, Color color, int camFlags, char depth, int transparent )
 {
 	return triRenderer_Add( positions[0], positions[1], positions[2], uvs[0], uvs[1], uvs[2],
-		texture, color, camFlags, depth, transparent );
+		shader, texture, color, camFlags, depth, transparent );
 }
 
-int triRenderer_Add( Vector2 pos0, Vector2 pos1, Vector2 pos2, Vector2 uv0, Vector2 uv1, Vector2 uv2, GLuint texture,
+int triRenderer_Add( Vector2 pos0, Vector2 pos1, Vector2 pos2, Vector2 uv0, Vector2 uv1, Vector2 uv2, ShaderType shader, GLuint texture,
 	Color color, int camFlags, char depth, int transparent )
 {
 	if( transparent ) {
-		return addTriangle( &transparentTriangles, pos0, pos1, pos2, uv0, uv1, uv2, texture, color, camFlags, depth );
+		return addTriangle( &transparentTriangles, pos0, pos1, pos2, uv0, uv1, uv2, shader, texture, color, camFlags, depth );
 	} else {
-		return addTriangle( &solidTriangles, pos0, pos1, pos2, uv0, uv1, uv2, texture, color, camFlags, depth );
+		return addTriangle( &solidTriangles, pos0, pos1, pos2, uv0, uv1, uv2, shader, texture, color, camFlags, depth );
 	}
 }
 
@@ -220,10 +247,20 @@ void triRenderer_Clear( void )
 	solidTriangles.lastTriIndex = -1;
 }
 
-static int sortByTexture( const void* p1, const void* p2 )
+static int sortShaderTypes( ShaderType st1, ShaderType st2 )
+{
+	return( (int)st1 - (int)st2 );
+}
+
+static int sortByRenderState( const void* p1, const void* p2 )
 {
 	Triangle* tri1 = (Triangle*)p1;
 	Triangle* tri2 = (Triangle*)p2;
+
+	int stDiff = sortShaderTypes( tri1->shaderType, tri2->shaderType );
+	if( stDiff != 0 ) {
+		return stDiff;
+	}
 
 	if( tri1->texture < tri2->texture ) {
 		return -1;
@@ -247,20 +284,38 @@ static void generateVertexArray( TriangleList* triList )
 	GL( glBufferSubData( GL_ARRAY_BUFFER, 0, sizeof( Vertex ) * ( ( triList->lastTriIndex + 1 ) * 3 ), triList->vertices ) );
 }
 
-static void drawTriangles( unsigned int camFlags, TriangleList* triList )
+static void drawTriangles( int currCamera, TriangleList* triList )
 {
 	// create the index buffers to access the vertex buffer
 	//  TODO: Test to see if having the index buffer or the vertex buffer in order is faster
 	GLuint lastBoundTexture = 0;
 	int triIdx = 0;
+	ShaderType lastBoundShader = NUM_SHADERS;
+	Matrix4 vpMat;
+	unsigned int camFlags = 0;
 
+	// we'll only be accessing the one vertex array
 	GL( glBindVertexArray( triList->VAO ) );
 
 	do {
 		GLuint texture = triList->triangles[triIdx].texture;
 		triList->lastIndexBufferIndex = -1;
 
-		while( ( triIdx <= triList->lastTriIndex ) && ( triList->triangles[triIdx].texture == texture ) ) {
+		if( ( triIdx <= triList->lastTriIndex ) && ( triList->triangles[triIdx].shaderType != lastBoundShader ) ) {
+			// next shader, bind and set up
+			lastBoundShader = triList->triangles[triIdx].shaderType;
+
+			camFlags = cam_GetFlags( currCamera );
+			cam_GetVPMatrix( currCamera, &vpMat );
+
+			GL( glUseProgram( shaderPrograms[lastBoundShader].programID ) );
+			GL( glUniformMatrix4fv( shaderPrograms[lastBoundShader].uniformLocs[0], 1, GL_FALSE, &( vpMat.m[0] ) ) );
+			GL( glUniform1i( shaderPrograms[lastBoundShader].uniformLocs[1], 0 ) );
+		}
+
+		// gather the list of all the triangles to be drawn
+		while( ( triIdx <= triList->lastTriIndex ) && ( triList->triangles[triIdx].texture == texture ) &&
+				( triList->triangles[triIdx].shaderType == lastBoundShader ) ) {
 			if( ( triList->triangles[triIdx].camFlags & camFlags ) != 0 ) {
 				triList->indices[++triList->lastIndexBufferIndex] = triList->triangles[triIdx].vertexIndices[0];
 				triList->indices[++triList->lastIndexBufferIndex] = triList->triangles[triIdx].vertexIndices[1];
@@ -269,10 +324,10 @@ static void drawTriangles( unsigned int camFlags, TriangleList* triList )
 			++triIdx;
 		}
 
+		// send the indices of the vertex array to draw, if there is any
 		if( triList->lastIndexBufferIndex < 0 ) {
 			continue;
 		}
-
 		GL( glBindTexture( GL_TEXTURE_2D, texture ) );
 		GL( glBufferSubData( GL_ELEMENT_ARRAY_BUFFER, 0, sizeof( GLuint ) * ( triList->lastIndexBufferIndex + 1 ), triList->indices ) );
 		GL( glDrawElements( GL_TRIANGLES, triList->lastIndexBufferIndex + 1, GL_UNSIGNED_INT, NULL ) );
@@ -284,36 +339,29 @@ Draws out all the triangles.
 */
 void triRenderer_Render( void )
 {
-	Matrix4 vpMat;
-
-	SDL_qsort( solidTriangles.triangles, solidTriangles.lastTriIndex + 1, sizeof( Triangle ), sortByTexture );
+	SDL_qsort( solidTriangles.triangles, solidTriangles.lastTriIndex + 1, sizeof( Triangle ), sortByRenderState );
 	SDL_qsort( transparentTriangles.triangles, transparentTriangles.lastTriIndex + 1, sizeof( Triangle ), sortByDepth );
 
 	// now that the triangles have been sorted create the vertex arrays
 	generateVertexArray( &solidTriangles );
 	generateVertexArray( &transparentTriangles );
 
-	GL( glUseProgram( shaderProgram.programID ) );
-	GL( glUniform1i( shaderProgram.uniformLocs[1], 0 ) );
-
 	GL( glDisable( GL_CULL_FACE ) );
 	GL( glEnable( GL_DEPTH_TEST ) );
 	GL( glDepthMask( GL_TRUE ) );
 	GL( glDepthFunc( GL_LESS ) );
 
+	// render triangles
+	// TODO: We're ignoring any issues with cameras and transparency, probably want to handle this better.
 	for( int currCamera = cam_StartIteration( ); currCamera != -1; currCamera = cam_GetNextActiveCam( ) ) {
-		unsigned int currFlags = cam_GetFlags( currCamera );
-		cam_GetVPMatrix( currCamera, &vpMat );
-		GL( glUniformMatrix4fv( shaderProgram.uniformLocs[0], 1, GL_FALSE, &( vpMat.m[0] ) ) );
-
 		GL( glClear( GL_DEPTH_BUFFER_BIT ) );
 		
 		GL( glDisable( GL_BLEND ) );
-		drawTriangles( currFlags, &solidTriangles );
+		drawTriangles( currCamera, &solidTriangles );
 
 		GL( glEnable( GL_BLEND ) );
 		GL( glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA ) );
-		drawTriangles( currFlags, &transparentTriangles );
+		drawTriangles( currCamera, &transparentTriangles );
 	}
 
 	GL( glBindVertexArray( 0 ) );

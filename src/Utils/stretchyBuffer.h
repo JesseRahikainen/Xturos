@@ -1,15 +1,13 @@
 #ifndef STRETCH_BUFFER_H
 #define STRETCH_BUFFER_H
-// just define some stuff for the memory management and include the stb stretchy buffer header
+
 #include <assert.h>
 #include "../System/memory.h"
 
-// this is basically stb libraries stretchy buffer modified to use our memory manager
+// this is basically the stb library stretchy buffer modified to use our memory manager
 //  assume the pointer used is what we'll use, before the pointer are two ints, one of the last used, and one for the allocated size
-//  totalSize, useSize, data
-
-// go through an make sure this all works correctly
-#define sb__Raw( p )	( ( (int*)(p) ) - 2 )
+//  (totalSize, useSize, [data])
+#define sb__Raw( p )	( ( (size_t*)(p) ) - 2 )
 #define sb__Total( p )	( sb__Raw( p )[0] )
 #define sb__Used( p )	( sb__Raw( p )[1] )
 

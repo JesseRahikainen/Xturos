@@ -97,7 +97,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="src\button.h" />
     <ClInclude Include="src\collisionDetection.h" />
     <ClInclude Include="src\gameState.h" />
     <ClInclude Include="src\Game\gameScreen.h" />
@@ -124,12 +123,16 @@
     <ClInclude Include="src\particles.h" />
     <ClInclude Include="src\sound.h" />
     <ClInclude Include="src\System\memory.h" />
+    <ClInclude Include="src\System\systems.h" />
     <ClInclude Include="src\tween.h" />
-    <ClInclude Include="src\Utils\cfgParser.h" />
+    <ClInclude Include="src\UI\button.h" />
+    <ClInclude Include="src\UI\checkBox.h" />
+    <ClInclude Include="src\UI\text.h" />
+    <ClInclude Include="src\Utils\cfgFile.h" />
+    <ClInclude Include="src\Utils\helpers.h" />
     <ClInclude Include="src\Utils\stretchyBuffer.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\button.c" />
     <ClCompile Include="src\collisionDetection.c" />
     <ClCompile Include="src\gameState.c" />
     <ClCompile Include="src\Game\gameScreen.c" />
@@ -154,8 +157,12 @@
     <ClCompile Include="src\particles.c" />
     <ClCompile Include="src\sound.c" />
     <ClCompile Include="src\System\memory.c" />
+    <ClCompile Include="src\System\systems.c" />
     <ClCompile Include="src\tween.c" />
-    <ClCompile Include="src\Utils\cfgParser.c" />
+    <ClCompile Include="src\UI\button.c" />
+    <ClCompile Include="src\UI\checkBox.c" />
+    <ClCompile Include="src\UI\text.c" />
+    <ClCompile Include="src\Utils\cfgFile.c" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="todo.txt" />

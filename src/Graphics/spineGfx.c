@@ -23,7 +23,8 @@ static SpineTemplate templates[MAX_TEMPLATES];
 typedef struct {
 	int templateIdx;
 	int cameraFlags;
-	Vector2 pos;
+	Vector2 startPos;
+	Vector2 endPos;
 	spSkeleton* skeleton;
 	spAnimationState* state;
 	char depth;
@@ -63,7 +64,7 @@ void _spAtlasPage_createTexture( spAtlasPage* self, const char* path )
 void _spAtlasPage_disposeTexture( spAtlasPage* self )
 {
 	gfxUtil_UnloadTexture( (Texture*)self->rendererObject );
-	free( self->rendererObject );
+	mem_Release( self->rendererObject );
 }
 
 char* _spUtil_readFile( const char* path, int* length )
@@ -199,6 +200,22 @@ void spine_CleanTemplate( int idx )
 	}
 }
 
+/*
+Sets the duration of the blending between the fromName to the toName animation. The templateIdx passed in should be a
+value returned from spine_LoadTemplate that hasn't been cleaned up yet.
+*/
+void spine_SetTemplateMix( int templateIdx, const char* fromName, const char* toName, float duration )
+{
+	assert( templateIdx >= 0 );
+	assert( templateIdx < MAX_TEMPLATES );
+
+	if( templates[templateIdx].stateData == NULL ) {
+		return;
+	}
+
+	spAnimationStateData_setMixByName( templates[templateIdx].stateData, fromName, toName, duration );
+}
+
 // instance handling
 /*
 Creates an instance of a template. The templateIdx passed in should be a value returns from spine_LoadTemplate that
@@ -235,7 +252,8 @@ int spine_CreateInstance( int templateIdx, Vector2 pos, int cameraFlags, char de
 		return -1;
 	}
 	
-
+	charState->startPos = pos;
+	charState->endPos = pos;
 	charState->skeleton->x = pos.x;
 	charState->skeleton->y = pos.y;
 
@@ -288,7 +306,38 @@ void spine_CleanAllInstances( void )
 }
 
 /*
+Sets the future position of the spine instance.
+*/
+void spine_SetInstancePosition( int id, const Vector2* pos )
+{
+	assert( id >= 0 );
+	assert( id < MAX_INSTANCES );
+
+	SpineInstance* charState = &( instances[id] );
+	if( charState->skeleton == NULL ) {
+		return;
+	}
+
+	charState->endPos = *pos;
+}
+
+/*
+Flips the positions used for rendering the instances.
+*/
+void spine_FlipInstancePositions( void )
+{
+	for( int i = 0; i <= lastInstance; ++i ) {
+		if( instances[i].skeleton == NULL ) {
+			continue;
+		}
+		
+		instances[i].startPos = instances[i].endPos;
+	}
+}
+
+/*
 Returns the skeleton of the spine instance, if there's an issue returns NULL.
+ Note: Adjustments to the skeletons x and y are overwritten in spine_RenderInstances( ).
 */
 spSkeleton* spine_GetInstanceSkeleton( int idx )
 {
@@ -362,8 +411,8 @@ static void drawCharacter( SpineInstance* spine )
 
 				texture = (Texture*)((spAtlasRegion*)regionAttachment->rendererObject)->page->rendererObject;
 
-				triRenderer_Add( positions[0], positions[1], positions[2], uvs[0], uvs[1], uvs[2], texture->textureID, col, camFlags, depth, texture->flags | TF_IS_TRANSPARENT );
-				triRenderer_Add( positions[0], positions[2], positions[3], uvs[0], uvs[2], uvs[3], texture->textureID, col, camFlags, depth, texture->flags | TF_IS_TRANSPARENT );
+				triRenderer_Add( positions[0], positions[1], positions[2], uvs[0], uvs[1], uvs[2], ST_DEFAULT, texture->textureID, col, camFlags, depth, texture->flags & TF_IS_TRANSPARENT );
+				triRenderer_Add( positions[0], positions[2], positions[3], uvs[0], uvs[2], uvs[3], ST_DEFAULT, texture->textureID, col, camFlags, depth, texture->flags & TF_IS_TRANSPARENT );
 			} break;
 		/*case SP_ATTACHMENT_BOUNDING_BOX: {
 				// if we're debugging 
@@ -404,7 +453,7 @@ static void drawCharacter( SpineInstance* spine )
 						uvs[j].y = meshAttachment->uvs[baseIndex+1];
 					}
 
-					triRenderer_AddVertices( verts, uvs, texture->textureID, col, camFlags, depth, texture->flags | TF_IS_TRANSPARENT );
+					triRenderer_AddVertices( verts, uvs, ST_DEFAULT, texture->textureID, col, camFlags, depth, texture->flags & TF_IS_TRANSPARENT );
 				}
 			} break;
 		case SP_ATTACHMENT_SKINNED_MESH: {
@@ -422,13 +471,11 @@ static void drawCharacter( SpineInstance* spine )
 						verts[j].x = spineVertices[baseIndex];
 						verts[j].y = spineVertices[baseIndex+1];
 
-						
-
 						uvs[j].x = skinnedMeshAttachment->uvs[baseIndex];
 						uvs[j].y = skinnedMeshAttachment->uvs[baseIndex+1];
 					}
 
-					triRenderer_AddVertices( verts, uvs, texture->textureID, col, camFlags, depth, texture->flags | TF_IS_TRANSPARENT );
+					triRenderer_AddVertices( verts, uvs, ST_DEFAULT, texture->textureID, col, camFlags, depth, texture->flags & TF_IS_TRANSPARENT );
 				}
 			} break;
 		default:
@@ -441,12 +488,17 @@ static void drawCharacter( SpineInstance* spine )
 /*
 Draws all the spine instances.
 */
-void spine_RenderInstances( void )
+void spine_RenderInstances( float normTimeElapsed )
 {
 	for( int i = 0; i <= lastInstance; ++i ) {
 		if( instances[i].skeleton == NULL ) {
 			continue;
 		}
+
+		Vector2 pos;
+		vec2_Lerp( &( instances[i].startPos ), &( instances[i].endPos ), normTimeElapsed, &pos );
+		instances[i].skeleton->x = pos.x;
+		instances[i].skeleton->y = pos.y;
 
 		drawCharacter( &( instances[i] ) );
 	}

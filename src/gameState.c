@@ -5,7 +5,7 @@
 // this is a simple state machine for right now, will most likely modify it to be heirarchical at some point
 //  but it's not necessary now
 
-struct GameStateMachine globalGSM = { NULL };
+struct GameStateMachine globalFSM = { NULL };
 
 void gsmEnterState( struct GameStateMachine* fsm, struct GameState* newState )
 {

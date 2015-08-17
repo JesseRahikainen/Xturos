@@ -39,4 +39,6 @@ float vec2_Dist( const Vector2* v1, const Vector2* v2 );
 float vec2_DistSqrd( const Vector2* v1, const Vector2* v2 );
 float vec2_Normalize( Vector2* vec );
 
+void vec2_Dump( const Vector2* vec, const char* extra );
+
 #endif /* end inclusion guard */

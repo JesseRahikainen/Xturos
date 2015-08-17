@@ -1,6 +1,5 @@
 #include "graphics.h"
 
-#include <SDL_ttf.h>
 #include <stdlib.h>
 #include <assert.h>
 #include <math.h>
@@ -55,12 +54,6 @@ int gfx_Init( SDL_Window* window )
 
 	currentTime = 0.0f;
 	endTime = 0.0f;
-
-	// init ttf stuff
-	if( TTF_Init( ) != 0 ) {
-		SDL_LogInfo( SDL_LOG_CATEGORY_VIDEO, TTF_GetError( ) );
-		return -1;
-	}
 
 	if( img_Init( ) < 0 ) {
 		return -1;
@@ -122,7 +115,7 @@ void gfx_Render( float dt )
 	// draw all the stuff that routes through the triangle rendering
 	triRenderer_Clear( );
 		img_Render( t );
-		spine_RenderInstances( );
+		spine_RenderInstances( t );
 	triRenderer_Render( );
 
 	// now draw all the debug stuff over everything

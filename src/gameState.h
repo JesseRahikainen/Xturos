@@ -19,7 +19,7 @@ struct GameStateMachine {
 	struct GameState* currentState;
 };
 
-struct GameStateMachine globalGSM;
+struct GameStateMachine globalFSM;
 
 void gsmEnterState( struct GameStateMachine* fsm, struct GameState* newState );
 void gsmProcessEvents( struct GameStateMachine* fsm, SDL_Event* e );

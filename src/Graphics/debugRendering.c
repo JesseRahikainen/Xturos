@@ -99,7 +99,7 @@ static int createShader( void )
 	debugProgDef.geometryShader = -1;
 	debugProgDef.uniformNames = "mvpMatrix";
 
-	if( loadShaders( &( debugShaderDefs[0] ), sizeof( debugShaderDefs ) / sizeof( ShaderDefinition ),
+	if( shaders_Load( &( debugShaderDefs[0] ), sizeof( debugShaderDefs ) / sizeof( ShaderDefinition ),
 		&debugProgDef, &debugShaderProgram, 1 ) <= 0 ) {
 		SDL_LogInfo( SDL_LOG_CATEGORY_VIDEO, "Error compiling debug shaders.\n" );
 		return -1;

@@ -164,7 +164,6 @@ static void* growBlock( MemoryBlockHeader* header, size_t newSize, const char* f
 		}
 	}
 
-	// this is all wrong, setting stuff in incorrect area
 	SetMemoryBlockInfo( (void*)( (uint8_t*)result - sizeof( MemoryBlockHeader ) ), fileName, line );
 	return result;
 }
@@ -217,7 +216,7 @@ void mem_Log( void )
 	MemoryBlockHeader* header = (MemoryBlockHeader*)( memoryBlock.memory );
 	while( header != NULL ) {
 		SDL_Log( " Memory header: %p", header );
-		if( header->guardValue != 0xdeadbeef ) {
+		if( header->guardValue != GUARD_VALUE ) {
 			SDL_Log( " ! Memory was corrupted" );
 		} else {
 #ifdef LOG_MEMORY_ALLOCATIONS

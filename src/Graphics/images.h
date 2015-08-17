@@ -4,6 +4,7 @@
 #include <SDL.h>
 #include "../Math/vector2.h"
 #include "color.h"
+#include "triRendering.h"
 
 /*
 Initializes images.
@@ -16,26 +17,12 @@ Loads the image stored at file name.
  Returns the index of the image on success.
  Returns -1 on failure, and prints a message to the log.
 */
-int img_Load( const char* fileName );
+int img_Load( const char* fileName, ShaderType shaderType );
 
 /*
 Creates an image from a surface.
 */
-int img_Create( SDL_Surface* surface );
-
-/*
-Creates an image from a string, used for rendering text.
- Returns the index of the image on success.
- Reutrns -1 on failure, prints a message to the log, and doesn't overwrite if a valid existing image id is passed in.
-*/
-int img_CreateText( const char* text, const char* fontName, int pointSize, Color color, Uint32 wrapLen );
-
-/*
-Changes the existing image instead of trying to create a new one.
- Returns the index of the image on success.
- Reutrns -1 on failure, prints a message to the log, and doesn't overwrite if a valid existing image id is passed in.
-*/
-int img_UpdateText( const char* text, const char* fontName, int pointSize, Color color, Uint32 wrapLen, int existingImage );
+int img_Create( SDL_Surface* surface, ShaderType shaderType );
 
 /*
 Cleans up an image at the specified index, trying to render with it after this won't work.
@@ -43,16 +30,22 @@ Cleans up an image at the specified index, trying to render with it after this w
 void img_Clean( int idx );
 
 /*
-Takes in a list of file names and loads them together. It's assumed the length of fileNames and retIDs equals count.
- Returns the package ID used to clean up later, returns -1 if there's a problem.
-*/
-int img_LoadPackage( int count, char** fileNames, int* retIDs );
-
-/*
 Takes in a file name and some rectangles. It's assumed the length of mins, maxes, and retIDs equals count.
  Returns package ID used to clean up later, returns -1 if there's a problem.
 */
-int img_SplitImage( char* fileName, int count, Vector2* mins, Vector2* maxes, int* retIDs );
+int img_SplitImageFile( char* fileName, int count, ShaderType shaderType, Vector2* mins, Vector2* maxes, int* retIDs );
+
+/*
+Takes in an RGBA bitmap and some rectangles. It's assumed the length of mins, maxes, and retIDs equals count.
+ Returns package ID used to clean up later, returns -1 if there's a problem.
+*/
+int img_SplitRGBABitmap( uint8_t* data, int width, int height, int count, ShaderType shaderType, Vector2* mins, Vector2* maxes, int* retIDs );
+
+/*
+Takes in a one channel bitmap and some rectangles. It's assume the length of the mins, maxes, and retIDs equal scount.
+ Returns package ID used to clean up later, returns -1 if there's a problem.
+*/
+int img_SplitAlphaBitmap( uint8_t* data, int width, int height, int count, ShaderType shaderType, Vector2* mins, Vector2* maxes, int* retIDs );
 
 /*
 Cleans up all the images in an image package.
@@ -63,6 +56,11 @@ void img_CleanPackage( int packageID );
 Sets an offset to render the image from. The default is the center of the image.
 */
 void img_SetOffset( int idx, Vector2 offset );
+
+/*
+Gets the size of the image, putting it into the out Vector2. Returns a negative number if there's an issue.
+*/
+int img_GetSize( int idx, Vector2* out );
 
 /*
 Adds to the list of images to draw.

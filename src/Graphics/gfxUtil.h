@@ -36,6 +36,18 @@ Turns an SDL_Surface into a texture. Takes in a pointer to a Texture structure t
 int gfxUtil_CreateTextureFromSurface( SDL_Surface* surface, Texture* outTexture );
 
 /*
+Turns an RGBA bitmap into a texture. Takes in a pointer to a Texture structure that it puts all the generated data into.
+ Returns >= 0 on success, < 0 on failure.
+*/
+int gfxUtil_CreateTextureFromRGBABitmap( uint8_t* data, int width, int height, Texture* outTexture );
+
+/*
+Turns a single channel bitmap into a texture. Takes in a pointer to a Texture structure that it puts all the generated data into.
+ Returns >= 0 on success, < 0 on failure.
+*/
+int gfxUtil_CreateTextureFromAlphaBitmap( uint8_t* data, int width, int height, Texture* outTexture );
+
+/*
 Unloads the passed in texture. After doing this the texture will be invalid and should not be used anymore.
 */
 void gfxUtil_UnloadTexture( Texture* texture );

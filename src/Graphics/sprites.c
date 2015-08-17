@@ -27,14 +27,14 @@ typedef struct {
 #define NUM_SPRITES 1000
 static Sprite sprites[NUM_SPRITES];
 
-void initSprites( void )
+void spr_Init( void )
 {
 	for( int i = 0; i < NUM_SPRITES; ++i ) {
 		sprites[i].image = -1;
 	}
 }
 
-void drawSprites( void )
+void spr_Draw( void )
 {
 	for( int i = 0; i < ( sizeof( sprites ) / sizeof( sprites[0] ) ); ++i ) {
 		if( sprites[i].image != -1 ) {
@@ -45,7 +45,7 @@ void drawSprites( void )
 	}
 }
 
-int createSprite( int image, unsigned int camFlags, Vector2 pos, Vector2 scale, float rot, Color col, char depth )
+int spr_Create( int image, unsigned int camFlags, Vector2 pos, Vector2 scale, float rot, Color col, char depth )
 {
 	int idx;
 	for( idx = 0; ( idx < NUM_SPRITES ) && ( sprites[idx].image != -1 ); ++idx ) ;
@@ -66,12 +66,22 @@ int createSprite( int image, unsigned int camFlags, Vector2 pos, Vector2 scale, 
 	return idx;
 }
 
-void destroySprite( int sprite )
+void spr_Destroy( int sprite )
 {
 	sprites[sprite].image = -1;
 }
 
-void updateSprite( int sprite, const Vector2* newPos, const Vector2* newScale, float newRot )
+void spr_GetColor( int sprite, Color* outCol )
+{
+	(*outCol) = sprites[sprite].newState.col;
+}
+
+void spr_SetColor( int sprite, Color* col )
+{
+	sprites[sprite].newState.col = *col;
+}
+
+void spr_Update( int sprite, const Vector2* newPos, const Vector2* newScale, float newRot )
 {
 	assert( newPos != NULL );
 	assert( newScale != NULL );
@@ -81,7 +91,7 @@ void updateSprite( int sprite, const Vector2* newPos, const Vector2* newScale, f
 	sprites[sprite].newState.scale = *newScale;
 }
 
-void updateSprite_Add( int sprite, const Vector2* posOffset, const Vector2* scaleOffset, float rotOffset )
+void spr_UpdateDelta( int sprite, const Vector2* posOffset, const Vector2* scaleOffset, float rotOffset )
 {
 	assert( posOffset != NULL );
 	assert( scaleOffset != NULL );

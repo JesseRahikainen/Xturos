@@ -52,6 +52,12 @@
     <Filter Include="Source Files\System">
       <UniqueIdentifier>{19e109d0-eec2-43f5-a81c-3873b20cdffb}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\UI">
+      <UniqueIdentifier>{3733adf8-c827-4d13-bef0-74d7762acb94}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\UI">
+      <UniqueIdentifier>{c22fe0a5-85d1-4c6d-a105-8f71b38fa906}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Game\gameScreen.h">
@@ -84,9 +90,6 @@
     <ClInclude Include="src\Others\wglew.h">
       <Filter>Header Files\Others</Filter>
     </ClInclude>
-    <ClInclude Include="src\button.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="src\collisionDetection.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -110,9 +113,6 @@
     </ClInclude>
     <ClInclude Include="src\System\memory.h">
       <Filter>Header Files\System</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Utils\cfgParser.h">
-      <Filter>Header Files\Utils</Filter>
     </ClInclude>
     <ClInclude Include="src\Graphics\sprites.h">
       <Filter>Header Files\Graphics</Filter>
@@ -144,6 +144,24 @@
     <ClInclude Include="src\Graphics\imageSheets.h">
       <Filter>Header Files\Graphics</Filter>
     </ClInclude>
+    <ClInclude Include="src\System\systems.h">
+      <Filter>Header Files\System</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Utils\cfgFile.h">
+      <Filter>Header Files\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Utils\helpers.h">
+      <Filter>Header Files\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="src\UI\button.h">
+      <Filter>Header Files\UI</Filter>
+    </ClInclude>
+    <ClInclude Include="src\UI\checkBox.h">
+      <Filter>Header Files\UI</Filter>
+    </ClInclude>
+    <ClInclude Include="src\UI\text.h">
+      <Filter>Header Files\UI</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Game\gameScreen.c">
@@ -170,9 +188,6 @@
     <ClCompile Include="src\Others\glew.c">
       <Filter>Source Files\Others</Filter>
     </ClCompile>
-    <ClCompile Include="src\button.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\collisionDetection.c">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -196,9 +211,6 @@
     </ClCompile>
     <ClCompile Include="src\System\memory.c">
       <Filter>Source Files\System</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Utils\cfgParser.c">
-      <Filter>Source Files\Utils</Filter>
     </ClCompile>
     <ClCompile Include="src\Graphics\sprites.c">
       <Filter>Source Files\Graphics</Filter>
@@ -226,6 +238,21 @@
     </ClCompile>
     <ClCompile Include="src\Graphics\imageSheets.c">
       <Filter>Source Files\Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="src\System\systems.c">
+      <Filter>Source Files\System</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Utils\cfgFile.c">
+      <Filter>Source Files\Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="src\UI\button.c">
+      <Filter>Source Files\UI</Filter>
+    </ClCompile>
+    <ClCompile Include="src\UI\checkBox.c">
+      <Filter>Source Files\UI</Filter>
+    </ClCompile>
+    <ClCompile Include="src\UI\text.c">
+      <Filter>Source Files\UI</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
