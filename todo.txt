@@ -1,18 +1,8 @@
 Create a list of steps needed to start a project from fresh
 
-Atlas out sprites
-  - (done)first get lists of sprites loading in a batch, group these together into a package
-      loadSprites( count, size_t count, char* fileNames, int* outIDs )
-  - (done)group these together and add the ability to delete a single batch at once
-  - then make it so every sprite loaded up in a batch is placed in the same atlas
-
-Switch image rendering over to a generic quad rendering system
 Frame based animations - copy existing stuff, allow offsets per frame (maybe just use Spine for this?)
-Spine animations working
 Custom geometry
 Come up with some way to configure and store OpenGL states, so we can make sure everything is in order when starting to render specific things
-
-Want to get the atlas working for the frame based and spine animations.
 
 Child states, hfsm
 Seemless looping mod music, maybe switch to always using vorbis? but i like the size of mods...
@@ -26,15 +16,12 @@ Render to image
 eventually:
 Find a better way to enumerate all the combinations of stuff that can go into a render instruction.
 Write own audio mixer
-Write own text drawing (maybe just use the image rendering?)
 Generally try to get rid of external libraries, except for SDL2, use STB whenever possible
 See what OpenGL features are actually needed and downgrade the version to support that
 Add in ability to cope with the amount of texture memory the computer has (basically make sure the next image can fit, if it can't then exit with a log), maybe store the max we're going to use and test it when the program starts so they don't get a crash in the middle of playing. Just pre-allocate how much we'll think we need and then use it up as we get more, can be mixed in with the atlasing.
 Turn off multi-threaded dll library (may need to rebuild all the SDL2 based libraries)  http://forums.libsdl.org/viewtopic.php?t=9634&sid=917224a793e6a71f05b1c7ed49120797
 Better file loading scheme, avoid locks, some sort of queue system so we can say what we want loaded and use some placeholder asset until it's fully loaded
 Random number generator, needs to be able to have multiple generators at once, seeded, quick, also add in some dice functions that we can use
-
-Switch to allocating memory on the heap instead of stack as we currently are, will run out of stack eventually. Will also want to make sure we don't do any allocation during gameplay, but will still need a way to measure what we want. Can do it manually, have some sort of memory configuration file we load up and get everything from, then assert when we're out of memory. Or could have dynamic allocation allowed for certain flag settings and then for release have static pools. Could report memory usage, or constraint violations and deal with them.
 
 continuous:
 - Go through all the log messages and enforce some sort of standards: stuff we want in debug builds versus stuff we want release builds.
