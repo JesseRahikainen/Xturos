@@ -390,7 +390,7 @@ static DrawInstruction* GetNextRenderInstruction( int imgObj, unsigned int camFl
 		return NULL;
 	}
 
-	if( lastDrawInstruction >= MAX_RENDER_INSTRUCTIONS ) {
+	if( lastDrawInstruction >= ( MAX_RENDER_INSTRUCTIONS - 1 ) ) {
 		SDL_LogVerbose( SDL_LOG_CATEGORY_VIDEO, "Render instruction queue full." );
 		return NULL;
 	}
