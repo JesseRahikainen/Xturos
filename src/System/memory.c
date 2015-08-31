@@ -160,6 +160,7 @@ static void* growBlock( MemoryBlockHeader* header, size_t newSize, const char* f
 		//  and return the pointer to the beginning of the new block of data
 		result = mem_Allocate_Data( newSize, fileName, line );
 		if( result != NULL ) {
+			memcpy( result, (void*)( header + 1 ), header->size );
 			mem_Release( (void*)( header + 1 ) );
 		}
 	}
