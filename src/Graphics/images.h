@@ -1,6 +1,7 @@
 #ifndef IMAGES_H
 #define IMAGES_H
 
+#include <stdint.h>
 #include <SDL.h>
 #include "../Math/vector2.h"
 #include "color.h"
@@ -65,25 +66,25 @@ int img_GetSize( int idx, Vector2* out );
 /*
 Adds to the list of images to draw.
 */
-int img_Draw( int imgID, unsigned int camFlags, Vector2 startPos, Vector2 endPos, char depth );
-int img_Draw_s( int imgID, unsigned int camFlags, Vector2 startPos, Vector2 endPos, float startScale, float endScale, char depth );
-int img_Draw_sv( int imgID, unsigned int camFlags, Vector2 startPos, Vector2 endPos, Vector2 startScale, Vector2 endScale, char depth );
-int img_Draw_c( int imgID, unsigned int camFlags, Vector2 startPos, Vector2 endPos, Color startColor, Color endColor, char depth );
-int img_Draw_r( int imgID, unsigned int camFlags, Vector2 startPos, Vector2 endPos, float startRot, float endRot, char depth );
-int img_Draw_s_c( int imgID, unsigned int camFlags, Vector2 startPos, Vector2 endPos, float startScale, float endScale,
-	Color startColor, Color endColor, char depth );
-int img_Draw_s_r( int imgID, unsigned int camFlags, Vector2 startPos, Vector2 endPos, float startScale, float endScale,
-	float startRot, float endRot, char depth );
-int img_Draw_sv_c( int imgID, unsigned int camFlags, Vector2 startPos, Vector2 endPos, Vector2 startScale, Vector2 endScale,
-	Color startColor, Color endColor, char depth );
-int img_Draw_sv_r( int imgID, unsigned int camFlags, Vector2 startPos, Vector2 endPos, Vector2 startScale, Vector2 endScale,
-	float startRot, float endRot, char depth );
-int img_Draw_c_r( int imgID, unsigned int camFlags, Vector2 startPos, Vector2 endPos, Color startColor, Color endColor,
-	float startRot, float endRot, char depth );
-int img_Draw_s_c_r( int imgID, unsigned int camFlags, Vector2 startPos, Vector2 endPos, float startScale, float endScale,
-	Color startColor, Color endColor, float startRot, float endRot, char depth );
-int img_Draw_sv_c_r( int imgID, unsigned int camFlags, Vector2 startPos, Vector2 endPos, Vector2 startScale, Vector2 endScale,
-	Color startColor, Color endColor, float startRot, float endRot, char depth );
+int img_Draw( int imgID, uint32_t camFlags, Vector2 startPos, Vector2 endPos, int8_t depth );
+int img_Draw_s( int imgID, uint32_t camFlags, Vector2 startPos, Vector2 endPos, float startScale, float endScale, int8_t depth );
+int img_Draw_sv( int imgID, uint32_t camFlags, Vector2 startPos, Vector2 endPos, Vector2 startScale, Vector2 endScale, int8_t depth );
+int img_Draw_c( int imgID, uint32_t camFlags, Vector2 startPos, Vector2 endPos, Color startColor, Color endColor, int8_t depth );
+int img_Draw_r( int imgID, uint32_t camFlags, Vector2 startPos, Vector2 endPos, float startRotRad, float endRotRad, int8_t depth );
+int img_Draw_s_c( int imgID, uint32_t camFlags, Vector2 startPos, Vector2 endPos, float startScale, float endScale,
+	Color startColor, Color endColor, int8_t depth );
+int img_Draw_s_r( int imgID, uint32_t camFlags, Vector2 startPos, Vector2 endPos, float startScale, float endScale,
+	float startRotRad, float endRotRad, int8_t depth );
+int img_Draw_sv_c( int imgID, uint32_t camFlags, Vector2 startPos, Vector2 endPos, Vector2 startScale, Vector2 endScale,
+	Color startColor, Color endColor, int8_t depth );
+int img_Draw_sv_r( int imgID, uint32_t camFlags, Vector2 startPos, Vector2 endPos, Vector2 startScale, Vector2 endScale,
+	float startRotRad, float endRotRad, int8_t depth );
+int img_Draw_c_r( int imgID, uint32_t camFlags, Vector2 startPos, Vector2 endPos, Color startColor, Color endColor,
+	float startRotRad, float endRotRad, int8_t depth );
+int img_Draw_s_c_r( int imgID, uint32_t camFlags, Vector2 startPos, Vector2 endPos, float startScale, float endScale,
+	Color startColor, Color endColor, float startRotRad, float endRotRad, int8_t depth );
+int img_Draw_sv_c_r( int imgID, uint32_t camFlags, Vector2 startPos, Vector2 endPos, Vector2 startScale, Vector2 endScale,
+	Color startColor, Color endColor, float startRotRad, float endRotRad, int8_t depth );
 
 /*
 Clears the image draw list.

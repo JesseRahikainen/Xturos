@@ -58,6 +58,12 @@
     <Filter Include="Source Files\UI">
       <UniqueIdentifier>{c22fe0a5-85d1-4c6d-a105-8f71b38fa906}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Input">
+      <UniqueIdentifier>{050e6dbb-b453-4b45-b404-9f0a3b5b38d5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Input">
+      <UniqueIdentifier>{e163acc5-ed75-4492-93c0-8b2bfe225477}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Game\gameScreen.h">
@@ -162,6 +168,9 @@
     <ClInclude Include="src\UI\text.h">
       <Filter>Header Files\UI</Filter>
     </ClInclude>
+    <ClInclude Include="src\Input\input.h">
+      <Filter>Header Files\Input</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Game\gameScreen.c">
@@ -253,6 +262,9 @@
     </ClCompile>
     <ClCompile Include="src\UI\text.c">
       <Filter>Source Files\UI</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Input\input.c">
+      <Filter>Source Files\Input</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

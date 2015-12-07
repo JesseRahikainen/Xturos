@@ -7,6 +7,7 @@
 #include "triRendering.h"
 #include "debugRendering.h"
 #include "gfxUtil.h"
+#include "../Utils/helpers.h"
 #include "../System/memory.h"
 
 // templates
@@ -22,12 +23,12 @@ static SpineTemplate templates[MAX_TEMPLATES];
 // instances
 typedef struct {
 	int templateIdx;
-	int cameraFlags;
+	uint32_t cameraFlags;
 	Vector2 startPos;
 	Vector2 endPos;
 	spSkeleton* skeleton;
 	spAnimationState* state;
-	char depth;
+	int8_t depth;
 } SpineInstance;
 
 #define MAX_INSTANCES 2048
@@ -91,6 +92,8 @@ void spine_Init( void )
 	_setMalloc( Allocate_Spine );
 	_setFree( Release_Spine );
 
+	spBone_setYDown( 1 );
+
 	lastInstance = -1;
 }
 
@@ -127,13 +130,13 @@ int spine_LoadTemplate( const char* fileNameBase )
 
 	templates[idx].atlas = spAtlas_createFromFile( atlasName, 0 );
 	if( templates[idx].atlas == NULL ) {
-		SDL_LogDebug( SDL_LOG_CATEGORY_VIDEO, "Unable to load atlas." );
+		SDL_LogDebug( SDL_LOG_CATEGORY_VIDEO, "Unable to load atlas for %s", fileNameBase );
 		return -1;
 	}
 
 	json = spSkeletonJson_create( templates[idx].atlas );
 	if( json == NULL ) {
-		SDL_LogDebug( SDL_LOG_CATEGORY_VIDEO, "Unable to create skeleton JSON." );
+		SDL_LogDebug( SDL_LOG_CATEGORY_VIDEO, "Unable to create skeleton JSON for %s", fileNameBase );
 
 		spAtlas_dispose( templates[idx].atlas );
 		templates[idx].atlas = NULL;
@@ -146,7 +149,7 @@ int spine_LoadTemplate( const char* fileNameBase )
 	templates[idx].skeletonData = spSkeletonJson_readSkeletonDataFile( json, jsonName );
 	spSkeletonJson_dispose( json );
 	if( templates[idx].skeletonData == NULL ) {
-		SDL_LogDebug( SDL_LOG_CATEGORY_VIDEO, "Unable to create skeleton data." );
+		SDL_LogDebug( SDL_LOG_CATEGORY_VIDEO, "Unable to create skeleton data for %s", fileNameBase );
 
 		spAtlas_dispose( templates[idx].atlas );
 		templates[idx].atlas = NULL;
@@ -157,7 +160,7 @@ int spine_LoadTemplate( const char* fileNameBase )
 
 	templates[idx].stateData = spAnimationStateData_create( templates[idx].skeletonData );
 	if( templates[idx].stateData == NULL ) {
-		SDL_LogDebug( SDL_LOG_CATEGORY_VIDEO, "Unable to create animation state data." );
+		SDL_LogDebug( SDL_LOG_CATEGORY_VIDEO, "Unable to create animation state data for %s", fileNameBase );
 
 		spSkeletonData_dispose( templates[idx].skeletonData );
 		templates[idx].skeletonData = NULL;
@@ -201,10 +204,26 @@ void spine_CleanTemplate( int idx )
 }
 
 /*
+Sets the duration of the blending between the two animations. The templateIdx passed in should be a
+value returned from spine_LoadTemplate that hasn't been cleaned up yet.
+*/
+void spine_SetTemplateMix( int templateIdx, spAnimation* from, spAnimation* to, float duration )
+{
+	assert( templateIdx >= 0 );
+	assert( templateIdx < MAX_TEMPLATES );
+
+	if( templates[templateIdx].stateData == NULL ) {
+		return;
+	}
+
+	spAnimationStateData_setMix( templates[templateIdx].stateData, from, to, duration );
+}
+
+/*
 Sets the duration of the blending between the fromName to the toName animation. The templateIdx passed in should be a
 value returned from spine_LoadTemplate that hasn't been cleaned up yet.
 */
-void spine_SetTemplateMix( int templateIdx, const char* fromName, const char* toName, float duration )
+void spine_SetTemplateMixByName( int templateIdx, const char* fromName, const char* toName, float duration )
 {
 	assert( templateIdx >= 0 );
 	assert( templateIdx < MAX_TEMPLATES );
@@ -258,7 +277,7 @@ int spine_CreateInstance( int templateIdx, Vector2 pos, int cameraFlags, char de
 	charState->skeleton->y = pos.y;
 
 	charState->skeleton->flipX = 0;
-	charState->skeleton->flipY = 1;
+	charState->skeleton->flipY = 0;
 	spSkeleton_setToSetupPose( charState->skeleton );
 
 	charState->state->listener = listener;
@@ -436,6 +455,7 @@ static void drawCharacter( SpineInstance* spine )
 				spMeshAttachment* meshAttachment = (spMeshAttachment*)attachment;
 				assert( meshAttachment->verticesCount < MAX_SPINE_VERTS );
 
+				// todo: come up with a better way than just a preallocated array, possible probems when world vertices > sizeof( spineVertices )
 				spMeshAttachment_computeWorldVertices( meshAttachment, slot, spineVertices );
 
 				texture = (Texture*)((spAtlasRegion*)meshAttachment->rendererObject)->page->rendererObject;

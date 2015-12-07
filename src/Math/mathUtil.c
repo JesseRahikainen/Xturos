@@ -28,6 +28,66 @@ float radianRotLerp( float from, float to, float t )
 	return ( from + ( diff * sgn * clamp( 0.0f, 1.0f, t ) ) );
 }
 
+float degreeRotLerp( float from, float to, float t )
+{
+	// always use the shortest angle
+	float diff = to - from;
+	float sgn = sign( diff );
+	diff = fabsf( diff );
+	
+	if( diff > 180.0f ) {
+		diff = 360.0f - diff;
+		sgn = -sgn;
+	}
+	
+	return ( from + ( diff * sgn * clamp( 0.0f, 1.0f, t ) ) );
+}
+
+float degreeRotDiff( float from, float to )
+{
+	assert( from >= -180.0f );
+	assert( from <= 180.0f );
+	assert( to >= -180.0f );
+	assert( to <= 180.0f );
+	float diff = to - from;
+
+	if( diff > 180.0f ) {
+		diff -= 360.0f;
+	}
+
+	if( diff < -180.0f ) {
+		diff += 360.0f;
+	}
+
+	return diff;
+}
+
+float degreeRotWrap( float deg )
+{
+	while( deg > 180.0f ) {
+		deg -= 360.0f;
+	}
+
+	while( deg < -180.0f ) {
+		deg += 360.0f;
+	}
+
+	return deg;
+}
+
+float spineDegRotToEngineDegRot( float spineDeg )
+{
+	float rot = spineDeg + 90.0f;
+	return rot;
+}
+
+float engineDegRotToSpineDegRot( float engineDeg )
+{
+	float rot = 0.0f;
+
+	return rot;
+}
+
 uint8_t lerp_uint8_t( uint8_t from, uint8_t to, float t )
 {
 	return (uint8_t)lerp( (float)from, (float)to, t );
@@ -78,4 +138,10 @@ Vector3* vec2ToVec3( const Vector2* vec2, float z, Vector3* out )
 	out->v[2] = z;
 
 	return out;
+}
+
+float jerkLerp( float t )
+{
+	t = clamp( 0.0f, 1.0f, t );
+	return ( 1.0f - ( ( 1.0f - t ) * ( 1.0f - t ) ) );
 }

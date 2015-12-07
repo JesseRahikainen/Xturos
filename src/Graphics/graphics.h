@@ -10,12 +10,22 @@
 Initial setup for the rendering instruction buffer.
  Returns a negative number on failure.
 */
-int gfx_Init( SDL_Window* window );
+int gfx_Init( SDL_Window* window, int renderWidth, int renderHeight );
 
 /*
-Sets clearing color.
+Resizes everything for the specified window size. Used to calculate render area.
+*/
+void gfx_SetWindowSize( int windowWidth, int windowHeight );
+
+/*
+Sets render area clearing color.
 */
 void gfx_SetClearColor( Color newClearColor );
+
+/*
+Sets the non render area clearing color.
+*/
+void gfx_SetWindowClearColor( Color newClearColor );
 
 /*
 Clears all the drawing instructions.

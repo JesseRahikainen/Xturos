@@ -1,8 +1,10 @@
 #ifndef SPINE_GFX_H
 #define SPINE_GFX_H
 
+#include <stdint.h>
 #include <spine/spine.h>
 #include "../Math/vector2.h"
+#include "../Graphics/color.h"
 
 // general system functions
 void spine_Init( void );
@@ -24,13 +26,16 @@ Cleans up a template, freeing it's spot.
 void spine_CleanTemplate( int idx );
 
 /*
+Sets the duration of the blending between the two animations. The templateIdx passed in should be a
+value returned from spine_LoadTemplate that hasn't been cleaned up yet.
+*/
+void spine_SetTemplateMix( int templateIdx, spAnimation* from, spAnimation* to, float duration );
+
+/*
 Sets the duration of the blending between the fromName to the toName animation. The templateIdx passed in should be a
 value returned from spine_LoadTemplate that hasn't been cleaned up yet.
 */
-void spine_SetTemplateMix( int templateIdx, const char* fromName, const char* toName, float duration );
-
-// TODO:
-//   1. Add a way to get the animations so we don't have to keep using the name
+void spine_SetTemplateMixByName( int templateIdx, const char* fromName, const char* toName, float duration );
 
 // instance handling
 /*
@@ -38,7 +43,7 @@ Creates an instance of a template. The templateIdx passed in should be a value r
  hasn't been cleaned up.
 Returns an id to use in other functions. Returns -1 if there's a problem.
 */
-int spine_CreateInstance( int templateIdx, Vector2 pos, int cameraFlags, char depth, spAnimationStateListener listener );
+int spine_CreateInstance( int templateIdx, Vector2 pos, int cameraFlags, int8_t depth, spAnimationStateListener listener );
 
 /*
 Cleans up a spine instance.

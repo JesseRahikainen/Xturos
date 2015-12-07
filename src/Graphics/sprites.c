@@ -1,6 +1,7 @@
 #include "sprites.h"
 #include "images.h"
 #include "color.h"
+#include "../System/systems.h"
 #include <assert.h>
 #include <SDL.h>
 
@@ -20,12 +21,14 @@ typedef struct {
 	SpriteState oldState;
 	SpriteState newState;
 
-	unsigned int camFlags;
-	char depth;
+	uint32_t camFlags;
+	int8_t depth;
 } Sprite;
 
 #define NUM_SPRITES 1000
 static Sprite sprites[NUM_SPRITES];
+
+static int systemID = -1;
 
 void spr_Init( void )
 {
@@ -38,14 +41,17 @@ void spr_Draw( void )
 {
 	for( int i = 0; i < ( sizeof( sprites ) / sizeof( sprites[0] ) ); ++i ) {
 		if( sprites[i].image != -1 ) {
-			img_Draw_c_r( sprites[i].image, sprites[i].camFlags, sprites[i].oldState.pos, sprites[i].newState.pos,
-				sprites[i].oldState.col, sprites[i].newState.col, sprites[i].oldState.rot, sprites[i].newState.rot, sprites[i].depth );
+			img_Draw_sv_c_r( sprites[i].image, sprites[i].camFlags, sprites[i].oldState.pos, sprites[i].newState.pos,
+				sprites[i].oldState.scale, sprites[i].newState.scale, sprites[i].oldState.col, sprites[i].newState.col,
+				sprites[i].oldState.rot, sprites[i].newState.rot, sprites[i].depth );
+			/*img_Draw_c_r( sprites[i].image, sprites[i].camFlags, sprites[i].oldState.pos, sprites[i].newState.pos,
+				sprites[i].oldState.col, sprites[i].newState.col, sprites[i].oldState.rot, sprites[i].newState.rot, sprites[i].depth );*/
 			sprites[i].oldState = sprites[i].newState;
 		}
 	}
 }
 
-int spr_Create( int image, unsigned int camFlags, Vector2 pos, Vector2 scale, float rot, Color col, char depth )
+int spr_Create( int image, unsigned int camFlags, Vector2 pos, Vector2 scale, float rotRad, Color col, char depth )
 {
 	int idx;
 	for( idx = 0; ( idx < NUM_SPRITES ) && ( sprites[idx].image != -1 ); ++idx ) ;
@@ -58,7 +64,7 @@ int spr_Create( int image, unsigned int camFlags, Vector2 pos, Vector2 scale, fl
 	sprites[idx].depth = depth;
 	sprites[idx].newState.pos = pos;
 	sprites[idx].newState.scale = scale;
-	sprites[idx].newState.rot = rot;
+	sprites[idx].newState.rot = rotRad;
 	sprites[idx].newState.col = col;
 	sprites[idx].oldState = sprites[idx].newState;
 	sprites[idx].camFlags = camFlags;
@@ -99,4 +105,15 @@ void spr_UpdateDelta( int sprite, const Vector2* posOffset, const Vector2* scale
 	vec2_Add( &( sprites[sprite].newState.pos ), posOffset, &( sprites[sprite].newState.pos ) );
 	vec2_Add( &( sprites[sprite].newState.scale ), scaleOffset, &( sprites[sprite].newState.scale ) );
 	sprites[sprite].newState.rot += rotOffset;
+}
+
+int spr_RegisterSystem( void )
+{
+	systemID = sys_Register( NULL, NULL, spr_Draw, NULL );
+	return systemID;
+}
+
+void spr_UnRegisterSystem( void )
+{
+	sys_UnRegister( systemID );
 }

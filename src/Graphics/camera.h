@@ -2,6 +2,7 @@
 #define CAMERA_H
 
 #include <SDL.h>
+#include <stdint.h>
 
 #include "../Math/vector2.h"
 #include "../Math/matrix4.h"
@@ -14,7 +15,7 @@ void cam_Init( void );
 /*
 Creates the base projection matrices for all the cameras.
 */
-void cam_SetProjectionMatrices( SDL_Window* window );
+void cam_SetProjectionMatrices( int width, int height );
 
 /*
 Set the state the camera will be at at the end of the next frame.
@@ -54,19 +55,19 @@ int cam_GetInverseViewMatrix( int camera, Matrix4* out );
 Turns on render flags for the camera.
  Returns <0 if there's a problem.
 */
-int cam_TurnOnFlags( int camera, unsigned int flags );
+int cam_TurnOnFlags( int camera, uint32_t flags );
 
 /*
 Turns off render flags for the camera.
  Returns <0 if there's a problem.
 */
-int cam_TurnOffFlags( int camera, unsigned int flags );
+int cam_TurnOffFlags( int camera, uint32_t flags );
 
 /*
 Gets the flags for the camera.
  Returns 0 if there is something wrong with the index, also when no flags have been set.
 */
-unsigned int cam_GetFlags( int camera );
+uint32_t cam_GetFlags( int camera );
 
 /*
 Starts the iteration of all the cameras.

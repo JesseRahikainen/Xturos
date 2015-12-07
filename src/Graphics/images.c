@@ -49,8 +49,8 @@ typedef struct {
 	DrawInstructionState start;
 	DrawInstructionState end;
 	int flags;
-	int camFlags;
-	char depth;
+	uint32_t camFlags;
+	int8_t depth;
 	ShaderType shaderType;
 } DrawInstruction;
 
@@ -383,14 +383,14 @@ initializes the structure so only what's used needs to be set, also fill in
   for further setting of other stuff
  returns NULL if there's a problem
 */
-static DrawInstruction* GetNextRenderInstruction( int imgObj, unsigned int camFlags, Vector2 startPos, Vector2 endPos, char depth )
+static DrawInstruction* GetNextRenderInstruction( int imgObj, uint32_t camFlags, Vector2 startPos, Vector2 endPos, int8_t depth )
 {
 	if( !( images[imgObj].flags & IMGFLAG_IN_USE ) ) {
 		SDL_LogVerbose( SDL_LOG_CATEGORY_VIDEO, "Attempting to draw invalid image: %i", imgObj );
 		return NULL;
 	}
 
-	if( lastDrawInstruction >= ( MAX_RENDER_INSTRUCTIONS - 1 ) ) {
+	if( lastDrawInstruction >= MAX_RENDER_INSTRUCTIONS ) {
 		SDL_LogVerbose( SDL_LOG_CATEGORY_VIDEO, "Render instruction queue full." );
 		return NULL;
 	}
@@ -452,46 +452,46 @@ Adds to the list of images to draw.
 		( ( endColor.a > 0 ) && ( endColor.a < 1.0f ) )) { \
 		ri->flags |= IMGFLAG_HAS_TRANSPARENCY; }
 
-#define SET_DRAW_INSTRUCTION_ROT( startRot, endRot ) \
-	ri->start.rotation = startRot; \
-	ri->end.rotation = endRot;
+#define SET_DRAW_INSTRUCTION_ROT( startRotRad, endRotRad ) \
+	ri->start.rotation = startRotRad; \
+	ri->end.rotation = endRotRad;
 
-int img_Draw( int imgID, unsigned int camFlags, Vector2 startPos, Vector2 endPos, char depth )
+int img_Draw( int imgID, uint32_t camFlags, Vector2 startPos, Vector2 endPos, int8_t depth )
 {
 	DRAW_INSTRUCTION_START;
 	DRAW_INSTRUCTION_END;
 }
 
-int img_Draw_s( int imgID, unsigned int camFlags, Vector2 startPos, Vector2 endPos, float startScale, float endScale, char depth )
+int img_Draw_s( int imgID, uint32_t camFlags, Vector2 startPos, Vector2 endPos, float startScale, float endScale, int8_t depth )
 {
 	DRAW_INSTRUCTION_START;
 	SET_DRAW_INSTRUCTION_SCALE( startScale, startScale, endScale, endScale );
 	DRAW_INSTRUCTION_END;
 }
 
-int img_Draw_sv( int imgID, unsigned int camFlags, Vector2 startPos, Vector2 endPos, Vector2 startScale, Vector2 endScale, char depth )
+int img_Draw_sv( int imgID, uint32_t camFlags, Vector2 startPos, Vector2 endPos, Vector2 startScale, Vector2 endScale, int8_t depth )
 {
 	DRAW_INSTRUCTION_START;
 	SET_DRAW_INSTRUCTION_SCALE( startScale.x, startScale.y, endScale.x, endScale.y );
 	DRAW_INSTRUCTION_END;
 }
 
-int img_Draw_c( int imgID, unsigned int camFlags, Vector2 startPos, Vector2 endPos, Color startColor, Color endColor, char depth )
+int img_Draw_c( int imgID, uint32_t camFlags, Vector2 startPos, Vector2 endPos, Color startColor, Color endColor, int8_t depth )
 {
 	DRAW_INSTRUCTION_START;
 	SET_DRAW_INSTRUCTION_COLOR( startColor, endColor );
 	DRAW_INSTRUCTION_END;
 }
 
-int img_Draw_r( int imgID, unsigned int camFlags, Vector2 startPos, Vector2 endPos, float startRot, float endRot, char depth )
+int img_Draw_r( int imgID, uint32_t camFlags, Vector2 startPos, Vector2 endPos, float startRotRad, float endRotRad, int8_t depth )
 {
 	DRAW_INSTRUCTION_START;
-	SET_DRAW_INSTRUCTION_ROT( startRot, endRot );
+	SET_DRAW_INSTRUCTION_ROT( startRotRad, endRotRad );
 	DRAW_INSTRUCTION_END;
 }
 
-int img_Draw_s_c( int imgID, unsigned int camFlags, Vector2 startPos, Vector2 endPos, float startScale, float endScale,
-	Color startColor, Color endColor, char depth )
+int img_Draw_s_c( int imgID, uint32_t camFlags, Vector2 startPos, Vector2 endPos, float startScale, float endScale,
+	Color startColor, Color endColor, int8_t depth )
 {
 	DRAW_INSTRUCTION_START;
 	SET_DRAW_INSTRUCTION_SCALE( startScale, startScale, endScale, endScale );
@@ -499,17 +499,17 @@ int img_Draw_s_c( int imgID, unsigned int camFlags, Vector2 startPos, Vector2 en
 	DRAW_INSTRUCTION_END;
 }
 
-int img_Draw_s_r( int imgID, unsigned int camFlags, Vector2 startPos, Vector2 endPos, float startScale, float endScale,
-	float startRot, float endRot, char depth )
+int img_Draw_s_r( int imgID, uint32_t camFlags, Vector2 startPos, Vector2 endPos, float startScale, float endScale,
+	float startRotRad, float endRotRad, int8_t depth )
 {
 	DRAW_INSTRUCTION_START;
 	SET_DRAW_INSTRUCTION_SCALE( startScale, startScale, endScale, endScale );
-	SET_DRAW_INSTRUCTION_ROT( startRot, endRot );
+	SET_DRAW_INSTRUCTION_ROT( startRotRad, endRotRad );
 	DRAW_INSTRUCTION_END;
 }
 
-int img_Draw_sv_c( int imgID, unsigned int camFlags, Vector2 startPos, Vector2 endPos, Vector2 startScale, Vector2 endScale,
-	Color startColor, Color endColor, char depth )
+int img_Draw_sv_c( int imgID, uint32_t camFlags, Vector2 startPos, Vector2 endPos, Vector2 startScale, Vector2 endScale,
+	Color startColor, Color endColor, int8_t depth )
 {
 	DRAW_INSTRUCTION_START;
 	SET_DRAW_INSTRUCTION_SCALE( startScale.x, startScale.y, endScale.x, endScale.y );
@@ -517,41 +517,41 @@ int img_Draw_sv_c( int imgID, unsigned int camFlags, Vector2 startPos, Vector2 e
 	DRAW_INSTRUCTION_END;
 }
 
-int img_Draw_sv_r( int imgID, unsigned int camFlags, Vector2 startPos, Vector2 endPos, Vector2 startScale, Vector2 endScale,
-	float startRot, float endRot, char depth )
+int img_Draw_sv_r( int imgID, uint32_t camFlags, Vector2 startPos, Vector2 endPos, Vector2 startScale, Vector2 endScale,
+	float startRotRad, float endRotRad, int8_t depth )
 {
 	DRAW_INSTRUCTION_START;
 	SET_DRAW_INSTRUCTION_SCALE( startScale.x, startScale.y, endScale.x, endScale.y );
-	SET_DRAW_INSTRUCTION_ROT( startRot, endRot );
+	SET_DRAW_INSTRUCTION_ROT( startRotRad, endRotRad );
 	DRAW_INSTRUCTION_END;
 }
 
-int img_Draw_c_r( int imgID, unsigned int camFlags, Vector2 startPos, Vector2 endPos, Color startColor, Color endColor,
-	float startRot, float endRot, char depth )
+int img_Draw_c_r( int imgID, uint32_t camFlags, Vector2 startPos, Vector2 endPos, Color startColor, Color endColor,
+	float startRotRad, float endRotRad, int8_t depth )
 {
 	DRAW_INSTRUCTION_START;
 	SET_DRAW_INSTRUCTION_COLOR( startColor, endColor );
-	SET_DRAW_INSTRUCTION_ROT( startRot, endRot );
+	SET_DRAW_INSTRUCTION_ROT( startRotRad, endRotRad );
 	DRAW_INSTRUCTION_END;
 }
 
-int img_Draw_s_c_r( int imgID, unsigned int camFlags, Vector2 startPos, Vector2 endPos, float startScale, float endScale,
-	Color startColor, Color endColor, float startRot, float endRot, char depth )
+int img_Draw_s_c_r( int imgID, uint32_t camFlags, Vector2 startPos, Vector2 endPos, float startScale, float endScale,
+	Color startColor, Color endColor, float startRotRad, float endRotRad, int8_t depth )
 {
 	DRAW_INSTRUCTION_START;
 	SET_DRAW_INSTRUCTION_SCALE( startScale, startScale, endScale, endScale );
 	SET_DRAW_INSTRUCTION_COLOR( startColor, endColor );
-	SET_DRAW_INSTRUCTION_ROT( startRot, endRot );
+	SET_DRAW_INSTRUCTION_ROT( startRotRad, endRotRad );
 	DRAW_INSTRUCTION_END;
 }
 
-int img_Draw_sv_c_r( int imgID, unsigned int camFlags, Vector2 startPos, Vector2 endPos, Vector2 startScale, Vector2 endScale,
-	Color startColor, Color endColor, float startRot, float endRot, char depth )
+int img_Draw_sv_c_r( int imgID, uint32_t camFlags, Vector2 startPos, Vector2 endPos, Vector2 startScale, Vector2 endScale,
+	Color startColor, Color endColor, float startRotRad, float endRotRad, int8_t depth )
 {
 	DRAW_INSTRUCTION_START;
 	SET_DRAW_INSTRUCTION_SCALE( startScale.x, startScale.y, endScale.x, endScale.y );
 	SET_DRAW_INSTRUCTION_COLOR( startColor, endColor );
-	SET_DRAW_INSTRUCTION_ROT( startRot, endRot );
+	SET_DRAW_INSTRUCTION_ROT( startRotRad, endRotRad );
 	DRAW_INSTRUCTION_END;
 }
 

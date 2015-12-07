@@ -7,6 +7,7 @@
 #include "../Math/vector3.h"
 #include "../Math/matrix4.h"
 #include "../Graphics/camera.h"
+#include "../Input/input.h"
 
 #define MAX_CHECK_BOXES 32
 #define TEXT_LEN 32
@@ -147,16 +148,17 @@ void chkBox_Draw( void )
 void chkBox_Process( void )
 {
 	int i;
-	int mouseX, mouseY;
-	Vector3 mousePos = { 0.0f, 0.0f, 0.0f };
+	Vector3 mousePos;
 	Vector3 transMousePos = { 0.0f, 0.0f, 0.0f };
 	Vector2 diff;
 	enum ButtonState prevState;
 
 	/* see if the mouse is positioned over any buttons */
-	SDL_GetMouseState( &mouseX, &mouseY );
-	mousePos.x = (float)mouseX;
-	mousePos.y = (float)mouseY;
+	Vector2 mouse2DPos;
+	if( !input_GetMousePostion( &mouse2DPos ) ) {
+		return;
+	}
+	vec2ToVec3( &mouse2DPos, 0.0f, &mousePos );
 
 	for( int currCamera = cam_StartIteration( ); currCamera != -1; currCamera = cam_GetNextActiveCam( ) ) {
 		unsigned int camFlags = cam_GetFlags( currCamera );

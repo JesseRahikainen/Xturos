@@ -44,6 +44,13 @@ typedef struct {
 typedef void(*CollisionResponse)( int firstColliderIdx, int secondColliderIdx, Vector2 separation );
 
 /*
+Finds the separation needed for c1 to move and not overlap c2.
+ Returns 1 if there is any overlap and puts the separation into outSeparation.
+ Returns 1 if there is no overlap.
+*/
+int collision_GetSeparation( Collider* c1, Collider* c2, Vector2* outSeparation );
+
+/*
 Finds and handles the all collisions between mainCollider and the colliders in the list.
  NOTE: You shouldn't modify the passed in colliders in the response.
 */
@@ -61,6 +68,12 @@ Finds if the specified line segment hits anything in the list. Returns 1 if it d
  collision point into out, if out is NULL it'll exit once it detects any collision instead of finding the first.
 */
 int collision_RayCast( Vector2 start, Vector2 end, ColliderCollection collection, Vector2* out );
+
+/*
+Finds the closest distance from the position to the collider, useful when you want the distance to object but not it's center.
+ Returns a negative number if there were any problems.
+*/
+float collision_Distance( Collider* collider, Vector2* position );
 
 /*
 Renders collisions, for debugging.

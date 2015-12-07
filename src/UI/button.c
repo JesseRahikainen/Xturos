@@ -10,10 +10,14 @@
 #include "../Math/vector3.h"
 #include "../Graphics/camera.h"
 #include "text.h"
+#include "../Input/input.h"
+#include "../System/systems.h"
 
 #define MAX_BUTTONS 32
 #define BUTTON_TEXT_LEN 32
 static enum ButtonState { BS_NORMAL, BS_FOCUSED, BS_CLICKED };
+
+static int systemID = -1;
 
 static struct Button {
 	int normalImgId;
@@ -99,6 +103,17 @@ void btn_DestroyAll( void )
 	memset( buttons, 0, sizeof( buttons ) );
 }
 
+int btn_RegisterSystem( void )
+{
+	systemID = sys_Register( btn_ProcessEvents, btn_Process, btn_Draw, NULL );
+	return systemID;
+}
+
+void btn_UnRegisterSystem( void )
+{
+	sys_UnRegister( systemID );
+}
+
 void btn_Draw( void )
 {
 	int i;
@@ -129,16 +144,17 @@ void btn_Draw( void )
 void btn_Process( void )
 {
 	int i;
-	int mouseX, mouseY;
-	Vector3 mousePos = { 0.0f, 0.0f, 0.0f };
+	Vector3 mousePos;
 	Vector3 transMousePos = { 0.0f, 0.0f, 0.0f };
 	Vector2 diff;
 	enum ButtonState prevState;
 
 	/* see if the mouse is positioned over any buttons */
-	SDL_GetMouseState( &mouseX, &mouseY );
-	mousePos.x = (float)mouseX;
-	mousePos.y = (float)mouseY;
+	Vector2 mouse2DPos;
+	if( !input_GetMousePostion( &mouse2DPos ) ) {
+		return;
+	}
+	vec2ToVec3( &mouse2DPos, 0.0f, &mousePos );
 
 	for( int currCamera = cam_StartIteration( ); currCamera != -1; currCamera = cam_GetNextActiveCam( ) ) {
 		unsigned int camFlags = cam_GetFlags( currCamera );

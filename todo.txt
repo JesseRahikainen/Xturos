@@ -1,15 +1,12 @@
 Create a list of steps needed to start a project from fresh
 
 Frame based animations - copy existing stuff, allow offsets per frame (maybe just use Spine for this?)
-Custom geometry
 Come up with some way to configure and store OpenGL states, so we can make sure everything is in order when starting to render specific things
 
 Child states, hfsm
 Seemless looping mod music, maybe switch to always using vorbis? but i like the size of mods...
 Optional switch for having a locked graphics update rate (must always be >= gameplay fps), would be easier if it was a multiple of the gameplay fps
 Support different resolutions and dynamic changing of resolutions
-
-Better input support, including binding
 
 Render to image
 

@@ -133,9 +133,7 @@ int cfg_SaveFile( void* cfgFile )
 	SDL_RWwrite( rwopsFile, outBuffer, sizeof( char ), sb_Count( outBuffer ) );
 
 clean_up:
-	if( rwopsFile != NULL ) {
-		SDL_RWclose( rwopsFile );
-	}
+	SDL_RWclose( rwopsFile );
 	sb_Release( outBuffer );
 	return success;
 }

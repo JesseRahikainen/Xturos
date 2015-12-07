@@ -10,7 +10,7 @@ typedef struct {
 typedef struct {
 	CameraState start;
 	CameraState end;
-	unsigned int renderFlags;
+	uint32_t renderFlags;
 	Matrix4 projectionMat;
 } Camera;
 
@@ -33,11 +33,9 @@ void cam_Init( void )
 /*
 Creates the base projection matrices for all the cameras.
 */
-void cam_SetProjectionMatrices( SDL_Window* window )
+void cam_SetProjectionMatrices( int width, int height)
 {
 	Matrix4 proj;
-	int width, height;
-	SDL_GetWindowSize( window, &width, &height );
 	mat4_CreateOrthographicProjection( 0.0f, (float)width, 0.0f, (float)height, -1000.0f, 1000.0f, &proj );
 
 	for( int i = 0; i < NUM_CAMERAS; ++i ) {
@@ -128,7 +126,7 @@ int cam_GetInverseViewMatrix( int camera, Matrix4* out )
 Turns on render flags for the camera.
  Returns <0 if there's a problem.
 */
-int cam_TurnOnFlags( int camera, unsigned int flags )
+int cam_TurnOnFlags( int camera, uint32_t flags )
 {
 	assert( camera < NUM_CAMERAS );
 	cameras[camera].renderFlags |= flags;
@@ -139,7 +137,7 @@ int cam_TurnOnFlags( int camera, unsigned int flags )
 Turns off render flags for the camera.
  Returns <0 if there's a problem.
 */
-int cam_TurnOffFlags( int camera, unsigned int flags )
+int cam_TurnOffFlags( int camera, uint32_t flags )
 {
 	assert( camera < NUM_CAMERAS );
 	cameras[camera].renderFlags &= ~flags;
@@ -150,7 +148,7 @@ int cam_TurnOffFlags( int camera, unsigned int flags )
 Gets the flags for the camera.
  Returns 0 if there is something wrong with the index, also when no flags have been set.
 */
-unsigned int cam_GetFlags( int camera )
+uint32_t cam_GetFlags( int camera )
 {
 	assert( camera < NUM_CAMERAS );
 	return cameras[camera].renderFlags;

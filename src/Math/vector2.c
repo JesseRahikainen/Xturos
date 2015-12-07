@@ -1,4 +1,5 @@
 #include "vector2.h"
+#include "mathUtil.h"
 #include <assert.h>
 #include <math.h>
 #include <string.h>
@@ -138,10 +139,48 @@ float vec2_Normalize( Vector2* vec )
 
 	float mag = sqrtf( ( vec->v[0] * vec->v[0] ) + ( vec->v[1] * vec->v[1] ) );
 
-	vec->v[0] /= mag;
-	vec->v[1] /= mag;
+	if( mag != 0.0f ) {
+		vec->v[0] /= mag;
+		vec->v[1] /= mag;
+	}
 
 	return mag;
+}
+
+Vector2* vec2_NormalFromRot( float rotRad, Vector2* out )
+{
+	assert( out != NULL );
+
+	out->x = sinf( rotRad );
+	out->y = -cosf( rotRad );
+
+	return out;
+}
+
+float vec2_RotationRadians( const Vector2* v )
+{
+	assert( v != NULL );
+
+	float dir = atan2f( -v->y, -v->x ) - ( M_PI_F / 2.0f );
+	return dir;
+}
+
+Vector2* vec2_NormalFromSpineRot( float rotRad, Vector2* out )
+{
+	assert( out != NULL );
+
+	out->x = -sinf( rotRad );
+	out->y = -cosf( rotRad );
+
+	return out;
+}
+
+float vec2_SpineRotationRadians( const Vector2* v )
+{
+	assert( v != NULL );
+
+	float dir = atan2f( v->y, -v->x ) + ( M_PI_F / 2.0f );
+	return dir;
 }
 
 void vec2_Dump( const Vector2* vec, const char* extra )

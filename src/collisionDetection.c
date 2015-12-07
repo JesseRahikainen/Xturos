@@ -269,6 +269,20 @@ typedef int(*RayCastCheck)( Vector2* start, Vector2* dir, Collider* collider, fl
 RayCastCheck rayCastChecks[NUM_COLLIDER_TYPES] = { RayCastvAABB, RayCastvCircle };
 
 /*
+Finds the separation needed for c1 to move and not overlap c2.
+ Returns 1 if there is any overlap and puts the separation into outSeparation.
+ Returns 1 if there is no overlap.
+*/
+int collision_GetSeparation( Collider* c1, Collider* c2, Vector2* outSeparation )
+{
+	if( ( c1 == NULL ) || ( c2 == NULL ) || ( outSeparation == NULL ) ) {
+		return 0;
+	}
+
+	return collisionChecks[c1->type][c2->type]( c1, c2, outSeparation );
+}
+
+/*
 Finds and handles the all collisions between mainCollider and the colliders in the list.
  NOTE: You shouldn't modify the passed in list in the response.
 */
@@ -315,7 +329,7 @@ void collision_DetectAll( ColliderCollection firstCollection, ColliderCollection
 			continue;
 		}
 
-		for( int j = 0; j < secondCollection.count; ++i ) {
+		for( int j = 0; j < secondCollection.count; ++j ) {
 			secondCurrent = (Collider*)( secondData + ( j * secondCollection.stride ) );
 			if( ( secondCurrent == NULL ) || ( secondCurrent->type == CT_DEACTIVATED ) ) {
 				continue;
@@ -364,6 +378,48 @@ int collision_RayCast( Vector2 start, Vector2 end, ColliderCollection collection
 	}
 
 	return ret;
+}
+
+/*
+Finds the closest distance from the position to the collider, useful when you want the distance to object but not it's center.
+ Returns a negative number if there were any problems.
+ TODO: Find a way to remove the square root from the circle distance check
+*/
+float collision_Distance( Collider* collider, Vector2* pos )
+{
+	float dist = -1.0f;
+	
+	switch( collider->type ) {
+	case CT_CIRCLE: {
+		Vector2 diff;
+		vec2_Subtract( pos, &( collider->circle.center ), &diff );
+		dist = vec2_Mag( &diff ) - collider->circle.radius;
+		if( dist < 0.0f ) {
+			// inside the circle
+			dist = 0.0f;
+		}
+	} break;
+	case CT_AABB: {
+		dist = 0.0f;
+		Vector2 min;
+		Vector2 max;
+		vec2_Add( &( collider->aabb.center ), &( collider->aabb.halfDim ), &max );
+		vec2_Subtract( &( collider->aabb.center ), &( collider->aabb.halfDim ), &min );
+		
+		// calculates squared distance
+		if( pos->v[0] < min.v[0] ) { dist += ( ( min.v[0] - pos->v[0] ) * ( min.v[0] - pos->v[0] ) ); }
+		if( pos->v[0] > max.v[0] ) { dist += ( ( pos->v[0] - max.v[0] ) * ( pos->v[0] - max.v[0] ) ); }
+		if( pos->v[1] < min.v[1] ) { dist += ( ( min.v[1] - pos->v[1] ) * ( min.v[1] - pos->v[1] ) ); }
+		if( pos->v[1] > max.v[1] ) { dist += ( ( pos->v[1] - max.v[1] ) * ( pos->v[1] - max.v[1] ) ); }
+
+		dist = sqrtf( dist );
+	} break;
+	case CT_DEACTIVATED: {
+		dist = -1.0f;
+	} break;
+	}
+
+	return dist;
 }
 
 /*

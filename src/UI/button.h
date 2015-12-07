@@ -24,6 +24,13 @@ int btn_Create( Vector2 position, Vector2 size, const char* text, int fontID, in
 void btn_Destroy( int buttonIdx );
 void btn_DestroyAll( void );
 
+/*
+Handles the system level stuff.
+ Returns a number < 0 if there was a problem.
+*/
+int btn_RegisterSystem( void );
+void btn_UnRegisterSystem( void );
+
 void btn_Draw( void );
 void btn_Process( void );
 void btn_ProcessEvents( SDL_Event* sdlEvent );

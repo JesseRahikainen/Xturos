@@ -17,7 +17,7 @@ typedef struct {
 typedef struct {
 	GLuint vertexIndices[3];
 	float zPos;
-	unsigned int camFlags;
+	uint32_t camFlags;
 	GLuint texture;
 
 	ShaderType shaderType;
@@ -183,7 +183,7 @@ int triRenderer_Init( void )
 }
 
 int addTriangle( TriangleList* triList, Vector2 pos0, Vector2 pos1, Vector2 pos2, Vector2 uv0, Vector2 uv1, Vector2 uv2,
-	ShaderType shader, GLuint texture, Color color, int camFlags, char depth )
+	ShaderType shader, GLuint texture, Color color, uint32_t camFlags, int8_t depth )
 {
 	if( triList->lastTriIndex >= ( MAX_TRIS - 1 ) ) {
 		SDL_LogVerbose( SDL_LOG_CATEGORY_RENDER, "Triangle list full." );
@@ -222,14 +222,14 @@ int addTriangle( TriangleList* triList, Vector2 pos0, Vector2 pos1, Vector2 pos2
 We'll assume the array has three vertices in it.
  Return a value < 0 if there's a problem.
 */
-int triRenderer_AddVertices( Vector2* positions, Vector2* uvs, ShaderType shader, GLuint texture, Color color, int camFlags, char depth, int transparent )
+int triRenderer_AddVertices( Vector2* positions, Vector2* uvs, ShaderType shader, GLuint texture, Color color, uint32_t camFlags, int8_t depth, int transparent )
 {
 	return triRenderer_Add( positions[0], positions[1], positions[2], uvs[0], uvs[1], uvs[2],
 		shader, texture, color, camFlags, depth, transparent );
 }
 
 int triRenderer_Add( Vector2 pos0, Vector2 pos1, Vector2 pos2, Vector2 uv0, Vector2 uv1, Vector2 uv2, ShaderType shader, GLuint texture,
-	Color color, int camFlags, char depth, int transparent )
+	Color color, uint32_t camFlags, int8_t depth, int transparent )
 {
 	if( transparent ) {
 		return addTriangle( &transparentTriangles, pos0, pos1, pos2, uv0, uv1, uv2, shader, texture, color, camFlags, depth );
@@ -247,17 +247,12 @@ void triRenderer_Clear( void )
 	solidTriangles.lastTriIndex = -1;
 }
 
-static int sortShaderTypes( ShaderType st1, ShaderType st2 )
-{
-	return( (int)st1 - (int)st2 );
-}
-
 static int sortByRenderState( const void* p1, const void* p2 )
 {
 	Triangle* tri1 = (Triangle*)p1;
 	Triangle* tri2 = (Triangle*)p2;
 
-	int stDiff = sortShaderTypes( tri1->shaderType, tri2->shaderType );
+	int stDiff = ( (int)tri1->shaderType - (int)tri2->shaderType );
 	if( stDiff != 0 ) {
 		return stDiff;
 	}
@@ -284,7 +279,7 @@ static void generateVertexArray( TriangleList* triList )
 	GL( glBufferSubData( GL_ARRAY_BUFFER, 0, sizeof( Vertex ) * ( ( triList->lastTriIndex + 1 ) * 3 ), triList->vertices ) );
 }
 
-static void drawTriangles( int currCamera, TriangleList* triList )
+static void drawTriangles( uint32_t currCamera, TriangleList* triList )
 {
 	// create the index buffers to access the vertex buffer
 	//  TODO: Test to see if having the index buffer or the vertex buffer in order is faster
@@ -292,7 +287,7 @@ static void drawTriangles( int currCamera, TriangleList* triList )
 	int triIdx = 0;
 	ShaderType lastBoundShader = NUM_SHADERS;
 	Matrix4 vpMat;
-	unsigned int camFlags = 0;
+	uint32_t camFlags = 0;
 
 	// we'll only be accessing the one vertex array
 	GL( glBindVertexArray( triList->VAO ) );

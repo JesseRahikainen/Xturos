@@ -18,6 +18,10 @@ typedef struct {
 
 static const Vector2 VEC2_ZERO = { 0.0f, 0.0f };
 static const Vector2 VEC2_ONE = { 1.0f, 1.0f };
+static const Vector2 VEC2_UP = { 0.0f, -1.0f };
+static const Vector2 VEC2_DOWN = { 0.0f, 1.0f };
+static const Vector2 VEC2_LEFT = { -1.0f, 0.0f };
+static const Vector2 VEC2_RIGHT = { 1.0f, 0.0f };
 
 Vector2* vec2_Add( const Vector2* v1, const Vector2* v2, Vector2* out );
 Vector2* vec2_Subtract( const Vector2* v1, const Vector2* v2, Vector2* out );
@@ -38,6 +42,12 @@ float vec2_MagSqrd( const Vector2* vec );
 float vec2_Dist( const Vector2* v1, const Vector2* v2 );
 float vec2_DistSqrd( const Vector2* v1, const Vector2* v2 );
 float vec2_Normalize( Vector2* vec );
+
+Vector2* vec2_NormalFromRot( float rotRad, Vector2* out );
+float vec2_RotationRadians( const Vector2* v );
+
+Vector2* vec2_NormalFromSpineRot( float rotRad, Vector2* out );
+float vec2_SpineRotationRadians( const Vector2* v );
 
 void vec2_Dump( const Vector2* vec, const char* extra );
 

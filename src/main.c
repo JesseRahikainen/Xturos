@@ -17,6 +17,7 @@
 #include "Utils/cfgFile.h"
 
 #include "UI/text.h"
+#include "Input/input.h"
 
 #include "gameState.h"
 #include "Game/gameScreen.h"
@@ -26,6 +27,8 @@
 
 #define WINDOW_WIDTH 800
 #define WINDOW_HEIGHT 600
+#define RENDER_WIDTH 600
+#define RENDER_HEIGHT 800
 
 static int running;
 static int focused;
@@ -81,7 +84,7 @@ int initEverything( void )
 	// memory first, won't be used everywhere at first so lets keep the initial allocation low, 64 MB
 	mem_Init( 64 * 1024 * 1024 );
 
-	/* then SDL */
+	// then SDL
 	SDL_SetMainReady( );
 	if( SDL_Init( SDL_INIT_TIMER | SDL_INIT_AUDIO | SDL_INIT_VIDEO | SDL_INIT_EVENTS ) != 0 ) {
 		SDL_LogError( SDL_LOG_CATEGORY_APPLICATION, SDL_GetError( ) );
@@ -91,7 +94,7 @@ int initEverything( void )
 	atexit( cleanUp );
 
 	// set up opengl
-	// try opening and parsing the config file
+	//  try opening and parsing the config file
 	int majorVersion;
 	int minorVersion;
 	int redSize;
@@ -108,19 +111,17 @@ int initEverything( void )
 	cfg_GetInt( oglCFGFile, "DEPTH_SIZE", 16, &depthSize );
 	cfg_CloseFile( oglCFGFile );
 
+	// todo: commenting these out breaks the font rendering, something wrong with the texture that's created
+	//  note: without these it uses the values loaded in from the .cfg file, which is 3.3
 	majorVersion = 2;
 	minorVersion = 1;
-	// want the core functionality
 	SDL_GL_SetAttribute( SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE );
 	SDL_GL_SetAttribute( SDL_GL_CONTEXT_MAJOR_VERSION, majorVersion );
 	SDL_GL_SetAttribute( SDL_GL_CONTEXT_MINOR_VERSION, minorVersion );
-	// want 8 bits minimum per color
 	SDL_GL_SetAttribute( SDL_GL_RED_SIZE, redSize );
     SDL_GL_SetAttribute( SDL_GL_GREEN_SIZE, greenSize );
     SDL_GL_SetAttribute( SDL_GL_BLUE_SIZE, blueSize );
-	// want 16 bit depth buffer
     SDL_GL_SetAttribute( SDL_GL_DEPTH_SIZE, depthSize );
-	// want it to be double buffered
     SDL_GL_SetAttribute( SDL_GL_DOUBLEBUFFER, 1 );
 
 	window = SDL_CreateWindow( windowName, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
@@ -131,41 +132,48 @@ int initEverything( void )
 	}
 	SDL_LogInfo( SDL_LOG_CATEGORY_APPLICATION, "SDL OpenGL window successfully created" );
 
-	/* Load and create images */
-	if( gfx_Init( window ) < 0 ) {
+	// Create rendering
+	if( gfx_Init( window, RENDER_WIDTH, RENDER_HEIGHT ) < 0 ) {
 		return -1;
 	}
 	SDL_LogInfo( SDL_LOG_CATEGORY_APPLICATION, "Rendering successfully initialized" );
 
-	/* Load and create sounds and music */
+	// Create sound mixer
 	if( initMixer( ) < 0 ) {
 		return -1;
 	}
 	SDL_LogInfo( SDL_LOG_CATEGORY_APPLICATION, "Mixer successfully initialized" );
 
 	cam_Init( );
-	cam_SetProjectionMatrices( window );
+	cam_SetProjectionMatrices( RENDER_WIDTH, RENDER_HEIGHT );
 	SDL_LogInfo( SDL_LOG_CATEGORY_APPLICATION, "Cameras successfully initialized" );
+
+	input_InitMouseInputArea( RENDER_WIDTH, RENDER_HEIGHT );
+	input_UpdateMouseWindow( WINDOW_WIDTH, WINDOW_HEIGHT );
+	SDL_LogInfo( SDL_LOG_CATEGORY_APPLICATION, "Input successfully initialize" );
 
 	return 0;
 }
 
 /* input processing */
-void processEvents( int systemOnly )
+void processEvents( int windowsEventsOnly )
 {
 	SDL_Event e;
 	while( SDL_PollEvent( &e ) != 0 ) {
 		if( e.type == SDL_WINDOWEVENT ) {
 			switch( e.window.event ) {
+			case SDL_WINDOWEVENT_RESIZED:
+				// data1 == width, data2 == height
+				gfx_SetWindowSize( e.window.data1, e.window.data2 );
+				input_UpdateMouseWindow( e.window.data1, e.window.data2 );
+				break;
+
+			// will want to handle these messages for pausing and unpausing the game when they lose focus
 			case SDL_WINDOWEVENT_FOCUS_GAINED:
 				focused = 1;
-				SDL_Log("Window %d gained keyboard focus",
-						e.window.windowID);
 				break;
 			case SDL_WINDOWEVENT_FOCUS_LOST:
 				focused = 0;
-				SDL_Log("Window %d lost keyboard focus",
-						e.window.windowID);
 				break;
 			}
 		}
@@ -174,11 +182,12 @@ void processEvents( int systemOnly )
 			running = 0;
 		}
 
-		if( systemOnly ) {
+		if( windowsEventsOnly ) { 
 			continue;
 		}
 
 		sys_ProcessEvents( &e );
+		input_ProcessEvents( &e );
 		gsmProcessEvents( &globalFSM, &e );
 	}
 }
@@ -205,7 +214,7 @@ int main( int argc, char** argv )
 
 	srand( (unsigned int)time( NULL ) );
 
-	/* main loop */
+	//***** main loop *****
 	running = 1;
 	lastTicks = SDL_GetTicks( );
 	physicsTickAcc = 0;
@@ -214,23 +223,25 @@ int main( int argc, char** argv )
 
 	while( running ) {
 
+		currTicks = SDL_GetTicks( );
+		tickDelta = currTicks - lastTicks;
+		lastTicks = currTicks;
+
 		if( !focused ) {
 			processEvents( 1 );
 			continue;
 		}
 
-		currTicks = SDL_GetTicks( );
-		tickDelta = currTicks - lastTicks;
-		lastTicks = currTicks;
-
 		physicsTickAcc += tickDelta;
 
-		/* process input */
+		// process input
 		processEvents( 0 );
+
+		// handle per frame update
 		sys_Process( );
 		gsmProcess( &globalFSM );
 
-		/* process movement and collision */
+		// process movement, collision, and other things that require a delta time
 		numPhysicsProcesses = 0;
 		while( physicsTickAcc > PHYSICS_TICK ) {
 			sys_PhysicsTick( PHYSICS_DELTA );
@@ -239,18 +250,19 @@ int main( int argc, char** argv )
 			++numPhysicsProcesses;
 		}
 
-		/* rendering */
+		// rendering
 		if( numPhysicsProcesses > 0 ) {
-			/* set the new render positions */
+			// set the new render positions
 			renderDelta = PHYSICS_DELTA * (float)numPhysicsProcesses;
 			gfx_ClearDrawCommands( renderDelta );
 			cam_FinalizeStates( renderDelta );
 
-			/* render all the things */
+			// set up rendering for everything
 			sys_Draw( );
 			gsmDraw( &globalFSM );
 		}
 
+		// do the actual drawing for this frame
 		float dt = (float)tickDelta / 1000.0f;
 		cam_Update( dt );
 		gfx_Render( dt );
