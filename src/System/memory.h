@@ -6,6 +6,9 @@
 int mem_Init( size_t totalSize );
 void mem_CleanUp( void );
 void mem_Log( void );
+void mem_Verify( void );
+int mem_GetVerify( void );
+void mem_Report( void );
 
 #define mem_Allocate( s ) mem_Allocate_Data( (s), __FILE__, __LINE__ )
 #define mem_Resize( p, s ) mem_Resize_Data( (p), (s), __FILE__, __LINE__ )

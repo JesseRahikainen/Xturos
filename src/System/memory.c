@@ -143,6 +143,7 @@ static void* growBlock( MemoryBlockHeader* header, size_t newSize, const char* f
 		while( ( scan != NULL ) && !( scan->flags & IN_USE_FLAG ) ) {
 			header->size += scan->size + sizeof( MemoryBlockHeader );
 			scan = scan->next;
+			header->next = scan;
 		}
 
 		// see if there's enough left over to create a new block
@@ -232,9 +233,67 @@ void mem_Log( void )
 	SDL_Log( "=== End Memory Use Log ===" );
 }
 
+void mem_Verify( void )
+{
+	// just follow the list, verifying that the guard value is correct
+	MemoryBlockHeader* header = (MemoryBlockHeader*)( memoryBlock.memory );
+	while( header != NULL ) {
+		assert( header->guardValue == GUARD_VALUE );
+		header = header->next;
+	}
+}
+
+int mem_GetVerify( void )
+{
+	// just follow the list, verifying that the guard value is correct
+	MemoryBlockHeader* header = (MemoryBlockHeader*)( memoryBlock.memory );
+	while( header != NULL ) {
+		if( header->guardValue != GUARD_VALUE ) {
+			return -1;
+		}
+		header = header->next;
+	}
+
+	return 0;
+}
+
+void mem_Report( void )
+{
+	size_t total = 0;
+	size_t inUse = 0;
+	size_t overhead = 0;
+	uint32_t fragments = 0; // blocks not in use
+
+	MemoryBlockHeader* header = (MemoryBlockHeader*)( memoryBlock.memory );
+	while( header != NULL ) {
+		if( header->flags & IN_USE_FLAG ) {
+			inUse += header->size;
+		} else {
+			++fragments;
+		}
+		overhead += sizeof( MemoryBlockHeader );
+		total += ( header->size + sizeof( MemoryBlockHeader ) );
+
+		header = header->next;
+	}
+
+	// TODO: Find out why %zu doesn't work...
+	SDL_Log( "Memory Report:" );
+	SDL_Log( "  Total: %u", total );
+	SDL_Log( "  In Use: %u", inUse );
+	SDL_Log( "  Overhead: %u", overhead );
+	SDL_Log( "  Fragments: %u", fragments );
+}
+
 void* mem_Allocate_Data( size_t size, const char* fileName, const int line )
 {
 	assert( memoryBlock.memory != NULL );
+
+	// if the size is 0 malloc can return NULL or an unusable pointer, NULL works better for us as
+	//  it avoids littering the memory with zero sized headers
+	if( size == 0 ) {
+		return NULL;
+	}
 
 	// we'll just do first fit, if we can't find a spot we'll just return NULL
 	char* result = NULL;
