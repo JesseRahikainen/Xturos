@@ -37,7 +37,7 @@ Gets the code associated with response function. Puts them into the keyCodes arr
 void input_GetKeyPressBindings( KeyResponse response, SDL_Keycode* keyCodes, int maxKeyCodes );
 void input_GetKeyReleaseBindings( KeyResponse response, SDL_Keycode* keyCodes, int maxKeyCodes );
 
-/***** Mouse Position Input *****/
+/***** Mouse Input *****/
 /*
 Sets up the coordinates for relative mouse position handling.
 */
@@ -52,6 +52,34 @@ void input_UpdateMouseWindow( int windowWidth, int windowHeight );
 Gets the relative position of the mouse.
 */
 int input_GetMousePostion( Vector2* out );
+
+/*
+Clears all current mouse button bindings.
+*/
+void input_ClearAllMouseButtonBinds( void );
+
+/*
+Clears all mouse button bindings associated with the passed in button code.
+*/
+void input_ClearMouseButtonBinds( Uint8 button );
+
+/*
+Clears all mouse button bindsings associated with the passed in response.
+*/
+void input_ClearMouseButtonReponse( KeyResponse response );
+
+/*
+Binds a function response when a key is pressed down.
+ Returns < 0 if there was a problem binding the key.
+*/
+int input_BindOnMouseButtonPress( Uint8 button, KeyResponse response );
+
+/*
+Binds a function response when a key is released.
+ Returns < 0 if there was a problem binding the key.
+*/
+int input_BindOnMouseButtonRelease( Uint8 button, KeyResponse response );
+
 
 /***** General Usage Functions *****/
 /*

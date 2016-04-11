@@ -5,6 +5,8 @@
 #include <SDL_log.h>
 #include <SDL_rwops.h>
 #include <assert.h>
+#include <stdbool.h>
+#include <stdint.h>
 
 #include "../System/memory.h"
 
@@ -17,12 +19,18 @@
 
 #include "../Utils/stretchyBuffer.h"
 #include "../Graphics/images.h"
+#include "../Math/mathUtil.h"
 
 typedef struct {
 	int codepoint;
 	int imageID;
 	float advance;
 } Glyph;
+
+static const uint32_t LINE_FEED = 0xA;
+
+// used for when we want to modify a string but don't want to change what was passed in
+static uint32_t* sbStringCodepointBuffer = NULL;
 
 #define MAX_FONTS 32
 typedef struct {
@@ -31,6 +39,8 @@ typedef struct {
 	// will be a stretchy buffer
 	Glyph* glyphsBuffer;
 	int packageID;
+
+	int missingCharGlyphIdx;
 
 	float descent;
 	float lineGap;
@@ -60,6 +70,8 @@ int txt_Init( void )
 		}
 		fonts[i].glyphsBuffer = NULL;
 	}
+
+	sb_Add( sbStringCodepointBuffer, 1024 );
 
 	return 0;
 }
@@ -219,6 +231,10 @@ int txt_LoadFont( const char* fileName, float pixelHeight )
 		fonts[newFont].glyphsBuffer[i].imageID = retIDs[i];
 		fonts[newFont].glyphsBuffer[i].advance = fontPackRange.chardata_for_range[i].xadvance;
 
+		if( fonts[newFont].glyphsBuffer[i].codepoint == missingChar ) {
+			fonts[newFont].missingCharGlyphIdx = i;
+		}
+
 		// set the offset for each glyph, the x0, y0, x1, and y1 of the quad determines the coordinates of the rectangle to use to render
 		//  the glyph as an offset of it's position, so we just set the offset as the middle point of that rectangle
 		stbtt_aligned_quad quad;
@@ -261,25 +277,25 @@ void txt_UnloadFont( int fontID )
 
 Glyph* getCodepointGlyph( int fontID, int codepoint )
 {
+	Font* font = &( fonts[fontID] );
 	Glyph* out = NULL;
-	int glyphCount = sb_Count( fonts[fontID].glyphsBuffer );
+	int glyphCount = sb_Count( font->glyphsBuffer );
 	for( int i = 0; i < glyphCount; ++i ) {
-		if( fonts[fontID].glyphsBuffer[i].codepoint == codepoint ) {
-			return &( fonts[fontID].glyphsBuffer[i] );
+		if( font->glyphsBuffer[i].codepoint == codepoint ) {
+			return &( font->glyphsBuffer[i] );
 		}
 	}
-
-	return NULL;
+	return &( font->glyphsBuffer[ font->missingCharGlyphIdx ] );
 }
 
 /*
 Gets the code point from a string, will advance the string past the current codepoint to the next.
 */
-int getUTF8CodePoint( const uint8_t** strData )
+uint32_t getUTF8CodePoint( const uint8_t** strData )
 {
 	// TODO: Get this working with actual UTF-8 and not just the ASCII subset
 	//  https://tools.ietf.org/html/rfc3629
-	int c = (**strData);
+	uint32_t c = (**strData);
 	++(*strData);
 	return c;
 }
@@ -291,17 +307,26 @@ float calcStringRenderWidth( const uint8_t* str, int fontID )
 {
 	float width = 0.0f;
 
-	int codepoint = 0;
+	uint32_t codepoint = 0;
 	do {
 		codepoint = getUTF8CodePoint( &str );
-		if( ( codepoint == 0 ) || ( codepoint == 0xA )) {
+		if( ( codepoint == 0 ) || ( codepoint == LINE_FEED ) ) {
 			// end of string/line do nothing
 		} else {
 			Glyph* glyph = getCodepointGlyph( fontID, codepoint );
 			width += glyph->advance;
 		}
-	} while( ( codepoint != 0 ) && ( codepoint != 0xA ) );
+	} while( ( codepoint != 0 ) && ( codepoint != LINE_FEED ) );
 
+	return width;
+}
+
+float calcCodepointsRenderWidth( const uint32_t* str, int fontID )
+{
+	float width = 0.0f;
+	for( int i = 0; ( str[i] != 0 ) && ( str[i] != LINE_FEED ); ++i ) {
+		width += getCodepointGlyph( fontID, str[i] )->advance;
+	}
 	return width;
 }
 
@@ -321,11 +346,26 @@ void positionStringStartX( const uint8_t* str, int fontID, HorizTextAlignment al
 	}
 }
 
+void positionCodepointsStartX( const uint32_t* codeptStr, int fontID, HorizTextAlignment align, float width, Vector2* inOutPos )
+{
+	switch( align ) {
+	case HORIZ_ALIGN_RIGHT:
+		inOutPos->x += width - calcCodepointsRenderWidth( codeptStr, fontID );
+		break;
+	case HORIZ_ALIGN_CENTER:
+		inOutPos->x += ( width / 2.0f ) - ( calcCodepointsRenderWidth( codeptStr, fontID ) / 2.0f );
+		break;
+	/*case HORIZ_ALIGN_LEFT:
+		// nothing to do
+		break;*/
+	}
+}
+
 float calcRenderHeight( const uint8_t* str, int fontID )
 {
 	float height = fonts[fontID].nextLineDescent;
 
-	int codepoint = 0;
+	uint32_t codepoint = 0;
 	do {
 		codepoint = getUTF8CodePoint( &str );
 		if( codepoint == 0xA ) {
@@ -360,18 +400,17 @@ void positionStringStartY( const uint8_t* str, int fontID, VertTextAlignment ali
 Draws a string on the screen. The base line is determined by pos.
 */
 void txt_DisplayString( const char* utf8Str, Vector2 pos, Color clr, HorizTextAlignment hAlign, VertTextAlignment vAlign,
-	int fontID, int camFlags, char depth )
+	int fontID, int camFlags, int8_t depth )
 {
 	assert( utf8Str != NULL );
 
 	// TODO: Alignment options?
-	// TODO: Handle missing codepoint correctly
 	// TODO: Handle multi-line text better (sometimes letters overlap right now)
 	const uint8_t* str = (uint8_t*)utf8Str;
 	Vector2 currPos = pos;
 	positionStringStartX( str, fontID, hAlign, &currPos );
 	positionStringStartY( str, fontID, vAlign, &currPos );
-	int codepoint = 0;
+	uint32_t codepoint = 0;
 	do {
 		codepoint = getUTF8CodePoint( &str );
 		if( codepoint == 0 ) {
@@ -389,4 +428,157 @@ void txt_DisplayString( const char* utf8Str, Vector2 pos, Color clr, HorizTextAl
 			}
 		}
 	} while( codepoint != 0 );
+}
+
+// returns whether we can break the line at the specified codepoint
+//  gotten from here: https://en.wikipedia.org/wiki/Whitespace_character#Unicode
+bool isBreakableCodepoint( int codepoint )
+{
+	return ( ( codepoint == 9 ) ||
+			 ( codepoint == 32 ) ||
+			 ( codepoint == 5760 ) ||
+			 ( codepoint == 8192 ) ||
+			 ( codepoint == 8193 ) ||
+			 ( codepoint == 8194 ) ||
+			 ( codepoint == 8195 ) ||
+			 ( codepoint == 8196 ) ||
+			 ( codepoint == 8197 ) ||
+			 ( codepoint == 8198 ) ||
+			 ( codepoint == 8200 ) ||
+			 ( codepoint == 8201 ) ||
+			 ( codepoint == 8202 ) ||
+			 ( codepoint == 8287 ) ||
+			 ( codepoint == 12288 ) ||
+			 ( codepoint == 6158 ) ||
+			 ( codepoint == 8203 ) ||
+			 ( codepoint == 8204 ) ||
+			 ( codepoint == 8205 ) );
+}
+
+void convertOutToBuffer( const uint8_t* utf8Str )
+{
+	const uint8_t* str = utf8Str;
+	uint32_t codepoint;
+	sb_Clear( sbStringCodepointBuffer );
+	do {
+		codepoint = getUTF8CodePoint( &str );
+		sb_Push( sbStringCodepointBuffer, codepoint );
+	} while( codepoint != 0 );
+}
+
+/*
+Draws a string on the screen to an area. Splits up lines and such.
+*/
+#include <string.h>
+void txt_DisplayTextArea( const uint8_t* utf8Str, Vector2 upperLeft, Vector2 size, Color clr,
+	HorizTextAlignment hAlign, VertTextAlignment vAlign, int fontID, int camFlags, int8_t depth )
+{
+	int test = 0;
+	assert( utf8Str != NULL );
+
+	const uint8_t* str = (uint8_t*)utf8Str;
+
+	// don't bother rendering anything if there are no lines to be able to draw
+	if( (int)( size.y / fonts[fontID].nextLineDescent ) <= 0 ) {
+		return;
+	}
+
+	// puts the converted string int sbStringCodepointBuffer
+	convertOutToBuffer( (uint8_t*)utf8Str );
+
+	float currentLength = 0.0f;
+	float currentHeight = 0.0f;
+	uint32_t* stringPos = sbStringCodepointBuffer;
+	size_t lastBreakPoint = SIZE_MAX;
+
+	// the height and width are dependent on each other, we'll also find the break
+	//  points on lines caused by wrapping and insert line breaks where appropriate
+	// the main problem will be if the break is in the middle of a word instead of
+	//  just replacing a white space character
+	Vector2 maxSize = VEC2_ZERO;
+	maxSize.y = fonts[fontID].nextLineDescent;
+	float lastBreakPointSize = 0.0f;
+	uint32_t maxLineCnt = 0;
+	for( size_t i = 0; i < sb_Count( sbStringCodepointBuffer ); ++i ) {
+//#error breaks in here if the first line is longer than the allowed length
+		if( isBreakableCodepoint( sbStringCodepointBuffer[i] ) ) {
+			// store the position for later use
+			lastBreakPoint = i;
+
+			// want to ignore the character since if we're using it that means
+			//  it will be replaced
+			lastBreakPointSize = currentLength;
+		}
+
+		if( sbStringCodepointBuffer[i] != LINE_FEED ) {
+			Glyph* glyph = getCodepointGlyph( fontID, sbStringCodepointBuffer[i] );
+			currentLength += glyph->advance;
+			
+			if( currentLength > size.x ) {
+				if( lastBreakPoint != SIZE_MAX ) {
+					// have a valid breakpoint, replace it with a new line
+					sbStringCodepointBuffer[lastBreakPoint] = LINE_FEED;
+					i = lastBreakPoint;
+				} else {
+					// no valid breakpoint, put the breakpoint in the middle
+					//  of the word
+					--i;
+					sb_Insert( sbStringCodepointBuffer, i, LINE_FEED );
+					lastBreakPointSize = currentLength - glyph->advance;
+				}
+			}
+		}
+
+		// if we're at a line feed, or reached the max width
+		if( sbStringCodepointBuffer[i] == LINE_FEED ) {
+			maxSize.x = MAX( maxSize.x, lastBreakPointSize );
+			currentLength = 0.0f;
+			lastBreakPoint = SIZE_MAX;
+			lastBreakPointSize = 0.0f;
+
+			if( ( maxSize.y + fonts[fontID].nextLineDescent ) > size.y ) {
+				// past the bottom of the area we want to draw the text in
+				//  truncate the string here
+				sbStringCodepointBuffer[i] = 0;
+				break;
+			}
+			++maxLineCnt;
+			maxSize.y += fonts[fontID].nextLineDescent;
+		}
+	}
+
+	// now based on the calculated height we can start rendering and positioning stuff
+	//  since we've preprocessed the string and know that all the lines will fit in the
+	//  maximum width we can just use the standard width calculation we've already made
+
+	Vector2 renderPos = upperLeft;
+	switch( vAlign ) {
+	case VERT_ALIGN_BASE_LINE:
+	case VERT_ALIGN_TOP:
+		//renderPos.y += fonts[fontID].descent + fonts[fontID].nextLineDescent;
+		renderPos.y = upperLeft.y + fonts[fontID].descent + fonts[fontID].nextLineDescent;
+		break;
+	case VERT_ALIGN_CENTER:
+		renderPos.y = upperLeft.y + ( size.y / 2.0f ) - ( maxSize.y / 2.0f ) + ( fonts[fontID].ascent / 2.0f );
+		break;
+	case VERT_ALIGN_BOTTOM:
+		renderPos.y = ( upperLeft.y + size.y ) - maxSize.y + fonts[fontID].nextLineDescent + fonts[fontID].descent;
+		//renderPos.y += fonts[fontID].ascent - ( maxSize.y / 2.0f );
+		break;
+	}
+	positionCodepointsStartX( sbStringCodepointBuffer, fontID, hAlign, size.x, &renderPos );
+	for( size_t i = 0; ( i < sb_Count( sbStringCodepointBuffer ) ) && ( sbStringCodepointBuffer[i] != 0 ); ++i ) {
+		if( sbStringCodepointBuffer[i] == LINE_FEED ) {
+			// new line
+			renderPos.x = upperLeft.x;
+			renderPos.y += fonts[fontID].nextLineDescent;
+			positionCodepointsStartX( &( sbStringCodepointBuffer[i+1] ), fontID, hAlign, size.x, &renderPos );
+		} else {
+			Glyph* glyph = getCodepointGlyph( fontID, sbStringCodepointBuffer[i] );
+			if( glyph != NULL ) {
+				img_Draw_c( glyph->imageID, camFlags, renderPos, renderPos, clr, clr, depth );
+				renderPos.x += glyph->advance;
+			}
+		}
+	}
 }

@@ -3,9 +3,10 @@
 
 #include "Math/Vector2.h"
 
-int particles_Init( void );
-void particles_CleanUp( void );
-void particles_Spawn( Vector2 startPos, Vector2 startVel, Vector2 gravity, float rotRad,
+void initParticles( );
+void spawnParticle( Vector2 startPos, Vector2 startVel, Vector2 gravity,
 	float lifeTime, float fadeStart, int image, unsigned int camFlags, char layer );
+void particlesPhysicsTick( float dt );
+void particlesDraw( );
 
 #endif /* inclusion guard */

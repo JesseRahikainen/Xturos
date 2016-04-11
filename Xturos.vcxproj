@@ -107,11 +107,13 @@
     <ClInclude Include="src\Graphics\glDebugging.h" />
     <ClInclude Include="src\Graphics\graphics.h" />
     <ClInclude Include="src\Graphics\images.h" />
+    <ClInclude Include="src\Graphics\scissor.h" />
     <ClInclude Include="src\Graphics\shaderManager.h" />
     <ClInclude Include="src\Graphics\spineGfx.h" />
     <ClInclude Include="src\Graphics\sprites.h" />
     <ClInclude Include="src\Graphics\imageSheets.h" />
     <ClInclude Include="src\Graphics\triRendering.h" />
+    <ClInclude Include="src\IMGUI\IMGUI.h" />
     <ClInclude Include="src\Input\input.h" />
     <ClInclude Include="src\Math\mathUtil.h" />
     <ClInclude Include="src\Math\matrix4.h" />
@@ -144,11 +146,13 @@
     <ClCompile Include="src\Graphics\glDebugging.c" />
     <ClCompile Include="src\Graphics\graphics.c" />
     <ClCompile Include="src\Graphics\images.c" />
+    <ClCompile Include="src\Graphics\scissor.c" />
     <ClCompile Include="src\Graphics\shaderManager.c" />
     <ClCompile Include="src\Graphics\spineGfx.c" />
     <ClCompile Include="src\Graphics\sprites.c" />
     <ClCompile Include="src\Graphics\imageSheets.c" />
     <ClCompile Include="src\Graphics\triRendering.c" />
+    <ClCompile Include="src\IMGUI\IMGUI.c" />
     <ClCompile Include="src\Input\input.c" />
     <ClCompile Include="src\main.c" />
     <ClCompile Include="src\Math\mathUtil.c" />

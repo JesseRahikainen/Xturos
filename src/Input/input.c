@@ -9,10 +9,18 @@ typedef struct {
 	KeyResponse response;
 } KeyBindings;
 
+typedef struct {
+	Uint8 button;
+	KeyResponse response;
+} MouseButtonBindings;
+
 #define MAX_BINDINGS 32
 
 static KeyBindings keyDownBindings[MAX_BINDINGS];
 static KeyBindings keyUpBindings[MAX_BINDINGS];
+
+static MouseButtonBindings mouseButtonDownBindings[MAX_BINDINGS];
+static MouseButtonBindings mouseButtonUpBindings[MAX_BINDINGS];
 
 /*
 Clears all the current key bindings.
@@ -132,7 +140,7 @@ void handleKeyEvent( SDL_Keycode code, KeyBindings* bindingsList )
 	}
 }
 
-/***** Mouse Position Input *****/
+/***** Mouse Input *****/
 static Vector2 mousePosition;
 static int mousePosValid;
 
@@ -195,6 +203,94 @@ int input_GetMousePostion( Vector2* out )
 	return mousePosValid;
 }
 
+/*
+Clears all current mouse button bindings.
+*/
+void input_ClearAllMouseButtonBinds( void )
+{
+	for( int i = 0; i < MAX_BINDINGS; ++i ) {
+		mouseButtonDownBindings[i].response = NULL;/*
+Clears all mouse button bindsings associated with the passed in response.
+*/
+void input_ClearMouseButtonReponse( KeyResponse response );
+		mouseButtonUpBindings[i].response = NULL;
+	}
+}
+
+/*
+Clears all key bindings assocated with the passed in key code.
+*/
+void input_ClearMouseButtonBinds( Uint8 button )
+{
+	for( int i = 0; i < MAX_BINDINGS; ++i ) {
+		if( mouseButtonDownBindings[i].button == button ) {
+			mouseButtonDownBindings[i].response = NULL;
+		}
+		if( mouseButtonUpBindings[i].button == button ) {
+			mouseButtonUpBindings[i].response = NULL;
+		}
+	}
+}
+
+/*
+Clears all mouse button bindsings associated with the passed in response.
+*/
+void input_ClearMouseButtonReponse( KeyResponse response )
+{
+	for( int i = 0; i < MAX_BINDINGS; ++i ) {
+		if( mouseButtonDownBindings[i].response == response ) {
+			mouseButtonDownBindings[i].response = NULL;
+		}
+		if( mouseButtonUpBindings[i].response == response ) {
+			mouseButtonUpBindings[i].response = NULL;
+		}
+	}
+}
+
+/*
+Finds the first unused binding in the list.
+ Return < 0 if we don't find a spot.
+*/
+int bindToMouseList( Uint8 button, KeyResponse response, MouseButtonBindings* bindingsList )
+{
+	if( response == NULL ) {
+		SDL_LogDebug( SDL_LOG_CATEGORY_APPLICATION, "Attempting to bind a mouse button with a NULL response." );
+		return -1;
+	}
+
+	int idx;
+	for( idx = 0; ( idx < MAX_BINDINGS ) && ( bindingsList[idx].response != NULL ); ++idx )
+		;
+
+	if( idx >= MAX_BINDINGS ) {
+		SDL_LogDebug( SDL_LOG_CATEGORY_APPLICATION, "Mouse button binding list full, increase size of bind list." );
+		return -1;
+	}
+
+	bindingsList[idx].button = button;
+	bindingsList[idx].response = response;
+
+	return 0;
+}
+
+/*
+Binds a function response when a key is pressed down.
+ Returns < 0 if there was a problem binding the key.
+*/
+int input_BindOnMouseButtonPress( Uint8 button, KeyResponse response )
+{
+	return bindToMouseList( button, response, mouseButtonDownBindings );
+}
+
+/*
+Binds a function response when a key is released.
+ Returns < 0 if there was a problem binding the key.
+*/
+int input_BindOnMouseButtonRelease( Uint8 button, KeyResponse response )
+{
+	return bindToMouseList( button, response, mouseButtonUpBindings );
+}
+
 static void processMouseMovementEvent( SDL_Event* e )
 {
 	mousePosition.x = (float)( e->motion.x );
@@ -209,6 +305,18 @@ static void processMouseMovementEvent( SDL_Event* e )
 					  ( mousePosition.y >= 0.0f ) &&
 					  ( mousePosition.x <= mouseInputArea.x ) &&
 					  ( mousePosition.y <= mouseInputArea.y ) );
+}
+
+/*
+Handles a mouse button event.
+*/
+void handleMouseButtonEvent( Uint8 button, MouseButtonBindings* bindingsList )
+{
+	for( int i = 0; i < MAX_BINDINGS; ++i ) {
+		if( ( bindingsList[i].button == button ) && ( bindingsList[i].response != NULL ) ) {
+			bindingsList[i].response( );
+		}
+	}
 }
 
 /***** General Usage Functions *****/
@@ -228,6 +336,12 @@ void input_ProcessEvents( SDL_Event* e )
 		break;
 	case SDL_KEYUP:
 		handleKeyEvent( e->key.keysym.sym, keyUpBindings );
+		break;
+	case SDL_MOUSEBUTTONDOWN:
+		handleMouseButtonEvent( e->button.button, mouseButtonDownBindings );
+		break;
+	case SDL_MOUSEBUTTONUP:
+		handleMouseButtonEvent( e->button.button, mouseButtonUpBindings );
 		break;
 	}
 }

@@ -3,7 +3,11 @@
 #include "Graphics/color.h"
 #include "Math/MathUtil.h"
 
+#include "System/systems.h"
+
 #include <string.h>
+
+static int systemID = -1;
 
 struct Particle {
 	Vector2 currRenderPos;
@@ -17,8 +21,9 @@ struct Particle {
 	Color futureColor;
 	float currScale;
 	float futureScale;
+	float rotRad;
 	int image;
-	char layer;
+	char depth;
 	unsigned int camFlags;
 };
 
@@ -27,39 +32,7 @@ struct Particle {
 int lastParticle;
 static struct Particle particles[MAX_NUM_PARTICLES];
 
-void initParticles( )
-{
-	lastParticle = -1;
-}
-
-void spawnParticle( Vector2 startPos, Vector2 startVel, Vector2 gravity,
-	float lifeTime, float fadeStart, int image, unsigned int camFlags, char layer )
-{
-	if( lastParticle >= ( MAX_NUM_PARTICLES - 1 ) ) {
-		return;
-	}
-
-	++lastParticle;
-	particles[lastParticle].currRenderPos = startPos;
-	particles[lastParticle].futureRenderPos = startPos;
-	particles[lastParticle].velocity = startVel;
-	particles[lastParticle].gravity = gravity;
-	particles[lastParticle].lifeTime = lifeTime;
-	particles[lastParticle].fadeStart = MIN( fadeStart, lifeTime );
-	particles[lastParticle].lifeElapsed = 0;
-	particles[lastParticle].image = image;
-	particles[lastParticle].layer = layer;
-	particles[lastParticle].camFlags = camFlags;
-
-	particles[lastParticle].currColor.r = particles[lastParticle].futureColor.r = 1.0f;
-	particles[lastParticle].currColor.g = particles[lastParticle].futureColor.g = 1.0f;
-	particles[lastParticle].currColor.b = particles[lastParticle].futureColor.b = 1.0f;
-	particles[lastParticle].currColor.a = particles[lastParticle].futureColor.a = 1.0f;
-
-	particles[lastParticle].currScale = particles[lastParticle].futureScale = 1.0f;
-}
-
-void particlesPhysicsTick( float dt )
+void physicsTick( float dt )
 {
 	int i;
 	float fadeAmt;
@@ -88,13 +61,61 @@ void particlesPhysicsTick( float dt )
 	}
 }
 
-void particlesDraw( )
+void draw( void )
 {
 	for( int i = 0; i <= lastParticle; ++i ) {
-		img_Draw_s( particles[i].image, particles[i].camFlags, particles[i].currRenderPos, particles[i].futureRenderPos,
-			particles[i].currScale, particles[i].futureScale, particles[i].layer );
+		/*img_Draw_s( particles[i].image, particles[i].camFlags, particles[i].currRenderPos, particles[i].futureRenderPos,
+			particles[i].currScale, particles[i].futureScale, particles[i].layer ); //*/
+		img_Draw_s_r( particles[i].image, particles[i].camFlags, particles[i].currRenderPos, particles[i].futureRenderPos,
+			particles[i].currScale, particles[i].futureScale, particles[i].rotRad, particles[i].rotRad, particles[i].depth );
 		particles[i].currRenderPos = particles[i].futureRenderPos;
 		particles[i].currColor = particles[i].futureColor;
 		particles[i].currScale = particles[i].futureScale;
 	}
+}
+
+int particles_Init( void )
+{
+	lastParticle = -1;
+
+	systemID = sys_Register( NULL, NULL, draw, physicsTick );
+
+	return systemID;
+}
+
+void particles_CleanUp( void )
+{
+	if( systemID >= 0 ) {
+		sys_UnRegister( systemID );
+		systemID = -1;
+	}
+}
+
+void particles_Spawn( Vector2 startPos, Vector2 startVel, Vector2 gravity, float rotRad,
+	float lifeTime, float fadeStart, int image, unsigned int camFlags, char layer )
+{
+	if( lastParticle >= ( MAX_NUM_PARTICLES - 1 ) ) {
+		return;
+	}
+
+	++lastParticle;
+	particles[lastParticle].currRenderPos = startPos;
+	particles[lastParticle].futureRenderPos = startPos;
+	particles[lastParticle].velocity = startVel;
+	particles[lastParticle].gravity = gravity;
+	particles[lastParticle].lifeTime = lifeTime;
+	particles[lastParticle].fadeStart = MIN( fadeStart, lifeTime );
+	particles[lastParticle].lifeElapsed = 0;
+	particles[lastParticle].image = image;
+	particles[lastParticle].depth = layer;
+	particles[lastParticle].camFlags = camFlags;
+
+	particles[lastParticle].currColor.r = particles[lastParticle].futureColor.r = 1.0f;
+	particles[lastParticle].currColor.g = particles[lastParticle].futureColor.g = 1.0f;
+	particles[lastParticle].currColor.b = particles[lastParticle].futureColor.b = 1.0f;
+	particles[lastParticle].currColor.a = particles[lastParticle].futureColor.a = 1.0f;
+
+	particles[lastParticle].currScale = particles[lastParticle].futureScale = 1.0f;
+
+	particles[lastParticle].rotRad = rotRad;
 }

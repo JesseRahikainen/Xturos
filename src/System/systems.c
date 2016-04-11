@@ -14,35 +14,47 @@ static System emptySystem = { NULL, NULL, NULL, NULL };
 #define MAX_SYSTEMS 32
 
 static System systems[MAX_SYSTEMS];
-static int lastSystem = -1;
+
+int systemInUse( int idx )
+{
+	return ( ( systems[idx].procEvents != NULL ) ||
+			 ( systems[idx].proc != NULL ) ||
+			 ( systems[idx].draw != NULL ) ||
+			 ( systems[idx].tick != NULL ) );
+}
 
 int sys_Register( SystemProcessEventsFunc procEvents, SystemProcessFunc proc, SystemDrawFunc draw, SystemPhysicsTickFunc tick )
 {
-	if( lastSystem >= ( MAX_SYSTEMS - 1 ) ) {
+	int idx = 0;
+	while( ( idx < MAX_SYSTEMS ) && systemInUse( idx ) ) {
+		++idx;
+	}
+
+	if( idx >= MAX_SYSTEMS ) {
 		return -1;
 	}
 
-	++lastSystem;
-	systems[lastSystem].procEvents = procEvents;
-	systems[lastSystem].proc = proc;
-	systems[lastSystem].draw = draw;
-	systems[lastSystem].tick = tick;
+	systems[idx].procEvents = procEvents;
+	systems[idx].proc = proc;
+	systems[idx].draw = draw;
+	systems[idx].tick = tick;
 
-	return lastSystem;
+	return idx;
 }
 
 void sys_UnRegister( int systemID )
 {
-	if( ( systemID < 0 ) || ( systemID > lastSystem ) ) {
+	if( ( systemID < 0 ) || ( systemID > MAX_SYSTEMS ) ) {
 		SDL_LogDebug( SDL_LOG_CATEGORY_APPLICATION, "Attempting to unregister an invalid system" );
 		return;
 	}
 
-	int idx;
-	for( idx = systemID; idx < lastSystem; ++idx ) {
-		systems[idx] = systems[idx+1];
+	if( !systemInUse( systemID ) ) {
+		SDL_LogDebug( SDL_LOG_CATEGORY_APPLICATION, "Attempting to unregister a system that has not been registered" );
+		return;
 	}
-	--lastSystem;
+
+	systems[systemID] = emptySystem;
 }
 
 // Runs the matching function on all the registered systems.

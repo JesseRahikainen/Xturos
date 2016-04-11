@@ -15,6 +15,7 @@
 #include "Math/MathUtil.h"
 #include "sound.h"
 #include "Utils/cfgFile.h"
+#include "IMGUI/IMGUI.h"
 
 #include "UI/text.h"
 #include "Input/input.h"
@@ -189,6 +190,7 @@ void processEvents( int windowsEventsOnly )
 		sys_ProcessEvents( &e );
 		input_ProcessEvents( &e );
 		gsmProcessEvents( &globalFSM, &e );
+		imgui_ProcessEvents( &e ); // just for TextInput events when text input is enabled
 	}
 }
 

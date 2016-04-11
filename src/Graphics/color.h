@@ -27,6 +27,9 @@ static const Color CLR_YELLOW = { 1.0f, 1.0f, 0.0f, 1.0f };
 static const Color CLR_MAGENTA = { 1.0f, 0.0f, 1.0f, 1.0f };
 static const Color CLR_CYAN = { 0.0f, 1.0f, 1.0f, 1.0f };
 static const Color CLR_WHITE = { 1.0f, 1.0f, 1.0f, 1.0f };
+static const Color CLR_DARK_GREY = { 0.25f, 0.25f, 0.25f, 1.0f };
+static const Color CLR_GREY = { 0.5f, 0.5f, 0.5f, 1.0f };
+static const Color CLR_LIGHT_GREY = { 0.75f, 0.75f, 0.75f, 1.0f };
 
 Color* clr_Lerp( const Color* from, const Color* to, float t, Color* out );
 SDL_Color clr_ToSDLColor( const Color* color );

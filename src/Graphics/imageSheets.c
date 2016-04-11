@@ -108,7 +108,8 @@ int img_LoadSpriteSheet( char* fileName, ShaderType shaderType, int** imgOutArra
 					goto clean_up;
 				}
 				
-				if( ( (*imgOutArray) = mem_Allocate( sizeof( int ) * numSprites ) ) == NULL ) {
+				sb_Add( *imgOutArray, numSprites );
+				if( imgOutArray == NULL ) {
 					SDL_LogError( SDL_LOG_CATEGORY_VIDEO, "Unable to allocate image IDs array for sprite sheet definition file: %s", fileName );
 					returnVal = -1;
 					goto clean_up;
@@ -134,7 +135,7 @@ int img_LoadSpriteSheet( char* fileName, ShaderType shaderType, int** imgOutArra
 	}
 
 	if( currentState != RS_FINISHED ) {
-		mem_Release( *imgOutArray );
+		sb_Release( *imgOutArray );
 		returnVal = -1;
 		SDL_LogError( SDL_LOG_CATEGORY_VIDEO, "Problem reading sprite sheet definition file: %s", fileName );
 		goto clean_up;
@@ -142,7 +143,7 @@ int img_LoadSpriteSheet( char* fileName, ShaderType shaderType, int** imgOutArra
 
 	// now go through and create all the images
 	if( img_SplitImageFile( imgFileName, numSpritesRead, shaderType, mins, maxes, (*imgOutArray) ) < 0 ) {
-		mem_Release( *imgOutArray );
+		sb_Release( *imgOutArray );
 		returnVal = -1;
 		SDL_LogError( SDL_LOG_CATEGORY_VIDEO, "Problem splitting image for sprite sheet definition file: %s", fileName );
 		goto clean_up;

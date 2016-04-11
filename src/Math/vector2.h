@@ -12,6 +12,10 @@ typedef struct {
 			float s;
 			float t;
 		};
+		struct {
+			float w;
+			float h;
+		};
 		float v[2];
 	};
 } Vector2;

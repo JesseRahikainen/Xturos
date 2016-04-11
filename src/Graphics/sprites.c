@@ -116,4 +116,5 @@ int spr_RegisterSystem( void )
 void spr_UnRegisterSystem( void )
 {
 	sys_UnRegister( systemID );
+	systemID = -1;
 }

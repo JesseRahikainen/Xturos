@@ -7,6 +7,7 @@
 #include "camera.h"
 #include "shaderManager.h"
 #include "glDebugging.h"
+#include "scissor.h"
 
 typedef struct {
 	Vector3 pos;
@@ -21,6 +22,8 @@ typedef struct {
 	GLuint texture;
 
 	ShaderType shaderType;
+
+	int scissorID;
 } Triangle;
 
 /*
@@ -33,6 +36,9 @@ Once that is done we generate index buffers to represent what each camera can se
 #define MAX_VERTS ( MAX_TRIS * 3 )
 
 typedef struct {
+	Vertex startVertices[MAX_VERTS];
+	Vertex endVertices[MAX_VERTS];
+
 	Triangle triangles[MAX_TRIS];
 	Vertex vertices[MAX_VERTS];
 	GLuint indices[MAX_VERTS];
@@ -164,7 +170,7 @@ static int createTriListGLObjects( TriangleList* triList )
 Initializes all the stuff needed for rendering the triangles.
  Returns a value < 0 if there's a problem.
 */
-int triRenderer_Init( void )
+int triRenderer_Init( int renderAreaWidth, int renderAreaHeight )
 {
 	for( int i = 0; i < NUM_SHADERS; ++i ) {
 		shaderPrograms[i].programID = 0;
@@ -183,7 +189,7 @@ int triRenderer_Init( void )
 }
 
 int addTriangle( TriangleList* triList, Vector2 pos0, Vector2 pos1, Vector2 pos2, Vector2 uv0, Vector2 uv1, Vector2 uv2,
-	ShaderType shader, GLuint texture, Color color, uint32_t camFlags, int8_t depth )
+	ShaderType shader, GLuint texture, Color color, int clippingID, uint32_t camFlags, int8_t depth )
 {
 	if( triList->lastTriIndex >= ( MAX_TRIS - 1 ) ) {
 		SDL_LogVerbose( SDL_LOG_CATEGORY_RENDER, "Triangle list full." );
@@ -198,6 +204,7 @@ int addTriangle( TriangleList* triList, Vector2 pos0, Vector2 pos1, Vector2 pos2
 	triList->triangles[idx].texture = texture;
 	triList->triangles[idx].zPos = z;
 	triList->triangles[idx].shaderType = shader;
+	triList->triangles[idx].scissorID = clippingID;
 	int baseIdx = idx * 3;
 
 	vec2ToVec3( &( pos0 ), z, &( triList->vertices[baseIdx].pos ) );
@@ -222,19 +229,20 @@ int addTriangle( TriangleList* triList, Vector2 pos0, Vector2 pos1, Vector2 pos2
 We'll assume the array has three vertices in it.
  Return a value < 0 if there's a problem.
 */
-int triRenderer_AddVertices( Vector2* positions, Vector2* uvs, ShaderType shader, GLuint texture, Color color, uint32_t camFlags, int8_t depth, int transparent )
+int triRenderer_AddVertices( Vector2* positions, Vector2* uvs, ShaderType shader, GLuint texture, Color color,
+	int clippingID, uint32_t camFlags, int8_t depth, int transparent )
 {
 	return triRenderer_Add( positions[0], positions[1], positions[2], uvs[0], uvs[1], uvs[2],
-		shader, texture, color, camFlags, depth, transparent );
+		shader, texture, color, clippingID, camFlags, depth, transparent );
 }
 
 int triRenderer_Add( Vector2 pos0, Vector2 pos1, Vector2 pos2, Vector2 uv0, Vector2 uv1, Vector2 uv2, ShaderType shader, GLuint texture,
-	Color color, uint32_t camFlags, int8_t depth, int transparent )
+	Color color, int clippingID, uint32_t camFlags, int8_t depth, int transparent )
 {
 	if( transparent ) {
-		return addTriangle( &transparentTriangles, pos0, pos1, pos2, uv0, uv1, uv2, shader, texture, color, camFlags, depth );
+		return addTriangle( &transparentTriangles, pos0, pos1, pos2, uv0, uv1, uv2, shader, texture, color, clippingID, camFlags, depth );
 	} else {
-		return addTriangle( &solidTriangles, pos0, pos1, pos2, uv0, uv1, uv2, shader, texture, color, camFlags, depth );
+		return addTriangle( &solidTriangles, pos0, pos1, pos2, uv0, uv1, uv2, shader, texture, color, clippingID, camFlags, depth );
 	}
 }
 
@@ -263,7 +271,7 @@ static int sortByRenderState( const void* p1, const void* p2 )
 		return 1;
 	}
 
-	return 0;
+	return ( tri1->scissorID - tri2->scissorID );
 }
 
 static int sortByDepth( const void* p1, const void* p2 )
@@ -279,6 +287,17 @@ static void generateVertexArray( TriangleList* triList )
 	GL( glBufferSubData( GL_ARRAY_BUFFER, 0, sizeof( Vertex ) * ( ( triList->lastTriIndex + 1 ) * 3 ), triList->vertices ) );
 }
 
+static void setScissor( int area )
+{
+	GLint x;
+	GLint y;
+	GLsizei w;
+	GLsizei h;
+
+	scissor_GetScissorAreaGL( area, &x, &y, &w, &h );
+	GL( glScissor( x, y, w, h ) );
+}
+
 static void drawTriangles( uint32_t currCamera, TriangleList* triList )
 {
 	// create the index buffers to access the vertex buffer
@@ -288,6 +307,7 @@ static void drawTriangles( uint32_t currCamera, TriangleList* triList )
 	ShaderType lastBoundShader = NUM_SHADERS;
 	Matrix4 vpMat;
 	uint32_t camFlags = 0;
+	int lastSetClippingArea = -1;
 
 	// we'll only be accessing the one vertex array
 	GL( glBindVertexArray( triList->VAO ) );
@@ -308,15 +328,24 @@ static void drawTriangles( uint32_t currCamera, TriangleList* triList )
 			GL( glUniform1i( shaderPrograms[lastBoundShader].uniformLocs[1], 0 ) );
 		}
 
+		if( ( triIdx <= triList->lastTriIndex ) && ( triList->triangles[triIdx].scissorID != lastSetClippingArea ) ) {
+			lastSetClippingArea = triList->triangles[triIdx].scissorID;
+			setScissor( lastSetClippingArea );
+		}
+
+		int triCount = 0;
 		// gather the list of all the triangles to be drawn
-		while( ( triIdx <= triList->lastTriIndex ) && ( triList->triangles[triIdx].texture == texture ) &&
-				( triList->triangles[triIdx].shaderType == lastBoundShader ) ) {
+		while( ( triIdx <= triList->lastTriIndex ) &&
+				( triList->triangles[triIdx].texture == texture ) &&
+				( triList->triangles[triIdx].shaderType == lastBoundShader ) &&
+				( triList->triangles[triIdx].scissorID == lastSetClippingArea ) ) {
 			if( ( triList->triangles[triIdx].camFlags & camFlags ) != 0 ) {
 				triList->indices[++triList->lastIndexBufferIndex] = triList->triangles[triIdx].vertexIndices[0];
 				triList->indices[++triList->lastIndexBufferIndex] = triList->triangles[triIdx].vertexIndices[1];
 				triList->indices[++triList->lastIndexBufferIndex] = triList->triangles[triIdx].vertexIndices[2];
 			}
 			++triIdx;
+			++triCount;
 		}
 
 		// send the indices of the vertex array to draw, if there is any
@@ -329,10 +358,22 @@ static void drawTriangles( uint32_t currCamera, TriangleList* triList )
 	} while( triIdx <= triList->lastTriIndex );
 }
 
+static void lerpVertices( TriangleList* triList, float t )
+{
+	for( int i = 0; i < triList->lastTriIndex; ++i ) {
+		int baseIdx = i * 3;
+		for( int s = 0; s < 3; ++i ) {
+			triList->vertices[baseIdx+s].uv = triList->startVertices[baseIdx+s].uv;
+			vec3_Lerp( &( triList->startVertices[baseIdx+s].pos ), &( triList->endVertices[baseIdx+s].pos ), t, &( triList->vertices[baseIdx+s].pos ) );
+			clr_Lerp( &( triList->startVertices[baseIdx+s].col ), &( triList->endVertices[baseIdx+s].col ), t, &( triList->vertices[baseIdx+s].col ) );
+		}
+	}
+}
+
 /*
 Draws out all the triangles.
 */
-void triRenderer_Render( void )
+void triRenderer_Render( float t )
 {
 	SDL_qsort( solidTriangles.triangles, solidTriangles.lastTriIndex + 1, sizeof( Triangle ), sortByRenderState );
 	SDL_qsort( transparentTriangles.triangles, transparentTriangles.lastTriIndex + 1, sizeof( Triangle ), sortByDepth );
@@ -343,14 +384,16 @@ void triRenderer_Render( void )
 
 	GL( glDisable( GL_CULL_FACE ) );
 	GL( glEnable( GL_DEPTH_TEST ) );
+	GL( glEnable( GL_SCISSOR_TEST ) );
 	GL( glDepthMask( GL_TRUE ) );
 	GL( glDepthFunc( GL_LESS ) );
 
 	// render triangles
 	// TODO: We're ignoring any issues with cameras and transparency, probably want to handle this better.
 	for( int currCamera = cam_StartIteration( ); currCamera != -1; currCamera = cam_GetNextActiveCam( ) ) {
+		setScissor( 0 ); // set to the default scissor area for clearing
 		GL( glClear( GL_DEPTH_BUFFER_BIT ) );
-		
+
 		GL( glDisable( GL_BLEND ) );
 		drawTriangles( currCamera, &solidTriangles );
 
@@ -359,6 +402,7 @@ void triRenderer_Render( void )
 		drawTriangles( currCamera, &transparentTriangles );
 	}
 
+	GL( glDisable( GL_SCISSOR_TEST ) );
 	GL( glBindVertexArray( 0 ) );
 	GL( glUseProgram( 0 ) );
 }

@@ -64,6 +64,12 @@
     <Filter Include="Source Files\Input">
       <UniqueIdentifier>{e163acc5-ed75-4492-93c0-8b2bfe225477}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\IMGUI">
+      <UniqueIdentifier>{d0561b8c-29ac-4aa1-9503-bd3324772ef9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\IMGUI">
+      <UniqueIdentifier>{71084b89-6d3d-4c57-87ad-eb62f0043dd3}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Game\gameScreen.h">
@@ -171,6 +177,12 @@
     <ClInclude Include="src\Input\input.h">
       <Filter>Header Files\Input</Filter>
     </ClInclude>
+    <ClInclude Include="src\Graphics\scissor.h">
+      <Filter>Header Files\Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="src\IMGUI\IMGUI.h">
+      <Filter>Header Files\IMGUI</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Game\gameScreen.c">
@@ -265,6 +277,12 @@
     </ClCompile>
     <ClCompile Include="src\Input\input.c">
       <Filter>Source Files\Input</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Graphics\scissor.c">
+      <Filter>Source Files\Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="src\IMGUI\IMGUI.c">
+      <Filter>Source Files\IMGUI</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

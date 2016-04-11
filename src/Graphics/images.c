@@ -9,6 +9,7 @@
 
 #include "../Math/matrix4.h"
 #include "gfxUtil.h"
+#include "scissor.h"
 
 /* Image loading types and variables */
 #define MAX_IMAGES 512
@@ -49,6 +50,7 @@ typedef struct {
 	DrawInstructionState start;
 	DrawInstructionState end;
 	int flags;
+	int scissorID;
 	uint32_t camFlags;
 	int8_t depth;
 	ShaderType shaderType;
@@ -414,6 +416,7 @@ static DrawInstruction* GetNextRenderInstruction( int imgObj, uint32_t camFlags,
 	ri->camFlags = camFlags;
 	ri->shaderType = images[imgObj].shaderType;
 	ri->depth = depth;
+	ri->scissorID = scissor_GetTopID( );
 	memcpy( ri->uvs, DEFAULT_DRAW_INSTRUCTION.uvs, sizeof( ri->uvs ) );
 
 	ri->uvs[0] = images[imgObj].uvMin;
@@ -625,11 +628,13 @@ void img_Render( float normTimeElapsed )
 
 		triRenderer_Add( verts[indices[0]], verts[indices[1]], verts[indices[2]],
 			renderBuffer[idx].uvs[indices[0]], renderBuffer[idx].uvs[indices[1]], renderBuffer[idx].uvs[indices[2]],
-			renderBuffer[idx].shaderType, renderBuffer[idx].textureObj, col, renderBuffer[idx].camFlags, renderBuffer[idx].depth,
+			renderBuffer[idx].shaderType, renderBuffer[idx].textureObj, col,
+			renderBuffer[idx].scissorID, renderBuffer[idx].camFlags, renderBuffer[idx].depth,
 			transparent );
 		triRenderer_Add( verts[indices[3]], verts[indices[4]], verts[indices[5]],
 			renderBuffer[idx].uvs[indices[3]], renderBuffer[idx].uvs[indices[4]], renderBuffer[idx].uvs[indices[5]],
-			renderBuffer[idx].shaderType, renderBuffer[idx].textureObj, col, renderBuffer[idx].camFlags, renderBuffer[idx].depth,
+			renderBuffer[idx].shaderType, renderBuffer[idx].textureObj, col,
+			renderBuffer[idx].scissorID, renderBuffer[idx].camFlags, renderBuffer[idx].depth,
 			transparent );
 	}
 }

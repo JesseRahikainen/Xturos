@@ -17,6 +17,7 @@
 #include "debugRendering.h"
 #include "spineGfx.h"
 #include "triRendering.h"
+#include "scissor.h"
 
 static SDL_GLContext glContext;
 
@@ -133,7 +134,11 @@ int gfx_Init( SDL_Window* window, int desiredRenderWidth, int desiredRenderHeigh
 
 	spine_Init( );
 
-	if( triRenderer_Init( ) < 0 ) {
+	if( triRenderer_Init( desiredRenderWidth, desiredRenderHeight ) < 0 ) {
+		return -1;
+	}
+
+	if( scissor_Init( desiredRenderWidth, desiredRenderHeight ) < 0 ) {
 		return -1;
 	}
 
@@ -199,6 +204,7 @@ void gfx_ClearDrawCommands( float timeToEnd )
 {
 	debugRenderer_ClearVertices( );
 	img_ClearDrawInstructions( );
+	scissor_Clear( );
 	
 	endTime = timeToEnd;
 	currentTime = 0.0f;

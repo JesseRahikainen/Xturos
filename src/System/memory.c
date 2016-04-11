@@ -137,13 +137,19 @@ static void* growBlock( MemoryBlockHeader* header, size_t newSize, const char* f
 	}
 
 	if( newSize < sizeAllowed ) {
-		// claim new headers until we've filled our quota
+		// claim all the next headers
 		result = (void*)( header + 1 );
 		scan = header->next;
 		while( ( scan != NULL ) && !( scan->flags & IN_USE_FLAG ) ) {
+			// unlink the scan block
+			if( scan->next != NULL ) scan->next->prev = scan->prev;
+			/*if( scan->prev != NULL ) scan->prev->next = scan->next; */
+			header->next = scan->next;
+
+			// claim the memory
 			header->size += scan->size + sizeof( MemoryBlockHeader );
+
 			scan = scan->next;
-			header->next = scan;
 		}
 
 		// see if there's enough left over to create a new block
@@ -236,10 +242,24 @@ void mem_Log( void )
 void mem_Verify( void )
 {
 	// just follow the list, verifying that the guard value is correct
+	//  also make sure all the previous and next pointers are correct
 	MemoryBlockHeader* header = (MemoryBlockHeader*)( memoryBlock.memory );
+	int firstBlock = 1;
 	while( header != NULL ) {
 		assert( header->guardValue == GUARD_VALUE );
+
+		if( header->prev != NULL ) {
+			assert( header->prev->next == header );
+		} else {
+			assert( firstBlock == 1 );
+		}
+
+		if( header->next != NULL ) {
+			assert( header->next->prev == header );
+		}
+
 		header = header->next;
+		firstBlock = 0;
 	}
 }
 
@@ -257,7 +277,41 @@ int mem_GetVerify( void )
 	return 0;
 }
 
+void mem_VerifyPointer( void* p )
+{
+	// verify the pointer is pointing to valid memory
+	int found = 0;
+	MemoryBlockHeader* header = (MemoryBlockHeader*)( memoryBlock.memory );
+	while( !found && ( header != NULL ) ) {
+		header = header->next;
+		void* dataStart = (void*)( header + 1 );
+		void* dataEnd = (void*)( (uint8_t*)( dataStart ) + header->size );
+		if( ( p >= dataStart ) && ( p < dataEnd ) ) {
+			found = 1;
+		}
+	}
+
+	assert( found );
+}
+
 void mem_Report( void )
+{
+	size_t total = 0;
+	size_t inUse = 0;
+	size_t overhead = 0;
+	uint32_t fragments = 0; // blocks not in use
+
+	mem_GetReportValues( &total, &inUse, &overhead, &fragments );
+
+	// TODO: Find out why %zu doesn't work...
+	SDL_Log( "Memory Report:" );
+	SDL_Log( "  Total: %u", total );
+	SDL_Log( "  In Use: %u", inUse );
+	SDL_Log( "  Overhead: %u", overhead );
+	SDL_Log( "  Fragments: %u", fragments );
+}
+
+void mem_GetReportValues( size_t* totalOut, size_t* inUseOut, size_t* overheadOut, uint32_t* fragmentsOut )
 {
 	size_t total = 0;
 	size_t inUse = 0;
@@ -277,12 +331,10 @@ void mem_Report( void )
 		header = header->next;
 	}
 
-	// TODO: Find out why %zu doesn't work...
-	SDL_Log( "Memory Report:" );
-	SDL_Log( "  Total: %u", total );
-	SDL_Log( "  In Use: %u", inUse );
-	SDL_Log( "  Overhead: %u", overhead );
-	SDL_Log( "  Fragments: %u", fragments );
+	if( totalOut != NULL ) (*totalOut) = total;
+	if( inUseOut != NULL ) (*inUseOut) = inUse;
+	if( overheadOut != NULL ) (*overheadOut) = overhead;
+	if( fragmentsOut != NULL ) (*fragmentsOut) = fragments;
 }
 
 void* mem_Allocate_Data( size_t size, const char* fileName, const int line )
@@ -382,4 +434,162 @@ void mem_Release_Data( void* memory, const char* fileName, const int line )
 	
 	header = condenseMemoryBlocks( header, fileName, line );
 	testingSetMemory( (void*)( ( (char*)header ) + sizeof( MemoryBlockHeader ) ), header->size, 0xFF );
+}
+
+void mem_RunTests( void )
+{
+	void* oldMemoryBlock = memoryBlock.memory;
+
+	uint8_t* testOne;
+	uint8_t* testTwo;
+	uint8_t* testThree;
+	uint8_t* backup;
+
+	// test basic allocation and release
+	assert( mem_Init( 32 * 1024 ) == 0 ); {
+		testOne = (uint8_t*)mem_Allocate( 100 );
+		assert( testOne != NULL );
+		mem_Verify( );
+
+		mem_Release( testOne );
+		mem_Verify( );
+	} mem_CleanUp( );
+
+	// test multiple allocations and releases
+	assert( mem_Init( 32 * 1024 ) == 0 ); {
+		testOne = (uint8_t*)mem_Allocate( 100 );
+		assert( testOne != NULL );
+		mem_Verify( );
+
+		testTwo = (uint8_t*)mem_Allocate( 100 );
+		assert( testTwo != NULL );
+		mem_Verify( );
+
+		mem_Release( testTwo );
+		mem_Verify( );
+
+		mem_Release( testOne );
+		mem_Verify( );
+	} mem_CleanUp( );
+
+	// test basic resize
+	assert( mem_Init( 32 * 1024 ) == 0 ); {
+		testOne = (uint8_t*)mem_Allocate( 1000 );
+		assert( testOne != NULL );
+		mem_Verify( );
+
+		testOne = (uint8_t*)mem_Resize( testOne, 500 );
+		assert( testOne != NULL );
+		mem_Verify( );
+
+		testOne = (uint8_t*)mem_Resize( testOne, 750 );
+		assert( testOne != NULL );
+		mem_Verify( );
+	} mem_CleanUp( );
+
+	// test resize grow with enough open space in next block to allocate data, and enough data to create new header
+	assert( mem_Init( 32 * 1024 ) == 0 ); {
+		testOne = (uint8_t*)mem_Allocate( 100 );
+		assert( testOne != NULL );
+		mem_Verify( );
+
+		testTwo = (uint8_t*)mem_Allocate( 100 + sizeof( MemoryBlockHeader ) + MIN_ALLOC_SIZE );
+		assert( testTwo != NULL );
+		mem_Verify( );
+
+		testThree = (uint8_t*)mem_Allocate( 100 );
+		assert( testThree != NULL );
+		mem_Verify( );
+
+		mem_Release( testTwo );
+		mem_Verify( );
+
+		backup = testOne;
+		testOne = mem_Resize( testOne, 200 );
+		assert( testOne != NULL );
+		assert( testOne == backup );
+		mem_Verify( );
+	} mem_CleanUp( );
+
+	// test resize grow with enough open space in next block to allocate data, and not enough space to create new header
+	assert( mem_Init( 32 * 1024 ) == 0 ); {
+		testOne = (uint8_t*)mem_Allocate( 100 );
+		assert( testOne != NULL );
+		mem_Verify( );
+
+		testTwo = (uint8_t*)mem_Allocate( 100 );
+		assert( testTwo != NULL );
+		mem_Verify( );
+
+		testThree = (uint8_t*)mem_Allocate( 100 );
+		assert( testThree != NULL );
+		mem_Verify( );
+
+		mem_Release( testTwo );
+		mem_Verify( );
+
+		backup = testOne;
+		testOne = mem_Resize( testOne, 199 );
+		assert( testOne != NULL );
+		assert( testOne == backup );
+		mem_Verify( );
+	} mem_CleanUp( );
+
+	// test resize grow without enough open space in next block to allocate data
+	assert( mem_Init( 32 * 1024 ) == 0 ); {
+		testOne = (uint8_t*)mem_Allocate( 100 );
+		assert( testOne != NULL );
+		mem_Verify( );
+
+		testTwo = (uint8_t*)mem_Allocate( 100 );
+		assert( testTwo != NULL );
+		mem_Verify( );
+
+		testThree = (uint8_t*)mem_Allocate( 100 );
+		assert( testThree != NULL );
+		mem_Verify( );
+
+		mem_Release( testTwo );
+		mem_Verify( );
+
+		backup = testOne;
+		testOne = mem_Resize( testOne, 1000 );
+		assert( testOne != NULL );
+		assert( testOne != backup );
+		mem_Verify( );
+	} mem_CleanUp( );
+
+	// test resize shrink where there is enough open space after to create new block
+	assert( mem_Init( 32 * 1024 ) == 0 ); {
+		testOne = (uint8_t*)mem_Allocate( 100 + sizeof( MemoryBlockHeader ) + MIN_ALLOC_SIZE );
+		mem_Verify( );
+
+		testTwo = (uint8_t*)mem_Allocate( 100 );
+		mem_Verify( );
+
+		backup = testOne;
+		testOne = (uint8_t*)mem_Resize( testOne, 10 );
+		assert( testOne != NULL );
+		assert( testOne == backup );
+		mem_Verify( );
+
+	} mem_CleanUp( );
+
+	// test resize shrink where there is not enough open space after to create new block
+	assert( mem_Init( 32 * 1024 ) == 0 ); {
+		testOne = (uint8_t*)mem_Allocate( 100 );
+		mem_Verify( );
+
+		testTwo = (uint8_t*)mem_Allocate( 100 );
+		mem_Verify( );
+
+		backup = testOne;
+		testOne = (uint8_t*)mem_Resize( testOne, 99 );
+		assert( testOne != NULL );
+		assert( testOne == backup );
+		mem_Verify( );
+	} mem_CleanUp( );
+
+	// restore old memory block
+	memoryBlock.memory = oldMemoryBlock;
 }

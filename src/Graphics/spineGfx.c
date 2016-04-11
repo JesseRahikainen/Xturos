@@ -430,8 +430,8 @@ static void drawCharacter( SpineInstance* spine )
 
 				texture = (Texture*)((spAtlasRegion*)regionAttachment->rendererObject)->page->rendererObject;
 
-				triRenderer_Add( positions[0], positions[1], positions[2], uvs[0], uvs[1], uvs[2], ST_DEFAULT, texture->textureID, col, camFlags, depth, texture->flags & TF_IS_TRANSPARENT );
-				triRenderer_Add( positions[0], positions[2], positions[3], uvs[0], uvs[2], uvs[3], ST_DEFAULT, texture->textureID, col, camFlags, depth, texture->flags & TF_IS_TRANSPARENT );
+				triRenderer_Add( positions[0], positions[1], positions[2], uvs[0], uvs[1], uvs[2], ST_DEFAULT, texture->textureID, col, 0, camFlags, depth, texture->flags & TF_IS_TRANSPARENT );
+				triRenderer_Add( positions[0], positions[2], positions[3], uvs[0], uvs[2], uvs[3], ST_DEFAULT, texture->textureID, col, 0, camFlags, depth, texture->flags & TF_IS_TRANSPARENT );
 			} break;
 		/*case SP_ATTACHMENT_BOUNDING_BOX: {
 				// if we're debugging 
@@ -473,7 +473,7 @@ static void drawCharacter( SpineInstance* spine )
 						uvs[j].y = meshAttachment->uvs[baseIndex+1];
 					}
 
-					triRenderer_AddVertices( verts, uvs, ST_DEFAULT, texture->textureID, col, camFlags, depth, texture->flags & TF_IS_TRANSPARENT );
+					triRenderer_AddVertices( verts, uvs, ST_DEFAULT, texture->textureID, col, 0, camFlags, depth, texture->flags & TF_IS_TRANSPARENT );
 				}
 			} break;
 		case SP_ATTACHMENT_SKINNED_MESH: {
@@ -495,7 +495,7 @@ static void drawCharacter( SpineInstance* spine )
 						uvs[j].y = skinnedMeshAttachment->uvs[baseIndex+1];
 					}
 
-					triRenderer_AddVertices( verts, uvs, ST_DEFAULT, texture->textureID, col, camFlags, depth, texture->flags & TF_IS_TRANSPARENT );
+					triRenderer_AddVertices( verts, uvs, ST_DEFAULT, texture->textureID, col, 0, camFlags, depth, texture->flags & TF_IS_TRANSPARENT );
 				}
 			} break;
 		default:

@@ -44,6 +44,12 @@ void txt_UnloadFont( int fontID );
 Draws a string on the screen. The base line is determined by pos.
 */
 void txt_DisplayString( const char* utf8Str, Vector2 pos, Color clr, HorizTextAlignment hAlign, VertTextAlignment vAlign,
-	int fontID, int camFlags, char depth );
+	int fontID, int camFlags, int8_t depth );
+
+/*
+Draws a string on the screen to an area. Splits up lines and such.
+*/
+void txt_DisplayTextArea( const uint8_t* utf8Str, Vector2 upperLeft, Vector2 size, Color clr,
+	HorizTextAlignment hAlign, VertTextAlignment vAlign, int fontID, int camFlags, int8_t depth );
 
 #endif /* inclusion guard */
