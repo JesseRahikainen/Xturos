@@ -180,7 +180,10 @@
     <ClInclude Include="src\Graphics\scissor.h">
       <Filter>Header Files\Graphics</Filter>
     </ClInclude>
-    <ClInclude Include="src\IMGUI\IMGUI.h">
+    <ClInclude Include="src\IMGUI\nuklearHeader.h">
+      <Filter>Header Files\IMGUI</Filter>
+    </ClInclude>
+    <ClInclude Include="src\IMGUI\nuklearWrapper.h">
       <Filter>Header Files\IMGUI</Filter>
     </ClInclude>
   </ItemGroup>
@@ -281,7 +284,7 @@
     <ClCompile Include="src\Graphics\scissor.c">
       <Filter>Source Files\Graphics</Filter>
     </ClCompile>
-    <ClCompile Include="src\IMGUI\IMGUI.c">
+    <ClCompile Include="src\IMGUI\nuklearWrapper.c">
       <Filter>Source Files\IMGUI</Filter>
     </ClCompile>
   </ItemGroup>

@@ -49,6 +49,21 @@ void input_ClearKeyBinds( SDL_Keycode code )
 }
 
 /*
+Clears all key bindings associated with the passed in response function.
+*/
+void input_ClearKeyResponse( KeyResponse response )
+{
+	for( int i = 0; i < MAX_BINDINGS; ++i ) {
+		if( keyDownBindings[i].response == response ) {
+			keyDownBindings[i].response = NULL;
+		}
+		if( keyUpBindings[i].response == response ) {
+			keyUpBindings[i].response = NULL;
+		}
+	}
+}
+
+/*
 Finds the first unused binding in the list.
  Return < 0 if we don't find a spot.
 */
@@ -142,6 +157,7 @@ void handleKeyEvent( SDL_Keycode code, KeyBindings* bindingsList )
 
 /***** Mouse Input *****/
 static Vector2 mousePosition;
+static Vector2 rawMousePosition;
 static int mousePosValid;
 
 static Vector2 mouseInputArea;
@@ -155,6 +171,7 @@ void input_InitMouseInputArea( int inputWidth, int inputHeight )
 {
 	mousePosValid = 0;
 	mousePosition = VEC2_ZERO;
+	rawMousePosition = VEC2_ZERO;
 
 	mouseInputArea.x = (float)inputWidth;
 	mouseInputArea.y = (float)inputHeight;
@@ -197,10 +214,18 @@ void input_UpdateMouseWindow( int windowWidth, int windowHeight )
 Gets the relative position of the mouse.
  Returns 1 if the position is inside the input area.
 */
-int input_GetMousePostion( Vector2* out )
+int input_GetMousePosition( Vector2* out )
 {
 	(*out) = mousePosition;
 	return mousePosValid;
+}
+
+/*
+Gets the position of the mouse in the window.
+*/
+void input_GetRawMousePosition( Vector2* out )
+{
+	(*out) = rawMousePosition;
 }
 
 /*
@@ -209,10 +234,7 @@ Clears all current mouse button bindings.
 void input_ClearAllMouseButtonBinds( void )
 {
 	for( int i = 0; i < MAX_BINDINGS; ++i ) {
-		mouseButtonDownBindings[i].response = NULL;/*
-Clears all mouse button bindsings associated with the passed in response.
-*/
-void input_ClearMouseButtonReponse( KeyResponse response );
+		mouseButtonDownBindings[i].response = NULL;
 		mouseButtonUpBindings[i].response = NULL;
 	}
 }
@@ -293,11 +315,11 @@ int input_BindOnMouseButtonRelease( Uint8 button, KeyResponse response )
 
 static void processMouseMovementEvent( SDL_Event* e )
 {
-	mousePosition.x = (float)( e->motion.x );
-	mousePosition.y = (float)( e->motion.y );
+	rawMousePosition.x = (float)( e->motion.x );
+	rawMousePosition.y = (float)( e->motion.y );
 
 	// adjust the position from the window to the mouse input area
-	vec2_Add( &mousePosition, &mouseInputOffset, &mousePosition );
+	vec2_Add( &rawMousePosition, &mouseInputOffset, &mousePosition );
 	vec2_Scale( &mousePosition, mouseInputScale, &mousePosition );
 
 	// if it's in the input area then the position is valid, otherwise it isn't

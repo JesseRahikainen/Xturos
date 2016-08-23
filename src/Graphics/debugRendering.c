@@ -204,6 +204,16 @@ int debugRenderer_Circle( unsigned int camFlags, Vector2 center, float radius, C
 	return -fail;
 }
 
+int debugRenderer_Triangle( unsigned int camFlags, Vector2 pOne, Vector2 pTwo, Vector2 pThree, Color color )
+{
+	int fail = 0;
+	fail = fail || debugRenderer_Line( camFlags, pOne, pTwo, color );
+	fail = fail || debugRenderer_Line( camFlags, pOne, pThree, color );
+	fail = fail || debugRenderer_Line( camFlags, pThree, pTwo, color );
+
+	return -fail;
+}
+
 /*
 Draw all the debug lines.
 */

@@ -1,6 +1,8 @@
 #ifndef SPINE_GFX_H
 #define SPINE_GFX_H
 
+// TODO: Change the rendering system, will need to manually call the render to allow for scissor commands to be processed correctly.
+
 #include <stdint.h>
 #include <spine/spine.h>
 #include "../Math/vector2.h"
@@ -43,7 +45,7 @@ Creates an instance of a template. The templateIdx passed in should be a value r
  hasn't been cleaned up.
 Returns an id to use in other functions. Returns -1 if there's a problem.
 */
-int spine_CreateInstance( int templateIdx, Vector2 pos, int cameraFlags, int8_t depth, spAnimationStateListener listener );
+int spine_CreateInstance( int templateIdx, Vector2 pos, int cameraFlags, char depth, spAnimationStateListener listener, void* object );
 
 /*
 Cleans up a spine instance.

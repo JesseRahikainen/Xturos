@@ -19,6 +19,8 @@
 #include "triRendering.h"
 #include "scissor.h"
 
+#include "../IMGUI/nuklearWrapper.h"
+
 static SDL_GLContext glContext;
 
 static float currentTime;
@@ -46,6 +48,32 @@ static enum {
 
 static GLuint mainRenderFBO = 0;
 static GLuint mainRenderRBOs[RBO_COUNT] = { 0, 0 };
+
+static int generateFBO( GLuint* fboOut, GLuint* rbosOut )
+{
+	GL( glGenFramebuffers( 1, fboOut ) );
+	GL( glGenRenderbuffers( RBO_COUNT, rbosOut ) );
+
+	//  create the render buffer objects
+	GL( glBindRenderbuffer( GL_RENDERBUFFER, rbosOut[DEPTH_RBO] ) );
+	GL( glRenderbufferStorage( GL_RENDERBUFFER, GL_DEPTH_COMPONENT32, renderWidth, renderHeight ) );
+	
+	GL( glBindRenderbuffer( GL_RENDERBUFFER, rbosOut[COLOR_RBO] ) );
+	GL( glRenderbufferStorage( GL_RENDERBUFFER, GL_RGB8, renderWidth, renderHeight ) );
+
+	//  bind the render buffer objects
+	GL( glBindFramebuffer( GL_DRAW_FRAMEBUFFER, (*fboOut) ) );
+	GL( glFramebufferRenderbuffer( GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, rbosOut[COLOR_RBO] ) );
+	GL( glFramebufferRenderbuffer( GL_DRAW_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rbosOut[DEPTH_RBO] ) );
+
+	if( checkAndLogFrameBufferCompleteness( GL_DRAW_FRAMEBUFFER, NULL ) < 0 ) {
+		return -1;
+	}
+
+	GL( glBindFramebuffer( GL_DRAW_FRAMEBUFFER, 0 ) );
+
+	return 0;
+}
 
 /*
 Initial setup for the rendering instruction buffer.
@@ -96,7 +124,12 @@ int gfx_Init( SDL_Window* window, int desiredRenderWidth, int desiredRenderHeigh
 		renderHeight = (int)maxSize;
 		SDL_LogDebug( SDL_LOG_CATEGORY_VIDEO, "Render height outside maximum size allowed by OpenGL, resizing to %ix%i", renderWidth, renderHeight );
 	}
-	GL( glGenFramebuffers( 1, &mainRenderFBO ) );
+
+	if( generateFBO( &mainRenderFBO, &( mainRenderRBOs[0] ) ) < 0 ) {
+		return -1;
+	}
+
+	/*GL( glGenFramebuffers( 1, &mainRenderFBO ) );
 	GL( glGenRenderbuffers( RBO_COUNT, &( mainRenderRBOs[0] ) ) );
 
 	//  create the render buffer objects
@@ -117,7 +150,7 @@ int gfx_Init( SDL_Window* window, int desiredRenderWidth, int desiredRenderHeigh
 		return -1;
 	}
 
-	GL( glBindFramebuffer( GL_DRAW_FRAMEBUFFER, 0 ) );
+	GL( glBindFramebuffer( GL_DRAW_FRAMEBUFFER, 0 ) );*/
 
 	int windowWidth, windowHeight;
 	SDL_GetWindowSize( window, &windowWidth, &windowHeight );
@@ -175,6 +208,18 @@ void gfx_SetWindowSize( int windowWidth, int windowHeight )
 	}
 }
 
+/*
+Just gets the size.
+*/
+void gfx_GetRenderSize( int* renderWidthOut, int* renderHeightOut )
+{
+	assert( renderWidthOut != NULL );
+	assert( renderHeightOut != NULL );
+
+	(*renderWidthOut) = renderWidth;
+	(*renderHeightOut) = renderHeight;
+}
+
 void gfx_CleanUp( void )
 {
 	GL( glDeleteRenderbuffers( RBO_COUNT, &( mainRenderRBOs[0] ) ) ); 
@@ -221,6 +266,9 @@ void gfx_Render( float dt )
 	currentTime += dt;
 	t = clamp( 0.0f, 1.0f, ( currentTime / endTime ) );
 
+	GL( glViewport( 0, 0, renderWidth, renderHeight ) );
+
+	// draw the game stuff
 	GLenum mainRenderBuffers = GL_COLOR_ATTACHMENT0;
 	GL( glBindFramebuffer( GL_DRAW_FRAMEBUFFER, mainRenderFBO ) );
 		GL( glDrawBuffers( 1, &mainRenderBuffers ) );
@@ -238,22 +286,30 @@ void gfx_Render( float dt )
 			spine_RenderInstances( t );
 		triRenderer_Render( );
 
+		// in game ui stuff
+		//  note: this sets the glViewport, so if the render width and height of the imgui instance doesn't match the
+		//   render width and height used above that will cause issues with the UI and the debug rendering
+		nk_xu_render( &inGameIMGUI );
+
 		// now draw all the debug stuff over everything
 		debugRenderer_Render( );
 	GL( glBindFramebuffer( GL_DRAW_FRAMEBUFFER, 0 ) );
 
 	// now render everything to the screen, scaling based on the size of the window
 	GL( glDrawBuffer( GL_BACK_LEFT ) );
-	GL( glViewport( 0, 0, renderWidth, renderHeight ) );
-
+	
 	GL( glClearColor( windowClearColor.r, windowClearColor.g, windowClearColor.b, windowClearColor.a) );
 	GL( glColorMask( GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE ) );
 	GL( glClear( GL_COLOR_BUFFER_BIT ) );
 
 	GL( glBindFramebuffer( GL_READ_FRAMEBUFFER, mainRenderFBO ) );
-	GL( glReadBuffer( GL_COLOR_ATTACHMENT0 ) );
-	GL( glBlitFramebuffer( 0, 0, renderWidth, renderHeight,
+		GL( glReadBuffer( GL_COLOR_ATTACHMENT0 ) );
+		GL( glBlitFramebuffer( 0, 0, renderWidth, renderHeight,
 					windowRenderX0, windowRenderY0, windowRenderX1, windowRenderY1,
-					GL_COLOR_BUFFER_BIT, GL_LINEAR ) );
+					GL_COLOR_BUFFER_BIT,
+					GL_LINEAR ) );
 	GL( glBindFramebuffer( GL_READ_FRAMEBUFFER, 0 ) );
+
+	// editor and debugging ui stuff
+	nk_xu_render( &editorIMGUI );
 }

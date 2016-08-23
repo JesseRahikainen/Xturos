@@ -5,6 +5,7 @@
 
 typedef struct {
 	Vector2 pos;
+	float scale;
 } CameraState;
 
 typedef struct {
@@ -28,6 +29,11 @@ Initialize all the cameras, set them to the identity.
 void cam_Init( void )
 {
 	memset( cameras, 0, sizeof( cameras ) );
+
+	for( int i = 0; i < NUM_CAMERAS; ++i ) {
+		cameras[i].start.scale = 1.0f;
+		cameras[i].end.scale = 1.0f;
+	}
 }
 
 /*
@@ -47,11 +53,12 @@ void cam_SetProjectionMatrices( int width, int height)
 Set the state the camera will be at at the end of the next frame.
  Returns <0 if there's a problem.
 */
-int cam_SetNextState( int camera, Vector2 pos )
+int cam_SetNextState( int camera, Vector2 pos, float scale )
 {
 	assert( camera < NUM_CAMERAS );
 
 	cameras[camera].end.pos = pos;
+	cameras[camera].end.scale = scale;
 	return 0;
 }
 
@@ -59,10 +66,11 @@ int cam_SetNextState( int camera, Vector2 pos )
 Takes the current state and adds a value to it to set the next state;
  Returns <0 if there's a problem.
 */
-int cam_MoveNextState( int camera, Vector2 delta )
+int cam_MoveNextState( int camera, Vector2 delta, float scaleDelta )
 {
 	assert( camera < NUM_CAMERAS );
 	vec2_Add( &( cameras[camera].start.pos ), &delta, &( cameras[camera].end.pos ) );
+	cameras[camera].end.scale = cameras[camera].start.scale + scaleDelta;
 	return 0;
 }
 
@@ -96,13 +104,20 @@ int cam_GetVPMatrix( int camera, Matrix4* out )
 
 	Vector2 pos;
 	Vector2 invPos;
-	Matrix4 trans;
+	Matrix4 transTf, scaleTf;
+	Matrix4 view;
 	float t = clamp( 0.0f, 1.0f, ( currentTime / endTime ) );
 	vec2_Lerp( &( cameras[camera].start.pos ), &( cameras[camera].end.pos ), t, &pos );
 	vec2_Scale( &pos, -1.0f, &invPos ); // object movement is inverted from camera movement
-	mat4_CreateTranslation( invPos.x, invPos.y, 0.0f, &trans );
-	mat4_Multiply( &( cameras[camera].projectionMat ), &trans, out );
+	mat4_CreateTranslation( invPos.x, invPos.y, 0.0f, &transTf );
 
+	float scale = lerp( cameras[camera].start.scale, cameras[camera].end.scale, t );
+	mat4_CreateScale( scale, scale, 1.0f, &scaleTf );
+
+	mat4_Multiply( &transTf, &scaleTf, &view );
+	
+	mat4_Multiply( &( cameras[camera].projectionMat ), &view, out );
+	
 	return 0;
 }
 
@@ -114,11 +129,20 @@ int cam_GetInverseViewMatrix( int camera, Matrix4* out )
 {
 	assert( camera < NUM_CAMERAS );
 
+	Matrix4 transTf, scaleTf;
+
 	Vector2 pos;
 	float t = clamp( 0.0f, 1.0f, ( currentTime / endTime ) );
 	vec2_Lerp( &( cameras[camera].start.pos ), &( cameras[camera].end.pos ), t, &pos );
-	mat4_CreateTranslation( pos.x, pos.y, 0.0f, out );
+	mat4_CreateTranslation( pos.x, pos.y, 0.0f, &transTf );
 
+	float scale = 1.0f / lerp( cameras[camera].start.scale, cameras[camera].end.scale, t );
+	mat4_CreateScale( scale, scale, 1.0f, &scaleTf );
+
+	memcpy( out, &IDENTITY_MATRIX, sizeof( Matrix4 ) );
+	mat4_Multiply( out, &scaleTf, out );
+	mat4_Multiply( out, &transTf, out );
+	
 	return 0;
 }
 

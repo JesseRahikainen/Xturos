@@ -21,13 +21,13 @@ void cam_SetProjectionMatrices( int width, int height );
 Set the state the camera will be at at the end of the next frame.
  Returns <0 if there's a problem.
 */
-int cam_SetNextState( int camera, Vector2 pos );
+int cam_SetNextState( int camera, Vector2 pos, float scale );
 
 /*
 Takes the current state and adds a value to it to set the next state;
  Returns <0 if there's a problem.
 */
-int cam_MoveNextState( int camera, Vector2 delta );
+int cam_MoveNextState( int camera, Vector2 delta, float scaleDelta );
 
 /*
 Do everything that needs to be done when starting a new render set.

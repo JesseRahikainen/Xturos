@@ -38,7 +38,10 @@
 #define sb_Clear( ptr ) ( sb__Used( ptr ) = 0 )
 
 // if you try to insert at a value past the end of the array it acts as a push
-#define sb_Insert( ptr, at, val ) ( ( (at) >= sb__Used( (ptr) ) ) ? sb_Push( (ptr), (val) ) : ( sb_Add( (ptr), 1 ), memmove( (ptr)+(at)+1, (ptr)+(at), sizeof( (ptr)[0] ) * ( sb__Used( (ptr) ) - (at) ) ), (ptr)[(at)] = (val) ) )
+#define sb_Insert( ptr, at, val ) ( ( (at) >= sb_Count( (ptr) ) ) ? sb_Push( (ptr), (val) ) : ( sb_Add( (ptr), 1 ), memmove( (ptr)+(at)+1, (ptr)+(at), sizeof( (ptr)[0] ) * ( sb_Count( (ptr) ) - (at) - 1 ) ), (ptr)[(at)] = (val) ) )
+
+// if you try to remove past the end of the array nothing is removed
+#define sb_Remove( ptr, at ) ( (at) < sb_Count( (ptr) ) ? ( memmove( (ptr)+(at), (ptr)+(at)+1, sizeof( (ptr)[0] ) * ( sb__Used( ptr ) - ( (at) + 1 ) ) ), --sb__Used( (ptr) ) ) : 0 )
 
 // increases the amount of allocated space by amt
 #define sb_Reserve( ptr, amt ) ( ( ( (ptr) == 0 ) || ( sb__Total( ptr ) < amt ) ) ? ( (ptr) = sb__GrowData( (ptr), (amt), sizeof( (ptr)[0] ), __FILE__, __LINE__ ) ) : 0 )

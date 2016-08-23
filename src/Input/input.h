@@ -19,6 +19,11 @@ Clears all key bindings assocated with the passed in key code.
 void input_ClearKeyBinds( SDL_Keycode code );
 
 /*
+Clears all key bindings associated with the passed in response function.
+*/
+void input_ClearKeyResponse( KeyResponse response );
+
+/*
 Binds a function response when a key is pressed down.
  Returns < 0 if there was a problem binding the key.
 */
@@ -50,8 +55,14 @@ void input_UpdateMouseWindow( int windowWidth, int windowHeight );
 
 /*
 Gets the relative position of the mouse.
+ Returns 1 if the position is inside the input area.
 */
-int input_GetMousePostion( Vector2* out );
+int input_GetMousePosition( Vector2* out );
+
+/*
+Gets the position of the mouse in the window.
+*/
+void input_GetRawMousePosition( Vector2* out );
 
 /*
 Clears all current mouse button bindings.

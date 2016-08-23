@@ -33,7 +33,7 @@ static struct Button {
 	ButtonResponse pressResponse;
 	ButtonResponse releaseResponse;
 
-	char layer;
+	char depth;
 	Vector2 position;
 	Vector2 halfSize;
 
@@ -72,7 +72,7 @@ int btn_Create( Vector2 position, Vector2 size, const char* text, int fontID, in
 	buttons[newIdx].normalImgId = normalImg;
 	buttons[newIdx].focusImgId = focusedImg;
 	buttons[newIdx].clickedImdId = clickedImg;
-	buttons[newIdx].layer = layer;
+	buttons[newIdx].depth = layer;
 	buttons[newIdx].inUse = 1;
 	buttons[newIdx].pressResponse = pressResponse;
 	buttons[newIdx].releaseResponse = releaseResponse;
@@ -112,6 +112,7 @@ int btn_RegisterSystem( void )
 void btn_UnRegisterSystem( void )
 {
 	sys_UnRegister( systemID );
+	systemID = -1;
 }
 
 void btn_Draw( void )
@@ -132,10 +133,10 @@ void btn_Draw( void )
 				img = buttons[i].clickedImdId;
 				break;
 			}
-			img_Draw( img, buttons[i].camFlags, buttons[i].position, buttons[i].position, buttons[i].layer );
+			img_Draw( img, buttons[i].camFlags, buttons[i].position, buttons[i].position, buttons[i].depth );
 			if( ( buttons[i].text[0] != 0 ) && ( buttons[i].fontID >= 0 ) ) {
 				txt_DisplayString( buttons[i].text, buttons[i].position, CLR_WHITE, HORIZ_ALIGN_CENTER, VERT_ALIGN_CENTER,
-									buttons[i].fontID, buttons[i].camFlags, buttons[i].layer );
+									buttons[i].fontID, buttons[i].camFlags, buttons[i].depth );
 			}
 		}
 	}
@@ -151,7 +152,7 @@ void btn_Process( void )
 
 	/* see if the mouse is positioned over any buttons */
 	Vector2 mouse2DPos;
-	if( !input_GetMousePostion( &mouse2DPos ) ) {
+	if( !input_GetMousePosition( &mouse2DPos ) ) {
 		return;
 	}
 	vec2ToVec3( &mouse2DPos, 0.0f, &mousePos );

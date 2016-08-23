@@ -18,6 +18,11 @@ Resizes everything for the specified window size. Used to calculate render area.
 void gfx_SetWindowSize( int windowWidth, int windowHeight );
 
 /*
+Just gets the size.
+*/
+void gfx_GetRenderSize( int* renderWidthOut, int* renderHeightOut );
+
+/*
 Sets render area clearing color.
 */
 void gfx_SetClearColor( Color newClearColor );

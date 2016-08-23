@@ -197,7 +197,7 @@ void spine_CleanTemplate( int idx )
 	}
 
 	for( int i = 0; i < lastInstance; ++i ) {
-		if( instances[i].templateIdx == idx ) {
+		if( ( instances[i].templateIdx == idx ) &&  ( instances[i].skeleton != NULL ) ) {
 			SDL_LogError( SDL_LOG_CATEGORY_RENDER, "Found a spine instance using a freed template." );
 		}
 	}
@@ -241,7 +241,7 @@ Creates an instance of a template. The templateIdx passed in should be a value r
  hasn't been cleaned up.
 Returns an id to use in other functions. Returns -1 if there's a problem.
 */
-int spine_CreateInstance( int templateIdx, Vector2 pos, int cameraFlags, char depth, spAnimationStateListener listener )
+int spine_CreateInstance( int templateIdx, Vector2 pos, int cameraFlags, char depth, spAnimationStateListener listener, void* object )
 {
 	int idx;
 	for( idx = 0; ( instances[idx].skeleton != NULL ) && ( idx < MAX_INSTANCES ); ++idx ) ;
@@ -281,6 +281,7 @@ int spine_CreateInstance( int templateIdx, Vector2 pos, int cameraFlags, char de
 	spSkeleton_setToSetupPose( charState->skeleton );
 
 	charState->state->listener = listener;
+	charState->state->rendererObject = object;
 
 	charState->templateIdx = templateIdx;
 	charState->cameraFlags = cameraFlags;
@@ -453,7 +454,7 @@ static void drawCharacter( SpineInstance* spine )
 			} break;*/
 		case SP_ATTACHMENT_MESH: {
 				spMeshAttachment* meshAttachment = (spMeshAttachment*)attachment;
-				assert( meshAttachment->verticesCount < MAX_SPINE_VERTS );
+				assert( meshAttachment->super.worldVerticesLength < MAX_SPINE_VERTS );
 
 				// todo: come up with a better way than just a preallocated array, possible probems when world vertices > sizeof( spineVertices )
 				spMeshAttachment_computeWorldVertices( meshAttachment, slot, spineVertices );
@@ -473,28 +474,7 @@ static void drawCharacter( SpineInstance* spine )
 						uvs[j].y = meshAttachment->uvs[baseIndex+1];
 					}
 
-					triRenderer_AddVertices( verts, uvs, ST_DEFAULT, texture->textureID, col, 0, camFlags, depth, texture->flags & TF_IS_TRANSPARENT );
-				}
-			} break;
-		case SP_ATTACHMENT_SKINNED_MESH: {
-				spSkinnedMeshAttachment* skinnedMeshAttachment = (spSkinnedMeshAttachment*)attachment;
-				spSkinnedMeshAttachment_computeWorldVertices( skinnedMeshAttachment, slot, spineVertices );
-
-				texture = (Texture*)((spAtlasRegion*)skinnedMeshAttachment->rendererObject)->page->rendererObject;
-
-				for( int i = 0; i < skinnedMeshAttachment->trianglesCount; i+=3 ) {
-					Vector2 verts[3];
-					Vector2 uvs[3];
-
-					for( int j = 0; j < 3; ++j ) {
-						int baseIndex = skinnedMeshAttachment->triangles[i+j] * 2;
-						verts[j].x = spineVertices[baseIndex];
-						verts[j].y = spineVertices[baseIndex+1];
-
-						uvs[j].x = skinnedMeshAttachment->uvs[baseIndex];
-						uvs[j].y = skinnedMeshAttachment->uvs[baseIndex+1];
-					}
-
+					//debugRenderer_Triangle( camFlags, verts[0], verts[1], verts[2], CLR_GREEN );
 					triRenderer_AddVertices( verts, uvs, ST_DEFAULT, texture->textureID, col, 0, camFlags, depth, texture->flags & TF_IS_TRANSPARENT );
 				}
 			} break;

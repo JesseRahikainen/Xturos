@@ -1,6 +1,8 @@
 #ifndef TEXT_H
 #define TEXT_H
 
+#include <stdbool.h>
+
 #include "../Graphics/color.h"
 #include "../Math/vector2.h"
 
@@ -47,9 +49,11 @@ void txt_DisplayString( const char* utf8Str, Vector2 pos, Color clr, HorizTextAl
 	int fontID, int camFlags, int8_t depth );
 
 /*
-Draws a string on the screen to an area. Splits up lines and such.
+Draws a string on the screen to an area. Splits up lines and such. If outCharPos is not equal to NULL it will
+ grab the position of the character at storeCharPos and put it in there. Returns if outCharPos is valid.
 */
-void txt_DisplayTextArea( const uint8_t* utf8Str, Vector2 upperLeft, Vector2 size, Color clr,
-	HorizTextAlignment hAlign, VertTextAlignment vAlign, int fontID, int camFlags, int8_t depth );
+bool txt_DisplayTextArea( const uint8_t* utf8Str, Vector2 upperLeft, Vector2 size, Color clr,
+	HorizTextAlignment hAlign, VertTextAlignment vAlign, int fontID, size_t storeCharPos, Vector2* outCharPos,
+	int camFlags, int8_t depth );
 
 #endif /* inclusion guard */

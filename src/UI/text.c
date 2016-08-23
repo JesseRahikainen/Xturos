@@ -466,21 +466,25 @@ void convertOutToBuffer( const uint8_t* utf8Str )
 	} while( codepoint != 0 );
 }
 
-/*
-Draws a string on the screen to an area. Splits up lines and such.
-*/
 #include <string.h>
-void txt_DisplayTextArea( const uint8_t* utf8Str, Vector2 upperLeft, Vector2 size, Color clr,
-	HorizTextAlignment hAlign, VertTextAlignment vAlign, int fontID, int camFlags, int8_t depth )
+/*
+Draws a string on the screen to an area. Splits up lines and such. If outCharPos is not equal to NULL it will
+ grab the position of the character at storeCharPos and put it in there. Returns if outCharPos is valid.
+*/
+bool txt_DisplayTextArea( const uint8_t* utf8Str, Vector2 upperLeft, Vector2 size, Color clr,
+	HorizTextAlignment hAlign, VertTextAlignment vAlign, int fontID, size_t storeCharPos, Vector2* outCharPos,
+	int camFlags, int8_t depth )
 {
-	int test = 0;
 	assert( utf8Str != NULL );
 
 	const uint8_t* str = (uint8_t*)utf8Str;
 
+	bool posValid = false;
+	size_t charBufferPos = SIZE_MAX;
+
 	// don't bother rendering anything if there are no lines to be able to draw
 	if( (int)( size.y / fonts[fontID].nextLineDescent ) <= 0 ) {
-		return;
+		return false;
 	}
 
 	// puts the converted string int sbStringCodepointBuffer
@@ -500,7 +504,6 @@ void txt_DisplayTextArea( const uint8_t* utf8Str, Vector2 upperLeft, Vector2 siz
 	float lastBreakPointSize = 0.0f;
 	uint32_t maxLineCnt = 0;
 	for( size_t i = 0; i < sb_Count( sbStringCodepointBuffer ); ++i ) {
-//#error breaks in here if the first line is longer than the allowed length
 		if( isBreakableCodepoint( sbStringCodepointBuffer[i] ) ) {
 			// store the position for later use
 			lastBreakPoint = i;
@@ -508,6 +511,10 @@ void txt_DisplayTextArea( const uint8_t* utf8Str, Vector2 upperLeft, Vector2 siz
 			// want to ignore the character since if we're using it that means
 			//  it will be replaced
 			lastBreakPointSize = currentLength;
+		}
+
+		if( storeCharPos == i ) {
+			charBufferPos = sb_Count( sbStringCodepointBuffer );
 		}
 
 		if( sbStringCodepointBuffer[i] != LINE_FEED ) {
@@ -580,5 +587,17 @@ void txt_DisplayTextArea( const uint8_t* utf8Str, Vector2 upperLeft, Vector2 siz
 				renderPos.x += glyph->advance;
 			}
 		}
+
+		if( ( i == charBufferPos ) && ( outCharPos != NULL ) ) {
+			(*outCharPos) = renderPos;
+			posValid = true;
+		}
 	}
+
+	if( !posValid && ( outCharPos != NULL ) ) {
+		(*outCharPos) = renderPos;
+		posValid = true;
+	}
+
+	return posValid;
 }

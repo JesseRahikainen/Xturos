@@ -45,7 +45,7 @@
     <LinkIncremental>true</LinkIncremental>
     <TargetName>$(ProjectName)-dbg</TargetName>
     <OutDir>$(SolutionDir)\bin\</OutDir>
-    <IncludePath>F:\Data\Libraries\stb-master;F:\Data\Libraries\SDL2-2.0.3\include;F:\Data\Libraries\SDL2_ttf-2.0.12\include;F:\Data\Libraries\SDL2_mixer-2.0.0\include;F:\Data\Libraries\spine-runtimes-master\spine-c\include;$(IncludePath)</IncludePath>
+    <IncludePath>F:\Data\Libraries\stb-master;F:\Data\Libraries\SDL2-2.0.3\include;F:\Data\Libraries\SDL2_ttf-2.0.12\include;F:\Data\Libraries\SDL2_mixer-2.0.0\include;F:\Data\Libraries\spine-runtimes-master\spine-c\include;F:\Data\Libraries\nuklear-master;$(IncludePath)</IncludePath>
     <LibraryPath>F:\Data\Libraries\spine-runtimes-master\spine-c\lib;F:\Data\Libraries\SDL2-2.0.3\debug_lib\x86;F:\Data\Libraries\SDL2_ttf-2.0.12\lib\x86;F:\Data\Libraries\SDL2_mixer-2.0.0\lib\x86;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -113,7 +113,8 @@
     <ClInclude Include="src\Graphics\sprites.h" />
     <ClInclude Include="src\Graphics\imageSheets.h" />
     <ClInclude Include="src\Graphics\triRendering.h" />
-    <ClInclude Include="src\IMGUI\IMGUI.h" />
+    <ClInclude Include="src\IMGUI\nuklearHeader.h" />
+    <ClInclude Include="src\IMGUI\nuklearWrapper.h" />
     <ClInclude Include="src\Input\input.h" />
     <ClInclude Include="src\Math\mathUtil.h" />
     <ClInclude Include="src\Math\matrix4.h" />
@@ -152,7 +153,7 @@
     <ClCompile Include="src\Graphics\sprites.c" />
     <ClCompile Include="src\Graphics\imageSheets.c" />
     <ClCompile Include="src\Graphics\triRendering.c" />
-    <ClCompile Include="src\IMGUI\IMGUI.c" />
+    <ClCompile Include="src\IMGUI\nuklearWrapper.c" />
     <ClCompile Include="src\Input\input.c" />
     <ClCompile Include="src\main.c" />
     <ClCompile Include="src\Math\mathUtil.c" />

@@ -15,7 +15,7 @@
 #include "Math/MathUtil.h"
 #include "sound.h"
 #include "Utils/cfgFile.h"
-#include "IMGUI/IMGUI.h"
+#include "IMGUI/nuklearWrapper.h"
 
 #include "UI/text.h"
 #include "Input/input.h"
@@ -25,6 +25,8 @@
 
 #include "System/memory.h"
 #include "System/systems.h"
+
+#include "Graphics\debugRendering.h"
 
 #define WINDOW_WIDTH 800
 #define WINDOW_HEIGHT 600
@@ -71,6 +73,18 @@ void LogOutput( void* userData, int category, SDL_LogPriority priority, const ch
 #else
 	#warning "NO END OF LINE DEFINED FOR THIS PLATFORM!"
 #endif
+}
+
+static void initIMGUI( NuklearWrapper* imgui, bool useRelativeMousePos, int width, int height )
+{
+	nk_xu_init( imgui, window, useRelativeMousePos, width, height );
+
+	struct nk_font_atlas* fontAtlas;
+	nk_xu_fontStashBegin( imgui, &fontAtlas );
+	// load fonts
+	struct nk_font *font = nk_font_atlas_add_from_file( fontAtlas, "./Fonts/kenpixel.ttf", 12, 0 );
+	nk_xu_fontStashEnd( imgui );
+	nk_style_set_font( &( imgui->ctx ), &( font->handle ) );
 }
 
 int initEverything( void )
@@ -153,6 +167,9 @@ int initEverything( void )
 	input_UpdateMouseWindow( WINDOW_WIDTH, WINDOW_HEIGHT );
 	SDL_LogInfo( SDL_LOG_CATEGORY_APPLICATION, "Input successfully initialize" );
 
+	initIMGUI( &inGameIMGUI, true, RENDER_WIDTH, RENDER_HEIGHT );
+	initIMGUI( &editorIMGUI, false, WINDOW_WIDTH, WINDOW_HEIGHT );
+
 	return 0;
 }
 
@@ -160,6 +177,8 @@ int initEverything( void )
 void processEvents( int windowsEventsOnly )
 {
 	SDL_Event e;
+	nk_input_begin( &( editorIMGUI.ctx ) );
+	nk_input_begin( &( inGameIMGUI.ctx ) );
 	while( SDL_PollEvent( &e ) != 0 ) {
 		if( e.type == SDL_WINDOWEVENT ) {
 			switch( e.window.event ) {
@@ -190,8 +209,13 @@ void processEvents( int windowsEventsOnly )
 		sys_ProcessEvents( &e );
 		input_ProcessEvents( &e );
 		gsmProcessEvents( &globalFSM, &e );
-		imgui_ProcessEvents( &e ); // just for TextInput events when text input is enabled
+		//imgui_ProcessEvents( &e ); // just for TextInput events when text input is enabled
+		nk_xu_handleEvent( &editorIMGUI, &e );
+		nk_xu_handleEvent( &inGameIMGUI, &e );
 	}
+
+	nk_input_end( &( editorIMGUI.ctx ) );
+	nk_input_end( &( inGameIMGUI.ctx ) );
 }
 
 int main( int argc, char** argv )

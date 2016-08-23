@@ -155,7 +155,7 @@ void chkBox_Process( void )
 
 	/* see if the mouse is positioned over any buttons */
 	Vector2 mouse2DPos;
-	if( !input_GetMousePostion( &mouse2DPos ) ) {
+	if( !input_GetMousePosition( &mouse2DPos ) ) {
 		return;
 	}
 	vec2ToVec3( &mouse2DPos, 0.0f, &mousePos );

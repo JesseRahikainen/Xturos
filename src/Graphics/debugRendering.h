@@ -18,6 +18,7 @@ Some basic debug drawing functions. The alpha value of colors are ignored.
 int debugRenderer_AABB( unsigned int camFlags, Vector2 topLeft, Vector2 size, Color color );
 int debugRenderer_Line( unsigned int camFlags, Vector2 pOne, Vector2 pTwo, Color color );
 int debugRenderer_Circle( unsigned int camFlags, Vector2 center, float radius, Color color );
+int debugRenderer_Triangle( unsigned int camFlags, Vector2 pOne, Vector2 pTwo, Vector2 pThree, Color color );
 
 /*
 Draw all the debug lines.
