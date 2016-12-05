@@ -213,6 +213,7 @@ void spine_SetTemplateMix( int templateIdx, spAnimation* from, spAnimation* to, 
 	assert( templateIdx < MAX_TEMPLATES );
 
 	if( templates[templateIdx].stateData == NULL ) {
+		SDL_LogCritical( SDL_LOG_CATEGORY_VIDEO, "Attempting to set a mix on a template that doesn't exist." );
 		return;
 	}
 
@@ -229,6 +230,7 @@ void spine_SetTemplateMixByName( int templateIdx, const char* fromName, const ch
 	assert( templateIdx < MAX_TEMPLATES );
 
 	if( templates[templateIdx].stateData == NULL ) {
+		SDL_LogCritical( SDL_LOG_CATEGORY_VIDEO, "Attempting to set a mix on a template that doesn't exist." );
 		return;
 	}
 
@@ -353,6 +355,14 @@ void spine_FlipInstancePositions( void )
 		
 		instances[i].startPos = instances[i].endPos;
 	}
+}
+
+/*
+Returns the skeleton data for the template, if theres'a an issue returns NULL.
+*/
+spSkeletonData* spine_GetTemplateSkeletonData( int id )
+{
+	return templates[id].skeletonData;
 }
 
 /*

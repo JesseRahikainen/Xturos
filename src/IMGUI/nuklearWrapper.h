@@ -36,6 +36,8 @@ typedef struct {
 
 	bool useRelativeMousePos;
 
+	bool clear;
+
 	struct nk_context ctx;
 	struct nk_font_atlas fontAtlas;
 } NuklearWrapper;

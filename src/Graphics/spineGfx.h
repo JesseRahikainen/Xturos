@@ -68,6 +68,11 @@ Flips the positions used for rendering the instances.
 void spine_FlipInstancePositions( void );
 
 /*
+Returns the skeleton data for the template, if theres'a an issue returns NULL.
+*/
+spSkeletonData* spine_GetTemplateSkeletonData( int id );
+
+/*
 Returns the skeleton of the spine instance, if there's an issue returns NULL.
  Note: Adjustments to the skeletons x and y are overwritten in spine_RenderInstances( ).
 */

@@ -277,6 +277,8 @@ int main( int argc, char** argv )
 		}
 
 		// rendering
+		editorIMGUI.clear = false;
+		inGameIMGUI.clear = false;
 		if( numPhysicsProcesses > 0 ) {
 			// set the new render positions
 			renderDelta = PHYSICS_DELTA * (float)numPhysicsProcesses;
@@ -286,6 +288,9 @@ int main( int argc, char** argv )
 			// set up rendering for everything
 			sys_Draw( );
 			gsmDraw( &globalFSM );
+
+			editorIMGUI.clear = true;
+			inGameIMGUI.clear = true;
 		}
 
 		// do the actual drawing for this frame

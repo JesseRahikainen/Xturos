@@ -16,8 +16,8 @@
 #define sb__NeedGrow( ptr, amt )	( ( (ptr) == 0 ) || ( ( sb__Used( (ptr) ) + (amt) ) >= sb__Total( ptr ) ) )
 #define sb__TestAndGrow( ptr, cnt )	( sb__NeedGrow( ptr, (cnt) ) ? ( (ptr) = sb__GrowData( (ptr), (cnt), sizeof( (ptr)[0] ), __FILE__, __LINE__ ) ) : 0 )
 
-// releases all memory in use by the buffer
-#define sb_Release( ptr )	( (ptr) ? ( mem_Release( sb__Raw( (ptr) ) ), 0 ) : 0 )
+// releases all memory in use by the buffer and sets the pointer to null
+#define sb_Release( ptr )	( (ptr) ? ( mem_Release( sb__Raw( (ptr) ) ), ptr = 0, 0 ) : 0 )
 
 // Pushes the value onto the end of the buffer
 #define sb_Push( ptr, val )	( sb__TestAndGrow( (ptr), 1 ), (ptr)[sb__Used(ptr)++] = (val) )

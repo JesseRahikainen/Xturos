@@ -31,4 +31,7 @@ float sign( float val );
 Vector3* vec2ToVec3( const Vector2* vec2, float z, Vector3* out );
 float jerkLerp( float t );
 
+void closestPtToSegment( const Vector2* segOne, const Vector2* segTwo, const Vector2* pos, Vector2* outPos, float* outParam );
+float sqDistPointSegment( const Vector2* segOne, const Vector2* segTwo, const Vector2* pos );
+
 #endif // inclusion guard

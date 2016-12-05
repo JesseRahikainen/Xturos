@@ -21,7 +21,6 @@
 NuklearWrapper editorIMGUI = { 0 };
 NuklearWrapper inGameIMGUI = { 0 };
 
-
 static void uploadAtlas( NuklearWrapper* xu, const void *image, int width, int height)
 {
     GL( glGenTextures( 1, &( xu->fontTx ) ) );
@@ -56,8 +55,7 @@ static void clipboardCopy( nk_handle usr, const char *text, int len )
 
 static void* customAlloc( nk_handle handle, void* old, nk_size size )
 {
-	// it looks like old is only every passed 0, so we can probably ignore that
-	return mem_Allocate( size );
+	return mem_Resize( old, size );
 }
 
 static void customFree( nk_handle handle, void* p )
@@ -89,7 +87,7 @@ void nk_xu_init( NuklearWrapper* xu, SDL_Window* win, bool useRelativeMousePos, 
 	// device creation
 	//struct nk_xu_device* dev = &( xu.xuDev );
 	nk_buffer_init( &( xu->cmds ), &alloc, INITIAL_CMD_BUFFER_SIZE );
-	//  create the shader, TODO: find a way to share this between contexts?
+	//  create the shader, TODO: share this between contexts
 	
 	ShaderDefinition shaderDefs[2];
 	ShaderProgramDefinition progDef;
@@ -159,6 +157,7 @@ void nk_xu_init( NuklearWrapper* xu, SDL_Window* win, bool useRelativeMousePos, 
 	xu->renderHeight = renderHeight;
 
 	xu->useRelativeMousePos = useRelativeMousePos;
+	xu->clear = true;
 }
 
 void nk_xu_fontStashBegin( NuklearWrapper* xu, struct nk_font_atlas** atlas )
@@ -383,7 +382,7 @@ void nk_xu_render( NuklearWrapper* xu )
 
 			
 		}
-		nk_clear( &( xu->ctx ) );
+		if( xu->clear ) nk_clear( &( xu->ctx ) );
 	}
 
 	GL( glUseProgram( 0 ) );

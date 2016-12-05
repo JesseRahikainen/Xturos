@@ -145,3 +145,48 @@ float jerkLerp( float t )
 	t = clamp( 0.0f, 1.0f, t );
 	return ( 1.0f - ( ( 1.0f - t ) * ( 1.0f - t ) ) );
 }
+
+// Real-Time Collision Detection, pg 128
+void closestPtToSegment( const Vector2* segOne, const Vector2* segTwo, const Vector2* pos, Vector2* outPos, float* outParam )
+{
+	Vector2 line;
+	vec2_Subtract( segOne, segTwo, &line );
+
+	// project pos onto the line
+	Vector2 toPos;
+	vec2_Subtract( segOne, pos, &toPos );
+	float t = vec2_DotProduct( &toPos, &line ) / vec2_DotProduct( &line, &line );
+
+	// if outside the segment clamp t to the nearest endpoint
+	if( t < 0.0f ) t = 0.0f;
+	if( t > 1.0f ) t = 1.0f;
+
+	vec2_Lerp( segOne, segTwo, t, outPos );
+	(*outParam) = t;
+}
+
+// Real-Time Collision Detection, pg 130
+float sqDistPointSegment( const Vector2* segOne, const Vector2* segTwo, const Vector2* pos )
+{
+	Vector2 twoMinOne;
+	Vector2 posMinOne;
+	Vector2 posMinTwo;
+
+	vec2_Subtract( segTwo, segOne, &twoMinOne );
+	vec2_Subtract( pos, segOne, &posMinOne );
+	vec2_Subtract( pos, segTwo, &posMinTwo );
+
+	float e = vec2_DotProduct( &posMinOne, &twoMinOne );
+
+	// handles cases where pos projects outside the segment
+	if( e <= 0.0f )  {
+		return vec2_DotProduct( &posMinOne, &posMinOne );
+	}
+
+	float f = vec2_DotProduct( &twoMinOne, &twoMinOne );
+	if( e >= f ) {
+		return vec2_DotProduct( &posMinTwo, &posMinTwo );
+	}
+
+	return vec2_DotProduct( &posMinOne, &posMinOne ) - ( ( e * e ) / f );
+}
