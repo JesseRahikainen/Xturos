@@ -2,7 +2,6 @@
 
 // TODO: Ability to cache string images
 
-#include <SDL_log.h>
 #include <SDL_rwops.h>
 #include <assert.h>
 #include <stdbool.h>
@@ -20,6 +19,8 @@
 #include "../Utils/stretchyBuffer.h"
 #include "../Graphics/images.h"
 #include "../Math/mathUtil.h"
+
+#include "../System/platformLog.h"
 
 typedef struct {
 	int codepoint;
@@ -116,14 +117,14 @@ int txt_LoadFont( const char* fileName, float pixelHeight )
 	}
 	if( newFont >= MAX_FONTS ) {
 		newFont = -1;
-		SDL_LogError( SDL_LOG_CATEGORY_APPLICATION, "Unable to find empty font to use for %s", fileName );
+		llog( LOG_ERROR, "Unable to find empty font to use for %s", fileName );
 		goto clean_up;
 	}
 
 	sb_Add( glyphStorage, fontPackRange.num_chars );
 	if( glyphStorage == NULL ) {
 		newFont = -1;
-		SDL_LogError( SDL_LOG_CATEGORY_APPLICATION, "Unable to allocate glyphs for %s", fileName );
+		llog( LOG_ERROR, "Unable to allocate glyphs for %s", fileName );
 		goto clean_up;
 	}
 
@@ -131,7 +132,7 @@ int txt_LoadFont( const char* fileName, float pixelHeight )
 	fontPackRange.chardata_for_range = mem_Allocate( sizeof( stbtt_packedchar ) * fontPackRange.num_chars );
 	fontPackRange.font_size = pixelHeight;
 	if( fontPackRange.chardata_for_range == NULL ) {
-		SDL_LogError( SDL_LOG_CATEGORY_APPLICATION, "Error allocating range data for %s", fileName );
+		llog( LOG_ERROR, "Error allocating range data for %s", fileName );
 		newFont = -1;
 		goto clean_up;
 	}
@@ -141,21 +142,21 @@ int txt_LoadFont( const char* fileName, float pixelHeight )
 	size_t bufferSize = 1024 * 1024;
 	buffer = mem_Allocate( bufferSize * sizeof( uint8_t ) ); // megabyte sized buffer, should never load a file larger than this
 	if( buffer == NULL ) {
-		SDL_LogWarn( SDL_LOG_CATEGORY_APPLICATION, "Error allocating font data buffer for %s", fileName );
+		llog( LOG_WARN, "Error allocating font data buffer for %s", fileName );
 		newFont = -1;
 		goto clean_up;
 	}
 
 	SDL_RWops* rwopsFile = SDL_RWFromFile( fileName, "r" );
 	if( rwopsFile == NULL ) {
-		SDL_LogError( SDL_LOG_CATEGORY_APPLICATION, "Error opening font file %s", fileName );
+		llog( LOG_ERROR, "Error opening font file %s", fileName );
 		newFont = -1;
 		goto clean_up;
 	}
 
 	size_t numRead = SDL_RWread( rwopsFile, (void*)buffer, sizeof( uint8_t ), bufferSize );
 	if( numRead >= bufferSize ) {
-		SDL_LogError( SDL_LOG_CATEGORY_APPLICATION, "Too much data read in from file %s", fileName );
+		llog( LOG_ERROR, "Too much data read in from file %s", fileName );
 		newFont = -1;
 		goto clean_up;
 	}
@@ -180,20 +181,20 @@ int txt_LoadFont( const char* fileName, float pixelHeight )
 	bmpBuffer = mem_Allocate( sizeof( unsigned char ) * bmpWidth * bmpHeight ); // the 4 allows room for expansion
 	if( bmpBuffer == NULL ) {
 		newFont = -1;
-		SDL_LogError( SDL_LOG_CATEGORY_APPLICATION, "Unable to allocate bitmap memory for %s", fileName );
+		llog( LOG_ERROR, "Unable to allocate bitmap memory for %s", fileName );
 		goto clean_up;
 	}
 	// TODO: Test oversampling
 	if( !stbtt_PackBegin( &packContext, bmpBuffer, bmpWidth, bmpHeight, 0, 1, NULL ) ) {
 		newFont = -1;
-		SDL_LogError( SDL_LOG_CATEGORY_APPLICATION, "Unable to begin packing ranges for %s", fileName );
+		llog( LOG_ERROR, "Unable to begin packing ranges for %s", fileName );
 		goto clean_up;
 	}
 	int wasPacked = stbtt_PackFontRanges( &packContext, (unsigned char*)buffer, 0, &fontPackRange, 1 );
 	stbtt_PackEnd( &packContext );
 	if( !wasPacked ) {
 		newFont = -1;
-		SDL_LogError( SDL_LOG_CATEGORY_APPLICATION, "Unable to pack ranges for %s", fileName );
+		llog( LOG_ERROR, "Unable to pack ranges for %s", fileName );
 		goto clean_up;
 	}
 
@@ -203,7 +204,7 @@ int txt_LoadFont( const char* fileName, float pixelHeight )
 	retIDs = mem_Allocate( sizeof( int ) * fontPackRange.num_chars );
 	if( ( mins == NULL ) || ( maxes == NULL ) || ( retIDs == NULL ) ) {
 		newFont = -1;
-		SDL_LogError( SDL_LOG_CATEGORY_APPLICATION, "Unable to allocate image data for %s", fileName );
+		llog( LOG_ERROR, "Unable to allocate image data for %s", fileName );
 		goto clean_up;
 	}
 
@@ -219,7 +220,7 @@ int txt_LoadFont( const char* fileName, float pixelHeight )
 	//  clamp to either on or off
 	fonts[newFont].packageID = img_SplitAlphaBitmap( bmpBuffer, bmpWidth, bmpHeight, fontPackRange.num_chars, ST_ALPHA_ONLY, mins, maxes, retIDs );
 	if( fonts[newFont].packageID < 0 ) {
-		SDL_LogError( SDL_LOG_CATEGORY_APPLICATION, "Unable to split images for font %s", fileName );
+		llog( LOG_ERROR, "Unable to split images for font %s", fileName );
 		newFont = -1;
 		goto clean_up;
 	}
@@ -566,7 +567,7 @@ bool txt_DisplayTextArea( const uint8_t* utf8Str, Vector2 upperLeft, Vector2 siz
 		renderPos.y = upperLeft.y + fonts[fontID].descent + fonts[fontID].nextLineDescent;
 		break;
 	case VERT_ALIGN_CENTER:
-		renderPos.y = upperLeft.y + ( size.y / 2.0f ) - ( maxSize.y / 2.0f ) + ( fonts[fontID].ascent / 2.0f );
+		renderPos.y = upperLeft.y + ( size.y / 2.0f ) - ( maxSize.y / 2.0f ) + fonts[fontID].ascent;
 		break;
 	case VERT_ALIGN_BOTTOM:
 		renderPos.y = ( upperLeft.y + size.y ) - maxSize.y + fonts[fontID].nextLineDescent + fonts[fontID].descent;

@@ -93,6 +93,15 @@
     <ClInclude Include="src\Math\vector3.h">
       <Filter>Header Files\Math</Filter>
     </ClInclude>
+    <ClInclude Include="src\Others\glew.h">
+      <Filter>Header Files\Others</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Others\glxew.h">
+      <Filter>Header Files\Others</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Others\wglew.h">
+      <Filter>Header Files\Others</Filter>
+    </ClInclude>
     <ClInclude Include="src\collisionDetection.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -177,21 +186,6 @@
     <ClInclude Include="src\IMGUI\nuklearWrapper.h">
       <Filter>Header Files\IMGUI</Filter>
     </ClInclude>
-    <ClInclude Include="src\Others\gl_core.h">
-      <Filter>Header Files\Others</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Graphics\glPlatform.h">
-      <Filter>Header Files\Graphics</Filter>
-    </ClInclude>
-    <ClInclude Include="src\System\platformLog.h">
-      <Filter>Header Files\System</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Math\matrix3.h">
-      <Filter>Header Files\Math</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Utils\idSet.h">
-      <Filter>Header Files\Utils</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Game\gameScreen.c">
@@ -214,6 +208,9 @@
     </ClCompile>
     <ClCompile Include="src\Math\vector3.c">
       <Filter>Source Files\Math</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Others\glew.c">
+      <Filter>Source Files\Others</Filter>
     </ClCompile>
     <ClCompile Include="src\collisionDetection.c">
       <Filter>Source Files</Filter>
@@ -289,27 +286,6 @@
     </ClCompile>
     <ClCompile Include="src\IMGUI\nuklearWrapper.c">
       <Filter>Source Files\IMGUI</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Others\gl_core.c">
-      <Filter>Source Files\Others</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Graphics\glPlatform.c">
-      <Filter>Source Files\Graphics</Filter>
-    </ClCompile>
-    <ClCompile Include="src\System\platformLog.c">
-      <Filter>Source Files\System</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Utils\helpers.c">
-      <Filter>Source Files\Utils</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Math\matrix3.c">
-      <Filter>Source Files\Math</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Utils\idSet.c">
-      <Filter>Source Files\Utils</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Others\stb_vorbis_sdl.c">
-      <Filter>Source Files\Others</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

@@ -123,6 +123,12 @@ float randFloat( float min, float max )
 	return min + ( ( ( (float)rand( ) / (float)RAND_MAX ) ) * ( max - min ) );
 }
 
+float randFloatVar( float mid, float var )
+{
+	assert( var >= 0.0f );
+	return randFloat( mid - var, mid + var );
+}
+
 float sign( float val )
 {
 	return ( ( val >= 0.0f ) ? 1.0f : -1.0f );

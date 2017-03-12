@@ -1,13 +1,13 @@
 #include "triRendering.h"
 
-//#include "../Others/glew.h"
-//#include <SDL_opengl.h>
+#include "glPlatform.h"
 
 #include "../Math/matrix4.h"
 #include "camera.h"
 #include "shaderManager.h"
 #include "glDebugging.h"
 #include "scissor.h"
+#include "../System/platformLog.h"
 
 typedef struct {
 	Vector3 pos;
@@ -58,58 +58,26 @@ static ShaderProgram shaderPrograms[NUM_SHADERS];
 
 int triRenderer_LoadShaders( void )
 {
+	llog( LOG_INFO, "Loading triangle renderer shaders." );
 	ShaderDefinition shaderDefs[3];
 	ShaderProgramDefinition progDefs[NUM_SHADERS];
 
+	llog( LOG_INFO, "  Destroying shaders." );
 	shaders_Destroy( shaderPrograms, NUM_SHADERS );
 
 	// Sprite shader
 	shaderDefs[0].fileName = NULL;
 	shaderDefs[0].type = GL_VERTEX_SHADER;
-	shaderDefs[0].shaderText =	"#version 330\n"
-								"uniform mat4 vpMatrix;\n"
-								"layout(location = 0) in vec3 vVertex;\n"
-								"layout(location = 1) in vec2 vTexCoord0;\n"
-								"layout(location = 2) in vec4 vColor;\n"
-								"out vec2 vTex;\n"
-								"out vec4 vCol;\n"
-								"void main( void )\n"
-								"{\n"
-								"	vTex = vTexCoord0;\n"
-								"	vCol = vColor;\n"
-								"	gl_Position = vpMatrix * vec4( vVertex, 1.0f );\n"
-								"}\n";
+	shaderDefs[0].shaderText = DEFAULT_VERTEX_SHADER;
 
 	shaderDefs[1].fileName = NULL;
 	shaderDefs[1].type = GL_FRAGMENT_SHADER;
-	shaderDefs[1].shaderText =	"#version 330\n"
-								"in vec2 vTex;\n"
-								"in vec4 vCol;\n"
-								"uniform sampler2D textureUnit0;\n"
-								"out vec4 outCol;\n"
-								"void main( void )\n"
-								"{\n"
-								"	outCol = texture2D(textureUnit0, vTex) * vCol;\n"
-								"	if( outCol.w <= 0.0f ) {\n"
-								"		discard;\n"
-								"	}\n"
-								"}\n";
+	shaderDefs[1].shaderText = DEFAULT_FRAG_SHADER;
 
 	// for rendering fonts
 	shaderDefs[2].fileName = NULL;
 	shaderDefs[2].type = GL_FRAGMENT_SHADER;
-	shaderDefs[2].shaderText =	"#version 330\n"
-								"in vec2 vTex;\n"
-								"in vec4 vCol;\n"
-								"uniform sampler2D textureUnit0;\n"
-								"out vec4 outCol;\n"
-								"void main( void )\n"
-								"{\n"
-								"	outCol = vec4( vCol.r, vCol.g, vCol.b, texture2D(textureUnit0, vTex).a * vCol.a );\n"
-								"	if( outCol.w <= 0.0f ) {\n"
-								"		discard;\n"
-								"	}\n"
-								"}\n";
+	shaderDefs[2].shaderText = FONT_FRAG_SHADER;
 
 	progDefs[0].fragmentShader = 1;
 	progDefs[0].vertexShader = 0;
@@ -121,9 +89,10 @@ int triRenderer_LoadShaders( void )
 	progDefs[1].geometryShader = -1;
 	progDefs[1].uniformNames = "vpMatrix textureUnit0";
 
+	llog( LOG_INFO, "  Loading shaders." );
 	if( shaders_Load( &( shaderDefs[0] ), sizeof( shaderDefs ) / sizeof( ShaderDefinition ),
 		progDefs, shaderPrograms, NUM_SHADERS ) <= 0 ) {
-		SDL_LogInfo( SDL_LOG_CATEGORY_VIDEO, "Error compiling image shaders.\n" );
+		llog( LOG_ERROR, "Error compiling image shaders.\n" );
 		return -1;
 	}
 
@@ -136,7 +105,7 @@ static int createTriListGLObjects( TriangleList* triList )
 	GL( glGenBuffers( 1, &( triList->VBO ) ) );
 	GL( glGenBuffers( 1, &( triList->IBO ) ) );
 	if( ( triList->VAO == 0 ) || ( triList->VBO == 0 ) || ( triList->IBO == 0 ) ) {
-		SDL_LogError( SDL_LOG_CATEGORY_VIDEO, "Unable to create one or more storage objects for triangle rendering." );
+		llog( LOG_ERROR, "Unable to create one or more storage objects for triangle rendering." );
 		return -1;
 	}
 
@@ -180,6 +149,7 @@ int triRenderer_Init( int renderAreaWidth, int renderAreaHeight )
 		return -1;
 	}
 
+	llog( LOG_INFO, "Creating triangle lists." );
 	if( ( createTriListGLObjects( &solidTriangles ) < 0 ) ||
 		( createTriListGLObjects( &transparentTriangles ) < 0 ) ) {
 		return -1;
@@ -192,7 +162,7 @@ int addTriangle( TriangleList* triList, Vector2 pos0, Vector2 pos1, Vector2 pos2
 	ShaderType shader, GLuint texture, Color color, int clippingID, uint32_t camFlags, int8_t depth )
 {
 	if( triList->lastTriIndex >= ( MAX_TRIS - 1 ) ) {
-		SDL_LogVerbose( SDL_LOG_CATEGORY_RENDER, "Triangle list full." );
+		llog( LOG_VERBOSE, "Triangle list full." );
 		return -1;
 	}
 
@@ -373,7 +343,7 @@ static void lerpVertices( TriangleList* triList, float t )
 /*
 Draws out all the triangles.
 */
-void triRenderer_Render( float t )
+void triRenderer_Render( )
 {
 	SDL_qsort( solidTriangles.triangles, solidTriangles.lastTriIndex + 1, sizeof( Triangle ), sortByRenderState );
 	SDL_qsort( transparentTriangles.triangles, transparentTriangles.lastTriIndex + 1, sizeof( Triangle ), sortByDepth );

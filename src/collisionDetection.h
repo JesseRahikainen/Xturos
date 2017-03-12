@@ -64,6 +64,12 @@ Finds all the collisions between every collider in firstCollectin and secondColl
 void collision_DetectAll( ColliderCollection firstCollection, ColliderCollection secondCollection, CollisionResponse response );
 
 /*
+Finds all the collision between every collider inside the collection.
+ The indices passed to the response function match the collection.
+*/
+void collision_DetectAllInternal( ColliderCollection collection, CollisionResponse response );
+
+/*
 Finds if the specified line segment hits anything in the list. Returns 1 if it did, 0 otherwise. Puts the
  collision point into out, if out is NULL it'll exit once it detects any collision instead of finding the first.
 */

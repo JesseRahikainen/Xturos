@@ -72,7 +72,7 @@ static void* sb__GrowData( void* p, int increment, size_t itemSize, const char* 
 /*
 static void sb_Test( void )
 {
-	//SDL_Log( SDL_LOG_CATEGORY_APPLICATION, txt );
+	//llog( LOG_DEBUG,  SDL_LOG_CATEGORY_APPLICATION, txt );
 	printf( "-- Testing stretchy buffer --\n" );
 
 #define DUMP_ARRAY( a ) \

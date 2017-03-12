@@ -5,6 +5,8 @@ Simple handling of lerping between two values.
 #ifndef ENGINE_TWEEN_H
 #define ENGINE_TWEEN_H
 
+typedef float (*EaseFunc)(float);
+
 typedef struct {
 	int active;
 	float current;
@@ -14,11 +16,12 @@ typedef struct {
 	float duration;
 	float elapsed;
 
-	float (*ease)(float);
+	EaseFunc ease;
 } Tween;
 
+
 /* Sets the values for the tween. If no ease function is set it treats it as linear. */
-void setTween( Tween* tween, float start, float end, float duration, float(*easeFunc)(float) );
+void setTween( Tween* tween, float start, float end, float duration, EaseFunc easeFunc );
 
 /* Resets everything for the tween. */
 void resetTween( Tween* tween );
@@ -59,5 +62,6 @@ float easeOutBounce( float t );
 float easeInOutBounce( float t );
 float easeConstantZero( float t );
 float easeConstantOne( float t );
+float easeLinear( float t );
 
 #endif

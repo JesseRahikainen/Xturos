@@ -6,6 +6,8 @@
 #include "../Utils/stretchyBuffer.h"
 #include "helpers.h"
 
+#include "../System/platformLog.h"
+
 // TODO: make this better overall, this is just a quick hack to test some stuff
 
 #define READ_BUFFER_SIZE 512
@@ -18,14 +20,14 @@ typedef struct {
 
 typedef struct {
 	char filePath[FILE_PATH_LEN];
-	CFGAttribute* attributes;
+	CFGAttribute* sbAttributes;
 } CFGFile;
 
 // opens the file, returns NULL if it fails.
 void* cfg_OpenFile( const char* fileName )
 {
 	if( SDL_strlen( fileName ) >= 128 ) {
-		SDL_LogError( SDL_LOG_CATEGORY_APPLICATION, "Configuration file path too long" );
+		llog( LOG_ERROR, "Configuration file path too long" );
 		return NULL;
 	}
 
@@ -33,7 +35,7 @@ void* cfg_OpenFile( const char* fileName )
 	if( newFile == NULL ) {
 		return NULL;
 	}
-	newFile->attributes = NULL;
+	newFile->sbAttributes = NULL;
 	SDL_strlcpy( newFile->filePath, fileName, FILE_PATH_LEN - 1 );
 	newFile->filePath[FILE_PATH_LEN-1] = 0;
 
@@ -65,6 +67,7 @@ void* cfg_OpenFile( const char* fileName )
 	const char* delimiters = "\f\v\t =\r\n";
 	char* token = strtok( fileText, delimiters );
 	CFGAttribute attr;
+
 	while( token != NULL ) {
 
 		// cut off white space, don't care about preserving memory
@@ -74,7 +77,7 @@ void* cfg_OpenFile( const char* fileName )
 			gettingAttrName = 0;
 		} else {
 			attr.value = SDL_atoi( token );
-			sb_Push( newFile->attributes, attr );
+			sb_Push( newFile->sbAttributes, attr );
 			gettingAttrName = 1;
 		}
 
@@ -100,7 +103,7 @@ int cfg_SaveFile( void* cfgFile )
 	char strVal[32];
 
 	int writeNewLine = 0;
-	int count = sb_Count( file->attributes );
+	int count = sb_Count( file->sbAttributes );
 	for( int i = 0; i < count; ++i ) {
 		char* c = NULL;
 		if( writeNewLine ) {
@@ -110,18 +113,18 @@ int cfg_SaveFile( void* cfgFile )
 		writeNewLine = 1;
 
 		// write out attribute name
-		size_t attrLen = SDL_strlen( file->attributes[i].name );
+		size_t attrLen = SDL_strlen( file->sbAttributes[i].name );
 		c = sb_Add( outBuffer, attrLen );
-		SDL_memcpy( c, file->attributes[i].name, attrLen );
+		SDL_memcpy( c, file->sbAttributes[i].name, attrLen );
 
 		// write out separator
 		c = sb_Add( outBuffer, 3 );
 		SDL_memcpy( c, " = ", 3 );
 
 		// write out value
-		int pl = SDL_snprintf( strVal, sizeof( strVal ), "%i", file->attributes[i].value );
+		int pl = SDL_snprintf( strVal, sizeof( strVal ), "%i", file->sbAttributes[i].value );
 		if( pl >= ARRAY_SIZE( strVal ) ) {
-			SDL_LogError( SDL_LOG_CATEGORY_APPLICATION, "Problem writing out configuration file value, value to long. File: %s   Name: %s", file->filePath, file->attributes[i].name );
+			llog( LOG_ERROR, "Problem writing out configuration file value, value to long. File: %s   Name: %s", file->filePath, file->sbAttributes[i].name );
 			goto clean_up;
 		} else {
 			c = sb_Add( outBuffer, pl );
@@ -143,11 +146,11 @@ void cfg_CloseFile( void* cfgFile )
 {
 	assert( cfgFile != NULL );
 	CFGFile* data = (CFGFile*)cfgFile;
-	if( ( data == NULL ) || ( data->attributes == NULL  ) ) {
+	if( ( data == NULL ) || ( data->sbAttributes == NULL  ) ) {
 		return;
 	}
 
-	sb_Release( data->attributes );
+	sb_Release( data->sbAttributes );
 	mem_Release( data );
 }
 
@@ -156,9 +159,9 @@ int AttributeIndex( CFGFile* fileData, const char* attrName )
 {
 	int idx = -1;
 
-	size_t count = sb_Count( fileData->attributes );
+	size_t count = sb_Count( fileData->sbAttributes );
 	for( size_t i = 0; ( i < count ) && ( idx < 0 ); ++i ) {
-		if( SDL_strncasecmp( attrName, fileData->attributes[i].name, sizeof( fileData->attributes[i].name ) - 1 ) == 0 ) {
+		if( SDL_strncasecmp( attrName, fileData->sbAttributes[i].name, sizeof( fileData->sbAttributes[i].name ) - 1 ) == 0 ) {
 			idx = (int)i;
 		}
 	}
@@ -179,7 +182,7 @@ int cfg_GetInt( void* cfgFile, const char* attrName, int defaultVal, int* retVal
 
 	int idx = AttributeIndex( data, attrName );
 	if( idx >= 0 ) {
-		result = data->attributes[idx].value;
+		result = data->sbAttributes[idx].value;
 	}
 	(*retVal) = result;
 
@@ -195,7 +198,7 @@ void cfg_SetInt( void* cfgFile, const char* attrName, int val )
 
 	int idx = AttributeIndex( data, attrName );
 	if( idx >= 0 ) {
-		data->attributes[idx].value = val;
+		data->sbAttributes[idx].value = val;
 	} else {
 		CFGAttribute newAttr;
 
@@ -203,6 +206,6 @@ void cfg_SetInt( void* cfgFile, const char* attrName, int val )
 		newAttr.name[sizeof( newAttr.name ) - 1] = 0;
 		newAttr.value = val;
 
-		sb_Push( data->attributes, newAttr );
+		sb_Push( data->sbAttributes, newAttr );
 	}
 }

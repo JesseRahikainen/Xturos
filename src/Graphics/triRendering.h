@@ -3,8 +3,8 @@
 
 #include <stdint.h>
 
-#include "../Others/glew.h"
-#include <SDL_opengl.h>
+#include "../Graphics/glPlatform.h"
+#include "glPlatform.h"
 
 #include "../Math/vector2.h"
 #include "color.h"

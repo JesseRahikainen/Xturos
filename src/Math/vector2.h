@@ -16,6 +16,10 @@ typedef struct {
 			float w;
 			float h;
 		};
+		struct {
+			float fwd;
+			float side;
+		};
 		float v[2];
 	};
 } Vector2;
@@ -27,6 +31,7 @@ static const Vector2 VEC2_DOWN = { 0.0f, 1.0f };
 static const Vector2 VEC2_LEFT = { -1.0f, 0.0f };
 static const Vector2 VEC2_RIGHT = { 1.0f, 0.0f };
 
+Vector2 vec2( float x, float y );
 Vector2* vec2_Add( const Vector2* v1, const Vector2* v2, Vector2* out );
 Vector2* vec2_Subtract( const Vector2* v1, const Vector2* v2, Vector2* out );
 Vector2* vec2_HadamardProd( const Vector2* v1, const Vector2* v2, Vector2* out );

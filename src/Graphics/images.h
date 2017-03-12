@@ -86,6 +86,17 @@ int img_Draw_s_c_r( int imgID, uint32_t camFlags, Vector2 startPos, Vector2 endP
 int img_Draw_sv_c_r( int imgID, uint32_t camFlags, Vector2 startPos, Vector2 endPos, Vector2 startScale, Vector2 endScale,
 	Color startColor, Color endColor, float startRotRad, float endRotRad, int8_t depth );
 
+// all 3x3 draw from the center
+int img_Draw3x3( int imgUL, int imgUC, int imgUR, int imgML, int imgMC, int imgMR, int imgDL, int imgDC, int imgDR,
+	uint32_t camFlags, Vector2 startPos, Vector2 endPos, Vector2 startSize, Vector2 endSize, int8_t depth );
+int img_Draw3x3v( int* imgs, uint32_t camFlags, Vector2 startPos, Vector2 endPos, Vector2 startSize, Vector2 endSize, int8_t depth );
+
+int img_Draw3x3_c( int imgUL, int imgUC, int imgUR, int imgML, int imgMC, int imgMR, int imgDL, int imgDC, int imgDR,
+	uint32_t camFlags, Vector2 startPos, Vector2 endPos, Vector2 startSize, Vector2 endSize,
+	Color startColor, Color endColor, int8_t depth );
+int img_Draw3x3v_c( int* imgs, uint32_t camFlags, Vector2 startPos, Vector2 endPos,
+	Vector2 startSize, Vector2 endSize, Color startColor, Color endColor, int8_t depth );
+
 /*
 Clears the image draw list.
 */

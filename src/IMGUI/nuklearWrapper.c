@@ -12,6 +12,8 @@
 
 #include "../Graphics/debugRendering.h"
 
+#include "../Graphics/glPlatform.h"
+
 //struct nk_context* nkCtx = NULL;
 
 #define MAX_VERTEX_MEMORY ( 512 * 1024 )
@@ -20,6 +22,12 @@
 
 NuklearWrapper editorIMGUI = { 0 };
 NuklearWrapper inGameIMGUI = { 0 };
+
+typedef struct {
+    float position[2];
+    float uv[2];
+    nk_byte col[4];
+} nk_xturos_vertex;
 
 static void uploadAtlas( NuklearWrapper* xu, const void *image, int width, int height)
 {
@@ -127,10 +135,10 @@ void nk_xu_init( NuklearWrapper* xu, SDL_Window* win, bool useRelativeMousePos, 
 
 	assert( shaders_Load( shaderDefs, sizeof( shaderDefs ) / sizeof( shaderDefs[0] ), &progDef, &( xu->prog ), 1 ) != 0 );
 
-	GLsizei vertSize = sizeof( struct nk_draw_vertex );
-	size_t vertPos = offsetof( struct nk_draw_vertex, position );
-	size_t vertUV = offsetof( struct nk_draw_vertex, uv );
-	size_t vertClr = offsetof( struct nk_draw_vertex, col );
+	GLsizei vertSize = sizeof( nk_xturos_vertex );
+	size_t vertPos = offsetof( nk_xturos_vertex, position );
+	size_t vertUV = offsetof( nk_xturos_vertex, uv );
+	size_t vertClr = offsetof( nk_xturos_vertex, col );
 
 	GL( glGenBuffers( 1, &( xu->vbo ) ) );
 	GL( glGenBuffers( 1, &( xu->ebo ) ) );
@@ -305,11 +313,23 @@ void nk_xu_render( NuklearWrapper* xu )
 		GL( glBufferData( GL_ELEMENT_ARRAY_BUFFER, MAX_ELEMENT_MEMORY, NULL, GL_STREAM_DRAW ) );
 
 		// load draw vertices and elements directly into vertex + element buffer
-		GLR( vertices, glMapBuffer( GL_ARRAY_BUFFER, GL_WRITE_ONLY ) );
-		GLR( elements, glMapBuffer( GL_ELEMENT_ARRAY_BUFFER, GL_WRITE_ONLY ) );
+		GLR( vertices, glMapBufferRange( GL_ARRAY_BUFFER, 0, MAX_VERTEX_MEMORY, GL_MAP_WRITE_BIT ) );
+		GLR( elements, glMapBufferRange( GL_ELEMENT_ARRAY_BUFFER, 0, MAX_ELEMENT_MEMORY, GL_MAP_WRITE_BIT ) );
 		{
+			// fill the convert configuration
 			struct nk_convert_config config;
 			memset( &config, 0, sizeof( config ) );
+
+			static const struct nk_draw_vertex_layout_element vertexLayout[] = {
+				{ NK_VERTEX_POSITION, NK_FORMAT_FLOAT, NK_OFFSETOF( nk_xturos_vertex, position ) },
+				{ NK_VERTEX_TEXCOORD, NK_FORMAT_FLOAT, NK_OFFSETOF( nk_xturos_vertex, uv ) },
+				{ NK_VERTEX_COLOR, NK_FORMAT_R8G8B8A8, NK_OFFSETOF( nk_xturos_vertex, col ) },
+				{ NK_VERTEX_LAYOUT_END }
+			};
+			config.vertex_layout = vertexLayout;
+			config.vertex_size = sizeof( nk_xturos_vertex );
+			config.vertex_alignment = NK_ALIGNOF( nk_xturos_vertex );
+
 			config.global_alpha = 1.0f;
 			config.shape_AA = NK_ANTI_ALIASING_OFF;
 			config.line_AA = NK_ANTI_ALIASING_OFF;

@@ -10,7 +10,7 @@ This is just an adaptation of the nuklear_sdl_gl3 example.
 #include <stdbool.h>
 #include <SDL_events.h>
 #include "../Graphics/glDebugging.h"
-#include <SDL_opengl.h>
+#include "../Graphics/glPlatform.h"
 
 #include "../Graphics/shaderManager.h"
 

@@ -1,5 +1,6 @@
 #include "checkBox.h"
 
+#include <string.h>
 #include <math.h>
 
 #include "../Graphics/images.h"
@@ -8,6 +9,7 @@
 #include "../Math/matrix4.h"
 #include "../Graphics/camera.h"
 #include "../Input/input.h"
+#include "../System/platformLog.h"
 
 #define MAX_CHECK_BOXES 32
 #define TEXT_LEN 32
@@ -32,7 +34,7 @@ typedef struct {
 	int isChecked;
 
 	Vector2 position;
-	Vector2 halfSize;
+	Vector2 collisionHalfSize;
 	int camFlags;
 } CheckBox;
 
@@ -58,11 +60,11 @@ int chkBox_Create( Vector2 position, Vector2 size, const char* text, int fontID,
 	}
 
 	if( newIdx >= MAX_CHECK_BOXES ) {
-		SDL_LogWarn( SDL_LOG_CATEGORY_SYSTEM, "Unable to create new check box, no open slots." );
+		llog( LOG_WARN, "Unable to create new check box, no open slots." );
 		return -1;
 	}
 
-	vec2_Scale( &size, 0.5f, &( checkBoxes[newIdx].halfSize ) );
+	vec2_Scale( &size, 0.5f, &( checkBoxes[newIdx].collisionHalfSize ) );
 	checkBoxes[newIdx].position = position;
 	
 	checkBoxes[newIdx].normalImgId = normalImg;
@@ -138,7 +140,7 @@ void chkBox_Draw( void )
 
 		if( ( checkBoxes[i].text[0] != 0 ) && ( checkBoxes[i].fontID >= 0 ) ) {
 			Vector2 textPos = checkBoxes[i].position;
-			textPos.x += checkBoxes[i].halfSize.x;
+			textPos.x += checkBoxes[i].collisionHalfSize.x;
 			txt_DisplayString( checkBoxes[i].text, textPos, CLR_WHITE, HORIZ_ALIGN_LEFT, VERT_ALIGN_CENTER,
 								checkBoxes[i].fontID, checkBoxes[i].camFlags, checkBoxes[i].depth );
 		}
@@ -151,7 +153,7 @@ void chkBox_Process( void )
 	Vector3 mousePos;
 	Vector3 transMousePos = { 0.0f, 0.0f, 0.0f };
 	Vector2 diff;
-	enum ButtonState prevState;
+	enum CheckBoxState prevState;
 
 	/* see if the mouse is positioned over any buttons */
 	Vector2 mouse2DPos;
@@ -179,7 +181,7 @@ void chkBox_Process( void )
 			prevState = checkBoxes[i].state;
 			diff.x = checkBoxes[i].position.x - transMousePos.x;
 			diff.y = checkBoxes[i].position.y - transMousePos.y;
-			if( ( fabsf( diff.x ) <= checkBoxes[i].halfSize.x ) && ( fabsf( diff.y ) <= checkBoxes[i].halfSize.y ) ) {
+			if( ( fabsf( diff.x ) <= checkBoxes[i].collisionHalfSize.x ) && ( fabsf( diff.y ) <= checkBoxes[i].collisionHalfSize.y ) ) {
 				if( checkBoxes[i].state != CBS_CLICKED ) {
 					checkBoxes[i].state = CBS_FOCUSED;
 				}

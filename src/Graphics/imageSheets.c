@@ -1,7 +1,6 @@
 #include "imageSheets.h"
 
 #include <SDL_rwops.h>
-#include <SDL_log.h>
 #include <ctype.h>
 #include <string.h>
 #include <stdlib.h>
@@ -10,6 +9,7 @@
 #include "gfxUtil.h"
 
 #include "../Utils/stretchyBuffer.h"
+#include "../System/platformLog.h"
 
 // TODO: Convert this from a text format to binary.
 
@@ -38,7 +38,7 @@ int img_LoadSpriteSheet( char* fileName, ShaderType shaderType, int** imgOutArra
 	SDL_RWops* rwopsFile = SDL_RWFromFile( fileName, "r" );
 	if( rwopsFile == NULL ) {
 		returnVal = -1;
-		SDL_LogError( SDL_LOG_CATEGORY_VIDEO, "Unable to open sprite sheet definition file: %s", fileName );
+		llog( LOG_ERROR, "Unable to open sprite sheet definition file: %s", fileName );
 		goto clean_up;
 	}
 
@@ -92,25 +92,25 @@ int img_LoadSpriteSheet( char* fileName, ShaderType shaderType, int** imgOutArra
 		case RS_COUNT:
 			numSprites = strtol( line, NULL, 10 );
 			if( numSprites == 0 ) {
-				SDL_LogError( SDL_LOG_CATEGORY_VIDEO, "Invalid number of sprites in sprite sheet definition file: %s", fileName );
+				llog( LOG_ERROR, "Invalid number of sprites in sprite sheet definition file: %s", fileName );
 				returnVal = -1;
 				goto clean_up;
 			} else {
 				if( ( mins = mem_Allocate( sizeof( Vector2 ) * numSprites ) ) == NULL ) {
-					SDL_LogError( SDL_LOG_CATEGORY_VIDEO, "Unable to allocate minimums array for sprite sheet definition file: %s", fileName );
+					llog( LOG_ERROR, "Unable to allocate minimums array for sprite sheet definition file: %s", fileName );
 					returnVal = -1;
 					goto clean_up;
 				}
 				
 				if( ( maxes = mem_Allocate( sizeof( Vector2 ) * numSprites ) ) == NULL ) {
-					SDL_LogError( SDL_LOG_CATEGORY_VIDEO, "Unable to allocate maximums array for sprite sheet definition file: %s", fileName );
+					llog( LOG_ERROR, "Unable to allocate maximums array for sprite sheet definition file: %s", fileName );
 					returnVal = -1;
 					goto clean_up;
 				}
 				
 				sb_Add( *imgOutArray, numSprites );
 				if( imgOutArray == NULL ) {
-					SDL_LogError( SDL_LOG_CATEGORY_VIDEO, "Unable to allocate image IDs array for sprite sheet definition file: %s", fileName );
+					llog( LOG_ERROR, "Unable to allocate image IDs array for sprite sheet definition file: %s", fileName );
 					returnVal = -1;
 					goto clean_up;
 				}
@@ -137,7 +137,7 @@ int img_LoadSpriteSheet( char* fileName, ShaderType shaderType, int** imgOutArra
 	if( currentState != RS_FINISHED ) {
 		sb_Release( *imgOutArray );
 		returnVal = -1;
-		SDL_LogError( SDL_LOG_CATEGORY_VIDEO, "Problem reading sprite sheet definition file: %s", fileName );
+		llog( LOG_ERROR, "Problem reading sprite sheet definition file: %s", fileName );
 		goto clean_up;
 	}
 
@@ -145,7 +145,7 @@ int img_LoadSpriteSheet( char* fileName, ShaderType shaderType, int** imgOutArra
 	if( img_SplitImageFile( imgFileName, numSpritesRead, shaderType, mins, maxes, (*imgOutArray) ) < 0 ) {
 		sb_Release( *imgOutArray );
 		returnVal = -1;
-		SDL_LogError( SDL_LOG_CATEGORY_VIDEO, "Problem splitting image for sprite sheet definition file: %s", fileName );
+		llog( LOG_ERROR, "Problem splitting image for sprite sheet definition file: %s", fileName );
 		goto clean_up;
 	}
 

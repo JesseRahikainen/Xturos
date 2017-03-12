@@ -1,23 +1,49 @@
 #include "memory.h"
 
-#include <SDL_log.h>
 #include <assert.h>
 #include <stdint.h>
 #include <string.h>
+#include <SDL_stdinc.h>
+
+#include "platformLog.h"
+
+/*
+If we know the initial address is aligned, and the address for the data is aligned, and the size is aligned
+ then the data after the block should also be aligned, so we can just assume that will work
+If we assume the alignment is n, then all aligned addresses are in some value m*n, given we have the values that
+ we know are aligned
+ headerAddr = h*n
+ dataStart = d*n
+ dataSize = s*n
+
+ then the address of the next header is at (d*n)+(s*n), which is (d+s)*n and as such should be aligned
+So as long as we make sure everything is aligned to begin with then everything should be aligned in the end
+We can also assume the initial header is memory aligned as it's address is gotten from the system memory allocation
+
+Also, given the memory alignment and the size of the header we should be able to know how far back we have to
+jump for the delete. Just need to align the size of the header.
+*/
+
+#if defined( __ANDROID__ )
+	// from allocators.cpp in android-ndk-r13b
+	//  would be nicer if the platforms had some sort of ALIGNMENT definition that we could access
+	#if defined (__OS400__)
+		#define ALIGN 16
+	#else
+		#define ALIGN ( sizeof(void*) * 2 )
+	#endif
+#else
+	#define ALIGN 64
+#endif
 
 #define GUARD_VALUE 0xDEADBEEF
-#define MIN_ALLOC_SIZE 16
+#define MIN_ALLOC_SIZE ( ALIGN ) // this needs to at least fit the alignment in bytes
 
 #define IN_USE_FLAG ( 1 << 31 )
 
+// debug flags
 //#define TEST_CLEAR_VALUES
-
 //#define LOG_MEMORY_ALLOCATIONS
-
-// TODO: Get aligned memory allocation working.
-
-// TODO: we can probably assume that there will never be a two unused blocks next to each other, unless we want some way to
-//   reserve memory in the future, in which case we don't want to make that assumption
 
 typedef struct MemoryBlockHeader {
 	uint32_t guardValue;
@@ -26,30 +52,92 @@ typedef struct MemoryBlockHeader {
 	struct MemoryBlockHeader* prev;
 
 	uint32_t flags;
-	size_t size;
+	size_t size; // the amount of memory this block stores
 
 	// last file and line in that file that modified this block
 #ifdef LOG_MEMORY_ALLOCATIONS
 	char file[256];
 	int line;
+	char note[32];
 #endif
+
+	uint32_t postGuardValue;
 } MemoryBlockHeader;
 
 // TODO: have all the functions take in a Memory structure so we can do something like memory pools. But how to do that without
 //   breaking having signatures similar to the standard c library memory allocation functions?
+// Could have an external pool used by everything that isn't in the engine, then a use other pools for in engine stuff
 typedef struct {
 	void* memory;
 } Memory;
 
 static Memory memoryBlock;
 
+static void* watchedAddress = NULL;
+static MemoryBlockHeader* watchedHeader = NULL;
+
+static void* alignAddress( void* addr )
+{
+	return (void*)( ( ( (uintptr_t)addr + ( ALIGN - 1 ) ) / ALIGN ) * ALIGN );
+}
+
+// makes it so the passed in size matches the desired alignment
+#define ALIGN_SIZE( s ) ( ( ( ( s ) + ( ALIGN - 1 ) ) / ALIGN ) * ALIGN )
+
+#define MEMORY_HEADER_SIZE ( ALIGN_SIZE( sizeof( MemoryBlockHeader ) ) )
+
+static MemoryBlockHeader* findMemoryBlock( void* ptr, bool ensureInUse )
+{
+	MemoryBlockHeader* block = NULL;
+
+	MemoryBlockHeader* header = (MemoryBlockHeader*)( memoryBlock.memory );
+	while( header != NULL ) {
+		if( !ensureInUse || ( header->flags & IN_USE_FLAG ) ) {
+			void* dataStart = (void*)( (uintptr_t)header + MEMORY_HEADER_SIZE );
+			void* dataEnd = (void*)( (uint8_t*)( dataStart ) + header->size );
+			if( ( ptr >= dataStart ) && ( ptr < dataEnd ) ) {
+				return header;
+			}
+		}
+		header = header->next;
+	}
+
+	return NULL;
+}
+
+#include <inttypes.h>
+static void memoryBlockLogDump( MemoryBlockHeader* header )
+{
+	if( header != NULL ) {
+		llog( LOG_DEBUG, " Memory header: 0x%p", header );
+		if( header->guardValue != GUARD_VALUE ) {
+			llog( LOG_DEBUG, " ! Memory was corrupted from beginning" );
+		} else if( header->postGuardValue != GUARD_VALUE ) {
+			llog( LOG_DEBUG, " ! Memory was corrupted from end" );
+		} else {
+#ifdef LOG_MEMORY_ALLOCATIONS
+			llog( LOG_DEBUG, "  File: %s", header->file );
+			llog( LOG_DEBUG, "   Line: %i", header->line );
+			llog( LOG_DEBUG, "   Note: %s", header->note );
+#endif
+			llog( LOG_DEBUG, "  Size: %u", header->size );
+			llog( LOG_DEBUG, "  In Use: %s", ( header->flags & IN_USE_FLAG ) ? "YES" : "no" );
+			llog( LOG_DEBUG, "  Start addr: 0x" PRIxPTR "p", (uintptr_t)header + MEMORY_HEADER_SIZE );
+			llog( LOG_DEBUG, "  End addr: 0x" PRIxPTR "p", (uintptr_t)header + MEMORY_HEADER_SIZE + header->size );
+		}
+	} else {
+		llog( LOG_DEBUG, "  NULL header!" );
+	}
+}
+
 #ifdef TEST_CLEAR_VALUES
 static void testingSetMemory( void* start, size_t size, uint8_t val )
 {
-	uint8_t* data = (uint8_t*)start;
+	/*uint8_t* data = (uint8_t*)start;
 	for( size_t i = 0; i < size; ++i ) {
 		data[i] = val;
-	}
+	}*/
+	memset( start, val, size );
 }
 #else
 static void testingSetMemory( void* start, size_t size, uint8_t val ) { }
@@ -57,15 +145,48 @@ static void testingSetMemory( void* start, size_t size, uint8_t val ) { }
 
 // assume header is never NULL
 #ifdef LOG_MEMORY_ALLOCATIONS
-static void SetMemoryBlockInfo( MemoryBlockHeader* header, const char* fileName, int line )
+static void setMemoryBlockInfo( MemoryBlockHeader* header, const char* fileName, int line, const char* note )
 {
 	int lastFileIdx = ( sizeof( header->file ) / sizeof( header->file[0] ) ) - 1;
 	strncpy( header->file, fileName, lastFileIdx );
 	header->file[lastFileIdx] = 0;
 	header->line = line;
+
+	int lastNoteIdx = ( sizeof( header->note ) / sizeof( header->note[0] ) ) - 1;
+	strncpy( header->note, note, lastNoteIdx );
+	header->note[lastNoteIdx] = 0;
 }
 #else
-static void SetMemoryBlockInfo( MemoryBlockHeader* header, const char* fileName, int line ) { }
+static void setMemoryBlockInfo( MemoryBlockHeader* header, const char* fileName, int line, const char* note ) { }
+#endif
+
+#ifdef LOG_WATCHED_MEMORY_ADDRESS_CHANGES
+#define BETWEEN( v, min, max ) ( ( v >= min ) && ( v <= max ) )
+static void logWatchedMemoryAddressChange( MemoryBlockHeader* adjHeader, const char* message )
+{
+	if( watchedHeader == NULL ) return;
+	if( adjHeader == NULL ) return;
+
+	// see if the adjust memory block header, and the watched memory block overlap at all
+	void* watchedStart = (void*)watchedHeader;
+	void* watchedEnd = (void*)( ( (uint8_t*)watchedHeader ) + MEMORY_HEADER_SIZE + watchedHeader->size );
+
+	void* adjStart = (void*)adjHeader;
+	void* adjEnd = (void*)( ( (uint8_t*)adjHeader ) + MEMORY_HEADER_SIZE + adjHeader->size );
+
+	if( BETWEEN( watchedStart, adjStart, adjEnd ) ||
+		BETWEEN( watchedEnd, adjStart, adjEnd ) ||
+		BETWEEN( adjStart, watchedStart, watchedEnd ) ||
+		BETWEEN( adjEnd, watchedStart, watchedEnd ) ) {
+
+		llog( LOG_DEBUG, "=== Address Change: %p ===", watchedAddress );
+		if( message != NULL ) llog( LOG_DEBUG, " %s", message );
+		memoryBlockLogDump( watchedHeader );
+		llog( LOG_DEBUG, "=== End Address change ===" );
+	}	
+}
+#else
+static void logWatchedMemoryAddressChange( MemoryBlockHeader* header, void* ptr, const char* message ) { }
 #endif
 
 // returns the remaining block after the condensation
@@ -81,9 +202,9 @@ static MemoryBlockHeader* condenseMemoryBlocks( MemoryBlockHeader* start, const 
 
 	// going to the right, merge unused blocks
 	while( ( start->next != NULL ) && !( start->next->flags & IN_USE_FLAG ) ) {
-		SetMemoryBlockInfo( start, fileName, line );
+		setMemoryBlockInfo( start, fileName, line, "Condense" );
 		MemoryBlockHeader* nextHeader = start->next;
-		start->size += nextHeader->size + sizeof( MemoryBlockHeader );
+		start->size += nextHeader->size + MEMORY_HEADER_SIZE;
 		start->next = nextHeader->next;
 		if( start->next != NULL ) {
 			start->next->prev = start;
@@ -98,6 +219,7 @@ static MemoryBlockHeader* createNewBlock( void* start, MemoryBlockHeader* prev, 
 	MemoryBlockHeader* header = (MemoryBlockHeader*)start;
 
 	header->guardValue = GUARD_VALUE;
+	header->postGuardValue = GUARD_VALUE;
 	header->flags = 0;
 	header->size = size;
 
@@ -111,7 +233,7 @@ static MemoryBlockHeader* createNewBlock( void* start, MemoryBlockHeader* prev, 
 	}
 	header->next = next;
 
-	SetMemoryBlockInfo( header, fileName, line );
+	setMemoryBlockInfo( header, fileName, line, "Create" );
 
 	return header;
 }
@@ -132,13 +254,13 @@ static void* growBlock( MemoryBlockHeader* header, size_t newSize, const char* f
 	size_t sizeAllowed = header->size;
 	MemoryBlockHeader* scan = header->next;
 	while( ( scan != NULL ) && !( scan->flags & IN_USE_FLAG ) ) {
-		sizeAllowed += scan->size + sizeof( MemoryBlockHeader );
+		sizeAllowed += scan->size + MEMORY_HEADER_SIZE;
 		scan = scan->next;
 	}
 
 	if( newSize < sizeAllowed ) {
 		// claim all the next headers
-		result = (void*)( header + 1 );
+		result = (void*)( (uintptr_t)header + MEMORY_HEADER_SIZE );
 		scan = header->next;
 		while( ( scan != NULL ) && !( scan->flags & IN_USE_FLAG ) ) {
 			// unlink the scan block
@@ -147,15 +269,15 @@ static void* growBlock( MemoryBlockHeader* header, size_t newSize, const char* f
 			header->next = scan->next;
 
 			// claim the memory
-			header->size += scan->size + sizeof( MemoryBlockHeader );
+			header->size += scan->size + MEMORY_HEADER_SIZE;
 
 			scan = scan->next;
 		}
 
 		// see if there's enough left over to create a new block
-		if( header->size >= ( newSize + sizeof( MemoryBlockHeader ) + MIN_ALLOC_SIZE ) ) {
+		if( header->size >= ( newSize + MEMORY_HEADER_SIZE + MIN_ALLOC_SIZE ) ) {
 			MemoryBlockHeader* nextHeader = createNewBlock( (void*)( (uint8_t*)result + newSize ),
-				header, scan, header->size - newSize - sizeof( MemoryBlockHeader ),
+				header, scan, header->size - newSize - MEMORY_HEADER_SIZE,
 				fileName, line );
 			header->next = nextHeader;
 			header->size = newSize;
@@ -167,12 +289,13 @@ static void* growBlock( MemoryBlockHeader* header, size_t newSize, const char* f
 		//  and return the pointer to the beginning of the new block of data
 		result = mem_Allocate_Data( newSize, fileName, line );
 		if( result != NULL ) {
-			memcpy( result, (void*)( header + 1 ), header->size );
-			mem_Release( (void*)( header + 1 ) );
+			memcpy( result, (void*)( (uintptr_t)header + MEMORY_HEADER_SIZE ), header->size );
+			mem_Release( (void*)( (uintptr_t)header + MEMORY_HEADER_SIZE ) );
 		}
 	}
 
-	SetMemoryBlockInfo( (void*)( (uint8_t*)result - sizeof( MemoryBlockHeader ) ), fileName, line );
+	logWatchedMemoryAddressChange( (MemoryBlockHeader*)( (uint8_t*)result - MEMORY_HEADER_SIZE ), "growBlock", NULL );
+	setMemoryBlockInfo( (MemoryBlockHeader*)( (uint8_t*)result - MEMORY_HEADER_SIZE ), fileName, line, "Grow" );
 	return result;
 }
 
@@ -183,17 +306,18 @@ static void* shrinkBlock( MemoryBlockHeader* header, size_t newSize, const char*
 
 	// see if there's enough left after the shrink for a new block, if there is
 	//  then make it and condense it
-	if( ( header->size - newSize ) >= ( sizeof( MemoryBlockHeader ) + MIN_ALLOC_SIZE ) ) {
-		MemoryBlockHeader* newHeader = createNewBlock( (void*)( (char*)( header + 1 ) + newSize ),
-			header, header->next, header->size - sizeof( MemoryBlockHeader) - newSize,
+	if( ( header->size - newSize ) >= ( MEMORY_HEADER_SIZE + MIN_ALLOC_SIZE ) ) {
+		MemoryBlockHeader* newHeader = createNewBlock( (void*)( (uintptr_t)header + MEMORY_HEADER_SIZE + newSize ),
+			header, header->next, header->size - MEMORY_HEADER_SIZE - newSize,
 			fileName, line );
 		condenseMemoryBlocks( newHeader, fileName, line );
-		testingSetMemory( (void*)( newHeader + 1 ), newHeader->size, 0xAA );
+		testingSetMemory( (void*)( (uintptr_t)newHeader + MEMORY_HEADER_SIZE ), newHeader->size, 0xAA );
 		header->size = newSize;
-		SetMemoryBlockInfo( header, fileName, line );
+		setMemoryBlockInfo( header, fileName, line, "Shrink" );
 	}
 
-	return (void*)( header + 1 );
+	logWatchedMemoryAddressChange( header, "shrinkBlock", NULL );
+	return (void*)( (uintptr_t)header + MEMORY_HEADER_SIZE );
 }
 
 int mem_Init( size_t totalSize )
@@ -206,7 +330,7 @@ int mem_Init( size_t totalSize )
 		return -1;
 	}
 
-	createNewBlock( memoryBlock.memory, NULL, NULL, totalSize - sizeof( MemoryBlockHeader ), __FILE__, __LINE__ );
+	createNewBlock( memoryBlock.memory, NULL, NULL, totalSize - MEMORY_HEADER_SIZE, __FILE__, __LINE__ );
 
 	return 0;
 }
@@ -220,23 +344,23 @@ void mem_CleanUp( void )
 
 void mem_Log( void )
 {
-	SDL_Log( "=== Memory Use Log ===" );
+	llog( LOG_DEBUG, "=== Memory Use Log ===" );
 	MemoryBlockHeader* header = (MemoryBlockHeader*)( memoryBlock.memory );
 	while( header != NULL ) {
-		SDL_Log( " Memory header: %p", header );
-		if( header->guardValue != GUARD_VALUE ) {
-			SDL_Log( " ! Memory was corrupted" );
-		} else {
-#ifdef LOG_MEMORY_ALLOCATIONS
-			SDL_Log( "  File: %s  Line: %i", header->file, header->line );
-#endif
-			SDL_Log( "  Size: %u", header->size );
-			SDL_Log( "  In Use: %s", ( header->flags & IN_USE_FLAG ) ? "YES" : "no" );
-		}
-
+		memoryBlockLogDump( header );
 		header = header->next;
 	}
-	SDL_Log( "=== End Memory Use Log ===" );
+	llog( LOG_DEBUG, "=== End Memory Use Log ===" );
+}
+
+void mem_LogAddressBlockData( void* ptr, const char* extra )
+{
+	// first find the memory block that the pointer is in
+	MemoryBlockHeader* header = findMemoryBlock( ptr, false );
+	llog( LOG_DEBUG, "=== Pointer Block Data %p ===", ptr );
+	if( extra != NULL ) llog( LOG_DEBUG, " %s", extra );
+	memoryBlockLogDump( header );
+	llog( LOG_DEBUG, "=== End Pointer Block Data ===" );
 }
 
 void mem_Verify( void )
@@ -244,14 +368,15 @@ void mem_Verify( void )
 	// just follow the list, verifying that the guard value is correct
 	//  also make sure all the previous and next pointers are correct
 	MemoryBlockHeader* header = (MemoryBlockHeader*)( memoryBlock.memory );
-	int firstBlock = 1;
+	bool firstBlock = true;
 	while( header != NULL ) {
 		assert( header->guardValue == GUARD_VALUE );
+		assert( header->postGuardValue == GUARD_VALUE );
 
 		if( header->prev != NULL ) {
 			assert( header->prev->next == header );
 		} else {
-			assert( firstBlock == 1 );
+			assert( firstBlock );
 		}
 
 		if( header->next != NULL ) {
@@ -259,39 +384,31 @@ void mem_Verify( void )
 		}
 
 		header = header->next;
-		firstBlock = 0;
+		firstBlock = false;
 	}
 }
 
-int mem_GetVerify( void )
+bool mem_GetVerify( void )
 {
 	// just follow the list, verifying that the guard value is correct
 	MemoryBlockHeader* header = (MemoryBlockHeader*)( memoryBlock.memory );
 	while( header != NULL ) {
 		if( header->guardValue != GUARD_VALUE ) {
-			return -1;
+			return false;
+		}
+		if( header->postGuardValue != GUARD_VALUE ) {
+			return false;
 		}
 		header = header->next;
 	}
 
-	return 0;
+	return true;
 }
 
 void mem_VerifyPointer( void* p )
 {
 	// verify the pointer is pointing to valid memory
-	int found = 0;
-	MemoryBlockHeader* header = (MemoryBlockHeader*)( memoryBlock.memory );
-	while( !found && ( header != NULL ) ) {
-		header = header->next;
-		void* dataStart = (void*)( header + 1 );
-		void* dataEnd = (void*)( (uint8_t*)( dataStart ) + header->size );
-		if( ( p >= dataStart ) && ( p < dataEnd ) ) {
-			found = 1;
-		}
-	}
-
-	assert( found );
+	assert( findMemoryBlock( p, true ) != NULL );
 }
 
 void mem_Report( void )
@@ -304,11 +421,11 @@ void mem_Report( void )
 	mem_GetReportValues( &total, &inUse, &overhead, &fragments );
 
 	// TODO: Find out why %zu doesn't work...
-	SDL_Log( "Memory Report:" );
-	SDL_Log( "  Total: %u", total );
-	SDL_Log( "  In Use: %u", inUse );
-	SDL_Log( "  Overhead: %u", overhead );
-	SDL_Log( "  Fragments: %u", fragments );
+	llog( LOG_DEBUG, "Memory Report:" );
+	llog( LOG_DEBUG, "  Total: %u", total );
+	llog( LOG_DEBUG, "  In Use: %u", inUse );
+	llog( LOG_DEBUG, "  Overhead: %u", overhead );
+	llog( LOG_DEBUG, "  Fragments: %u", fragments );
 }
 
 void mem_GetReportValues( size_t* totalOut, size_t* inUseOut, size_t* overheadOut, uint32_t* fragmentsOut )
@@ -325,8 +442,8 @@ void mem_GetReportValues( size_t* totalOut, size_t* inUseOut, size_t* overheadOu
 		} else {
 			++fragments;
 		}
-		overhead += sizeof( MemoryBlockHeader );
-		total += ( header->size + sizeof( MemoryBlockHeader ) );
+		overhead += MEMORY_HEADER_SIZE;
+		total += ( header->size + MEMORY_HEADER_SIZE );
 
 		header = header->next;
 	}
@@ -339,6 +456,9 @@ void mem_GetReportValues( size_t* totalOut, size_t* inUseOut, size_t* overheadOu
 
 void* mem_Allocate_Data( size_t size, const char* fileName, const int line )
 {
+#ifdef TEST_EVERY_CHANGE
+	mem_Verify( );
+#endif
 	assert( memoryBlock.memory != NULL );
 
 	// if the size is 0 malloc can return NULL or an unusable pointer, NULL works better for us as
@@ -347,8 +467,10 @@ void* mem_Allocate_Data( size_t size, const char* fileName, const int line )
 		return NULL;
 	}
 
+	size = ALIGN_SIZE( size );
+
 	// we'll just do first fit, if we can't find a spot we'll just return NULL
-	char* result = NULL;
+	uint8_t* result = NULL;
 
 	MemoryBlockHeader* header = (MemoryBlockHeader*)( memoryBlock.memory );
 	while( ( header != NULL ) && ( ( header->flags & IN_USE_FLAG ) || ( header->size < size ) ) ) {
@@ -359,19 +481,19 @@ void* mem_Allocate_Data( size_t size, const char* fileName, const int line )
 		// found a large enough block that's not in use, split it up and set stuff up
 		header->flags |= IN_USE_FLAG;
 
-		result = (char*)header;
-		result += sizeof( MemoryBlockHeader );
+		result = (uint8_t*)header;
+		result += MEMORY_HEADER_SIZE;
 
 		testingSetMemory( (void*)result, size, 0xCC );
 
 		// if there's enough room left then split it into it's own block
 
 		// how do we really want to do this?
-		if( header->size >= ( size + sizeof( MemoryBlockHeader ) + MIN_ALLOC_SIZE ) ) {
+		if( header->size >= ( size + MEMORY_HEADER_SIZE + MIN_ALLOC_SIZE ) ) {
 			MemoryBlockHeader* nextHeader = createNewBlock( (void*)( result + size ),
-				header, header->next, header->size - size - sizeof( MemoryBlockHeader ),
+				header, header->next, header->size - size - MEMORY_HEADER_SIZE,
 				fileName, line );
-			testingSetMemory( (void*)( nextHeader + 1 ), nextHeader->size, 0xDD );
+			testingSetMemory( (void*)( (uintptr_t)nextHeader + MEMORY_HEADER_SIZE ), nextHeader->size, 0xDD );
 		} else {
 			// there's some left over memory, we'll just put it into the block
 			testingSetMemory( (void*)( result + size ), header->size - size, 0xEE );
@@ -379,20 +501,31 @@ void* mem_Allocate_Data( size_t size, const char* fileName, const int line )
 		}
 
 		header->size = size;
+		setMemoryBlockInfo( header, fileName, line, "Allocate" );
 	}
-
+#ifdef TEST_EVERY_CHANGE
+	mem_Verify( );
+#endif
 	assert( result != NULL );
+
+	logWatchedMemoryAddressChange( (MemoryBlockHeader*)( (uint8_t*)result - MEMORY_HEADER_SIZE ), "mem_Allocate_Data", NULL );
+
 	return (void*)result;
 }
 
 void* mem_Resize_Data( void* memory, size_t newSize, const char* fileName, const int line )
 {
+#ifdef TEST_EVERY_CHANGE
+	mem_Verify( );
+#endif
 	assert( memoryBlock.memory != NULL );
 
 	if( newSize == 0 ) {
 		mem_Release( memory );
 		return NULL;
 	}
+
+	newSize = ALIGN_SIZE( newSize );
 
 	// two cases, when we want more and when we want less
 	// we'll see if there's enough memory in the next block, if there is then just
@@ -403,22 +536,31 @@ void* mem_Resize_Data( void* memory, size_t newSize, const char* fileName, const
 	void* result = memory;
 
 	if( memory != NULL ) {
-		MemoryBlockHeader* header = (MemoryBlockHeader*)( ( (char*)memory ) - sizeof( MemoryBlockHeader ) );
+		MemoryBlockHeader* header = (MemoryBlockHeader*)( (uintptr_t)memory - MEMORY_HEADER_SIZE );
 		if( newSize > header->size ) {
 			result = growBlock( header, newSize, fileName, line );
 		} else if( newSize < header->size ) {
 			result = shrinkBlock( header, newSize, fileName, line );
 		}
 	} else {
-		result = mem_Allocate( newSize );
+		result = mem_Allocate_Data( newSize, fileName, line );
 	}
 
+#ifdef TEST_EVERY_CHANGE
+	mem_Verify( );
+#endif
 	assert( result != NULL );
+
+	logWatchedMemoryAddressChange( (MemoryBlockHeader*)( (uintptr_t)result - MEMORY_HEADER_SIZE ), "mem_Resize_Data", NULL );
+
 	return result;
 }
 
 void mem_Release_Data( void* memory, const char* fileName, const int line )
 {
+#ifdef TEST_EVERY_CHANGE
+	mem_Verify( );
+#endif
 	assert( memoryBlock.memory != NULL );
 
 	if( memory == NULL ) {
@@ -427,13 +569,40 @@ void mem_Release_Data( void* memory, const char* fileName, const int line )
 	
 	// set the associated block as not in use, and merge with nearby blocks if they're
 	//  not in use
-	MemoryBlockHeader* header = (MemoryBlockHeader*)( ((char*)memory) - sizeof( MemoryBlockHeader ) );
+	MemoryBlockHeader* header = (MemoryBlockHeader*)( (uintptr_t)memory - MEMORY_HEADER_SIZE );
+	logWatchedMemoryAddressChange( header, "mem_Release_Data", NULL );
 	header->flags &= ~IN_USE_FLAG;
 
 	assert( header->guardValue == GUARD_VALUE );
+	assert( header->postGuardValue == GUARD_VALUE );
 	
 	header = condenseMemoryBlocks( header, fileName, line );
-	testingSetMemory( (void*)( ( (char*)header ) + sizeof( MemoryBlockHeader ) ), header->size, 0xFF );
+	testingSetMemory( (void*)( (uintptr_t)header + MEMORY_HEADER_SIZE ), header->size, 0xFF );
+
+#ifdef TEST_EVERY_CHANGE
+	mem_Verify( );
+#endif
+}
+
+void mem_WatchAddress( void* ptr )
+{
+	watchedAddress = ptr;
+	watchedHeader = findMemoryBlock( ptr, false );
+	llog( LOG_DEBUG, "=== Start Watching Memory Address: %p ===", ptr );
+	memoryBlockLogDump( watchedHeader );
+	llog( LOG_DEBUG, "=== End Start Watching Memory Address ===" );
+}
+
+void mem_UnWatchAddress( void* ptr )
+{
+	if( watchedAddress == ptr ) {
+		llog( LOG_DEBUG, "=== Stop Watching Memory Address: %p ===", ptr );
+		memoryBlockLogDump( watchedHeader );
+		llog( LOG_DEBUG, "=== End Stop Watching Memory Address ===" );
+
+		watchedAddress = NULL;
+		watchedHeader = NULL;
+	}
 }
 
 void mem_RunTests( void )
@@ -493,7 +662,7 @@ void mem_RunTests( void )
 		assert( testOne != NULL );
 		mem_Verify( );
 
-		testTwo = (uint8_t*)mem_Allocate( 100 + sizeof( MemoryBlockHeader ) + MIN_ALLOC_SIZE );
+		testTwo = (uint8_t*)mem_Allocate( 100 + MEMORY_HEADER_SIZE + MIN_ALLOC_SIZE );
 		assert( testTwo != NULL );
 		mem_Verify( );
 
@@ -561,7 +730,7 @@ void mem_RunTests( void )
 
 	// test resize shrink where there is enough open space after to create new block
 	assert( mem_Init( 32 * 1024 ) == 0 ); {
-		testOne = (uint8_t*)mem_Allocate( 100 + sizeof( MemoryBlockHeader ) + MIN_ALLOC_SIZE );
+		testOne = (uint8_t*)mem_Allocate( 100 + MEMORY_HEADER_SIZE + MIN_ALLOC_SIZE );
 		mem_Verify( );
 
 		testTwo = (uint8_t*)mem_Allocate( 100 );

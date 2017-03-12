@@ -1,7 +1,7 @@
 #ifndef GFX_UTIL_H
 #define GFX_UTIL_H
 
-#include "../Others/glew.h"
+#include "../Graphics/glPlatform.h"
 #include "../Math/vector2.h"
 #include <SDL_surface.h>
 

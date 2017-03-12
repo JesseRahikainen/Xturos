@@ -1,6 +1,6 @@
 #include "systems.h"
 
-#include <SDL_log.h>
+#include "platformLog.h"
 
 typedef struct {
 	SystemProcessEventsFunc procEvents;
@@ -45,12 +45,12 @@ int sys_Register( SystemProcessEventsFunc procEvents, SystemProcessFunc proc, Sy
 void sys_UnRegister( int systemID )
 {
 	if( ( systemID < 0 ) || ( systemID > MAX_SYSTEMS ) ) {
-		SDL_LogDebug( SDL_LOG_CATEGORY_APPLICATION, "Attempting to unregister an invalid system" );
+		llog( LOG_DEBUG, "Attempting to unregister an invalid system" );
 		return;
 	}
 
 	if( !systemInUse( systemID ) ) {
-		SDL_LogDebug( SDL_LOG_CATEGORY_APPLICATION, "Attempting to unregister a system that has not been registered" );
+		llog( LOG_DEBUG, "Attempting to unregister a system that has not been registered" );
 		return;
 	}
 

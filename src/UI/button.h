@@ -9,6 +9,7 @@ Don't manage resources used, expect them to be loaded somewhere else.
 #define ENGINE_BUTTON_H
 
 #include "../Math/Vector2.h"
+#include "../Graphics/color.h"
 #include <SDL_events.h>
 
 typedef void (*ButtonResponse)(void);
@@ -16,10 +17,9 @@ typedef void (*ButtonResponse)(void);
 /* Call this before trying to use any buttons. */
 void btn_Init( );
 
-/*
-Creates a button. All image ids must be valid.
-*/
-int btn_Create( Vector2 position, Vector2 size, const char* text, int fontID, int normalImg, int focusedImg, int clickedImg,
+int btn_Create( Vector2 position, Vector2 size, Vector2 clickedSize,
+	const char* text, int fontID, Color fontColor, Vector2 textOffset,
+	int* slicedBorder, int imgID, Color imgColor,
 	unsigned int camFlags, char layer, ButtonResponse pressResponse, ButtonResponse releaseResponse );
 void btn_Destroy( int buttonIdx );
 void btn_DestroyAll( void );
@@ -31,8 +31,11 @@ Handles the system level stuff.
 int btn_RegisterSystem( void );
 void btn_UnRegisterSystem( void );
 
+void btn_Update( float dt );
 void btn_Draw( void );
 void btn_Process( void );
 void btn_ProcessEvents( SDL_Event* sdlEvent );
+
+void btn_DebugDraw( Color idle, Color hover, Color clicked );
 
 #endif

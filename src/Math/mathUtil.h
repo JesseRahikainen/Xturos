@@ -4,8 +4,10 @@
 #include "vector2.h"
 #include "vector3.h"
 #include <stdint.h>
+#include <stdbool.h>
 
 #define M_PI_F 3.14159265359f
+#define M_TWO_PI_F ( 2.0f * M_PI_F )
 
 #define DEG_TO_RAD( d ) ( ( ( d ) * ( M_PI_F / 180.0f ) ) )
 #define RAD_TO_DEG( d ) ( ( ( d ) * ( 180.0f / M_PI_F ) ) )
@@ -27,6 +29,7 @@ uint8_t lerp_uint8_t( uint8_t from, uint8_t to, float t );
 float inverseLerp( float from, float to, float val );
 float clamp( float min, float max, float val );
 float randFloat( float min, float max );
+float randFloatVar( float mid, float var );
 float sign( float val );
 Vector3* vec2ToVec3( const Vector2* vec2, float z, Vector3* out );
 float jerkLerp( float t );

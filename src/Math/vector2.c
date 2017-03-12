@@ -3,7 +3,16 @@
 #include <assert.h>
 #include <math.h>
 #include <string.h>
-#include <SDL_log.h>
+#include "../System/platformLog.h"
+
+Vector2 vec2( float x, float y )
+{
+	Vector2 v;
+	v.x = x;
+	v.y = y;
+
+	return v;
+}
 
 Vector2* vec2_Add( const Vector2* v1, const Vector2* v2, Vector2* out )
 {
@@ -186,5 +195,5 @@ float vec2_SpineRotationRadians( const Vector2* v )
 void vec2_Dump( const Vector2* vec, const char* extra )
 {
 	assert( vec != NULL );
-	SDL_Log( "%s = %3.3f %3.3f\n", extra == NULL ? "v2" : extra, vec->v[0], vec->v[1] );
+	llog( LOG_DEBUG, "%s = %3.3f %3.3f\n", extra == NULL ? "v2" : extra, vec->v[0], vec->v[1] );
 }

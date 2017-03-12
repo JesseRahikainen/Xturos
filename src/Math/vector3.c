@@ -1,6 +1,6 @@
 #include <math.h>
 #include <assert.h>
-#include <SDL.h>
+#include "../System/platformLog.h"
 #include "Vector3.h"
 
 // component-wise operations
@@ -201,8 +201,17 @@ Vector3* vec3_Perpindicular( const Vector3* vec, const Vector3* ref, Vector3* ou
 	return out;
 }
 
+Vector3 vec3( float x, float y, float z )
+{
+	Vector3 v;
+	v.x = x;
+	v.y = y;
+	v.z = z;
+	return v;
+}
+
 void vec3_Dump( const Vector3* vec, const char* extra )
 {
 	assert( vec != NULL );
-	SDL_Log( "%s = %3.3f %3.3f %3.3f\n", extra == NULL ? "v3" : extra, vec->v[0], vec->v[1], vec->v[2] );
+	llog( LOG_DEBUG,  "%s = %3.3f %3.3f %3.3f\n", extra == NULL ? "v3" : extra, vec->v[0], vec->v[1], vec->v[2] );
 }

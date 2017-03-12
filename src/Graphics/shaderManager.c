@@ -2,13 +2,14 @@
 #include <string.h>
 #include <stdio.h>
 #include <SDL.h>
-#include "../Others/glew.h"
+#include "../Graphics/glPlatform.h"
 
 #include "shaderManager.h"
 
 #include "glDebugging.h"
 #include "../Utils/helpers.h"
 #include "../System/memory.h"
+#include "../System/platformLog.h"
 
 // Loaded shader.
 struct Shader
@@ -33,14 +34,14 @@ static int isValidShader( int shaderIdx, struct Shader* shaders )
 	}
 
 	if( shaderIdx >= numShaders ) {
-		SDL_LogWarn( SDL_LOG_CATEGORY_VIDEO, "Shader index not in valid range." );
+		llog( LOG_WARN, "Shader index not in valid range." );
 		return 0;
 	}
 
 	GLboolean isShader = GL_FALSE;
 	GLR( isShader, glIsShader( shaders[shaderIdx].id ) );
 	if( isShader == GL_FALSE ) {
-		SDL_LogWarn( SDL_LOG_CATEGORY_VIDEO, "Shader index does not point to a valid shader." );
+		llog( LOG_WARN, "Shader index does not point to a valid shader." );
 		return 0;
 	}
 
@@ -53,21 +54,21 @@ static GLuint compileShader( const char* text, GLenum type )
 	GLint testVal;
 	GLuint shaderID = 0;
 
-	SDL_LogVerbose( SDL_LOG_CATEGORY_VIDEO, "Compiling shader" );
+	llog( LOG_VERBOSE, "Compiling shader" );
 
 	if( text != NULL ) {
 		GLR( shaderID, glCreateShader( type ) );
-		SDL_LogVerbose( SDL_LOG_CATEGORY_VIDEO, "-- Created shader ID: %u", shaderID );
+		llog( LOG_VERBOSE, "-- Created shader ID: %u", shaderID );
 
 		if( shaderID != 0 ) {
 			shaderSourceStrs[0] = (GLchar*)text;
-			SDL_LogVerbose( SDL_LOG_CATEGORY_VIDEO, "-- Setting source and compiling" );
+			llog( LOG_VERBOSE, "-- Setting source and compiling" );
 			GL( glShaderSource( shaderID, 1, (const GLchar**)shaderSourceStrs, NULL ) );
 			GL( glCompileShader( shaderID ) );
 
 			// now check for errors
 			GL( glGetShaderiv( shaderID, GL_COMPILE_STATUS, &testVal ) );
-			SDL_LogVerbose( SDL_LOG_CATEGORY_VIDEO, "-- GL_COMPILE_STATUS: %i", testVal );
+			llog( LOG_VERBOSE, "-- GL_COMPILE_STATUS: %i", testVal );
 
 			GLint logSize = 0;
 			GL( glGetShaderiv( shaderID, GL_INFO_LOG_LENGTH, &logSize ) );
@@ -75,25 +76,25 @@ static GLuint compileShader( const char* text, GLenum type )
 				GLchar* errorStr = (GLchar*)mem_Allocate( sizeof(GLchar) * logSize );
 				if( errorStr != NULL ) {
 					GL( glGetShaderInfoLog( shaderID, (GLsizei)logSize, NULL, errorStr ) );
-					SDL_LogError( SDL_LOG_CATEGORY_VIDEO, "Error compiling shader:\n - %s", errorStr );
+					llog( LOG_ERROR, "Error compiling shader:\n - %s", errorStr );
 					mem_Release( errorStr );
 				} else {
-					SDL_LogError( SDL_LOG_CATEGORY_VIDEO, "Error allocating memory for error string" );
+					llog( LOG_ERROR, "Error allocating memory for error string" );
 				}
 			}
 
 			if( testVal == GL_FALSE ) {
-				SDL_LogError( SDL_LOG_CATEGORY_VIDEO, "Error compiling shader" );
+				llog( LOG_ERROR, "Error compiling shader" );
 
 				GL( glDeleteShader( shaderID ) );
 				shaderID = 0;
 			}
 		} else {
-			SDL_LogError( SDL_LOG_CATEGORY_VIDEO, "glCreateShader had a problem creating a shader." );
+			llog( LOG_ERROR, "glCreateShader had a problem creating a shader." );
 		}
 	}
 
-	SDL_LogVerbose( SDL_LOG_CATEGORY_VIDEO, "Returning shader: %u", shaderID );
+	llog( LOG_VERBOSE, "Returning shader: %u", shaderID );
 
 	return shaderID;
 }
@@ -104,46 +105,46 @@ static struct Shader loadShader( const ShaderDefinition* definition )
 	size_t amountRead;
 	struct Shader shader = { 0, 0 };
 	
-	SDL_LogVerbose( SDL_LOG_CATEGORY_VIDEO, "Loading shader file" );
+	llog( LOG_VERBOSE, "Loading shader file" );
 	shader.type = definition->type;
 
 	if( ( definition->shaderText != NULL ) && ( strlen( definition->shaderText ) > 0 ) ) {
-		SDL_LogVerbose( SDL_LOG_CATEGORY_VIDEO, "-- Compiling shader from shader text" );
+		llog( LOG_VERBOSE, "-- Compiling shader from shader text" );
 		shader.id = compileShader( definition->shaderText, shader.type );
 		if( shader.id == 0 ) {
-			SDL_LogError( SDL_LOG_CATEGORY_VIDEO, "Error opening shader file %s", ( ( definition->fileName == NULL ) ? "<no-file-name>" : definition->fileName ) );
+			llog( LOG_ERROR, "Error opening shader file %s", ( ( definition->fileName == NULL ) ? "<no-file-name>" : definition->fileName ) );
 		}
 	} else if( ( definition->fileName != NULL ) && ( strlen( definition->fileName ) > 0 ) ) {
-		SDL_LogVerbose( SDL_LOG_CATEGORY_VIDEO, "-- Compiling shader from file" );
+		llog( LOG_VERBOSE, "-- Compiling shader from file" );
 		inFile = fopen( definition->fileName, "r" );
 		if( inFile == NULL ) {
-			SDL_LogError( SDL_LOG_CATEGORY_VIDEO, "Error opening shader file %s", ( ( definition->fileName == NULL ) ? "<no-file-name>" : definition->fileName ) );
+			llog( LOG_ERROR, "Error opening shader file %s", ( ( definition->fileName == NULL ) ? "<no-file-name>" : definition->fileName ) );
 			return shader;
 		}
 
 		memset( shaderContents, 0, sizeof(char) * ( MAX_SHADER_SIZE + 1 ) );
 		amountRead = fread( shaderContents, sizeof(char), MAX_SHADER_SIZE, inFile );
 		shaderContents[amountRead] = 0; // can't assume that fread won't use some of the buffer for something, so need to set this here
-		SDL_LogVerbose( SDL_LOG_CATEGORY_VIDEO, "-- Read in %u bytes of text", amountRead );
+		llog( LOG_VERBOSE, "-- Read in %u bytes of text", amountRead );
 
 		if( ferror( inFile ) || amountRead == 0 ) {
-			SDL_LogError( SDL_LOG_CATEGORY_VIDEO, "Nothing read in from shader file %s.", ( ( definition->fileName == NULL ) ? "<no-file-name>" : definition->fileName ) );
+			llog( LOG_ERROR, "Nothing read in from shader file %s.", ( ( definition->fileName == NULL ) ? "<no-file-name>" : definition->fileName ) );
 		} else if ( amountRead == MAX_SHADER_SIZE ) {
-			SDL_LogError( SDL_LOG_CATEGORY_VIDEO, "Shader file %s is too big, increase max size or make shader smaller.", ( ( definition->fileName == NULL ) ? "<no-file-name>" : definition->fileName ) );
+			llog( LOG_ERROR, "Shader file %s is too big, increase max size or make shader smaller.", ( ( definition->fileName == NULL ) ? "<no-file-name>" : definition->fileName ) );
 		} else if ( amountRead < MAX_SHADER_SIZE ) {
-			SDL_LogVerbose( SDL_LOG_CATEGORY_VIDEO, "COMPILING SHADER: %s", ( ( definition->fileName == NULL ) ? "<no-file-name>" : definition->fileName ) );
+			llog( LOG_VERBOSE, "COMPILING SHADER: %s", ( ( definition->fileName == NULL ) ? "<no-file-name>" : definition->fileName ) );
 			shader.id = compileShader( shaderContents, shader.type );
 			if( shader.id == 0 ) {
-				SDL_LogError(  SDL_LOG_CATEGORY_VIDEO, "Error compiling shader file %s", ( ( definition->fileName == NULL ) ? "<no-file-name>" : definition->fileName ) );
+				llog( LOG_ERROR, "Error compiling shader file %s", ( ( definition->fileName == NULL ) ? "<no-file-name>" : definition->fileName ) );
 			}
 		}
 
 		fclose( inFile );
 	} else {
-		SDL_LogError( SDL_LOG_CATEGORY_VIDEO, "Shader definition has no file or text." );
+		llog( LOG_ERROR, "Shader definition has no file or text." );
 	}
 
-	SDL_LogVerbose( SDL_LOG_CATEGORY_VIDEO, "-- Done compiling shader" );
+	llog( LOG_VERBOSE, "-- Done compiling shader" );
 	return shader;
 }
 
@@ -153,21 +154,21 @@ static GLuint createShaderProgram( const ShaderProgramDefinition* def, int logId
 	int anyMatch;
 	GLuint programID;
 	GLint testVal;
-	SDL_LogVerbose( SDL_LOG_CATEGORY_VIDEO, "Creating shader program %i", logIdx );
+	llog( LOG_VERBOSE, "Creating shader program %i", logIdx );
 
 	// make sure the shaders to use have been successfully compiled first
 	if( !isValidShader( def->vertexShader, shaders ) ) {
-		SDL_LogError( SDL_LOG_CATEGORY_VIDEO, "Shader program at index %i is using invalid vertex shader %i", logIdx, def->vertexShader );
+		llog( LOG_ERROR, "Shader program at index %i is using invalid vertex shader %i", logIdx, def->vertexShader );
 		return 0;
 	}
 
 	if( !isValidShader( def->fragmentShader, shaders ) ) {
-		SDL_LogError( SDL_LOG_CATEGORY_VIDEO, "Shader program at index %i is using invalid fragment shader %i", logIdx, def->fragmentShader );
+		llog( LOG_ERROR, "Shader program at index %i is using invalid fragment shader %i", logIdx, def->fragmentShader );
 		return 0;
 	}
 
 	if( !isValidShader( def->geometryShader, shaders ) ) {
-		SDL_LogError( SDL_LOG_CATEGORY_VIDEO, "Shader program at index %i is using invalid geometry shader %i", logIdx, def->geometryShader );
+		llog( LOG_ERROR, "Shader program at index %i is using invalid geometry shader %i", logIdx, def->geometryShader );
 		return 0;
 	}
 
@@ -175,17 +176,17 @@ static GLuint createShaderProgram( const ShaderProgramDefinition* def, int logId
 	anyMatch = 0;
 	if( ( def->fragmentShader == def->vertexShader ) && ( def->fragmentShader > 0 ) ) {
 		anyMatch = 1;
-		SDL_LogError( SDL_LOG_CATEGORY_VIDEO, "Fragment and vertex shader indices are the same for program at index %i, they should never be.", logIdx );
+		llog( LOG_ERROR, "Fragment and vertex shader indices are the same for program at index %i, they should never be.", logIdx );
 	}
 
 	if( ( def->fragmentShader == def->geometryShader ) && ( def->fragmentShader > 0 ) ) {
 		anyMatch = 1;
-		SDL_LogError( SDL_LOG_CATEGORY_VIDEO, "Fragment and geometry shader indices are the same for program at index %i, they should never be.", logIdx );
+		llog( LOG_ERROR, "Fragment and geometry shader indices are the same for program at index %i, they should never be.", logIdx );
 	}
 
 	if( ( def->vertexShader == def->geometryShader ) && ( def->fragmentShader > 0 ) ) {
 		anyMatch = 1;
-		SDL_LogError( SDL_LOG_CATEGORY_VIDEO, "Vertex and geometry shader indices are the same for program at index %i, they should never be.", logIdx );
+		llog( LOG_ERROR, "Vertex and geometry shader indices are the same for program at index %i, they should never be.", logIdx );
 	}
 
 	if( anyMatch ) {
@@ -194,32 +195,32 @@ static GLuint createShaderProgram( const ShaderProgramDefinition* def, int logId
 
 	// create the program
 	GLR( programID, glCreateProgram( ) );
-	SDL_LogVerbose( SDL_LOG_CATEGORY_VIDEO, "-- creating gl program: %u", programID );
+	llog( LOG_VERBOSE, "-- creating gl program: %u", programID );
 	if( programID == 0 ) {
-		SDL_LogWarn( SDL_LOG_CATEGORY_VIDEO, "glCreateProgram returned invalid value for shader program defintion %i", logIdx );
+		llog( LOG_WARN, "glCreateProgram returned invalid value for shader program defintion %i", logIdx );
 		return 0;
 	}
 
 	// bind the shaders
 	if( def->vertexShader >= 0 ) {
-		SDL_LogVerbose( SDL_LOG_CATEGORY_VIDEO, "-- binding vertex shader %u", shaders[def->vertexShader].id );
+		llog( LOG_VERBOSE, "-- binding vertex shader %u", shaders[def->vertexShader].id );
 		GL( glAttachShader( programID, shaders[def->vertexShader].id ) );
 	}
 	if( def->fragmentShader >= 0 ) {
-		SDL_LogVerbose( SDL_LOG_CATEGORY_VIDEO, "-- binding fragment shader %u", shaders[def->fragmentShader].id );
+		llog( LOG_VERBOSE, "-- binding fragment shader %u", shaders[def->fragmentShader].id );
 		GL( glAttachShader( programID, shaders[def->fragmentShader].id ) );
 	}
 	if( def->geometryShader >= 0 ) {
-		SDL_LogVerbose( SDL_LOG_CATEGORY_VIDEO, "-- binding geometry shader %u", shaders[def->geometryShader].id );
+		llog( LOG_VERBOSE, "-- binding geometry shader %u", shaders[def->geometryShader].id );
 		GL( glAttachShader( programID, shaders[def->geometryShader].id ) );
 	}
 
 	// link the program, and make sure it was successful
 	GL( glLinkProgram( programID ) );
 	GL( glGetProgramiv( programID, GL_LINK_STATUS, &testVal ) );
-	SDL_LogVerbose( SDL_LOG_CATEGORY_VIDEO, "-- linking program %s", ( testVal ? "TRUE" : "FALSE" ) );
+	llog( LOG_VERBOSE, "-- linking program %s", ( testVal ? "TRUE" : "FALSE" ) );
 	if( testVal == GL_FALSE ) {
-		SDL_LogWarn( SDL_LOG_CATEGORY_VIDEO, "Shader program at index %i failed to link.", logIdx );
+		llog( LOG_WARN, "Shader program at index %i failed to link.", logIdx );
 		GL( glDeleteProgram( programID ) );
 		return 0;
 	}
@@ -234,7 +235,7 @@ size_t shaders_Load( const ShaderDefinition* shaderDefs, size_t numShaderDefs,
 				const ShaderProgramDefinition* shaderProgDefs,
 				ShaderProgram* shaderPrograms, size_t numShaderPrograms )
 {
-	SDL_LogVerbose(  SDL_LOG_CATEGORY_VIDEO, "Loading shaders - definitions: %u  programs: %u", numShaderDefs, numShaderPrograms );
+	llog( LOG_VERBOSE, "Loading shaders - definitions: %u  programs: %u", numShaderDefs, numShaderPrograms );
 	size_t numSuccessful = 0;
 	size_t i;
 
@@ -244,7 +245,7 @@ size_t shaders_Load( const ShaderDefinition* shaderDefs, size_t numShaderDefs,
 	numShaders = numShaderDefs;
 	shaders = (struct Shader*)mem_Allocate( sizeof(struct Shader) * numShaders );
 	if( shaders == NULL ) {
-		SDL_LogError( SDL_LOG_CATEGORY_VIDEO, "Problem allocating memory for shaders." );
+		llog( LOG_ERROR, "Problem allocating memory for shaders." );
 		return 0;
 	}
 
@@ -258,11 +259,11 @@ size_t shaders_Load( const ShaderDefinition* shaderDefs, size_t numShaderDefs,
 		shaderPrograms[i].programID = createShaderProgram( shaderProgDefs+i, i );
 		if( shaderPrograms[i].programID != 0 ) {
 			++numSuccessful;
-			SDL_LogVerbose( SDL_LOG_CATEGORY_VIDEO, "Successfully created shader program %i: %u", i, shaderPrograms[i].programID );
+			llog( LOG_VERBOSE, "Successfully created shader program %i: %u", i, shaderPrograms[i].programID );
 			// load the positions for the uniform and inputs
 			size_t defIdx = 0;
 			if( shaderPrograms[i].uniformLocs != NULL ) {
-				SDL_LogVerbose( SDL_LOG_CATEGORY_VIDEO, "Finding shader program uniforms" );
+				llog( LOG_VERBOSE, "Finding shader program uniforms" );
 				size_t namesLen = strlen( shaderProgDefs[i].uniformNames ) + 1;
 				char namesCopy[256];
 				if( namesLen < sizeof( namesCopy ) ) {
@@ -271,15 +272,15 @@ size_t shaders_Load( const ShaderDefinition* shaderDefs, size_t numShaderDefs,
 			
 					while( token != NULL ) {
 						GLR( shaderPrograms[i].uniformLocs[defIdx], glGetUniformLocation( shaderPrograms[i].programID, token ) );
-						SDL_LogVerbose( SDL_LOG_CATEGORY_VIDEO, "-- Found uniform %u %s at %i", defIdx, token, shaderPrograms[i].uniformLocs[defIdx] );
+						llog( LOG_VERBOSE, "-- Found uniform %u %s at %i", defIdx, token, shaderPrograms[i].uniformLocs[defIdx] );
 						token = strtok( NULL, " " );
 						++defIdx;
 					}
 				} else {
-					SDL_LogError( SDL_LOG_CATEGORY_VIDEO, "Error copying uniform name string for parsing shader program definition %d. String too long.", i );
+					llog( LOG_ERROR, "Error copying uniform name string for parsing shader program definition %d. String too long.", i );
 				}
 
-				SDL_LogVerbose( SDL_LOG_CATEGORY_VIDEO, "Found %u uniforms", defIdx );
+				llog( LOG_VERBOSE, "Found %u uniforms", defIdx );
 			}
 
 			while( defIdx < ARRAY_SIZE( shaderPrograms[i].uniformLocs ) ) {
@@ -290,13 +291,13 @@ size_t shaders_Load( const ShaderDefinition* shaderDefs, size_t numShaderDefs,
 	}
 
 	// don't need the shaders any more
-	SDL_LogVerbose( SDL_LOG_CATEGORY_VIDEO, "Deleting shaders" );
+	llog( LOG_VERBOSE, "Deleting shaders" );
 	for( i = 0; i < numShaderDefs; ++i ) {
 		if( isValidShader( i, shaders ) ) {
 			GL( glDeleteShader( shaders[i].id ) );
 		}
 	}
-	SDL_LogVerbose( SDL_LOG_CATEGORY_VIDEO, "Freeing shaders" );
+	llog( LOG_VERBOSE, "Freeing shaders" );
 	mem_Release( shaders );
 
 	return numSuccessful;
@@ -319,15 +320,15 @@ void shaders_ListUniforms( GLuint shaderID )
 	GLint count;
 	GLint maxSize;
 	GL( glGetProgramiv( shaderID, GL_ACTIVE_UNIFORMS, &count) );
-	SDL_LogInfo( SDL_LOG_CATEGORY_VIDEO, "Uniforms for program %i:\n", shaderID );
+	llog( LOG_INFO, "Uniforms for program %i:\n", shaderID );
 	if( count == 0 ) {
-		SDL_LogInfo( SDL_LOG_CATEGORY_VIDEO, "    none\n" );
+		llog( LOG_INFO, "    none\n" );
 	}
 
 	GL( glGetProgramiv( shaderID, GL_ACTIVE_UNIFORM_MAX_LENGTH, &maxSize ) );
 	char* uniformName = (char*)mem_Allocate( maxSize );
 	if( uniformName == NULL ) {
-		SDL_LogWarn( SDL_LOG_CATEGORY_VIDEO, "Error allocating memory for listing shader uniforms.\n" );
+		llog( LOG_WARN, "Error allocating memory for listing shader uniforms.\n" );
 	}
 
 	GLsizei length;
@@ -335,7 +336,7 @@ void shaders_ListUniforms( GLuint shaderID )
 	GLenum type;
 	for( GLint i = 0; i < count; ++i ) {		
 		GL( glGetActiveUniform( shaderID, i, maxSize, &length, &size, &type, uniformName ) );
-		SDL_LogInfo( SDL_LOG_CATEGORY_VIDEO, "   %s\n", uniformName );
+		llog( LOG_INFO, "   %s\n", uniformName );
 	}
 
 	mem_Release( uniformName );

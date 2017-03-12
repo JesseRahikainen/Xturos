@@ -1,6 +1,5 @@
 #include "gfxUtil.h"
 
-#include <SDL_log.h>
 #include <SDL_endian.h>
 
 
@@ -21,6 +20,8 @@
 
 #include "glDebugging.h"
 
+#include "../System/platformLog.h"
+
 typedef struct {
 	unsigned char* data;
 	int width, height, reqComp, comp;
@@ -37,15 +38,15 @@ int createTextureFromLoadedImage( GLenum texFormat, LoadedImage* image, Texture*
 	GL( glGenTextures( 1, &( outTexture->textureID ) ) );
 
 	if( outTexture->textureID == 0 ) {
-		SDL_LogInfo( SDL_LOG_CATEGORY_VIDEO, "Unable to create texture object." );
+		llog( LOG_INFO, "Unable to create texture object." );
 		return -1;
 	}
 
 	GL( glBindTexture( GL_TEXTURE_2D, outTexture->textureID ) );
 
 	// assuming these will look good for now, we shouldn't be too much resizing, but if we do we can go over these again
-	GL( glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST ) );
-	GL( glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST ) );
+	GL( glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR ) );
+	GL( glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR ) );
 
 	GL( glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE ) );
 	GL( glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE ) );
@@ -76,15 +77,46 @@ int gfxUtil_LoadTexture( const char* fileName, Texture* outTexture )
 	int returnCode = 0;
 
 	if( outTexture == NULL ) {
-		SDL_LogInfo( SDL_LOG_CATEGORY_VIDEO, "Null outTexture passed for file %s!", fileName );
+		llog( LOG_INFO, "Null outTexture passed for file %s!", fileName );
 		goto clean_up;
 	}
 
 	// load and convert file to pixel data
 	image.reqComp = 4;
+
+
+#if defined( __ANDROID__ )
+	// android has the assets stored in the apk, so we'll have to access that, SDL will handle whether it's a file stored in
+	//  data or the package
+	uint8_t* buffer;
+
+	SDL_RWops* file = SDL_RWFromFile( fileName, "r" );
+	if( file == NULL ) {
+		llog( LOG_INFO, "Unable to load image %s!", fileName );
+		return -1;
+	}
+	size_t fileSize = (size_t)SDL_RWsize( file );
+	buffer = mem_Allocate( fileSize );
+
+	size_t readTotal = 0;
+	size_t amtRead = 1;
+	uint8_t* bufferPos = buffer;
+	while( ( readTotal < fileSize ) && ( amtRead > 0 ) ) {
+		amtRead = SDL_RWread( file, bufferPos, sizeof( uint8_t ), ( fileSize - readTotal ) );
+		readTotal += amtRead;
+		bufferPos += amtRead;
+	}
+	SDL_RWclose( file );
+
+	image.data = stbi_load_from_memory( buffer, (int)fileSize, &( image.width ), &( image.height ), &( image.comp ), image.reqComp );
+
+	mem_Release( buffer );
+#else
 	image.data = stbi_load( fileName, &( image.width ), &( image.height ), &( image.comp ), image.reqComp );
+#endif
+
 	if( image.data == NULL ) {
-		SDL_LogInfo( SDL_LOG_CATEGORY_VIDEO, "Unable to load image %s! STB Error: %s", fileName, stbi_failure_reason( ) );
+		llog( LOG_INFO, "Unable to load image %s! STB Error: %s", fileName, stbi_failure_reason( ) );
 		returnCode = -1;
 		goto clean_up;
 	}
@@ -114,7 +146,7 @@ int gfxUtil_CreateTextureFromSurface( SDL_Surface* surface, Texture* outTexture 
 	} else if( surface->format->BytesPerPixel == 3 ) {
 		texFormat = GL_RGB;
 	} else {
-		SDL_LogInfo( SDL_LOG_CATEGORY_VIDEO, "Unable to handle format!" );
+		llog( LOG_INFO, "Unable to handle format!" );
 		return -1;
 	}
 
@@ -122,15 +154,15 @@ int gfxUtil_CreateTextureFromSurface( SDL_Surface* surface, Texture* outTexture 
 	glGenTextures( 1, &( outTexture->textureID ) );
 
 	if( outTexture->textureID == 0 ) {
-		SDL_LogInfo( SDL_LOG_CATEGORY_VIDEO, "Unable to create texture object." );
+		llog( LOG_INFO, "Unable to create texture object." );
 		return -1;
 	}
 
 	glBindTexture( GL_TEXTURE_2D, outTexture->textureID );
 
 	// assuming these will look good for now, we shouldn't be too much resizing, but if we do we can go over these again
-	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST );
-	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST );
+	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
+	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
 
 	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
 	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
@@ -167,7 +199,7 @@ int gfxUtil_CreateTextureFromRGBABitmap( uint8_t* data, int width, int height, T
 	image.reqComp = image.comp = 4;
 
 	if( outTexture == NULL ) {
-		SDL_LogInfo( SDL_LOG_CATEGORY_VIDEO, "Null outTexture passed for bitmap!" );
+		llog( LOG_INFO, "Null outTexture passed for bitmap!" );
 		goto clean_up;
 	}
 
@@ -199,7 +231,7 @@ int gfxUtil_CreateTextureFromAlphaBitmap( uint8_t* data, int width, int height, 
 	image.reqComp = image.comp = 1;
 
 	if( outTexture == NULL ) {
-		SDL_LogInfo( SDL_LOG_CATEGORY_VIDEO, "Null outTexture passed for bitmap!" );
+		llog( LOG_INFO, "Null outTexture passed for bitmap!" );
 		goto clean_up;
 	}
 

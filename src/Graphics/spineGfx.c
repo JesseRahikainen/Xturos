@@ -1,6 +1,5 @@
 #include "spineGfx.h"
 
-#include <SDL.h>
 #include <assert.h>
 #include <spine/extension.h>
 
@@ -9,6 +8,7 @@
 #include "gfxUtil.h"
 #include "../Utils/helpers.h"
 #include "../System/memory.h"
+#include "../System/platformLog.h"
 
 // templates
 typedef struct {
@@ -48,13 +48,13 @@ void _spAtlasPage_createTexture( spAtlasPage* self, const char* path )
 	Texture* newTexture = mem_Allocate( sizeof( Texture ) );
 	if( newTexture == NULL ) {
 		self->rendererObject = NULL;
-		SDL_LogError( SDL_LOG_CATEGORY_VIDEO, "Error allocating memory for spine atlas %s.", path );
+		llog( LOG_ERROR, "Error allocating memory for spine atlas %s.", path );
 		return;
 	}
 
 	if( gfxUtil_LoadTexture( path, newTexture ) < 0 ) {
 		self->rendererObject = NULL;
-		SDL_LogError( SDL_LOG_CATEGORY_VIDEO, "Error loading spine atlas %s.", path );
+		llog( LOG_ERROR, "Error loading spine atlas %s.", path );
 		return;
 	}
 	self->rendererObject = (void*)newTexture;
@@ -110,6 +110,7 @@ void spine_CleanEverything( void )
 Loads a set of spine files. Assumes there's three files: fileNameBase.json, fileNameBase.atlas, and fileNameBase.png.
 The template is created from these three files.
 Returns the index of the template if the loading was successfull, -1 if it was not.
+TODO: Get this working with direct from memory for Android.
 */
 int spine_LoadTemplate( const char* fileNameBase )
 {
@@ -130,13 +131,13 @@ int spine_LoadTemplate( const char* fileNameBase )
 
 	templates[idx].atlas = spAtlas_createFromFile( atlasName, 0 );
 	if( templates[idx].atlas == NULL ) {
-		SDL_LogDebug( SDL_LOG_CATEGORY_VIDEO, "Unable to load atlas for %s", fileNameBase );
+		llog( LOG_DEBUG, "Unable to load atlas for %s", fileNameBase );
 		return -1;
 	}
 
 	json = spSkeletonJson_create( templates[idx].atlas );
 	if( json == NULL ) {
-		SDL_LogDebug( SDL_LOG_CATEGORY_VIDEO, "Unable to create skeleton JSON for %s", fileNameBase );
+		llog( LOG_DEBUG, "Unable to create skeleton JSON for %s", fileNameBase );
 
 		spAtlas_dispose( templates[idx].atlas );
 		templates[idx].atlas = NULL;
@@ -149,7 +150,7 @@ int spine_LoadTemplate( const char* fileNameBase )
 	templates[idx].skeletonData = spSkeletonJson_readSkeletonDataFile( json, jsonName );
 	spSkeletonJson_dispose( json );
 	if( templates[idx].skeletonData == NULL ) {
-		SDL_LogDebug( SDL_LOG_CATEGORY_VIDEO, "Unable to create skeleton data for %s", fileNameBase );
+		llog( LOG_DEBUG, "Unable to create skeleton data for %s", fileNameBase );
 
 		spAtlas_dispose( templates[idx].atlas );
 		templates[idx].atlas = NULL;
@@ -160,7 +161,7 @@ int spine_LoadTemplate( const char* fileNameBase )
 
 	templates[idx].stateData = spAnimationStateData_create( templates[idx].skeletonData );
 	if( templates[idx].stateData == NULL ) {
-		SDL_LogDebug( SDL_LOG_CATEGORY_VIDEO, "Unable to create animation state data for %s", fileNameBase );
+		llog( LOG_DEBUG, "Unable to create animation state data for %s", fileNameBase );
 
 		spSkeletonData_dispose( templates[idx].skeletonData );
 		templates[idx].skeletonData = NULL;
@@ -198,7 +199,7 @@ void spine_CleanTemplate( int idx )
 
 	for( int i = 0; i < lastInstance; ++i ) {
 		if( ( instances[i].templateIdx == idx ) &&  ( instances[i].skeleton != NULL ) ) {
-			SDL_LogError( SDL_LOG_CATEGORY_RENDER, "Found a spine instance using a freed template." );
+			llog( LOG_ERROR, "Found a spine instance using a freed template." );
 		}
 	}
 }
@@ -213,7 +214,7 @@ void spine_SetTemplateMix( int templateIdx, spAnimation* from, spAnimation* to, 
 	assert( templateIdx < MAX_TEMPLATES );
 
 	if( templates[templateIdx].stateData == NULL ) {
-		SDL_LogCritical( SDL_LOG_CATEGORY_VIDEO, "Attempting to set a mix on a template that doesn't exist." );
+		llog( LOG_WARN, "Attempting to set a mix on a template that doesn't exist." );
 		return;
 	}
 
@@ -230,7 +231,7 @@ void spine_SetTemplateMixByName( int templateIdx, const char* fromName, const ch
 	assert( templateIdx < MAX_TEMPLATES );
 
 	if( templates[templateIdx].stateData == NULL ) {
-		SDL_LogCritical( SDL_LOG_CATEGORY_VIDEO, "Attempting to set a mix on a template that doesn't exist." );
+		llog( LOG_WARN, "Attempting to set a mix on a template that doesn't exist." );
 		return;
 	}
 
@@ -259,13 +260,13 @@ int spine_CreateInstance( int templateIdx, Vector2 pos, int cameraFlags, char de
 
 	charState->skeleton = spSkeleton_create( templates[templateIdx].skeletonData );
 	if( charState->skeleton == NULL ) {
-		SDL_LogError( SDL_LOG_CATEGORY_RENDER, "Unable to create skeleton." );
+		llog( LOG_ERROR, "Unable to create skeleton." );
 		return -1;
 	}
 
 	charState->state = spAnimationState_create( templates[templateIdx].stateData );
 	if( charState->state == NULL ) {
-		SDL_LogError( SDL_LOG_CATEGORY_RENDER, "Unable to create animation state." );
+		llog( LOG_ERROR, "Unable to create animation state." );
 
 		spSkeleton_dispose( charState->skeleton );
 		charState->skeleton = NULL;
@@ -489,7 +490,7 @@ static void drawCharacter( SpineInstance* spine )
 				}
 			} break;
 		default:
-			SDL_LogDebug( SDL_LOG_CATEGORY_VIDEO, "Unknown attachment type.\n" );
+			llog( LOG_DEBUG, "Unknown attachment type.\n" );
 			break;
 		}
 	}

@@ -1,6 +1,6 @@
 #include "input.h"
 
-#include <SDL_log.h>
+#include "../System/platformLog.h"
 
 /***** Key Binding *****/
 
@@ -70,7 +70,7 @@ Finds the first unused binding in the list.
 int bindToList( SDL_Keycode code, KeyResponse response, KeyBindings* bindingsList )
 {
 	if( response == NULL ) {
-		SDL_LogDebug( SDL_LOG_CATEGORY_APPLICATION, "Attempting to bind a key with a NULL response." );
+		llog( LOG_DEBUG, "Attempting to bind a key with a NULL response." );
 		return -1;
 	}
 
@@ -79,7 +79,7 @@ int bindToList( SDL_Keycode code, KeyResponse response, KeyBindings* bindingsLis
 		;
 
 	if( idx >= MAX_BINDINGS ) {
-		SDL_LogDebug( SDL_LOG_CATEGORY_APPLICATION, "Key binding list full, increase size of bind list." );
+		llog( LOG_DEBUG, "Key binding list full, increase size of bind list." );
 		return -1;
 	}
 
@@ -276,7 +276,7 @@ Finds the first unused binding in the list.
 int bindToMouseList( Uint8 button, KeyResponse response, MouseButtonBindings* bindingsList )
 {
 	if( response == NULL ) {
-		SDL_LogDebug( SDL_LOG_CATEGORY_APPLICATION, "Attempting to bind a mouse button with a NULL response." );
+		llog( LOG_DEBUG, "Attempting to bind a mouse button with a NULL response." );
 		return -1;
 	}
 
@@ -285,7 +285,7 @@ int bindToMouseList( Uint8 button, KeyResponse response, MouseButtonBindings* bi
 		;
 
 	if( idx >= MAX_BINDINGS ) {
-		SDL_LogDebug( SDL_LOG_CATEGORY_APPLICATION, "Mouse button binding list full, increase size of bind list." );
+		llog( LOG_DEBUG, "Mouse button binding list full, increase size of bind list." );
 		return -1;
 	}
 

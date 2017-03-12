@@ -4,8 +4,7 @@
 #include <assert.h>
 #include <math.h>
 #include <string.h>
-#include "../Others/glew.h"
-#include <SDL_opengl.h>
+#include "glPlatform.h"
 
 #include "glDebugging.h"
 
@@ -20,6 +19,10 @@
 #include "scissor.h"
 
 #include "../IMGUI/nuklearWrapper.h"
+
+#include "../Graphics/glPlatform.h"
+
+#include "../System/platformLog.h"
 
 static SDL_GLContext glContext;
 
@@ -39,6 +42,9 @@ static int windowRenderX0;
 static int windowRenderX1;
 static int windowRenderY0;
 static int windowRenderY1;
+
+// need to pass in the pointer to the value since we have to use glDrawBuffers
+static GLenum screenBuffer = GL_BACK_LEFT;
 
 static enum {
 	COLOR_RBO,
@@ -84,23 +90,21 @@ int gfx_Init( SDL_Window* window, int desiredRenderWidth, int desiredRenderHeigh
 	// setup opengl
 	glContext = SDL_GL_CreateContext( window );
 	if( glContext == NULL ) {
-		SDL_LogInfo( SDL_LOG_CATEGORY_VIDEO, "Error in initRendering while creating context: %s", SDL_GetError( ) );
+		llog( LOG_INFO, "Error in initRendering while creating context: %s", SDL_GetError( ) );
 		return -1;
 	}
 	SDL_GL_MakeCurrent( window, glContext );
+	llog( LOG_INFO, "OpenGL context created." );
 
-	// setup glew
-	glewExperimental = GL_TRUE;
-	GLenum glewError = glewInit( );
-	if( glewError != GLEW_OK ) {
-		SDL_LogInfo( SDL_LOG_CATEGORY_VIDEO, "Error in initRendering while initializing GLEW: %s", (char*)glewGetErrorString( glewError ) );
+	// initialize opengl
+	if( glInit( ) < 0 ) {
 		return -1;
 	}
-	glGetError( ); // reset error flag, glew can set it but it isn't important
+	llog( LOG_INFO, "OpenGL initialized." );
 
 	// use v-sync, avoid tearing
 	if( SDL_GL_SetSwapInterval( 1 ) < 0 ) {
-		SDL_LogInfo( SDL_LOG_CATEGORY_VIDEO, SDL_GetError( ) );
+		llog( LOG_INFO, "%s", SDL_GetError( ) );
 		return -1;
 	}
 
@@ -118,39 +122,16 @@ int gfx_Init( SDL_Window* window, int desiredRenderWidth, int desiredRenderHeigh
 	if( renderWidth > maxSize ) {
 		renderWidth = (int)maxSize;
 		renderHeight = (int)( maxSize / ratio );
-		SDL_LogDebug( SDL_LOG_CATEGORY_VIDEO, "Render width outside maximum size allowed by OpenGL, resizing to %ix%i", renderWidth, renderHeight );
+		llog( LOG_DEBUG, "Render width outside maximum size allowed by OpenGL, resizing to %ix%i", renderWidth, renderHeight );
 	} else if( renderHeight > maxSize ) {
 		renderWidth = (int)( maxSize * ratio );
 		renderHeight = (int)maxSize;
-		SDL_LogDebug( SDL_LOG_CATEGORY_VIDEO, "Render height outside maximum size allowed by OpenGL, resizing to %ix%i", renderWidth, renderHeight );
+		llog( LOG_DEBUG, "Render height outside maximum size allowed by OpenGL, resizing to %ix%i", renderWidth, renderHeight );
 	}
 
 	if( generateFBO( &mainRenderFBO, &( mainRenderRBOs[0] ) ) < 0 ) {
 		return -1;
 	}
-
-	/*GL( glGenFramebuffers( 1, &mainRenderFBO ) );
-	GL( glGenRenderbuffers( RBO_COUNT, &( mainRenderRBOs[0] ) ) );
-
-	//  create the render buffer objects
-	GL( glBindRenderbuffer( GL_RENDERBUFFER, mainRenderRBOs[DEPTH_RBO] ) );
-	//GL( glRenderbufferStorage( GL_RENDERBUFFER, GL_DEPTH_COMPONENT16, renderWidth, renderHeight ) ); // this doesn't work for some reason...
-	//GL( glRenderbufferStorage( GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, renderWidth, renderHeight ) );
-	GL( glRenderbufferStorage( GL_RENDERBUFFER, GL_DEPTH_COMPONENT32, renderWidth, renderHeight ) );
-	
-	GL( glBindRenderbuffer( GL_RENDERBUFFER, mainRenderRBOs[COLOR_RBO] ) );
-	GL( glRenderbufferStorage( GL_RENDERBUFFER, GL_RGB8, renderWidth, renderHeight ) );
-
-	//  bind the render buffer objects
-	GL( glBindFramebuffer( GL_DRAW_FRAMEBUFFER, mainRenderFBO ) );
-	GL( glFramebufferRenderbuffer( GL_DRAW_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, mainRenderRBOs[DEPTH_RBO] ) );
-	GL( glFramebufferRenderbuffer( GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, mainRenderRBOs[COLOR_RBO] ) );
-
-	if( checkAndLogFrameBufferCompleteness( GL_DRAW_FRAMEBUFFER, NULL ) < 0 ) {
-		return -1;
-	}
-
-	GL( glBindFramebuffer( GL_DRAW_FRAMEBUFFER, 0 ) );*/
 
 	int windowWidth, windowHeight;
 	SDL_GetWindowSize( window, &windowWidth, &windowHeight );
@@ -160,20 +141,25 @@ int gfx_Init( SDL_Window* window, int desiredRenderWidth, int desiredRenderHeigh
 	if( img_Init( ) < 0 ) {
 		return -1;
 	}
+	llog( LOG_INFO, "Images initialized." );
 
 	if( debugRenderer_Init( ) < 0 ) {
 		return -1;
 	}
+	llog( LOG_INFO, "Debug renderer initialized." );
 
 	spine_Init( );
+	llog( LOG_INFO, "Spine initialized." );
 
 	if( triRenderer_Init( desiredRenderWidth, desiredRenderHeight ) < 0 ) {
 		return -1;
 	}
+	llog( LOG_INFO, "Triangle renderer initialized." );
 
 	if( scissor_Init( desiredRenderWidth, desiredRenderHeight ) < 0 ) {
 		return -1;
 	}
+	llog( LOG_INFO, "Scissors initialized." );
 
 	gameClearColor = CLR_MAGENTA;
 
@@ -296,7 +282,7 @@ void gfx_Render( float dt )
 	GL( glBindFramebuffer( GL_DRAW_FRAMEBUFFER, 0 ) );
 
 	// now render everything to the screen, scaling based on the size of the window
-	GL( glDrawBuffer( GL_BACK_LEFT ) );
+	GL( glDrawBuffers( 1, &screenBuffer ) );
 	
 	GL( glClearColor( windowClearColor.r, windowClearColor.g, windowClearColor.b, windowClearColor.a) );
 	GL( glColorMask( GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE ) );

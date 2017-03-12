@@ -1,8 +1,8 @@
 #include <string.h>
 #include <math.h>
-#include <SDL.h>
 #include <assert.h>
 #include "Matrix4.h"
+#include "../System/platformLog.h"
 
 Matrix4* mat4_Multiply( const Matrix4* m, const Matrix4* n, Matrix4* out )
 {
@@ -381,9 +381,9 @@ void mat4_Dump( Matrix4* m, const char* extra )
 	assert( m != NULL );
 
 	if( extra != NULL ) {
-		SDL_Log( "%s", extra );
+		llog( LOG_DEBUG,  "%s", extra );
 	}
-	SDL_Log( "m4 = %7.3f %7.3f %7.3f %7.3f\n           %7.3f %7.3f %7.3f %7.3f\n           %7.3f %7.3f %7.3f %7.3f\n           %7.3f %7.3f %7.3f %7.3f",
+	llog( LOG_DEBUG,  "m4 = %7.3f %7.3f %7.3f %7.3f\n           %7.3f %7.3f %7.3f %7.3f\n           %7.3f %7.3f %7.3f %7.3f\n           %7.3f %7.3f %7.3f %7.3f",
 		m->m[0], m->m[4], m->m[8],  m->m[12],
 		m->m[1], m->m[5], m->m[9],  m->m[13],
 		m->m[2], m->m[6], m->m[10], m->m[14],

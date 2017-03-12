@@ -1,7 +1,7 @@
 #ifndef SCISSOR_H
 #define SCISSOR_H
 
-#include "../Others/glew.h"
+#include "../Graphics/glPlatform.h"
 
 #include "../Math/vector2.h"
 

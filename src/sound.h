@@ -1,33 +1,45 @@
 #ifndef JTR_SOUND
 #define JTR_SOUND
 
-#include <SDL.h>
-#include <SDL_mixer.h>
+#include <stdbool.h>
+#include <SDL_types.h>
 
-/* Sets up the SDL mixer. Returns 0 on success. */
-int initMixer( );
-
-/* Shuts down SDL mixer. */
-void shutDownMixer( );
-
-
-/* Plays a song. */
-void playSong( const char* fileName );
-
-/* Stops the currently playing song. */
-void stopSong( );
-
+#include "Utils\idSet.h"
 
 /*
-Loads the sound at the file name.
- Returns the id to use for playing, returns -1 on failure.
+Two resources here: samples and sounds
+Samples are the loaded sound data, similar to an image.
+Sounds are currently playing instances of samples, similar to a sprite.
 */
-int loadSound( const char* fileName );
 
-/* Plays a sound. */
-void playSound( int soundId );
+// Sets up the SDL mixer. Returns 0 on success.
+int snd_Init( );
 
-/* Cleans up memory for a sound, becomes invalid afterwards. */
-void cleanSound( int idx );
+// Shuts down SDL mixer.
+void snd_CleanUp( );
+
+void snd_SetFocus( bool hasFocus );
+
+//***** Loaded all at once
+int snd_LoadSample( const char* fileName, Uint8 desiredChannels, bool loops );
+// Returns an id that can be used to change the volume and pitch
+//  volume - how loud the sound will be, in the range [0,1], 0 being off, 1 being loudest
+//  pitch - pitch change for the sound, multiplies the sample rate, 1 for normal, lesser for slower, higher for faster
+//  pan - how far left or right the sound is, 0 is center, -1 is left, +1 is right
+// TODO: Some sort of event system so we can get when a sound has finished playing?
+EntityID snd_Play( int sampleID, float volume, float pitch, float pan );
+void snd_ChangeSoundVolume( EntityID soundID, float volume ); // Volume is assumed to be [0,1]
+void snd_ChangeSoundPitch( EntityID soundID, float pitch ); // Pitch is assumed to be > 0
+void snd_ChangeSoundPan( EntityID soundID, float pan ); // Pan is assumed to be [-1,1]
+void snd_Stop( EntityID soundID );
+void snd_UnloadSample( int sampleID );
+
+//***** Streaming
+int snd_LoadStreaming( const char* fileName, bool loops );
+void snd_PlayStreaming( int streamID, float volume, float pan ); // todo: fade in?
+void snd_StopStreaming( int streamID );
+void snd_ChangeStreamVolume( int streamID, float volume );
+void snd_ChangeStreamPan( int streamID, float pan );
+void snd_UnloadStream( int streamID );
 
 #endif

@@ -1,6 +1,6 @@
 #include "glDebugging.h"
 
-#include <SDL_log.h>
+#include "../System/platformLog.h"
 
 // some error check dumping, returns < 0 if there was an error
 int checkAndLogErrors( const char* extraInfo )
@@ -35,9 +35,9 @@ int checkAndLogErrors( const char* extraInfo )
 		}
 
 		if( extraInfo == NULL ) {
-			SDL_LogError( SDL_LOG_CATEGORY_VIDEO, "Error: %s", errorMsg );
+			llog( LOG_ERROR, "Error: %s", errorMsg );
 		} else {
-			SDL_LogError( SDL_LOG_CATEGORY_VIDEO, "Error: %s at %s", errorMsg, extraInfo );
+			llog( LOG_ERROR, "Error: %s at %s", errorMsg, extraInfo );
 		}
 #endif
 		ret = -1;
@@ -114,9 +114,9 @@ int checkAndLogFrameBufferCompleteness( GLenum target, const char* extraInfo )
 	}
 
 	if( extraInfo == NULL ) {
-		SDL_LogError( SDL_LOG_CATEGORY_VIDEO, "FB Status: %s", errorMsg );
+		llog( LOG_ERROR, "FB Status: %s", errorMsg );
 	} else {
-		SDL_LogError( SDL_LOG_CATEGORY_VIDEO, "FB Status: %s at %s", errorMsg, extraInfo );
+		llog( LOG_ERROR, "FB Status: %s at %s", errorMsg, extraInfo );
 	}
 #endif
 	return -1;

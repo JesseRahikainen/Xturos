@@ -17,7 +17,12 @@ void spr_Destroy( int sprite );
 void spr_GetColor( int sprite, Color* outCol );
 void spr_SetColor( int sprite, Color* col );
 
+void spr_GetPosition( int sprite, Vector2* outPos );
+
 void spr_Update( int sprite, const Vector2* newPos, const Vector2* newScale, float newRot );
+void spr_Update_p( int sprite, const Vector2* newPos );
+void spr_Update_pc( int sprite, const Vector2* newPos, const Color* clr );
+void spr_Update_c( int sprite, const Color* clr );
 void spr_UpdateDelta( int sprite, const Vector2* posOffset, const Vector2* scaleOffset, float rotOffset );
 
 /*

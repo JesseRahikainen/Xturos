@@ -25,16 +25,18 @@
 
 #include "System/memory.h"
 #include "System/systems.h"
+#include "System/platformLog.h"
 
 #include "Graphics\debugRendering.h"
+#include "Graphics\glPlatform.h"
 
 #define WINDOW_WIDTH 800
 #define WINDOW_HEIGHT 600
 #define RENDER_WIDTH 600
 #define RENDER_HEIGHT 800
 
-static int running;
-static int focused;
+static bool running;
+static bool focused;
 static unsigned int lastTicks;
 static SDL_Window* window;
 static SDL_RWops* logFile;
@@ -51,7 +53,7 @@ void cleanUp( void )
 	SDL_DestroyWindow( window );
 	window = NULL;
 
-	shutDownMixer( );
+	snd_CleanUp( );
 
 	SDL_Quit( );
 
@@ -64,12 +66,15 @@ void cleanUp( void )
 	atexit( NULL );
 }
 
-void LogOutput( void* userData, int category, SDL_LogPriority priority, const char* message )
+// TODO: Move to logPlatform
+void logOutput( void* userData, int category, SDL_LogPriority priority, const char* message )
 {
 	size_t strLen = SDL_strlen( message );
 	SDL_RWwrite( logFile, message, 1, strLen );
-#ifdef WIN32
+#if defined( WIN32 )
 	SDL_RWwrite( logFile, "\r\n", 1, 2 );
+#elif defined( __ANDROID__ )
+	SDL_RWwrite( logFile, "\n", 1, 1 );
 #else
 	#warning "NO END OF LINE DEFINED FOR THIS PLATFORM!"
 #endif
@@ -92,7 +97,7 @@ int initEverything( void )
 #ifndef _DEBUG
 	logFile = SDL_RWFromFile( "log.txt", "w" );
 	if( logFile != NULL ) {
-		SDL_LogSetOutputFunction( LogOutput, NULL );
+		SDL_LogSetOutputFunction( logOutput, NULL );
 	}
 #endif
 
@@ -102,10 +107,10 @@ int initEverything( void )
 	// then SDL
 	SDL_SetMainReady( );
 	if( SDL_Init( SDL_INIT_TIMER | SDL_INIT_AUDIO | SDL_INIT_VIDEO | SDL_INIT_EVENTS ) != 0 ) {
-		SDL_LogError( SDL_LOG_CATEGORY_APPLICATION, SDL_GetError( ) );
+		llog( LOG_ERROR, "%s", SDL_GetError( ) );
 		return -1;
 	}
-	SDL_LogInfo( SDL_LOG_CATEGORY_APPLICATION, "SDL successfully initialized" );
+	llog( LOG_INFO, "SDL successfully initialized." );
 	atexit( cleanUp );
 
 	// set up opengl
@@ -128,9 +133,11 @@ int initEverything( void )
 
 	// todo: commenting these out breaks the font rendering, something wrong with the texture that's created
 	//  note: without these it uses the values loaded in from the .cfg file, which is 3.3
-	majorVersion = 2;
-	minorVersion = 1;
-	SDL_GL_SetAttribute( SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE );
+//#if defined( __ANDROID__ ) //|| defined( __IOS__ )
+	// setup using OpenGLES
+//#else
+	// setup using OpenGL
+	SDL_GL_SetAttribute( SDL_GL_CONTEXT_PROFILE_MASK, PROFILE );
 	SDL_GL_SetAttribute( SDL_GL_CONTEXT_MAJOR_VERSION, majorVersion );
 	SDL_GL_SetAttribute( SDL_GL_CONTEXT_MINOR_VERSION, minorVersion );
 	SDL_GL_SetAttribute( SDL_GL_RED_SIZE, redSize );
@@ -138,37 +145,45 @@ int initEverything( void )
     SDL_GL_SetAttribute( SDL_GL_BLUE_SIZE, blueSize );
     SDL_GL_SetAttribute( SDL_GL_DEPTH_SIZE, depthSize );
     SDL_GL_SetAttribute( SDL_GL_DOUBLEBUFFER, 1 );
+//#endif
 
 	window = SDL_CreateWindow( windowName, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
 		WINDOW_WIDTH, WINDOW_HEIGHT, SDL_WINDOW_SHOWN | SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE );
 	if( window == NULL ) {
-		SDL_LogError( SDL_LOG_CATEGORY_VIDEO, SDL_GetError( ) );
+		llog( LOG_ERROR, "%s", SDL_GetError( ) );
 		return -1;
 	}
-	SDL_LogInfo( SDL_LOG_CATEGORY_APPLICATION, "SDL OpenGL window successfully created" );
+	llog( LOG_INFO, "SDL OpenGL window successfully created" );
 
 	// Create rendering
 	if( gfx_Init( window, RENDER_WIDTH, RENDER_HEIGHT ) < 0 ) {
 		return -1;
 	}
-	SDL_LogInfo( SDL_LOG_CATEGORY_APPLICATION, "Rendering successfully initialized" );
+	llog( LOG_INFO, "Rendering successfully initialized" );
 
 	// Create sound mixer
-	if( initMixer( ) < 0 ) {
+	if( snd_Init( ) < 0 ) {
 		return -1;
 	}
-	SDL_LogInfo( SDL_LOG_CATEGORY_APPLICATION, "Mixer successfully initialized" );
+	llog( LOG_INFO, "Mixer successfully initialized" );
 
 	cam_Init( );
 	cam_SetProjectionMatrices( RENDER_WIDTH, RENDER_HEIGHT );
-	SDL_LogInfo( SDL_LOG_CATEGORY_APPLICATION, "Cameras successfully initialized" );
+	llog( LOG_INFO, "Cameras successfully initialized" );
 
 	input_InitMouseInputArea( RENDER_WIDTH, RENDER_HEIGHT );
-	input_UpdateMouseWindow( WINDOW_WIDTH, WINDOW_HEIGHT );
-	SDL_LogInfo( SDL_LOG_CATEGORY_APPLICATION, "Input successfully initialize" );
+
+	// on mobile devices we can't assume the width and height we've used to create the window
+	//  are the current width and height
+	int winWidth;
+	int winHeight;
+	SDL_GetWindowSize( window, &winWidth, &winHeight );
+	input_UpdateMouseWindow( winWidth, winHeight );
+	llog( LOG_INFO, "Input successfully initialized" );
 
 	initIMGUI( &inGameIMGUI, true, RENDER_WIDTH, RENDER_HEIGHT );
-	initIMGUI( &editorIMGUI, false, WINDOW_WIDTH, WINDOW_HEIGHT );
+	initIMGUI( &editorIMGUI, false, winWidth, winHeight );
+	llog( LOG_INFO, "IMGUI successfully initialized" );
 
 	return 0;
 }
@@ -190,16 +205,21 @@ void processEvents( int windowsEventsOnly )
 
 			// will want to handle these messages for pausing and unpausing the game when they lose focus
 			case SDL_WINDOWEVENT_FOCUS_GAINED:
-				focused = 1;
+				llog( LOG_DEBUG, "Gained focus" );
+				focused = true;
+				snd_SetFocus( true );
 				break;
 			case SDL_WINDOWEVENT_FOCUS_LOST:
-				focused = 0;
+				llog( LOG_DEBUG, "Lost focus" );
+				focused = false;
+				snd_SetFocus( false );
 				break;
 			}
 		}
 
 		if( e.type == SDL_QUIT ) {
-			running = 0;
+			llog( LOG_DEBUG, "Quitting" );
+			running = false;
 		}
 
 		if( windowsEventsOnly ) { 
@@ -241,9 +261,12 @@ int main( int argc, char** argv )
 	srand( (unsigned int)time( NULL ) );
 
 	//***** main loop *****
-	running = 1;
+	running = true;
 	lastTicks = SDL_GetTicks( );
 	physicsTickAcc = 0;
+#if defined( __ANDROID__ )
+	focused = true;
+#endif
 
 	gsmEnterState( &globalFSM, &gameScreenState );
 

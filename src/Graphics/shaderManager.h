@@ -1,7 +1,8 @@
 #ifndef SHADER_MANAGER_H
 #define SHADER_MANAGER_H
 
-#include <SDL_opengl.h>
+#include "glPlatform.h"
+
 /*
 TODO:
 	Add ability to preprocess includes, either on the tool level or in game. Maybe other preprocessor functionality?

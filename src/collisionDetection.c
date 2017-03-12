@@ -342,6 +342,38 @@ void collision_DetectAll( ColliderCollection firstCollection, ColliderCollection
 	}
 }
 
+// detect all the collisions between objects in the collection
+void collision_DetectAllInternal( ColliderCollection collection, CollisionResponse response )
+{
+	Vector2 separation = VEC2_ZERO;
+	Collider* firstCurrent;
+	Collider* secondCurrent;
+	char* data = (char*)collection.firstCollider;
+
+	/* if there's no response then there's no reason to detect any collisions */
+	if( ( data == NULL ) || ( response == NULL ) ) {
+		return;
+	}
+
+	for( int i = 0; i < collection.count; ++i ) {
+		firstCurrent = (Collider*)( data + ( i * collection.stride ) );
+		if( ( firstCurrent == NULL ) || ( firstCurrent->type == CT_DEACTIVATED ) ) {
+			continue;
+		}
+
+		for( int j = i + 1; j < collection.count; ++j ) {
+			secondCurrent = (Collider*)( data + ( j * collection.stride ) );
+			if( ( secondCurrent == NULL ) || ( secondCurrent->type == CT_DEACTIVATED ) ) {
+				continue;
+			}
+
+			if( collisionChecks[firstCurrent->type][secondCurrent->type]( firstCurrent, secondCurrent, &separation ) ) {
+				response( i, j, separation );
+			}
+		}
+	}
+}
+
 /*
 Finds if the specified line segment hits anything in the list. Returns 1 if it did, 0 otherwise. Puts the
  collision point into out, if out is NULL it'll exit once it detects any collision instead of finding the first.

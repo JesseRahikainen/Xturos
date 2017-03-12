@@ -231,14 +231,15 @@ float easeInBounce( float t )
 
 float easeOutBounce( float t )
 {
-	if( t < ( 1 / 2.75 ) ) {
-		return 7.5625f * t * t;
-	} else if( t < ( 2 / 2.75 ) ) {
-		return 7.5625f * (t -= (1.5f / 2.75f)) * t + .75f;
-	} else if (t < (2.5 / 2.75)) {
-		return 7.5625f * (t -= (2.25f / 2.75f)) * t + .9375f;
+	// copied from https://github.com/warrenm/AHEasing/blob/master/AHEasing/easing.c
+	if( t < ( 4.0f / 11.0f ) ) {
+		return ( 121.0f * t * t ) / 16.0f;
+	} else if( t < ( 8.0f / 11.0f ) ) {
+		return ( 363.0f / 40.0f * t * t ) - ( 99.0f / 10.0f * t ) + ( 17.0f / 5.0f );
+	} else if( t < ( 9.0f / 10.0f ) ) {
+		return ( 4356.0f / 361.0f * t * t ) - ( 35442.0f / 1805.0f * t ) + ( 16061.0f / 1805.0f );
 	} else {
-		return 7.5625f * (t -= (2.625f / 2.75f)) * t + .984375f;
+		return ( 54.0f / 5.0f * t * t ) - ( 513.0f / 25.0f * t ) + ( 268.0f / 25.0f );
 	}
 }
 
@@ -259,4 +260,9 @@ float easeConstantZero( float t )
 float easeConstantOne( float t )
 {
 	return 1.0f;
+}
+
+float easeLinear( float t )
+{
+	return t;
 }

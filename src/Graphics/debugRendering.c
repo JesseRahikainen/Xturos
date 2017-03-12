@@ -1,9 +1,6 @@
 #include "debugRendering.h"
 
-#include "../Others/glew.h"
-
-#include <SDL_opengl.h>
-#include <SDL_log.h>
+#include "glPlatform.h"
 #include <math.h>
 
 #include "../Math/matrix4.h"
@@ -11,6 +8,7 @@
 #include "camera.h"
 #include "shaderManager.h"
 #include "glDebugging.h"
+#include "../System/platformLog.h"
 
 static GLuint debugVAO;
 static GLuint debugVBO;
@@ -43,7 +41,7 @@ static int createOGLObjects( void )
 	GL( glGenBuffers( 1, &debugIBO ) );
 	GL( glGenVertexArrays( 1, &debugVAO ) );
 	if( ( debugVBO == 0 ) || ( debugIBO == 0 ) || ( debugVAO == 0 ) ) {
-		SDL_LogError( SDL_LOG_CATEGORY_RENDER, "Unable to create one or more storage objects for debug rendering." );
+		llog( LOG_ERROR, "Unable to create one or more storage objects for debug rendering." );
 		return -1;
 	}
 
@@ -73,26 +71,11 @@ static int createShader( void )
 	ShaderProgramDefinition debugProgDef;
 	debugShaderDefs[0].fileName = NULL;
 	debugShaderDefs[0].type = GL_VERTEX_SHADER;
-	debugShaderDefs[0].shaderText =	"#version 330\n"
-									"uniform mat4 mvpMatrix;\n"
-									"layout(location = 0) in vec4 vertex;\n"
-									"layout(location = 2) in vec4 color;\n"
-									"out vec4 vertCol;\n"
-									"void main( void )\n"
-									"{\n"
-									"	vertCol = color;\n"
-									"	gl_Position = mvpMatrix * vertex;\n"
-									"}\n";
+	debugShaderDefs[0].shaderText =	DEBUG_VERT_SHADER;
 
 	debugShaderDefs[1].fileName = NULL;
 	debugShaderDefs[1].type = GL_FRAGMENT_SHADER;
-	debugShaderDefs[1].shaderText =	"#version 330\n"
-									"in vec4 vertCol;\n"
-									"out vec4 outCol;\n"
-									"void main( void )\n"
-									"{\n"
-									"	outCol = vertCol;\n"
-									"}\n";
+	debugShaderDefs[1].shaderText =	DEBUG_FRAG_SHADER;
 
 	debugProgDef.fragmentShader = 1;
 	debugProgDef.vertexShader = 0;
@@ -101,7 +84,7 @@ static int createShader( void )
 
 	if( shaders_Load( &( debugShaderDefs[0] ), sizeof( debugShaderDefs ) / sizeof( ShaderDefinition ),
 		&debugProgDef, &debugShaderProgram, 1 ) <= 0 ) {
-		SDL_LogInfo( SDL_LOG_CATEGORY_VIDEO, "Error compiling debug shaders.\n" );
+		llog( LOG_INFO, "Error compiling debug shaders.\n" );
 		return -1;
 	}
 
@@ -140,7 +123,7 @@ Some basic debug drawing functions.
 static int queueDebugVert( unsigned int camFlags, Vector2 pos, Color color )
 {
 	if( lastDebugVert >= ( MAX_VERTS - 1 ) ) {
-		SDL_LogVerbose( SDL_LOG_CATEGORY_VIDEO, "Debug instruction queue full." );
+		llog( LOG_VERBOSE, "Debug instruction queue full." );
 		return -1;
 	}
 
