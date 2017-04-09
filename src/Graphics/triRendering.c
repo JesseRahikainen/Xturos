@@ -1,5 +1,7 @@
 #include "triRendering.h"
 
+#include <stdlib.h>
+
 #include "glPlatform.h"
 
 #include "../Math/matrix4.h"
@@ -345,8 +347,9 @@ Draws out all the triangles.
 */
 void triRenderer_Render( )
 {
-	SDL_qsort( solidTriangles.triangles, solidTriangles.lastTriIndex + 1, sizeof( Triangle ), sortByRenderState );
-	SDL_qsort( transparentTriangles.triangles, transparentTriangles.lastTriIndex + 1, sizeof( Triangle ), sortByDepth );
+	// SDL_qsort appears to break some times, so fall back onto the standard library qsort for right now, and implement our own when we have time
+	qsort( solidTriangles.triangles, solidTriangles.lastTriIndex + 1, sizeof( Triangle ), sortByRenderState );
+	qsort( transparentTriangles.triangles, transparentTriangles.lastTriIndex + 1, sizeof( Triangle ), sortByDepth );
 
 	// now that the triangles have been sorted create the vertex arrays
 	generateVertexArray( &solidTriangles );

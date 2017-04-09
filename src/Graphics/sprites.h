@@ -23,6 +23,8 @@ void spr_Update( int sprite, const Vector2* newPos, const Vector2* newScale, flo
 void spr_Update_p( int sprite, const Vector2* newPos );
 void spr_Update_pc( int sprite, const Vector2* newPos, const Color* clr );
 void spr_Update_c( int sprite, const Color* clr );
+void spr_Update_sc( int sprite, const Vector2* newScale, const Color* clr );
+void spr_Update_psc( int sprite, const Vector2* newPos, const Vector2* newScale, const Color* clr );
 void spr_UpdateDelta( int sprite, const Vector2* posOffset, const Vector2* scaleOffset, float rotOffset );
 
 /*

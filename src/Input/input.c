@@ -1,5 +1,6 @@
 #include "input.h"
-
+#include <float.h>
+#include <assert.h>
 #include "../System/platformLog.h"
 
 /***** Key Binding *****/
@@ -341,6 +342,97 @@ void handleMouseButtonEvent( Uint8 button, MouseButtonBindings* bindingsList )
 	}
 }
 
+/***** Gesture Recognition *****/
+// This pulls from the mouse position (and by proxy the primary touch as well)
+typedef struct {
+	Vector2 dir;
+	KeyResponse response;
+} SwipeBinding;
+
+static SwipeBinding swipeBindings[MAX_BINDINGS];
+#define MIN_SWIPE_DIST 0.1f
+#define MAX_SWIPE_ERROR 0.1f;
+
+/*
+Clears all binded swipes.
+*/
+void input_ClearAllSwipeBinds( void )
+{
+	for( int i = 0; i < MAX_BINDINGS; ++i ) {
+		swipeBindings[i].response = NULL;
+	}
+}
+
+/*
+Binds a function response when a swipe is made in a specific direction.
+ Returns < 0 if there was a problem binding the swipe.
+*/
+int input_BindOnSwipe( Vector2 dir, KeyResponse response )
+{
+	vec2_Normalize( &dir );
+	assert( vec2_Mag( &dir ) > 0.01f );
+
+	for( int i = 0; i < MAX_BINDINGS; ++i ) {
+		if( swipeBindings[i].response == NULL ) {
+			swipeBindings[i].dir = dir;
+			swipeBindings[i].response = response;
+
+			return 0;
+		}
+	}
+
+	return -1;
+}
+
+static SDL_FingerID watchedFinger = -1;
+static Vector2 watchedFingerPosStart;
+
+static void processSwipePress( SDL_Event* e )
+{
+	if( watchedFinger < 0 ) {
+		watchedFingerPosStart.x = e->tfinger.x;
+		watchedFingerPosStart.y = e->tfinger.y;
+		watchedFinger = e->tfinger.fingerId;
+	}
+}
+
+static void processSwipeRelease( SDL_Event* e )
+{
+	if( e->tfinger.fingerId == watchedFinger ) {
+		Vector2 endPos;
+		endPos.x = e->tfinger.x;
+		endPos.y = e->tfinger.y;
+
+		Vector2 diff;
+
+		vec2_Subtract( &endPos, &watchedFingerPosStart, &diff );
+
+		if( vec2_MagSqrd( &diff ) >= ( MIN_SWIPE_DIST * MIN_SWIPE_DIST ) ) {
+			vec2_Normalize( &diff );
+			
+			float bestError = FLT_MAX;
+			KeyResponse response = NULL;
+
+			for( int i = 0; i < MAX_BINDINGS; ++i ) {
+				if( swipeBindings[i].response == NULL ) continue;
+
+				float error = vec2_DotProduct( &diff, &( swipeBindings[i].dir ) );
+
+				if( error < bestError ) {
+					bestError = error;
+					response = swipeBindings[i].response;
+				}
+			}
+
+			if( response != NULL ) {
+				response( );
+			}
+		}
+
+		watchedFinger = -1;
+	}
+}
+
 /***** General Usage Functions *****/
 /*
 Process events.
@@ -364,6 +456,12 @@ void input_ProcessEvents( SDL_Event* e )
 		break;
 	case SDL_MOUSEBUTTONUP:
 		handleMouseButtonEvent( e->button.button, mouseButtonUpBindings );
+		break;
+	case SDL_FINGERDOWN:
+		processSwipePress( e );
+		break;
+	case SDL_FINGERUP:
+		processSwipeRelease( e );
 		break;
 	}
 }

@@ -179,14 +179,16 @@ int cfg_GetInt( void* cfgFile, const char* attrName, int defaultVal, int* retVal
 	CFGFile* data = (CFGFile*)cfgFile;
 
 	int result = defaultVal;
+	int ret = -1;
 
 	int idx = AttributeIndex( data, attrName );
 	if( idx >= 0 ) {
 		result = data->sbAttributes[idx].value;
+		ret = 0;
 	}
 	(*retVal) = result;
 
-	return 0;
+	return ret;
 }
 
 // If the attribute already exists it sets the associated value, if it doesn't exist it is added.

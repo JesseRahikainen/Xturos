@@ -10,6 +10,7 @@
 #include "../Graphics/camera.h"
 #include "../Input/input.h"
 #include "../System/platformLog.h"
+#include "../System/systems.h"
 
 #define MAX_CHECK_BOXES 32
 #define TEXT_LEN 32
@@ -20,7 +21,6 @@ typedef struct {
 	int inUse;
 
 	int normalImgId;
-	int focusImgId;
 	int checkMarkImgId;
 
 	char text[TEXT_LEN+1];
@@ -31,111 +31,35 @@ typedef struct {
 	CheckBoxResponse response;
 	enum CheckBoxState state;
 
-	int isChecked;
+	bool isChecked;
 
 	Vector2 position;
 	Vector2 collisionHalfSize;
 	int camFlags;
+
+	Vector2 drawScale;
 } CheckBox;
 
 static CheckBox checkBoxes[MAX_CHECK_BOXES];
 static int mouseDown;
 
-/* Call this before trying to use any check boxes. */
-void chkBox_Init( )
-{
-	memset( checkBoxes, 0, sizeof( checkBoxes ) );
-	mouseDown = 0;
-}
+static int checkBoxSystem;
 
-/*
-Creates a button. All image ids must be valid.
-*/
-int chkBox_Create( Vector2 position, Vector2 size, const char* text, int fontID, int normalImg, int focusedImg, int checkMarkImg,
-	unsigned int camFlags, char depth, CheckBoxResponse response )
-{
-	int newIdx = 0;
-	while( ( newIdx < MAX_CHECK_BOXES ) && ( checkBoxes[newIdx].inUse == 1 ) ) {
-		++newIdx;
-	}
-
-	if( newIdx >= MAX_CHECK_BOXES ) {
-		llog( LOG_WARN, "Unable to create new check box, no open slots." );
-		return -1;
-	}
-
-	vec2_Scale( &size, 0.5f, &( checkBoxes[newIdx].collisionHalfSize ) );
-	checkBoxes[newIdx].position = position;
-	
-	checkBoxes[newIdx].normalImgId = normalImg;
-	checkBoxes[newIdx].focusImgId = focusedImg;
-	checkBoxes[newIdx].checkMarkImgId = checkMarkImg;
-	checkBoxes[newIdx].depth = depth;
-	checkBoxes[newIdx].inUse = 1;
-	checkBoxes[newIdx].response = response;
-	checkBoxes[newIdx].state = CBS_NORMAL;
-	checkBoxes[newIdx].camFlags = camFlags;
-	checkBoxes[newIdx].fontID = fontID;
-
-	if( text != NULL ) {
-		strncpy( checkBoxes[newIdx].text, text, TEXT_LEN );
-		checkBoxes[newIdx].text[TEXT_LEN] = 0;
-	} else {
-		memset( checkBoxes[newIdx].text, 0, sizeof( checkBoxes[newIdx].text ) );
-	}
-
-	checkBoxes[newIdx].inUse = 1;
-
-	return newIdx;
-}
-
-void chkBox_Destroy( int idx )
-{
-	if( ( idx < 0 ) || ( idx >= MAX_CHECK_BOXES ) ) {
-		return;
-	}
-	checkBoxes[idx].inUse = 0;
-}
-
-void chkBox_DestroyAll( void )
-{
-	memset( checkBoxes, 0, sizeof( checkBoxes ) );
-}
-
-int chkBox_IsChecked( int id )
-{
-	if( ( id < 0 ) || ( id >= MAX_CHECK_BOXES ) ) {
-		return -1;
-	}
-
-	if( !checkBoxes[id].inUse ) {
-		return -1;
-	}
-
-	return checkBoxes[id].inUse;
-}
-
-void chkBox_Draw( void )
+static void draw( void )
 {
 	for( int i = 0; i < MAX_CHECK_BOXES; ++i ) {
 		if( !checkBoxes[i].inUse ) {
 			continue;
 		}
 
-		int img = -1;
-		switch( checkBoxes[i].state ) {
-		case CBS_NORMAL:
-			img = checkBoxes[i].normalImgId;
-			break;
-		case CBS_FOCUSED:
-		case CBS_CLICKED:
-			img = checkBoxes[i].focusImgId;
-			break;
-		}
-		img_Draw( img, checkBoxes[i].camFlags, checkBoxes[i].position, checkBoxes[i].position, checkBoxes[i].depth );
-
 		if( checkBoxes[i].isChecked ) {
-			img_Draw( checkBoxes[i].checkMarkImgId, checkBoxes[i].camFlags, checkBoxes[i].position, checkBoxes[i].position, checkBoxes[i].depth );
+			img_Draw_sv( checkBoxes[i].checkMarkImgId, checkBoxes[i].camFlags,
+				checkBoxes[i].position, checkBoxes[i].position,
+				checkBoxes[i].drawScale, checkBoxes[i].drawScale, checkBoxes[i].depth );
+		} else {
+			img_Draw_sv( checkBoxes[i].normalImgId, checkBoxes[i].camFlags,
+				checkBoxes[i].position, checkBoxes[i].position,
+				checkBoxes[i].drawScale, checkBoxes[i].drawScale, checkBoxes[i].depth );
 		}
 
 		if( ( checkBoxes[i].text[0] != 0 ) && ( checkBoxes[i].fontID >= 0 ) ) {
@@ -147,7 +71,7 @@ void chkBox_Draw( void )
 	}
 }
 
-void chkBox_Process( void )
+static void process( void )
 {
 	int i;
 	Vector3 mousePos;
@@ -202,11 +126,108 @@ void chkBox_Process( void )
 	}
 }
 
-void chkBox_ProcessEvents( SDL_Event* sdlEvent )
+static void processEvents( SDL_Event* sdlEvent )
 {
 	if( ( sdlEvent->type == SDL_MOUSEBUTTONDOWN ) && ( sdlEvent->button.button == SDL_BUTTON_LEFT ) ) {
 		mouseDown = 1;
 	} else if( ( sdlEvent->type == SDL_MOUSEBUTTONUP ) && ( sdlEvent->button.button == SDL_BUTTON_LEFT ) ) {
 		mouseDown = 0;
+	}
+}
+
+/* Call this before trying to use any check boxes. */
+void chkBox_Init( )
+{
+	memset( checkBoxes, 0, sizeof( checkBoxes ) );
+	mouseDown = 0;
+
+	checkBoxSystem = sys_Register( processEvents, process, draw, NULL );
+}
+
+void chkBox_CleanUp( )
+{
+	chkBox_DestroyAll( );
+	sys_UnRegister( checkBoxSystem );
+}
+
+/*
+Creates a button. All image ids must be valid.
+*/
+int chkBox_Create( Vector2 position, Vector2 size, const char* text, int fontID, int normalImg, int checkMarkImg,
+	unsigned int camFlags, char depth, CheckBoxResponse response )
+{
+	int newIdx = 0;
+	while( ( newIdx < MAX_CHECK_BOXES ) && ( checkBoxes[newIdx].inUse == 1 ) ) {
+		++newIdx;
+	}
+
+	if( newIdx >= MAX_CHECK_BOXES ) {
+		llog( LOG_WARN, "Unable to create new check box, no open slots." );
+		return -1;
+	}
+
+	vec2_Scale( &size, 0.5f, &( checkBoxes[newIdx].collisionHalfSize ) );
+	checkBoxes[newIdx].position = position;
+	
+	checkBoxes[newIdx].normalImgId = normalImg;
+	checkBoxes[newIdx].checkMarkImgId = checkMarkImg;
+	checkBoxes[newIdx].depth = depth;
+	checkBoxes[newIdx].inUse = 1;
+	checkBoxes[newIdx].response = response;
+	checkBoxes[newIdx].state = CBS_NORMAL;
+	checkBoxes[newIdx].camFlags = camFlags;
+	checkBoxes[newIdx].fontID = fontID;
+
+	Vector2 imgSize;
+	img_GetSize( normalImg, &imgSize );
+	checkBoxes[newIdx].drawScale.x = size.x / imgSize.x; 
+	checkBoxes[newIdx].drawScale.y = size.y / imgSize.y;
+
+	if( text != NULL ) {
+		strncpy( checkBoxes[newIdx].text, text, TEXT_LEN );
+		checkBoxes[newIdx].text[TEXT_LEN] = 0;
+	} else {
+		memset( checkBoxes[newIdx].text, 0, sizeof( checkBoxes[newIdx].text ) );
+	}
+
+	checkBoxes[newIdx].inUse = 1;
+
+	return newIdx;
+}
+
+void chkBox_Destroy( int idx )
+{
+	if( ( idx < 0 ) || ( idx >= MAX_CHECK_BOXES ) ) {
+		return;
+	}
+	checkBoxes[idx].inUse = 0;
+}
+
+void chkBox_DestroyAll( void )
+{
+	memset( checkBoxes, 0, sizeof( checkBoxes ) );
+}
+
+bool chkBox_IsChecked( int id )
+{
+	if( ( id < 0 ) || ( id >= MAX_CHECK_BOXES ) ) {
+		return -1;
+	}
+
+	if( !checkBoxes[id].inUse ) {
+		return -1;
+	}
+
+	return checkBoxes[id].isChecked;
+}
+
+void chkBox_SetChecked( int id, bool val, bool respond )
+{
+	if( ( id < 0 ) || ( id >= MAX_CHECK_BOXES ) ) return;
+	if( !checkBoxes[id].inUse ) return;
+
+	checkBoxes[id].isChecked = val;
+	if( respond && ( checkBoxes[id].response != NULL ) ) {
+		checkBoxes[id].response( val );
 	}
 }

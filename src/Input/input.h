@@ -92,6 +92,20 @@ Binds a function response when a key is released.
 int input_BindOnMouseButtonRelease( Uint8 button, KeyResponse response );
 
 
+/***** Gesture Recognition *****/
+// This pulls from the mouse position (and by proxy the primary touch as well)
+
+/*
+Clears all binded swipes.
+*/
+void input_ClearAllSwipeBinds( void );
+
+/*
+Binds a function response when a swipe is made in a specific direction.
+ Returns < 0 if there was a problem binding the swipe.
+*/
+int input_BindOnSwipe( Vector2 dir, KeyResponse response );
+
 /***** General Usage Functions *****/
 /*
 Process events.

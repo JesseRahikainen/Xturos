@@ -70,7 +70,22 @@ void _spAtlasPage_disposeTexture( spAtlasPage* self )
 
 char* _spUtil_readFile( const char* path, int* length )
 {
-	return _readFile(path, length);
+	char* data;
+
+	SDL_RWops* rwopsFile = SDL_RWFromFile( path, "rb" );
+	if( rwopsFile == NULL ) {
+		return NULL;
+	}
+
+	*length = (int)SDL_RWsize( rwopsFile );
+
+	data = mem_Allocate( *length * sizeof( char ) );
+
+	SDL_RWread( rwopsFile, data, sizeof( char ), *length );
+
+	SDL_RWclose( rwopsFile );
+
+	return data;
 }
 
 void* Allocate_Spine( size_t size )

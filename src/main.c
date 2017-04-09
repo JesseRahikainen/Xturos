@@ -162,7 +162,7 @@ int initEverything( void )
 	llog( LOG_INFO, "Rendering successfully initialized" );
 
 	// Create sound mixer
-	if( snd_Init( ) < 0 ) {
+	if( snd_Init( 2 ) < 0 ) {
 		return -1;
 	}
 	llog( LOG_INFO, "Mixer successfully initialized" );
@@ -184,6 +184,8 @@ int initEverything( void )
 	initIMGUI( &inGameIMGUI, true, RENDER_WIDTH, RENDER_HEIGHT );
 	initIMGUI( &editorIMGUI, false, winWidth, winHeight );
 	llog( LOG_INFO, "IMGUI successfully initialized" );
+
+	txt_Init( );
 
 	return 0;
 }

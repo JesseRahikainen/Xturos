@@ -135,6 +135,30 @@ void spr_Update_c( int sprite, const Color* clr )
 	sprites[sprite].newState.col = *clr;
 }
 
+void spr_Update_sc( int sprite, const Vector2* newScale, const Color* clr )
+{
+	assert( newScale != NULL );
+	assert( clr != NULL );
+
+	if( !SPRITE_ID_VALID( sprite ) ) return;
+
+	sprites[sprite].newState.col = *clr;
+	sprites[sprite].newState.scale = *newScale;
+}
+
+void spr_Update_psc( int sprite, const Vector2* newPos, const Vector2* newScale, const Color* clr )
+{
+	assert( newPos != NULL );
+	assert( newScale != NULL );
+	assert( clr != NULL );
+
+	if( !SPRITE_ID_VALID( sprite ) ) return;
+
+	sprites[sprite].newState.pos = *newPos;
+	sprites[sprite].newState.scale = *newScale;
+	sprites[sprite].newState.col = *clr;
+}
+
 void spr_UpdateDelta( int sprite, const Vector2* posOffset, const Vector2* scaleOffset, float rotOffset )
 {
 	assert( posOffset != NULL );

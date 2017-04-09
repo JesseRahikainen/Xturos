@@ -19,7 +19,7 @@
 
 #define ANIM_START_LENGTH ( 0.75f / 2.0f )
 #define ANIM_LENGTH 0.75f
-#define MAX_BUTTONS 32
+#define MAX_BUTTONS 64
 #define BUTTON_TEXT_LEN 32
 static enum ButtonState { BS_NORMAL, BS_FOCUSED, BS_CLICKED, NUM_STATES };
 
@@ -98,6 +98,8 @@ int btn_Create( Vector2 position, Vector2 normalSize, Vector2 clickedSize,
 	buttons[newIdx].pressResponse = pressResponse;
 	buttons[newIdx].releaseResponse = releaseResponse;
 	vec2_Scale( &normalSize, 0.5f, &( buttons[newIdx].collisionHalfSize ) );
+	if( buttons[newIdx].collisionHalfSize.x < 0 ) buttons[newIdx].collisionHalfSize.x *= -1;
+	if( buttons[newIdx].collisionHalfSize.y < 0 ) buttons[newIdx].collisionHalfSize.y *= -1;
 	buttons[newIdx].normalDrawBorderSize = normalSize;
 	buttons[newIdx].clickedDrawBorderSize = clickedSize;
 	buttons[newIdx].timeInAnim = ANIM_LENGTH;
@@ -262,16 +264,16 @@ void btn_Process( void )
 #if defined( __ANDROID__ ) // touch screens respond differently, don't need focus
 			if( ( prevState != BS_CLICKED ) && ( buttons[i].state == BS_CLICKED ) ) {
 				buttons[i].timeInAnim = 0.0f;
-				if( buttons[i].pressResponse != NULL ) buttons[i].pressResponse( );
+				if( buttons[i].pressResponse != NULL ) buttons[i].pressResponse( i );
 			} else if( ( prevState == BS_CLICKED ) && ( buttons[i].state != BS_CLICKED ) && ( buttons[i].releaseResponse != NULL ) ) {
-				buttons[i].releaseResponse( );
+				buttons[i].releaseResponse( i );
 			}
 #else
 			if( ( prevState == BS_FOCUSED ) && ( buttons[i].state == BS_CLICKED ) ) {
 				buttons[i].timeInAnim = 0.0f;
-				if( buttons[i].pressResponse != NULL ) buttons[i].pressResponse( );
+				if( buttons[i].pressResponse != NULL ) buttons[i].pressResponse( i );
 			} else if( ( prevState == BS_CLICKED ) && ( buttons[i].state == BS_FOCUSED ) && ( buttons[i].releaseResponse != NULL ) ) {
-				buttons[i].releaseResponse( );
+				buttons[i].releaseResponse( i );
 			}
 #endif
 		}

@@ -13,10 +13,11 @@
 #include "System\memory.h"
 #include "Utils\stretchyBuffer.h"
 #include "Utils\helpers.h"
+#include "Utils\cfgFile.h"
 
 #define MAX_SAMPLES 256
 #define MAX_PLAYING_SOUNDS 32
-#define MAX_STREAMING_SOUNDS 4
+#define MAX_STREAMING_SOUNDS 8
 #define STREAMING_BUFFER_SAMPLES 4096
 
 // TODO: Get pitch shifting working with stereo sounds.
@@ -26,6 +27,7 @@ typedef struct {
 	float pitch;
 	float pos;
 	float pan; // only counts if there is one channel
+	unsigned int group;
 } Sound;
 
 typedef struct {
@@ -52,6 +54,7 @@ typedef struct {
 	float volume;
 	float pan;
 	bool loops;
+	unsigned int group;
 
 	// this stuff may be able to be removed
 	int totalSamples; // numSamples * channels ( channels 1 if access has 1 channel, 2 otherwise )
@@ -85,6 +88,15 @@ static struct IDSet playingIDSet; // we want to be able to change the currently 
 
 static StreamingSound streamingSounds[MAX_STREAMING_SOUNDS];
 
+static void* soundCfgFile;
+
+typedef struct {
+	float volume;
+} SoundGroup;
+static SoundGroup* sbSoundGroups;
+
+static float masterVolume = 1.0f;
+
 // stereo LRLRLR order
 void mixerCallback( void* userdata, Uint8* stream, int len )
 {
@@ -107,21 +119,22 @@ void mixerCallback( void* userdata, Uint8* stream, int len )
 		// for right now lets assume the pitch will stay the same, when we get it working it'll just involve
 		//  changing the speed at which we move through the array
 		bool soundDone = false;
+		float volume = snd->volume * sbSoundGroups[snd->group].volume * masterVolume;
 		for( int s = 0; ( s < numSamples ) && !soundDone; ++s ) {
 
 			int streamIdx = ( s * WORKING_CHANNELS );
 
 			// we're assuming stereo output here
 			if( sample->numChannels == 1 ) {
-				float data = sample->data[(int)snd->pos] * snd->volume;
+				float data = sample->data[(int)snd->pos] * volume;
 /* left */		workingBuffer[streamIdx] += data * inverseLerp( 1.0f, 0.0f, snd->pan );
 /* right */		workingBuffer[streamIdx+1] += data * inverseLerp( -1.0f, 0.0f, snd->pan );
 				snd->pos += snd->pitch;
 			} else {
 				// if the sample is stereo then we ignore panning
 				//  NOTE: Pitch change doesn't work with stereo samples yet
-				workingBuffer[streamIdx] += sample->data[(int)snd->pos] * snd->volume;
-				workingBuffer[streamIdx+1] += sample->data[(int)snd->pos+1] * snd->volume;
+				workingBuffer[streamIdx] += sample->data[(int)snd->pos] * volume;
+				workingBuffer[streamIdx+1] += sample->data[(int)snd->pos+1] * volume;
 				snd->pos += 2.0f;
 			}
 
@@ -144,6 +157,7 @@ void mixerCallback( void* userdata, Uint8* stream, int len )
 
 		StreamingSound* stream = &( streamingSounds[i] );
 		bool soundDone = false;
+		float volume = stream->volume * sbSoundGroups[stream->group].volume * masterVolume;
 		for( int s = 0; ( s < numSamples ) && !soundDone; ++s ) {
 			// if the next position would be past what we have loaded then load some more
 			if( ( stream->bufferCurrPos + stream->channels ) > stream->bufferUsed ) {
@@ -193,14 +207,14 @@ void mixerCallback( void* userdata, Uint8* stream, int len )
 			
 			// we're assuming stereo output here
 			if( stream->access->channels == 1 ) {
-				float data = stream->buffer[stream->bufferCurrPos] * stream->volume;
+				float data = stream->buffer[stream->bufferCurrPos] * volume;
 /* left */		workingBuffer[streamIdx] += data * inverseLerp( 1.0f, 0.0f, stream->pan );
 /* right */		workingBuffer[streamIdx+1] += data * inverseLerp( -1.0f, 0.0f, stream->pan );
 				stream->bufferCurrPos += 1;
 			} else {
 				// if the sample is stereo then we ignore panning
-				workingBuffer[streamIdx] += stream->buffer[(int)stream->bufferCurrPos] * stream->volume;
-				workingBuffer[streamIdx+1] += stream->buffer[(int)stream->bufferCurrPos + 1] * stream->volume;
+				workingBuffer[streamIdx] += stream->buffer[(int)stream->bufferCurrPos] * volume;
+				workingBuffer[streamIdx+1] += stream->buffer[(int)stream->bufferCurrPos + 1] * volume;
 				stream->bufferCurrPos += 2;
 			}
 			} else {
@@ -287,8 +301,10 @@ clean_up:
 }
 
 /* Sets up the SDL mixer. Returns 0 on success. */
-int snd_Init( )
+int snd_Init( unsigned int numGroups )
 {
+	assert( numGroups > 0 );
+
 	// clear out the samples storage
 	SDL_memset( samples, 0, ARRAY_SIZE( samples ) * sizeof( samples[0] ) );
 	for( int i = 0; i < MAX_STREAMING_SOUNDS; ++i ) {
@@ -339,6 +355,21 @@ int snd_Init( )
 		return -1;
 	}
 
+	sb_Add( sbSoundGroups, numGroups );
+	for( size_t i = 0; i < sb_Count( sbSoundGroups ); ++i ) {
+		sbSoundGroups[i].volume = 1.0f;
+	}
+
+	// load the master volume
+	soundCfgFile = cfg_OpenFile( "snd.cfg" );
+	if( soundCfgFile != NULL ) {
+		int vol;
+		cfg_GetInt( soundCfgFile, "vol", 1, &vol );
+		masterVolume = (float)vol;
+	} else {
+		masterVolume = 1.0f;
+	}
+
 	return 0;
 }
 
@@ -362,14 +393,52 @@ void snd_SetFocus( bool hasFocus )
 	} SDL_UnlockAudioDevice( devID );
 }
 
+float snd_GetMasterVolume( void )
+{
+	return masterVolume;
+}
+
+void snd_SetMasterVolume( float volume )
+{
+	SDL_LockAudioDevice( devID ); {
+		masterVolume = volume;
+	} SDL_UnlockAudioDevice( devID );
+
+	// just save this out every single time
+	if( soundCfgFile != NULL ) {
+		cfg_SetInt( soundCfgFile, "vol", (int)volume );
+		cfg_SaveFile( soundCfgFile );
+	}
+}
+
+float snd_GetVolume( unsigned int group )
+{
+	assert( group < sb_Count( sbSoundGroups ) );
+
+	return sbSoundGroups[group].volume;
+}
+
+void snd_SetVolume( float volume, unsigned int group )
+{
+	assert( group < sb_Count( sbSoundGroups ) );
+	assert( ( volume >= 0.0f ) && ( volume <= 1.0f ) );
+
+	SDL_LockAudioDevice( devID ); {
+		sbSoundGroups[group].volume = volume;
+	} SDL_UnlockAudioDevice( devID );
+}
+
 // Returns an id that can be used to change the volume and pitch
 //  loops - if the sound will loop back to the start once it's over
 //  volume - how loud the sound will be, in the range [0,1], 0 being off, 1 being loudest
 //  pitch - pitch change for the sound, multiplies the sample rate, 1 for normal, lesser for slower, higher for faster
 //  pan - how far left or right the sound is, 0 is center, -1 is left, +1 is right
 // TODO: Some sort of event system so we can get when a sound has finished playing?
-EntityID snd_Play( int sampleID, float volume, float pitch, float pan )
+EntityID snd_Play( int sampleID, float volume, float pitch, float pan, unsigned int group )
 {
+	assert( group >= 0 );
+	assert( group < sb_Count( sbSoundGroups ) );
+
 	EntityID playingID = INVALID_ENTITY_ID;
 	SDL_LockAudioDevice( devID ); {
 		playingID = idSet_ClaimID( &playingIDSet );
@@ -380,6 +449,7 @@ EntityID snd_Play( int sampleID, float volume, float pitch, float pan )
 			playingSounds[idx].pitch = pitch;
 			playingSounds[idx].pan = pan;
 			playingSounds[idx].pos = 0.0f;
+			playingSounds[idx].group = group;
 		}
 	} SDL_UnlockAudioDevice( devID );
 
@@ -426,9 +496,36 @@ void snd_Stop( EntityID soundID )
 	} SDL_UnlockAudioDevice( devID );
 }
 
-//***** Streaming
-int snd_LoadStreaming( const char* fileName, bool loops )
+void snd_UnloadSample( int sampleID )
 {
+	assert( sampleID >= 0 );
+	assert( sampleID < MAX_SAMPLES );
+
+	if( samples[sampleID].data == NULL ) {
+		return;
+	}
+
+	SDL_LockAudioDevice( devID ); {
+		// find all playing sounds using this sample and stop them
+		EntityID id = idSet_GetFirstValidID( &playingIDSet );
+		for( EntityID id = idSet_GetFirstValidID( &playingIDSet ); id != INVALID_ENTITY_ID; id = idSet_GetNextValidID( &playingIDSet, id ) ) {
+			int idx = idSet_GetIndex( id );
+			if( playingSounds[idx].sample == sampleID ) {
+				idSet_ReleaseID( &playingIDSet, id );
+			}
+		}
+
+		mem_Release( samples[sampleID].data );
+		samples[sampleID].data = NULL;
+	} SDL_UnlockAudioDevice( devID );
+}
+
+//***** Streaming
+int snd_LoadStreaming( const char* fileName, bool loops, unsigned int group )
+{
+	assert( group >= 0 );
+	assert( group < sb_Count( sbSoundGroups ) );
+
 	int newIdx = -1;
 	for( int i = 0; i < MAX_STREAMING_SOUNDS; ++i ) {
 		if( streamingSounds[i].access == NULL ) {
@@ -451,6 +548,7 @@ int snd_LoadStreaming( const char* fileName, bool loops )
 
 	streamingSounds[newIdx].playing = false;
 	streamingSounds[newIdx].loops = loops;
+	streamingSounds[newIdx].group = group;
 
 	streamingSounds[newIdx].channels = (Uint8)( streamingSounds[newIdx].access->channels );
 	if( streamingSounds[newIdx].channels > 2 ) {
@@ -500,6 +598,26 @@ void snd_StopStreaming( int streamID )
 		mem_Release( streamingSounds[streamID].buffer );
 		streamingSounds[streamID].buffer = NULL;
 	} SDL_UnlockAudioDevice( devID );
+}
+
+void snd_StopStreamingAllBut( int streamID )
+{
+	SDL_LockAudioDevice( devID ); {
+		for( int i = 0; i < MAX_STREAMING_SOUNDS; ++i ) {
+			if( i == streamID ) continue;
+			if( ( streamingSounds[i].access != NULL ) && streamingSounds[i].playing ) {
+				streamingSounds[i].playing = false;
+				mem_Release( streamingSounds[i].buffer );
+				streamingSounds[i].buffer = NULL;
+			}
+		}
+	} SDL_UnlockAudioDevice( devID );
+}
+
+bool snd_IsStreamPlaying( int streamID )
+{
+	assert( ( streamID >= 0 ) && ( streamID < MAX_STREAMING_SOUNDS ) );
+	return streamingSounds[streamID].playing;
 }
 
 void snd_ChangeStreamVolume( int streamID, float volume )

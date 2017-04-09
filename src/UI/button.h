@@ -12,7 +12,7 @@ Don't manage resources used, expect them to be loaded somewhere else.
 #include "../Graphics/color.h"
 #include <SDL_events.h>
 
-typedef void (*ButtonResponse)(void);
+typedef void (*ButtonResponse)(int);
 
 /* Call this before trying to use any buttons. */
 void btn_Init( );
