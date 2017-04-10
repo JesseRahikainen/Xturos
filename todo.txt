@@ -9,14 +9,13 @@ Full support for UTF-8 strings.
 
 eventually:
 Find a better way to enumerate all the combinations of stuff that can go into a render instruction.
-Generally try to get rid of external libraries, except for SDL2, use STB whenever possible
 See what OpenGL features are actually needed and downgrade the version to support that
 Add in ability to cope with the amount of texture memory the computer has (basically make sure the next image can fit, if it can't then exit with a log), maybe store the max we're going to use and test it when the program starts so they don't get a crash in the middle of playing. Just pre-allocate how much we'll think we need and then use it up as we get more, can be mixed in with the atlasing.
 Turn off multi-threaded dll library (may need to rebuild all the SDL2 based libraries)  http://forums.libsdl.org/viewtopic.php?t=9634&sid=917224a793e6a71f05b1c7ed49120797
 Better file loading scheme, avoid locks, some sort of queue system so we can say what we want loaded and use some placeholder asset until it's fully loaded
-Random number generator, needs to be able to have multiple generators at once, seeded, quick, also add in some dice functions that we can use
 
 continuous:
+- Generally try to get rid of external libraries, except for SDL2, use STB whenever possible
 - Go through all the log messages and enforce some sort of standards: stuff we want in debug builds versus stuff we want release builds.
 Will want three levels: Release, Development, and Debug.
 Map these to SDL_LOG_PRIORITY_INFO, SDL_LOG_PRIORITY_DEBUG, and SDL_LOG_PRIORITY_VERBOSE.

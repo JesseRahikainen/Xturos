@@ -128,6 +128,7 @@
     <ClInclude Include="src\sound.h" />
     <ClInclude Include="src\System\memory.h" />
     <ClInclude Include="src\System\platformLog.h" />
+    <ClInclude Include="src\System\random.h" />
     <ClInclude Include="src\System\systems.h" />
     <ClInclude Include="src\tween.h" />
     <ClInclude Include="src\UI\button.h" />
@@ -172,6 +173,7 @@
     <ClCompile Include="src\sound.c" />
     <ClCompile Include="src\System\memory.c" />
     <ClCompile Include="src\System\platformLog.c" />
+    <ClCompile Include="src\System\random.c" />
     <ClCompile Include="src\System\systems.c" />
     <ClCompile Include="src\tween.c" />
     <ClCompile Include="src\UI\button.c" />

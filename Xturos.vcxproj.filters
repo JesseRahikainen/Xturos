@@ -192,6 +192,9 @@
     <ClInclude Include="src\Utils\idSet.h">
       <Filter>Header Files\Utils</Filter>
     </ClInclude>
+    <ClInclude Include="src\System\random.h">
+      <Filter>Header Files\System</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Game\gameScreen.c">
@@ -310,6 +313,9 @@
     </ClCompile>
     <ClCompile Include="src\Others\stb_vorbis_sdl.c">
       <Filter>Source Files\Others</Filter>
+    </ClCompile>
+    <ClCompile Include="src\System\random.c">
+      <Filter>Source Files\System</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
