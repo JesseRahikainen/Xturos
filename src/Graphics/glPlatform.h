@@ -6,11 +6,14 @@
 /*
 Handles the platform specific OpenGL stuff.
 */
-
-#if defined( __ANDROID__ )
+#if defined( __ANDROID__ ) || defined( __EMSCRIPTEN__ )
 
 #include <GLES3/gl3.h>
-#include <GLES3/gl3ext.h>
+#if defined( __EMSCRIPTEN__ )
+	#include <GLES2/gl2ext.h>
+#else
+	#include <GLES3/gl3ext.h>
+#endif
 
 #define PROFILE SDL_GL_CONTEXT_PROFILE_ES
 
@@ -35,10 +38,10 @@ Handles the platform specific OpenGL stuff.
 
 #define DEFAULT_FRAG_SHADER \
 	"#version 300 es\n" \
-	"in vec2 vTex;\n" \
-	"in vec4 vCol;\n" \
+	"in highp vec2 vTex;\n" \
+	"in highp vec4 vCol;\n" \
 	"uniform sampler2D textureUnit0;\n" \
-	"out vec4 outCol;\n" \
+	"out highp vec4 outCol;\n" \
 	"void main( void )\n" \
 	"{\n" \
 	"	outCol = texture(textureUnit0, vTex) * vCol;\n" \
@@ -49,10 +52,10 @@ Handles the platform specific OpenGL stuff.
 
 #define FONT_FRAG_SHADER \
 	"#version 300 es\n" \
-	"in vec2 vTex;\n" \
-	"in vec4 vCol;\n" \
+	"in highp vec2 vTex;\n" \
+	"in highp vec4 vCol;\n" \
 	"uniform sampler2D textureUnit0;\n" \
-	"out vec4 outCol;\n" \
+	"out highp vec4 outCol;\n" \
 	"void main( void )\n" \
 	"{\n" \
 	"	outCol = vec4( vCol.r, vCol.g, vCol.b, texture(textureUnit0, vTex).a * vCol.a );\n" \
@@ -75,8 +78,8 @@ Handles the platform specific OpenGL stuff.
 
 #define DEBUG_FRAG_SHADER \
 	"#version 300 es\n" \
-	"in vec4 vertCol;\n" \
-	"out vec4 outCol;\n" \
+	"in highp vec4 vertCol;\n" \
+	"out highp vec4 outCol;\n" \
 	"void main( void )\n" \
 	"{\n" \
 	"	outCol = vertCol;\n" \

@@ -1,7 +1,7 @@
 #include <assert.h>
 #include <math.h>
 #include "tween.h"
-#include "Math/MathUtil.h"
+#include "Math/mathUtil.h"
 #include <stdio.h>
 
 static float pi = 3.14159265358979323846f;

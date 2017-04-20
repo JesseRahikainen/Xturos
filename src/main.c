@@ -1,3 +1,7 @@
+#ifdef __EMSCRIPTEN__
+	#include <emscripten.h>
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <SDL_main.h>
@@ -9,10 +13,10 @@
 #include <float.h>
 #include <math.h>
 
-#include "Math/Vector2.h"
+#include "Math/vector2.h"
 #include "Graphics/camera.h"
 #include "Graphics/graphics.h"
-#include "Math/MathUtil.h"
+#include "Math/mathUtil.h"
 #include "sound.h"
 #include "Utils/cfgFile.h"
 #include "IMGUI/nuklearWrapper.h"
@@ -30,17 +34,23 @@
 #include "Graphics\debugRendering.h"
 #include "Graphics\glPlatform.h"
 
-#define WINDOW_WIDTH 800
-#define WINDOW_HEIGHT 600
-#define RENDER_WIDTH 600
-#define RENDER_HEIGHT 800
+#define RENDER_WIDTH 800
+#define RENDER_HEIGHT 600
+#ifdef __EMSCRIPTEN__
+	#define WINDOW_WIDTH RENDER_WIDTH
+	#define WINDOW_HEIGHT RENDER_HEIGHT
+#else
+	#define WINDOW_WIDTH 800
+	#define WINDOW_HEIGHT 600
+#endif
 
 static bool running;
 static bool focused;
 static unsigned int lastTicks;
+static unsigned int physicsTickAcc;
 static SDL_Window* window;
 static SDL_RWops* logFile;
-static const char* windowName = "TESTING STUFF";
+static const char* windowName = "Tiny Tactics";
 
 /* making PHYSICS_TICK to something that will result in a whole number should lead to better results
 the second number is how many times per second it will update */
@@ -75,6 +85,8 @@ void logOutput( void* userData, int category, SDL_LogPriority priority, const ch
 	SDL_RWwrite( logFile, "\r\n", 1, 2 );
 #elif defined( __ANDROID__ )
 	SDL_RWwrite( logFile, "\n", 1, 1 );
+#elif defined( __EMSCRIPTEN__ )
+	SDL_RWwrite( logFile, "\n", 1, 1 );
 #else
 	#warning "NO END OF LINE DEFINED FOR THIS PLATFORM!"
 #endif
@@ -92,6 +104,19 @@ static void initIMGUI( NuklearWrapper* imgui, bool useRelativeMousePos, int widt
 	nk_style_set_font( &( imgui->ctx ), &( font->handle ) );
 }
 
+int unalignedAccess( void )
+{
+	int* is = malloc( sizeof( int ) * 100 );
+	for( int i = 0; i < 100; ++i ) {
+		is[i] = i;
+	}
+
+	char* p = (char*)is;
+	int* intData = (int*)((char*)&( p[1] ) );
+	int unalignedInt = *intData;
+	return unalignedInt;
+}
+
 int initEverything( void )
 {
 #ifndef _DEBUG
@@ -101,6 +126,9 @@ int initEverything( void )
 	}
 #endif
 
+	//unalignedAccess( );
+
+	llog( LOG_INFO, "Initializing memory." );
 	// memory first, won't be used everywhere at first so lets keep the initial allocation low, 64 MB
 	mem_Init( 64 * 1024 * 1024 );
 
@@ -122,9 +150,16 @@ int initEverything( void )
 	int blueSize;
 	int depthSize;
 
-	void* oglCFGFile = cfg_OpenFile( "opengl.cfg" );
+	void* oglCFGFile;
+#if defined( __EMSCRIPTEN__ )
+	oglCFGFile = cfg_OpenFile( "webgl.cfg" );
+#else
+	oglCFGFile = cfg_OpenFile( "opengl.cfg" );
+#endif
 	cfg_GetInt( oglCFGFile, "MAJOR", 3, &majorVersion );
+	printf( "major: %i\n", majorVersion );
 	cfg_GetInt( oglCFGFile, "MINOR", 3, &minorVersion );
+	printf( "minor: %i\n", minorVersion );
 	cfg_GetInt( oglCFGFile, "RED_SIZE", 8, &redSize );
 	cfg_GetInt( oglCFGFile, "GREEN_SIZE", 8, &greenSize );
 	cfg_GetInt( oglCFGFile, "BLUE_SIZE", 8, &blueSize );
@@ -137,6 +172,8 @@ int initEverything( void )
 	// setup using OpenGLES
 //#else
 	// setup using OpenGL
+	//majorVersion = 2;
+	//minorVersion = 0;
 	SDL_GL_SetAttribute( SDL_GL_CONTEXT_PROFILE_MASK, PROFILE );
 	SDL_GL_SetAttribute( SDL_GL_CONTEXT_MAJOR_VERSION, majorVersion );
 	SDL_GL_SetAttribute( SDL_GL_CONTEXT_MINOR_VERSION, minorVersion );
@@ -186,6 +223,8 @@ int initEverything( void )
 	llog( LOG_INFO, "IMGUI successfully initialized" );
 
 	txt_Init( );
+
+	llog( LOG_INFO, "Resources successfully loaded" );
 
 	return 0;
 }
@@ -240,20 +279,79 @@ void processEvents( int windowsEventsOnly )
 	nk_input_end( &( inGameIMGUI.ctx ) );
 }
 
-int main( int argc, char** argv )
+// needed to be able to work in javascript
+void mainLoop( void* v )
 {
 	unsigned int tickDelta;
 	unsigned int currTicks;
-	unsigned int physicsTickAcc;
 	int numPhysicsProcesses;
 	float renderDelta;
 
+#if defined( __EMSCRIPTEN__ )
+	if( !running ) {
+		emscripten_cancel_main_loop( );
+	}
+#endif
+
+	currTicks = SDL_GetTicks( );
+	tickDelta = currTicks - lastTicks;
+	lastTicks = currTicks;
+
+	if( !focused ) {
+		processEvents( 1 );
+		return;
+	}
+
+	physicsTickAcc += tickDelta;
+
+	// process input
+	processEvents( 0 );
+
+	// handle per frame update
+	sys_Process( );
+	gsmProcess( &globalFSM );
+
+	// process movement, collision, and other things that require a delta time
+	numPhysicsProcesses = 0;
+	while( physicsTickAcc > PHYSICS_TICK ) {
+		sys_PhysicsTick( PHYSICS_DELTA );
+		gsmPhysicsTick( &globalFSM, PHYSICS_DELTA );
+		physicsTickAcc -= PHYSICS_TICK;
+		++numPhysicsProcesses;
+	}
+
+	// rendering
+	editorIMGUI.clear = false;
+	inGameIMGUI.clear = false;
+	if( numPhysicsProcesses > 0 ) {
+		// set the new render positions
+		renderDelta = PHYSICS_DELTA * (float)numPhysicsProcesses;
+		gfx_ClearDrawCommands( renderDelta );
+		cam_FinalizeStates( renderDelta );
+
+		// set up rendering for everything
+		sys_Draw( );
+		gsmDraw( &globalFSM );
+
+		editorIMGUI.clear = true;
+		inGameIMGUI.clear = true;
+	}
+
+	// do the actual drawing for this frame
+	float dt = (float)tickDelta / 1000.0f;
+	cam_Update( dt );
+	gfx_Render( dt );
+	// flip here so we don't have to store the window anywhere else
+	SDL_GL_SwapWindow( window );
+}
+
+int main( int argc, char** argv )
+{
 #ifdef _DEBUG
 	SDL_LogSetAllPriority( SDL_LOG_PRIORITY_VERBOSE );
 #else
 	SDL_LogSetAllPriority( SDL_LOG_PRIORITY_WARN );
 #endif
-
 	SDL_LogSetAllPriority( SDL_LOG_PRIORITY_VERBOSE );
 
 	if( initEverything( ) < 0 ) {
@@ -272,59 +370,13 @@ int main( int argc, char** argv )
 
 	gsmEnterState( &globalFSM, &gameScreenState );
 
+#if defined( __EMSCRIPTEN__ )
+	emscripten_set_main_loop_arg( mainLoop, NULL, -1, 1 );
+#else
 	while( running ) {
-
-		currTicks = SDL_GetTicks( );
-		tickDelta = currTicks - lastTicks;
-		lastTicks = currTicks;
-
-		if( !focused ) {
-			processEvents( 1 );
-			continue;
-		}
-
-		physicsTickAcc += tickDelta;
-
-		// process input
-		processEvents( 0 );
-
-		// handle per frame update
-		sys_Process( );
-		gsmProcess( &globalFSM );
-
-		// process movement, collision, and other things that require a delta time
-		numPhysicsProcesses = 0;
-		while( physicsTickAcc > PHYSICS_TICK ) {
-			sys_PhysicsTick( PHYSICS_DELTA );
-			gsmPhysicsTick( &globalFSM, PHYSICS_DELTA );
-			physicsTickAcc -= PHYSICS_TICK;
-			++numPhysicsProcesses;
-		}
-
-		// rendering
-		editorIMGUI.clear = false;
-		inGameIMGUI.clear = false;
-		if( numPhysicsProcesses > 0 ) {
-			// set the new render positions
-			renderDelta = PHYSICS_DELTA * (float)numPhysicsProcesses;
-			gfx_ClearDrawCommands( renderDelta );
-			cam_FinalizeStates( renderDelta );
-
-			// set up rendering for everything
-			sys_Draw( );
-			gsmDraw( &globalFSM );
-
-			editorIMGUI.clear = true;
-			inGameIMGUI.clear = true;
-		}
-
-		// do the actual drawing for this frame
-		float dt = (float)tickDelta / 1000.0f;
-		cam_Update( dt );
-		gfx_Render( dt );
-		// flip here so we don't have to store the window anywhere else
-		SDL_GL_SwapWindow( window );
+		mainLoop( NULL );
 	}
+#endif
 
 	return 0;
 }

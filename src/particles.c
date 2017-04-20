@@ -1,7 +1,7 @@
 #include "particles.h"
 #include "Graphics/images.h"
 #include "Graphics/color.h"
-#include "Math/MathUtil.h"
+#include "Math/mathUtil.h"
 
 #include "System/systems.h"
 

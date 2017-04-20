@@ -20,6 +20,34 @@
 #define MAX_STREAMING_SOUNDS 8
 #define STREAMING_BUFFER_SAMPLES 4096
 
+#if defined( __EMSCRIPTEN__ )
+
+// can't get sound working with emscripten right now, get it working later
+int snd_Init( unsigned int numGroups ) { return 0; }
+void snd_CleanUp( ) { }
+void snd_SetFocus( bool hasFocus ) { }
+float snd_GetMasterVolume( void ) { return 0.0f; }
+void snd_SetMasterVolume( float volume ) { }
+float snd_GetVolume( unsigned int group ) { return 0.0f; }
+void snd_SetVolume( float volume, unsigned int group ) { }
+int snd_LoadSample( const char* fileName, Uint8 desiredChannels, bool loops ) { return 0; }
+EntityID snd_Play( int sampleID, float volume, float pitch, float pan, unsigned int group ) { return 0; }
+void snd_ChangeSoundVolume( EntityID soundID, float volume ) { }
+void snd_ChangeSoundPitch( EntityID soundID, float pitch ) { }
+void snd_ChangeSoundPan( EntityID soundID, float pan ) { }
+void snd_Stop( EntityID soundID ) { }
+void snd_UnloadSample( int sampleID ) { }
+int snd_LoadStreaming( const char* fileName, bool loops, unsigned int group ) { return 0; }
+void snd_PlayStreaming( int streamID, float volume, float pan ) { }
+void snd_StopStreaming( int streamID ) { }
+void snd_StopStreamingAllBut( int streamID ) { }
+bool snd_IsStreamPlaying( int streamID ) { return false; }
+void snd_ChangeStreamVolume( int streamID, float volume ) { }
+void snd_ChangeStreamPan( int streamID, float pan ) { }
+void snd_UnloadStream( int streamID ) { }
+
+#else
+
 // TODO: Get pitch shifting working with stereo sounds.
 typedef struct {
 	int sample;
@@ -645,3 +673,5 @@ void snd_UnloadStream( int streamID )
 		streamingSounds[streamID].access = NULL;
 	} SDL_UnlockAudioDevice( devID );
 }
+
+#endif // emscripten test

@@ -1,7 +1,7 @@
 #ifndef ENGINE_PARTICLES_H
 #define ENGINE_PARTICLES_H
 
-#include "Math/Vector2.h"
+#include "Math/vector2.h"
 
 int particles_Init( void );
 void particles_CleanUp( void );

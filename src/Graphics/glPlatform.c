@@ -18,6 +18,8 @@ int glInit( void )
 
 #elif defined( __ANDROID__ )
 	return 0;
+#elif defined( __EMSCRIPTEN__ )
+	return 0;
 #else
 	llog( LOG_ERROR, "OpenGL not setup for this platform." );
 	return -1;

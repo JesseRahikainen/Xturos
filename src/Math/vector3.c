@@ -1,7 +1,7 @@
 #include <math.h>
 #include <assert.h>
 #include "../System/platformLog.h"
-#include "Vector3.h"
+#include "vector3.h"
 
 // component-wise operations
 Vector3* vec3_Add( const Vector3* v1, const Vector3* v2, Vector3* out )

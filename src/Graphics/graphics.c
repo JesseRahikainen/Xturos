@@ -9,7 +9,7 @@
 #include "glDebugging.h"
 
 #include "camera.h"
-#include "../Math/MathUtil.h"
+#include "../Math/mathUtil.h"
 #include "shaderManager.h"
 
 #include "images.h"
@@ -241,17 +241,8 @@ void gfx_ClearDrawCommands( float timeToEnd )
 	currentTime = 0.0f;
 }
 
-/*
-Goes through everything in the render buffer and does the actual rendering.
-Resets the render buffer.
-*/
-void gfx_Render( float dt )
+static void dynamicSizeRender( float dt, float t )
 {
-	float t;
-
-	currentTime += dt;
-	t = clamp( 0.0f, 1.0f, ( currentTime / endTime ) );
-
 	GL( glViewport( 0, 0, renderWidth, renderHeight ) );
 
 	// draw the game stuff
@@ -298,4 +289,41 @@ void gfx_Render( float dt )
 
 	// editor and debugging ui stuff
 	nk_xu_render( &editorIMGUI );
+}
+
+static void staticSizeRender( float dt, float t )
+{
+	// clear the screen
+	glClearColor( windowClearColor.r, windowClearColor.g, windowClearColor.b, windowClearColor.a);
+	glColorMask( GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE );
+	glClear( GL_COLOR_BUFFER_BIT );
+
+	spine_UpdateInstances( dt );
+	spine_FlipInstancePositions( );
+	
+	// draw all the stuff that routes through the triangle rendering
+	triRenderer_Clear( );
+		img_Render( t );
+		spine_RenderInstances( t );
+	triRenderer_Render( );
+
+	// now draw all the debug stuff over everything
+	debugRenderer_Render( );
+}
+
+/*
+Goes through everything in the render buffer and does the actual rendering.
+Resets the render buffer.
+*/
+void gfx_Render( float dt )
+{
+	float t;
+	currentTime += dt;
+	t = clamp( 0.0f, 1.0f, ( currentTime / endTime ) );
+
+#if defined( __EMSCRIPTEN__ )
+	staticSizeRender( dt, t );
+#else
+	dynamicSizeRender( dt, t );
+#endif
 }

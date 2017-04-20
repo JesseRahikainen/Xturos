@@ -1,6 +1,7 @@
 #ifndef ID_SET_H
 #define ID_SET_H
 
+#include <stddef.h>
 #include <stdbool.h>
 #include <stdint.h>
 

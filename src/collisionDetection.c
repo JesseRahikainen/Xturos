@@ -8,7 +8,7 @@
 
 #include "Graphics/debugRendering.h"
 #include "Math/vector2.h"
-#include "Math/MathUtil.h"
+#include "Math/mathUtil.h"
 
 /*
 Determines if the collider primary overlaps with fixed, and if they do how much primary has to be moved to stop colliding.

@@ -1,7 +1,7 @@
 #ifndef MATRIX_3_H
 #define MATRIX_3_H
 
-#include "Vector3.h"
+#include "vector3.h"
 #include "vector2.h"
 
 /* Column-major 3x3 matrix

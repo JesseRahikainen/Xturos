@@ -2,7 +2,7 @@
 #define CHECK_BOX_H
 
 #include <stdbool.h>
-#include "../Math/Vector2.h"
+#include "../Math/vector2.h"
 #include <SDL_events.h>
 
 typedef void (*CheckBoxResponse)(bool);

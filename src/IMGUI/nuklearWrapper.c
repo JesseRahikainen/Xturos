@@ -102,6 +102,34 @@ void nk_xu_init( NuklearWrapper* xu, SDL_Window* win, bool useRelativeMousePos, 
 
 	shaderDefs[0].fileName = NULL;
 	shaderDefs[0].type = GL_VERTEX_SHADER;
+	shaderDefs[1].fileName = NULL;
+	shaderDefs[1].type = GL_FRAGMENT_SHADER;
+#if defined( __ANDROID__ ) || defined( __EMSCRIPTEN__ )
+	shaderDefs[0].shaderText =	"#version 300 es\n"
+								"uniform mat4 vpMatrix;\n"
+								"layout(location = 0) in vec2 vVertex;\n"
+								"layout(location = 1) in vec2 vTexCoord0;\n"
+								"layout(location = 2) in vec4 vColor;\n"
+								"out vec2 vTex;\n"
+								"out vec4 vCol;\n"
+								"void main( void )\n"
+								"{\n"
+								"	vTex = vTexCoord0;\n"
+								"	vCol = vColor;\n"
+								"	gl_Position = vpMatrix * vec4( vVertex.xy, 0.0f, 1.0f );\n"
+								"}\n";
+
+	
+	shaderDefs[1].shaderText =	"#version 300 es\n"
+								"in highp vec2 vTex;\n"
+								"in highp vec4 vCol;\n"
+								"uniform sampler2D textureUnit0;\n"
+								"out highp vec4 outCol;\n"
+								"void main( void )\n"
+								"{\n"
+								"	outCol = texture(textureUnit0, vTex) * vCol;\n"
+								"}\n";
+#else
 	shaderDefs[0].shaderText =	"#version 330\n"
 								"uniform mat4 vpMatrix;\n"
 								"layout(location = 0) in vec2 vVertex;\n"
@@ -116,8 +144,7 @@ void nk_xu_init( NuklearWrapper* xu, SDL_Window* win, bool useRelativeMousePos, 
 								"	gl_Position = vpMatrix * vec4( vVertex.xy, 0.0f, 1.0f );\n"
 								"}\n";
 
-	shaderDefs[1].fileName = NULL;
-	shaderDefs[1].type = GL_FRAGMENT_SHADER;
+	
 	shaderDefs[1].shaderText =	"#version 330\n"
 								"in vec2 vTex;\n"
 								"in vec4 vCol;\n"
@@ -127,6 +154,7 @@ void nk_xu_init( NuklearWrapper* xu, SDL_Window* win, bool useRelativeMousePos, 
 								"{\n"
 								"	outCol = texture2D(textureUnit0, vTex) * vCol;\n"
 								"}\n";
+#endif
 
 	progDef.geometryShader = 0;
 	progDef.vertexShader = 1;
@@ -313,8 +341,8 @@ void nk_xu_render( NuklearWrapper* xu )
 		GL( glBufferData( GL_ELEMENT_ARRAY_BUFFER, MAX_ELEMENT_MEMORY, NULL, GL_STREAM_DRAW ) );
 
 		// load draw vertices and elements directly into vertex + element buffer
-		GLR( vertices, glMapBufferRange( GL_ARRAY_BUFFER, 0, MAX_VERTEX_MEMORY, GL_MAP_WRITE_BIT ) );
-		GLR( elements, glMapBufferRange( GL_ELEMENT_ARRAY_BUFFER, 0, MAX_ELEMENT_MEMORY, GL_MAP_WRITE_BIT ) );
+		GLR( vertices, glMapBufferRange( GL_ARRAY_BUFFER, 0, MAX_VERTEX_MEMORY, GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT ) );
+		GLR( elements, glMapBufferRange( GL_ELEMENT_ARRAY_BUFFER, 0, MAX_ELEMENT_MEMORY, GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT ) );
 		{
 			// fill the convert configuration
 			struct nk_convert_config config;

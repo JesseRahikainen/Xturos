@@ -7,7 +7,7 @@ http://www.metanetsoftware.com/technique/tutorialA.html
 */
 
 #include <stddef.h>
-#include "Math/Vector2.h"
+#include "Math/vector2.h"
 #include "Graphics/color.h"
 
 enum ColliderType {
