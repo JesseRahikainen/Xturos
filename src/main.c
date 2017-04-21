@@ -224,8 +224,6 @@ int initEverything( void )
 
 	txt_Init( );
 
-	llog( LOG_INFO, "Resources successfully loaded" );
-
 	return 0;
 }
 

@@ -6,6 +6,7 @@
 #include "../Graphics/camera.h"
 #include "../Graphics/debugRendering.h"
 #include "../Graphics/imageSheets.h"
+#include "../UI/text.h"
 
 static int templateID[2];
 static int instanceID[2];
@@ -22,6 +23,8 @@ static int* imageSheet;
 static int numImagesOnSheet;
 
 static int spriteSheetImg;
+
+static int font;
 
 static int gameScreen_Enter( void )
 {
@@ -47,6 +50,8 @@ static int gameScreen_Enter( void )
 
 	//img_LoadPackage( 3, fileNames, testImages );
 
+	font = txt_LoadFont( "Fonts/kenpixel.ttf", 128.0f );
+
 	return 1;
 }
 
@@ -69,6 +74,8 @@ static void gameScreen_Draw( void )
 	for( int i = 0; i < numImagesOnSheet; ++i ) {
 		img_Draw( imageSheet[i], 1, pos[i], pos[i], 0 );
 	}
+
+	txt_DisplayString( "Testing stuff\nAnd even more stuff\nAnd once more", VEC2_ZERO, CLR_RED, HORIZ_ALIGN_LEFT, VERT_ALIGN_TOP, font, 1, 0 );
 }
 
 static void gameScreen_PhysicsTick( float dt )

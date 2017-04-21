@@ -6,6 +6,8 @@
 #define STRINGIFY(x) #x
 #define TOSTRING(x) STRINGIFY(x)
 
+//#define DEBUG_GL
+
 // all the different combinations D: Description, R: GL function return, C: Check error return
 #ifdef DEBUG_GL
 #define GL(x) do { (x); checkAndLogErrors( __FILE__":"TOSTRING(__LINE__) ); } while(0,0)

@@ -235,7 +235,7 @@ int gfxUtil_CreateTextureFromAlphaBitmap( uint8_t* data, int width, int height, 
 		goto clean_up;
 	}
 
-	if( createTextureFromLoadedImage( GL_ALPHA, &image, outTexture ) < 0 ) {
+	if( createTextureFromLoadedImage( GL_RED, &image, outTexture ) < 0 ) {
 		returnCode = -1;
 		goto clean_up;
 	}
