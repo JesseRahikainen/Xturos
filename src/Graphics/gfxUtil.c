@@ -235,7 +235,13 @@ int gfxUtil_CreateTextureFromAlphaBitmap( uint8_t* data, int width, int height, 
 		goto clean_up;
 	}
 
-	if( createTextureFromLoadedImage( GL_RED, &image, outTexture ) < 0 ) {
+	GLenum texFormat;
+#if defined( __ANDROID__ ) || defined( __EMSCRIPTEN__ )
+	texFormat = GL_ALPHA;
+#else
+	texFormat = GL_RED;
+#endif
+	if( createTextureFromLoadedImage( texFormat, &image, outTexture ) < 0 ) {
 		returnCode = -1;
 		goto clean_up;
 	}

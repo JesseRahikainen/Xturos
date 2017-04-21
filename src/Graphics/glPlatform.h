@@ -58,7 +58,7 @@ Handles the platform specific OpenGL stuff.
 	"out highp vec4 outCol;\n" \
 	"void main( void )\n" \
 	"{\n" \
-	"	outCol = vec4( vCol.r, vCol.g, vCol.b, texture(textureUnit0, vTex).r * vCol.a );\n" \
+	"	outCol = vec4( vCol.r, vCol.g, vCol.b, texture(textureUnit0, vTex).a * vCol.a );\n" \
 	"	if( outCol.w <= 0.0f ) {\n" \
 	"		discard;\n" \
 	"	}\n" \
