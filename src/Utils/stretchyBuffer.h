@@ -22,8 +22,9 @@
 // Pushes the value onto the end of the buffer
 #define sb_Push( ptr, val )	( sb__TestAndGrow( (ptr), 1 ), (ptr)[sb__Used(ptr)++] = (val) )
 
-// reduces the number of elements in the buffer by 1, and returns the value in the spot that was removed
-#define sb_Pop( ptr, type )	( --sb__Used(ptr), ( sb__Used(ptr) >= 0 ) ? (type)( (ptr)[sb__Used(ptr)] ) : ( assert( "Nothing to pop" ), (type)0 ) )
+// reduces the number of elements in the buffer by 1, and returns the value in the spot that was removed, will cause issues if the size is zero
+#define sb_Pop( ptr )	( --sb__Used(ptr), (ptr)[sb__Used(ptr)] )
+//#define sb_Pop( ptr, type )	( --sb__Used(ptr), ( sb__Used(ptr) >= 0 ) ? (type)( (ptr)[sb__Used(ptr)] ) : ( assert( "Nothing to pop" ), (type)0 ) )
 
 // returns the number of elements in the buffer that are currently in use
 #define sb_Count( ptr )	( (ptr) ? sb__Used( ptr ) : 0 )
@@ -35,7 +36,7 @@
 #define sb_Last( ptr )	( (ptr)[ sb__Used( (ptr) ) - 1] )
 
 // sets all the memory in the stretchy buffer as unused, doesn't deallocate memory
-#define sb_Clear( ptr ) ( sb__Used( ptr ) = 0 )
+#define sb_Clear( ptr ) ( (ptr) ? ( sb__Used( ptr ) = 0 ) : 0 )
 
 // if you try to insert at a value past the end of the array it acts as a push
 #define sb_Insert( ptr, at, val ) ( ( (at) >= sb_Count( (ptr) ) ) ? sb_Push( (ptr), (val) ) : ( sb_Add( (ptr), 1 ), memmove( (ptr)+(at)+1, (ptr)+(at), sizeof( (ptr)[0] ) * ( sb_Count( (ptr) ) - (at) - 1 ) ), (ptr)[(at)] = (val) ) )

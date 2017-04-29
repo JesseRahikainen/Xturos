@@ -26,10 +26,12 @@
 
 #include "gameState.h"
 #include "Game/gameScreen.h"
+#include "Game/testAStarScreen.h"
 
 #include "System/memory.h"
 #include "System/systems.h"
 #include "System/platformLog.h"
+#include "System/random.h"
 
 #include "Graphics\debugRendering.h"
 #include "Graphics\glPlatform.h"
@@ -224,6 +226,8 @@ int initEverything( void )
 
 	txt_Init( );
 
+	rand_Seed( NULL, (uint32_t)time( NULL ) );
+
 	return 0;
 }
 
@@ -366,7 +370,8 @@ int main( int argc, char** argv )
 	focused = true;
 #endif
 
-	gsmEnterState( &globalFSM, &gameScreenState );
+	//gsmEnterState( &globalFSM, &gameScreenState );
+	gsmEnterState( &globalFSM, &testAStarScreenState );
 
 #if defined( __EMSCRIPTEN__ )
 	emscripten_set_main_loop_arg( mainLoop, NULL, -1, 1 );
