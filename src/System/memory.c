@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <string.h>
 #include <SDL_stdinc.h>
+#include <SDL_mutex.h>
 
 #include "platformLog.h"
 
@@ -44,6 +45,7 @@ jump for the delete. Just need to align the size of the header.
 // debug flags
 //#define TEST_CLEAR_VALUES
 //#define LOG_MEMORY_ALLOCATIONS
+//#define TEST_EVERY_CHANGE
 
 typedef struct MemoryBlockHeader {
 	uint32_t guardValue;
@@ -67,8 +69,14 @@ typedef struct MemoryBlockHeader {
 // TODO: have all the functions take in a Memory structure so we can do something like memory pools. But how to do that without
 //   breaking having signatures similar to the standard c library memory allocation functions?
 // Could have an external pool used by everything that isn't in the engine, then a use other pools for in engine stuff
+// Or have special versions that access certain pools, so we'd have something like mem_Allocate_Spine( size_t s ) that
+//  would call mem_Allocate with spineMemory. This would involve creating a lot of memory pools though.
 typedef struct {
 	void* memory;
+	SDL_mutex* mutex;
+
+	void* watchedAddress;
+	MemoryBlockHeader* watchedHeader;
 } Memory;
 
 static Memory memoryBlock;
@@ -320,29 +328,7 @@ static void* shrinkBlock( MemoryBlockHeader* header, size_t newSize, const char*
 	return (void*)( (uintptr_t)header + MEMORY_HEADER_SIZE );
 }
 
-int mem_Init( size_t totalSize )
-{
-	memoryBlock.memory = SDL_malloc(totalSize);
-
-	testingSetMemory( memoryBlock.memory, totalSize, 0xFF );
-
-	if( memoryBlock.memory == NULL ) {
-		return -1;
-	}
-
-	createNewBlock( memoryBlock.memory, NULL, NULL, totalSize - MEMORY_HEADER_SIZE, __FILE__, __LINE__ );
-
-	return 0;
-}
-
-void mem_CleanUp( void )
-{
-	// invalidates all the pointers
-	SDL_free( memoryBlock.memory );
-	memoryBlock.memory = NULL;
-}
-
-void mem_Log( void )
+static void internal_log( void )
 {
 	llog( LOG_DEBUG, "=== Memory Use Log ===" );
 	MemoryBlockHeader* header = (MemoryBlockHeader*)( memoryBlock.memory );
@@ -353,7 +339,7 @@ void mem_Log( void )
 	llog( LOG_DEBUG, "=== End Memory Use Log ===" );
 }
 
-void mem_LogAddressBlockData( void* ptr, const char* extra )
+static void internal_logAddressBlockData( void* ptr, const char* extra )
 {
 	// first find the memory block that the pointer is in
 	MemoryBlockHeader* header = findMemoryBlock( ptr, false );
@@ -363,7 +349,7 @@ void mem_LogAddressBlockData( void* ptr, const char* extra )
 	llog( LOG_DEBUG, "=== End Pointer Block Data ===" );
 }
 
-void mem_Verify( void )
+static void internal_verify( void )
 {
 	// just follow the list, verifying that the guard value is correct
 	//  also make sure all the previous and next pointers are correct
@@ -388,7 +374,7 @@ void mem_Verify( void )
 	}
 }
 
-bool mem_GetVerify( void )
+static bool internal_getVerify( void )
 {
 	// just follow the list, verifying that the guard value is correct
 	MemoryBlockHeader* header = (MemoryBlockHeader*)( memoryBlock.memory );
@@ -405,30 +391,13 @@ bool mem_GetVerify( void )
 	return true;
 }
 
-void mem_VerifyPointer( void* p )
+static void internal_verifyPointer( void* p )
 {
 	// verify the pointer is pointing to valid memory
 	assert( findMemoryBlock( p, true ) != NULL );
 }
 
-void mem_Report( void )
-{
-	size_t total = 0;
-	size_t inUse = 0;
-	size_t overhead = 0;
-	uint32_t fragments = 0; // blocks not in use
-
-	mem_GetReportValues( &total, &inUse, &overhead, &fragments );
-
-	// TODO: Find out why %zu doesn't work...
-	llog( LOG_DEBUG, "Memory Report:" );
-	llog( LOG_DEBUG, "  Total: %u", total );
-	llog( LOG_DEBUG, "  In Use: %u", inUse );
-	llog( LOG_DEBUG, "  Overhead: %u", overhead );
-	llog( LOG_DEBUG, "  Fragments: %u", fragments );
-}
-
-void mem_GetReportValues( size_t* totalOut, size_t* inUseOut, size_t* overheadOut, uint32_t* fragmentsOut )
+static void internal_getReportValues( size_t* totalOut, size_t* inUseOut, size_t* overheadOut, uint32_t* fragmentsOut )
 {
 	size_t total = 0;
 	size_t inUse = 0;
@@ -454,109 +423,24 @@ void mem_GetReportValues( size_t* totalOut, size_t* inUseOut, size_t* overheadOu
 	if( fragmentsOut != NULL ) (*fragmentsOut) = fragments;
 }
 
-void* mem_Allocate_Data( size_t size, const char* fileName, const int line )
+static void internal_report( void )
 {
-#ifdef TEST_EVERY_CHANGE
-	mem_Verify( );
-#endif
-	assert( memoryBlock.memory != NULL );
+	size_t total = 0;
+	size_t inUse = 0;
+	size_t overhead = 0;
+	uint32_t fragments = 0; // blocks not in use
 
-	// if the size is 0 malloc can return NULL or an unusable pointer, NULL works better for us as
-	//  it avoids littering the memory with zero sized headers
-	if( size == 0 ) {
-		return NULL;
-	}
+	internal_getReportValues( &total, &inUse, &overhead, &fragments );
 
-	size = ALIGN_SIZE( size );
-
-	// we'll just do first fit, if we can't find a spot we'll just return NULL
-	uint8_t* result = NULL;
-
-	MemoryBlockHeader* header = (MemoryBlockHeader*)( memoryBlock.memory );
-	while( ( header != NULL ) && ( ( header->flags & IN_USE_FLAG ) || ( header->size < size ) ) ) {
-		header = header->next;
-	}
-
-	if( header != NULL ) {
-		// found a large enough block that's not in use, split it up and set stuff up
-		header->flags |= IN_USE_FLAG;
-
-		result = (uint8_t*)header;
-		result += MEMORY_HEADER_SIZE;
-
-		testingSetMemory( (void*)result, size, 0xCC );
-
-		// if there's enough room left then split it into it's own block
-
-		// how do we really want to do this?
-		if( header->size >= ( size + MEMORY_HEADER_SIZE + MIN_ALLOC_SIZE ) ) {
-			MemoryBlockHeader* nextHeader = createNewBlock( (void*)( result + size ),
-				header, header->next, header->size - size - MEMORY_HEADER_SIZE,
-				fileName, line );
-			testingSetMemory( (void*)( (uintptr_t)nextHeader + MEMORY_HEADER_SIZE ), nextHeader->size, 0xDD );
-		} else {
-			// there's some left over memory, we'll just put it into the block
-			testingSetMemory( (void*)( result + size ), header->size - size, 0xEE );
-			size = header->size;
-		}
-
-		header->size = size;
-		setMemoryBlockInfo( header, fileName, line, "Allocate" );
-	}
-#ifdef TEST_EVERY_CHANGE
-	mem_Verify( );
-#endif
-	assert( result != NULL );
-
-	logWatchedMemoryAddressChange( (MemoryBlockHeader*)( (uint8_t*)result - MEMORY_HEADER_SIZE ), "mem_Allocate_Data", NULL );
-
-	return (void*)result;
+	// TODO: Find out why %zu doesn't work...
+	llog( LOG_DEBUG, "Memory Report:" );
+	llog( LOG_DEBUG, "  Total: %u", total );
+	llog( LOG_DEBUG, "  In Use: %u", inUse );
+	llog( LOG_DEBUG, "  Overhead: %u", overhead );
+	llog( LOG_DEBUG, "  Fragments: %u", fragments );
 }
 
-void* mem_Resize_Data( void* memory, size_t newSize, const char* fileName, const int line )
-{
-#ifdef TEST_EVERY_CHANGE
-	mem_Verify( );
-#endif
-	assert( memoryBlock.memory != NULL );
-
-	if( newSize == 0 ) {
-		mem_Release( memory );
-		return NULL;
-	}
-
-	newSize = ALIGN_SIZE( newSize );
-
-	// two cases, when we want more and when we want less
-	// we'll see if there's enough memory in the next block, if there is then just
-	//  expand this block, otherwise find a space to fit it
-	// if we can't find a space then we'll return NULL, but won't deallocate the old
-	//  memory
-	// or we could just assert
-	void* result = memory;
-
-	if( memory != NULL ) {
-		MemoryBlockHeader* header = (MemoryBlockHeader*)( (uintptr_t)memory - MEMORY_HEADER_SIZE );
-		if( newSize > header->size ) {
-			result = growBlock( header, newSize, fileName, line );
-		} else if( newSize < header->size ) {
-			result = shrinkBlock( header, newSize, fileName, line );
-		}
-	} else {
-		result = mem_Allocate_Data( newSize, fileName, line );
-	}
-
-#ifdef TEST_EVERY_CHANGE
-	mem_Verify( );
-#endif
-	assert( result != NULL );
-
-	logWatchedMemoryAddressChange( (MemoryBlockHeader*)( (uintptr_t)result - MEMORY_HEADER_SIZE ), "mem_Resize_Data", NULL );
-
-	return result;
-}
-
-void mem_Release_Data( void* memory, const char* fileName, const int line )
+static void internal_release_Data( void* memory, const char* fileName, const int line )
 {
 #ifdef TEST_EVERY_CHANGE
 	mem_Verify( );
@@ -577,14 +461,14 @@ void mem_Release_Data( void* memory, const char* fileName, const int line )
 	assert( header->postGuardValue == GUARD_VALUE );
 	
 	header = condenseMemoryBlocks( header, fileName, line );
-	testingSetMemory( (void*)( (uintptr_t)header + MEMORY_HEADER_SIZE ), header->size, 0xFF );
+	testingSetMemory( (void*)( (uintptr_t)header + MEMORY_HEADER_SIZE ), header->size, 0xAB );
 
 #ifdef TEST_EVERY_CHANGE
 	mem_Verify( );
 #endif
 }
 
-void mem_WatchAddress( void* ptr )
+static void internal_watchAddress( void* ptr )
 {
 	watchedAddress = ptr;
 	watchedHeader = findMemoryBlock( ptr, false );
@@ -593,7 +477,7 @@ void mem_WatchAddress( void* ptr )
 	llog( LOG_DEBUG, "=== End Start Watching Memory Address ===" );
 }
 
-void mem_UnWatchAddress( void* ptr )
+static void internal_unwatchAddress( void* ptr )
 {
 	if( watchedAddress == ptr ) {
 		llog( LOG_DEBUG, "=== Stop Watching Memory Address: %p ===", ptr );
@@ -603,6 +487,222 @@ void mem_UnWatchAddress( void* ptr )
 		watchedAddress = NULL;
 		watchedHeader = NULL;
 	}
+}
+
+int mem_Init( size_t totalSize )
+{
+	memoryBlock.mutex = NULL;
+	memoryBlock.watchedAddress = NULL;
+	memoryBlock.watchedHeader = NULL;
+
+	memoryBlock.memory = SDL_malloc(totalSize);
+	if( memoryBlock.memory == NULL ) {
+		goto error_cleanup;
+	}
+
+	testingSetMemory( memoryBlock.memory, totalSize, 0xFF );
+
+	createNewBlock( memoryBlock.memory, NULL, NULL, totalSize - MEMORY_HEADER_SIZE, __FILE__, __LINE__ );
+
+	memoryBlock.mutex = SDL_CreateMutex( );
+	if( memoryBlock.mutex == NULL ) {
+		goto error_cleanup;
+	}
+
+	return 0;
+
+error_cleanup:
+	mem_CleanUp( );
+	return -1;
+}
+
+void mem_CleanUp( void )
+{
+	// invalidates all the pointers
+	SDL_free( memoryBlock.memory );
+	memoryBlock.memory = NULL;
+
+	SDL_DestroyMutex( memoryBlock.mutex );
+}
+
+void mem_Log( void )
+{
+	SDL_LockMutex( memoryBlock.mutex ); {
+		internal_log( );
+	} SDL_UnlockMutex( memoryBlock.mutex );
+}
+
+void mem_LogAddressBlockData( void* ptr, const char* extra )
+{
+	SDL_LockMutex( memoryBlock.mutex ); {
+		internal_logAddressBlockData( ptr, extra );
+	} SDL_UnlockMutex( memoryBlock.mutex );
+}
+
+void mem_Verify( void )
+{
+	SDL_LockMutex( memoryBlock.mutex ); {
+		internal_verify( );
+	} SDL_UnlockMutex( memoryBlock.mutex );
+}
+
+bool mem_GetVerify( void )
+{
+	bool ret;
+	SDL_LockMutex( memoryBlock.mutex ); {
+		ret = internal_getVerify( );
+	} SDL_UnlockMutex( memoryBlock.mutex );
+	return ret;
+}
+
+void mem_VerifyPointer( void* p )
+{
+	SDL_LockMutex( memoryBlock.mutex ); {
+		internal_verifyPointer( p );
+	} SDL_UnlockMutex( memoryBlock.mutex );
+}
+
+void mem_Report( void )
+{
+	SDL_LockMutex( memoryBlock.mutex ); {
+		internal_report( );
+	} SDL_UnlockMutex( memoryBlock.mutex );
+}
+
+void mem_GetReportValues( size_t* totalOut, size_t* inUseOut, size_t* overheadOut, uint32_t* fragmentsOut )
+{
+	SDL_LockMutex( memoryBlock.mutex ); {
+		internal_getReportValues( totalOut, inUseOut, overheadOut, fragmentsOut );
+	} SDL_UnlockMutex( memoryBlock.mutex );
+}
+
+void* mem_Allocate_Data( size_t size, const char* fileName, const int line )
+{
+	uint8_t* result = NULL;
+
+	SDL_LockMutex( memoryBlock.mutex ); {
+#ifdef TEST_EVERY_CHANGE
+		internal_verify( );
+#endif
+		assert( memoryBlock.memory != NULL );
+
+		// if the size is 0 malloc can return NULL or an unusable pointer, NULL works better for us as
+		//  it avoids littering the memory with zero sized headers
+		if( size == 0 ) {
+			return NULL;
+		}
+
+		size = ALIGN_SIZE( size );
+
+		// we'll just do first fit, if we can't find a spot we'll just return NULL
+		MemoryBlockHeader* header = (MemoryBlockHeader*)( memoryBlock.memory );
+		while( ( header != NULL ) && ( ( header->flags & IN_USE_FLAG ) || ( header->size < size ) ) ) {
+			header = header->next;
+		}
+
+		if( header != NULL ) {
+			// found a large enough block that's not in use, split it up and set stuff up
+			header->flags |= IN_USE_FLAG;
+
+			result = (uint8_t*)header;
+			result += MEMORY_HEADER_SIZE;
+
+			testingSetMemory( (void*)result, size, 0xCC );
+
+			// if there's enough room left then split it into it's own block
+
+			// how do we really want to do this?
+			if( header->size >= ( size + MEMORY_HEADER_SIZE + MIN_ALLOC_SIZE ) ) {
+				MemoryBlockHeader* nextHeader = createNewBlock( (void*)( result + size ),
+					header, header->next, header->size - size - MEMORY_HEADER_SIZE,
+					fileName, line );
+				testingSetMemory( (void*)( (uintptr_t)nextHeader + MEMORY_HEADER_SIZE ), nextHeader->size, 0xDD );
+			} else {
+				// there's some left over memory, we'll just put it into the block
+				testingSetMemory( (void*)( result + size ), header->size - size, 0xEE );
+				size = header->size;
+			}
+
+			header->size = size;
+			setMemoryBlockInfo( header, fileName, line, "Allocate" );
+		}
+	#ifdef TEST_EVERY_CHANGE
+		mem_Verify( );
+	#endif
+		assert( result != NULL );
+
+		logWatchedMemoryAddressChange( (MemoryBlockHeader*)( (uint8_t*)result - MEMORY_HEADER_SIZE ), "mem_Allocate_Data", NULL );
+
+	} SDL_UnlockMutex( memoryBlock.mutex );
+
+	return (void*)result;
+}
+
+void* mem_Resize_Data( void* memory, size_t newSize, const char* fileName, const int line )
+{
+	void* result = memory;
+	SDL_LockMutex( memoryBlock.mutex ); {
+#ifdef TEST_EVERY_CHANGE
+		internal_verify( );
+#endif
+		assert( memoryBlock.memory != NULL );
+
+		if( newSize == 0 ) {
+			internal_release_Data( memory, fileName, line );
+			return NULL;
+		}
+
+		newSize = ALIGN_SIZE( newSize );
+
+		// two cases, when we want more and when we want less
+		// we'll see if there's enough memory in the next block, if there is then just
+		//  expand this block, otherwise find a space to fit it
+		// if we can't find a space then we'll return NULL, but won't deallocate the old
+		//  memory
+		// or we could just assert
+		if( memory != NULL ) {
+			MemoryBlockHeader* header = (MemoryBlockHeader*)( (uintptr_t)memory - MEMORY_HEADER_SIZE );
+			if( newSize > header->size ) {
+				result = growBlock( header, newSize, fileName, line );
+			} else if( newSize < header->size ) {
+				result = shrinkBlock( header, newSize, fileName, line );
+			}
+		} else {
+			result = mem_Allocate_Data( newSize, fileName, line );
+		}
+
+#ifdef TEST_EVERY_CHANGE
+		mem_Verify( );
+#endif
+		assert( result != NULL );
+
+		logWatchedMemoryAddressChange( (MemoryBlockHeader*)( (uintptr_t)result - MEMORY_HEADER_SIZE ), "mem_Resize_Data", NULL );
+
+	} SDL_UnlockMutex( memoryBlock.mutex );
+
+	return result;
+}
+
+void mem_Release_Data( void* memory, const char* fileName, const int line )
+{
+	SDL_LockMutex( memoryBlock.mutex ); {
+		internal_release_Data( memory, fileName, line );
+	} SDL_UnlockMutex( memoryBlock.mutex );
+}
+
+void mem_WatchAddress( void* ptr )
+{
+	SDL_LockMutex( memoryBlock.mutex ); {
+		internal_watchAddress( ptr );
+	} SDL_UnlockMutex( memoryBlock.mutex );
+}
+
+
+void mem_UnWatchAddress( void* ptr )
+{
+	SDL_LockMutex( memoryBlock.mutex ); {
+		internal_unwatchAddress( ptr );
+	} SDL_UnlockMutex( memoryBlock.mutex );
 }
 
 void mem_RunTests( void )

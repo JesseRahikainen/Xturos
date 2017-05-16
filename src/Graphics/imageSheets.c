@@ -49,8 +49,8 @@ int img_LoadSpriteSheet( char* fileName, ShaderType shaderType, int** imgOutArra
 	//  sprite rectangles
 	//  final blank line
 	int version;
-	int numSprites;
-	int numSpritesRead;
+	int numSprites = 0;
+	int numSpritesRead = 0;
 	
 	ReadState currentState = RS_VERSION;
 

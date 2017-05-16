@@ -12,6 +12,10 @@
 #include "../System/platformLog.h"
 #include "../Math/mathUtil.h"
 
+#include "../System/jobQueue.h"
+#include "../System/jobRingQueue.h"
+#include "../System/memory.h"
+
 /* Image loading types and variables */
 #define MAX_IMAGES 512
 
@@ -138,6 +142,107 @@ int img_Load( const char* fileName, ShaderType shaderType )
 	}
 
 	return newIdx;
+}
+
+typedef struct {
+	const char* fileName;
+	ShaderType shaderType;
+	int* outIdx;
+	LoadedImage loadedImage;
+} ThreadedLoadImageData;
+
+static void bindImageJob( void* data )
+{
+	if( data == NULL ) {
+		llog( LOG_INFO, "No data, unable to bind." );
+		return;
+	}
+
+	ThreadedLoadImageData* loadData = (ThreadedLoadImageData*)data;
+
+	(*(loadData->outIdx)) = -1;
+
+	if( loadData->loadedImage.data == NULL ) {
+		llog( LOG_INFO, "Failed to load image %s", loadData->fileName );
+		goto clean_up;
+	}
+
+	// find the first empty spot, make sure we won't go over our maximum
+	int newIdx = findAvailableImageIndex( );
+	if( newIdx < 0 ) {
+		llog( LOG_INFO, "Unable to bind image %s! Image storage full.", loadData->fileName );
+		goto clean_up;
+	}
+
+	Texture texture;
+	if( gfxUtil_CreateTextureFromLoadedImage( GL_RGBA, &( loadData->loadedImage ), &texture ) < 0 ) {
+		llog( LOG_INFO, "Unable to bind image %s!", loadData->fileName );
+		goto clean_up;
+	}
+
+	images[newIdx].textureObj = texture.textureID;
+	images[newIdx].size.v[0] = (float)texture.width;
+	images[newIdx].size.v[1] = (float)texture.height;
+	images[newIdx].offset = VEC2_ZERO;
+	images[newIdx].packageID = -1;
+	images[newIdx].flags = IMGFLAG_IN_USE;
+	images[newIdx].nextInPackage = -1;
+	images[newIdx].uvMin = VEC2_ZERO;
+	images[newIdx].uvMax = VEC2_ONE;
+	images[newIdx].shaderType = loadData->shaderType;
+	if( texture.flags & TF_IS_TRANSPARENT ) {
+		images[newIdx].flags |= IMGFLAG_HAS_TRANSPARENCY;
+	}
+	(*(loadData->outIdx)) = newIdx;
+
+	llog( LOG_INFO, "Setting outIdx to %i", newIdx );
+
+clean_up:
+	gfxUtil_ReleaseLoadedImage( &( loadData->loadedImage ) );
+	mem_Release( loadData );
+}
+
+static void loadImageJob( void* data )
+{
+	if( data == NULL ) {
+		llog( LOG_INFO, "No data, unable to load." );
+		return;
+	}
+
+	ThreadedLoadImageData* loadData = (ThreadedLoadImageData*)data;
+	// will worry about handling a bad load when we get back to the main thread
+	gfxUtil_LoadImage( loadData->fileName, &( loadData->loadedImage ) );
+
+	// binding needs to be done on the main thread
+	jq_AddMainThreadJob( bindImageJob, data );
+}
+
+/*
+Loads the image in a seperate thread. Puts the resulting image index into outIdx.
+ Returns -1 if there was an issue, 0 otherwise.
+*/
+void img_ThreadedLoad( const char* fileName, ShaderType shaderType, int* outIdx )
+{
+	// set it to something that won't draw anything
+	(*outIdx) = -1;
+
+	// this isn't something that should be happening all the time, so allocating and freeing
+	//  should be fine, if we want to do continous streaming it would probably be better to
+	//  make a specialty queue for it
+	ThreadedLoadImageData* data = mem_Allocate( sizeof( ThreadedLoadImageData ) );
+	if( data == NULL ) {
+		llog( LOG_WARN, "Unable to create data for threaded image load for file %s", fileName );
+		return;
+	}
+
+	data->fileName = fileName;
+	data->shaderType = shaderType;
+	data->outIdx = outIdx;
+	data->loadedImage.data = NULL;
+
+	if( !jq_AddJob( loadImageJob, data ) ) {
+		mem_Release( data );
+	}
 }
 
 /*
@@ -386,6 +491,12 @@ initializes the structure so only what's used needs to be set, also fill in
 */
 static DrawInstruction* GetNextRenderInstruction( int imgObj, uint32_t camFlags, Vector2 startPos, Vector2 endPos, int8_t depth )
 {
+	// the image hasn't been loaded yet, so don't render anything
+	if( imgObj < 0 ) {
+		// TODO: Use a temporary image.
+		return NULL;
+	}
+
 	if( !( images[imgObj].flags & IMGFLAG_IN_USE ) ) {
 		llog( LOG_VERBOSE, "Attempting to draw invalid image: %i", imgObj );
 		return NULL;

@@ -14,6 +14,7 @@
 #include "Utils\stretchyBuffer.h"
 #include "Utils\helpers.h"
 #include "Utils\cfgFile.h"
+#include "System\jobQueue.h"
 
 #define MAX_SAMPLES 256
 #define MAX_PLAYING_SOUNDS 32
@@ -31,6 +32,7 @@ void snd_SetMasterVolume( float volume ) { }
 float snd_GetVolume( unsigned int group ) { return 0.0f; }
 void snd_SetVolume( float volume, unsigned int group ) { }
 int snd_LoadSample( const char* fileName, Uint8 desiredChannels, bool loops ) { return 0; }
+void snd_ThreadedLoadSample( const char* fileName, Uint8 desiredChannels, bool loops, int* outID ) { (*outID) = 0; }
 EntityID snd_Play( int sampleID, float volume, float pitch, float pan, unsigned int group ) { return 0; }
 void snd_ChangeSoundVolume( EntityID soundID, float volume ) { }
 void snd_ChangeSoundPitch( EntityID soundID, float pitch ) { }
@@ -311,7 +313,7 @@ int snd_LoadSample( const char* fileName, Uint8 desiredChannels, bool loops )
 	}
 	loadConverter.buf = (Uint8*)data;
 
-	SDL_ConvertAudio( &loadConverter ); // convert audio is corrupting memory!
+	SDL_ConvertAudio( &loadConverter );
 
 	// store it
 	samples[newIdx].data = mem_Allocate( loadConverter.len_cvt );
@@ -326,6 +328,129 @@ clean_up:
 	// clean up the working data
 	mem_Release( data );
 	return newIdx;
+}
+
+typedef struct {
+	const char* fileName;
+	Uint8 desiredChannels;
+	bool loops;
+	int* outID;
+	SDL_AudioCVT loadConverter;
+} ThreadedSoundLoadData;
+
+static void cleanUpThreadedSoundLoadData( ThreadedSoundLoadData* data )
+{
+	mem_Release( data->loadConverter.buf );
+	data->loadConverter.buf = NULL;
+
+	mem_Release( data );
+}
+
+static void bindSampleJob( void* data )
+{
+	if( data == NULL ) {
+		llog( LOG_ERROR, "NULL data passed into loadSampleJob!" );
+		return;
+	}
+
+	ThreadedSoundLoadData* loadData = (ThreadedSoundLoadData*)data;
+
+	int newIdx = -1;
+	for( int i = 0; ( i < ARRAY_SIZE( samples ) ) && ( newIdx < 0 ); ++i ) {
+		if( samples[i].data == NULL ) {
+			newIdx = i;
+		}
+	}
+
+	if( newIdx < 0 ) {
+		llog( LOG_ERROR, "Unable to find free space for sample." );
+		goto clean_up;
+	}
+
+	// store it
+	samples[newIdx].data = mem_Allocate( loadData->loadConverter.len_cvt );
+
+	memcpy( samples[newIdx].data, loadData->loadConverter.buf, loadData->loadConverter.len_cvt );
+
+	samples[newIdx].numChannels = loadData->desiredChannels;
+	samples[newIdx].numSamples = loadData->loadConverter.len_cvt / ( loadData->desiredChannels * ( ( SDL_AUDIO_MASK_BITSIZE & WORKING_FORMAT ) / 8 ) );
+	samples[newIdx].loops = loadData->loops;
+
+	(*(loadData->outID)) = newIdx;
+
+clean_up:
+	cleanUpThreadedSoundLoadData( loadData );
+}
+
+static void loadSampleJob( void* data )
+{
+	if( data == NULL ) {
+		llog( LOG_ERROR, "NULL data passed into loadSampleJob!" );
+		return;
+	}
+
+	ThreadedSoundLoadData* loadData = (ThreadedSoundLoadData*)data;
+
+	// read the entire file into memory and decode it
+	int channels;
+	int rate;
+	short* buffer;
+	int numSamples = stb_vorbis_decode_filename( loadData->fileName, &channels, &rate, &buffer );
+
+	if( numSamples < 0 ) {
+		llog( LOG_ERROR, "Error decoding sound sample %s", loadData->fileName );
+		goto error;
+	}
+
+	// convert it
+	if( SDL_BuildAudioCVT( &( loadData->loadConverter ),
+		AUDIO_S16, (Uint8)channels, rate,
+		WORKING_FORMAT, loadData->desiredChannels, WORKING_RATE ) < 0 ) {
+		llog( LOG_ERROR, "Unable to create converter for sound." );
+		goto error;
+	}
+
+	loadData->loadConverter.len = numSamples * channels * sizeof( buffer[0] );
+	size_t totLen = loadData->loadConverter.len * loadData->loadConverter.len_mult;
+	if( loadData->loadConverter.len_mult > 1 ) {
+		buffer = mem_Resize( buffer, loadData->loadConverter.len * loadData->loadConverter.len_mult ); // need to make sure there's enough room
+		if( buffer == NULL ) {
+			llog( LOG_ERROR, "Unable to allocate more memory for converting." );
+			goto error;
+		}
+	}
+	loadData->loadConverter.buf = (Uint8*)buffer;
+
+	SDL_ConvertAudio( &( loadData->loadConverter ) );
+
+	jq_AddMainThreadJob( bindSampleJob, (void*)loadData );
+
+	return;
+
+error:
+	cleanUpThreadedSoundLoadData( loadData );
+}
+
+void snd_ThreadedLoadSample( const char* fileName, Uint8 desiredChannels, bool loops, int* outID )
+{
+	assert( ( desiredChannels >= 1 ) && ( desiredChannels <= 2 ) );
+	assert( outID != NULL );
+
+	(*outID) = -1;
+
+	ThreadedSoundLoadData* loadData = mem_Allocate( sizeof( ThreadedSoundLoadData ) );
+	if( loadData == NULL ) {
+		llog( LOG_ERROR, "Unable to allocated data struct for threaded loading of sound sample" );
+		return;
+	}
+
+	loadData->fileName = fileName;
+	loadData->desiredChannels = desiredChannels;
+	loadData->loops = loops;
+	loadData->outID = outID;
+	loadData->loadConverter.buf = NULL;
+
+	jq_AddJob( loadSampleJob, (void*)loadData );
 }
 
 /* Sets up the SDL mixer. Returns 0 on success. */

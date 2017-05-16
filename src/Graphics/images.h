@@ -13,6 +13,14 @@ Initializes images.
 */
 int img_Init( void );
 
+//************ Threaded functions
+/*
+Loads the image in a seperate thread. Puts the resulting image index into outIdx.
+*/
+void img_ThreadedLoad( const char* fileName, ShaderType shaderType, int* outIdx );
+
+//************ End threaded functions
+
 /*
 Loads the image stored at file name.
  Returns the index of the image on success.

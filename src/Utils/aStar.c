@@ -114,6 +114,7 @@ bool aStar_ProcessPath( AStarSearchState* state, int numSteps, int** sbOutPaths 
 						asfd.cost = newCost + state->heuristic( state->graph, neighbor, state->targetNodeID );
 
 						// insertion sort into frontier, simulate a priority queue
+						// TODO: Create a proper priority queue if speed ever becomes an issue here
 						size_t idx = 0;
 						while( ( idx < sb_Count( state->sbFrontier ) ) && ( asfd.cost < state->sbFrontier[idx].cost ) ) {
 							++idx;

@@ -14,7 +14,7 @@
 #define FILE_PATH_LEN 128
 
 typedef struct {
-	char name[64];
+	char fileName[64];
 	int value;
 } CFGAttribute;
 
@@ -72,8 +72,8 @@ void* cfg_OpenFile( const char* fileName )
 
 		// cut off white space, don't care about preserving memory
 		if( gettingAttrName ) {
-			SDL_strlcpy( attr.name, token, sizeof( attr.name ) - 1 );
-			attr.name[sizeof( attr.name ) - 1] = 0;
+			SDL_strlcpy( attr.fileName, token, sizeof( attr.fileName ) - 1 );
+			attr.fileName[sizeof( attr.fileName ) - 1] = 0;
 			gettingAttrName = 0;
 		} else {
 			attr.value = SDL_atoi( token );
@@ -113,9 +113,9 @@ int cfg_SaveFile( void* cfgFile )
 		writeNewLine = 1;
 
 		// write out attribute name
-		size_t attrLen = SDL_strlen( file->sbAttributes[i].name );
+		size_t attrLen = SDL_strlen( file->sbAttributes[i].fileName );
 		c = sb_Add( outBuffer, attrLen );
-		SDL_memcpy( c, file->sbAttributes[i].name, attrLen );
+		SDL_memcpy( c, file->sbAttributes[i].fileName, attrLen );
 
 		// write out separator
 		c = sb_Add( outBuffer, 3 );
@@ -124,7 +124,7 @@ int cfg_SaveFile( void* cfgFile )
 		// write out value
 		int pl = SDL_snprintf( strVal, sizeof( strVal ), "%i", file->sbAttributes[i].value );
 		if( pl >= ARRAY_SIZE( strVal ) ) {
-			llog( LOG_ERROR, "Problem writing out configuration file value, value to long. File: %s   Name: %s", file->filePath, file->sbAttributes[i].name );
+			llog( LOG_ERROR, "Problem writing out configuration file value, value to long. File: %s   Name: %s", file->filePath, file->sbAttributes[i].fileName );
 			goto clean_up;
 		} else {
 			c = sb_Add( outBuffer, pl );
@@ -161,7 +161,7 @@ int AttributeIndex( CFGFile* fileData, const char* attrName )
 
 	size_t count = sb_Count( fileData->sbAttributes );
 	for( size_t i = 0; ( i < count ) && ( idx < 0 ); ++i ) {
-		if( SDL_strncasecmp( attrName, fileData->sbAttributes[i].name, sizeof( fileData->sbAttributes[i].name ) - 1 ) == 0 ) {
+		if( SDL_strncasecmp( attrName, fileData->sbAttributes[i].fileName, sizeof( fileData->sbAttributes[i].fileName ) - 1 ) == 0 ) {
 			idx = (int)i;
 		}
 	}
@@ -204,8 +204,8 @@ void cfg_SetInt( void* cfgFile, const char* attrName, int val )
 	} else {
 		CFGAttribute newAttr;
 
-		SDL_strlcpy( newAttr.name, attrName, sizeof( newAttr.name ) - 1 );
-		newAttr.name[sizeof( newAttr.name ) - 1] = 0;
+		SDL_strlcpy( newAttr.fileName, attrName, sizeof( newAttr.fileName ) - 1 );
+		newAttr.fileName[sizeof( newAttr.fileName ) - 1] = 0;
 		newAttr.value = val;
 
 		sb_Push( data->sbAttributes, newAttr );

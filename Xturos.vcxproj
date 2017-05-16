@@ -51,7 +51,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
     <OutDir>$(SolutionDir)\bin\</OutDir>
-    <IncludePath>F:\Data\Libraries\stb-master;F:\Data\Libraries\SDL2-2.0.5\include;F:\Data\Libraries\spine-runtimes-master\spine-c\include;$(IncludePath)</IncludePath>
+    <IncludePath>F:\Data\Libraries\stb-master;F:\Data\Libraries\SDL2-2.0.5\include;F:\Data\Libraries\spine-runtimes-master\spine-c\include;F:\Data\Libraries\nuklear-master;$(IncludePath)</IncludePath>
     <LibraryPath>F:\Data\Libraries\spine-runtimes-master\spine-c\lib;F:\Data\Libraries\SDL2-2.0.5\lib\x86;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -101,6 +101,7 @@
     <ClInclude Include="src\gameState.h" />
     <ClInclude Include="src\Game\gameScreen.h" />
     <ClInclude Include="src\Game\testAStarScreen.h" />
+    <ClInclude Include="src\Game\testJobQueueScreen.h" />
     <ClInclude Include="src\Graphics\camera.h" />
     <ClInclude Include="src\Graphics\color.h" />
     <ClInclude Include="src\Graphics\debugRendering.h" />
@@ -127,6 +128,8 @@
     <ClInclude Include="src\Others\gl_core.h" />
     <ClInclude Include="src\particles.h" />
     <ClInclude Include="src\sound.h" />
+    <ClInclude Include="src\System\jobQueue.h" />
+    <ClInclude Include="src\System\jobRingQueue.h" />
     <ClInclude Include="src\System\memory.h" />
     <ClInclude Include="src\System\platformLog.h" />
     <ClInclude Include="src\System\random.h" />
@@ -137,6 +140,7 @@
     <ClInclude Include="src\UI\text.h" />
     <ClInclude Include="src\Utils\aStar.h" />
     <ClInclude Include="src\Utils\cfgFile.h" />
+    <ClInclude Include="src\Utils\dictionary.h" />
     <ClInclude Include="src\Utils\helpers.h" />
     <ClInclude Include="src\Utils\idSet.h" />
     <ClInclude Include="src\Utils\stretchyBuffer.h" />
@@ -146,6 +150,7 @@
     <ClCompile Include="src\gameState.c" />
     <ClCompile Include="src\Game\gameScreen.c" />
     <ClCompile Include="src\Game\testAStarScreen.c" />
+    <ClCompile Include="src\Game\testJobQueueScreen.c" />
     <ClCompile Include="src\Graphics\camera.c" />
     <ClCompile Include="src\Graphics\color.c" />
     <ClCompile Include="src\Graphics\debugRendering.c" />
@@ -171,9 +176,12 @@
     <ClCompile Include="src\Others\gl_core.c" />
     <ClCompile Include="src\Others\stb_vorbis_sdl.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="src\particles.c" />
     <ClCompile Include="src\sound.c" />
+    <ClCompile Include="src\System\jobQueue.c" />
+    <ClCompile Include="src\System\jobRingQueue.c" />
     <ClCompile Include="src\System\memory.c" />
     <ClCompile Include="src\System\platformLog.c" />
     <ClCompile Include="src\System\random.c" />
@@ -184,6 +192,7 @@
     <ClCompile Include="src\UI\text.c" />
     <ClCompile Include="src\Utils\aStar.c" />
     <ClCompile Include="src\Utils\cfgFile.c" />
+    <ClCompile Include="src\Utils\dictionary.c" />
     <ClCompile Include="src\Utils\helpers.c" />
     <ClCompile Include="src\Utils\idSet.c" />
   </ItemGroup>

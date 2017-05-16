@@ -22,16 +22,21 @@
 
 #include "../System/platformLog.h"
 
-typedef struct {
-	unsigned char* data;
-	int width, height, reqComp, comp;
-} LoadedImage;
+/*
+Clean up anything that was created in a loaded image.
+*/
+void gfxUtil_ReleaseLoadedImage( LoadedImage* image )
+{
+	assert( image != NULL );
+
+	stbi_image_free( image->data );
+}
 
 /*
 Converts the LoadedImage into a texture, putting everything in outTexture. All LoadedImages are assumed to be in RGBA format.
  Returns >= 0 if everything went fine, < 0 if something went wrong.
 */
-int createTextureFromLoadedImage( GLenum texFormat, LoadedImage* image, Texture* outTexture )
+int gfxUtil_CreateTextureFromLoadedImage( GLenum texFormat, LoadedImage* image, Texture* outTexture )
 {
 	//GLenum texFormat = GL_RGBA;
 
@@ -68,22 +73,18 @@ int createTextureFromLoadedImage( GLenum texFormat, LoadedImage* image, Texture*
 }
 
 /*
-Loads the image at the file name. Takes in a pointer to a Texture structure that it puts all the generated data into.
- Returns >= 0 on success, < 0 on failure.
+ Loads the data from fileName into outLoadedImage, used as an intermediary between loading and creating
+  a texture.
+  Returns >= 0 on success, < 0 on failure.
 */
-int gfxUtil_LoadTexture( const char* fileName, Texture* outTexture )
+int gfxUtil_LoadImage( const char* fileName, LoadedImage* outLoadedImage )
 {
-	LoadedImage image = { 0 };
-	int returnCode = 0;
-
-	if( outTexture == NULL ) {
-		llog( LOG_INFO, "Null outTexture passed for file %s!", fileName );
-		goto clean_up;
+	if( outLoadedImage == NULL ) {
+		llog( LOG_INFO, "Attempting to load an image without a place to store it! %s", fileName );
+		return -1;
 	}
 
-	// load and convert file to pixel data
-	image.reqComp = 4;
-
+	outLoadedImage->reqComp = 4;
 
 #if defined( __ANDROID__ )
 	// android has the assets stored in the apk, so we'll have to access that, SDL will handle whether it's a file stored in
@@ -108,20 +109,45 @@ int gfxUtil_LoadTexture( const char* fileName, Texture* outTexture )
 	}
 	SDL_RWclose( file );
 
-	image.data = stbi_load_from_memory( buffer, (int)fileSize, &( image.width ), &( image.height ), &( image.comp ), image.reqComp );
+	outLoadedImage->data = stbi_load_from_memory( buffer, (int)fileSize,
+		&( outLoadedImage->width ), &( outLoadedImage->height ), &( outLoadedImage->comp ), outLoadedImage->reqComp );
 
 	mem_Release( buffer );
 #else
-	image.data = stbi_load( fileName, &( image.width ), &( image.height ), &( image.comp ), image.reqComp );
+	outLoadedImage->data = stbi_load( fileName,
+		&( outLoadedImage->width ), &( outLoadedImage->height ),
+		&( outLoadedImage->comp ), outLoadedImage->reqComp );
 #endif
 
-	if( image.data == NULL ) {
+	if( outLoadedImage->data == NULL ) {
+		llog( LOG_INFO, "Unable to load image %s! STB Error: %s", fileName, stbi_failure_reason( ) );
+		return -1;
+	}
+
+	return 0;
+}
+
+/*
+Loads the image at the file name. Takes in a pointer to a Texture structure that it puts all the generated data into.
+ Returns >= 0 on success, < 0 on failure.
+*/
+int gfxUtil_LoadTexture( const char* fileName, Texture* outTexture )
+{
+	LoadedImage image = { 0 };
+	int returnCode = 0;
+
+	if( outTexture == NULL ) {
+		llog( LOG_INFO, "Null outTexture passed for file %s!", fileName );
+		goto clean_up;
+	}
+
+	if( gfxUtil_LoadImage( fileName, &image ) < 0 ) {
 		llog( LOG_INFO, "Unable to load image %s! STB Error: %s", fileName, stbi_failure_reason( ) );
 		returnCode = -1;
 		goto clean_up;
 	}
 
-	if( createTextureFromLoadedImage( GL_RGBA, &image, outTexture ) < 0 ) {
+	if( gfxUtil_CreateTextureFromLoadedImage( GL_RGBA, &image, outTexture ) < 0 ) {
 		returnCode = -1;
 		goto clean_up;
 	}
@@ -203,7 +229,7 @@ int gfxUtil_CreateTextureFromRGBABitmap( uint8_t* data, int width, int height, T
 		goto clean_up;
 	}
 
-	if( createTextureFromLoadedImage( GL_RGBA, &image, outTexture ) < 0 ) {
+	if( gfxUtil_CreateTextureFromLoadedImage( GL_RGBA, &image, outTexture ) < 0 ) {
 		returnCode = -1;
 		goto clean_up;
 	}
@@ -241,7 +267,7 @@ int gfxUtil_CreateTextureFromAlphaBitmap( uint8_t* data, int width, int height, 
 #else
 	texFormat = GL_RED;
 #endif
-	if( createTextureFromLoadedImage( texFormat, &image, outTexture ) < 0 ) {
+	if( gfxUtil_CreateTextureFromLoadedImage( texFormat, &image, outTexture ) < 0 ) {
 		returnCode = -1;
 		goto clean_up;
 	}

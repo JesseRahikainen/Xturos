@@ -22,6 +22,8 @@
 
 #include "../System/platformLog.h"
 
+#include "../System/jobQueue.h"
+
 typedef struct {
 	int codepoint;
 	int imageID;
@@ -53,6 +55,7 @@ typedef struct {
 static int missingChar = 0x3F; // '?'
 
 static Font fonts[MAX_FONTS] = { 0 };
+// TODO: for localization we can define stbtt_pack_range for each language and link them together to be loaded
 stbtt_pack_range fontPackRange = { 0 };
 
 /*
@@ -267,6 +270,252 @@ clean_up:
 	return newFont;
 }
 
+typedef struct {
+	const char* fileName;
+	int* outFontID;
+
+	stbtt_pack_range packRange; // in case stuff changes while loading the font
+
+	// these are calculated after the font has been loaded and are saved out when the font is bound
+	float descent;
+	float lineGap;
+	float ascent;
+	float nextLineDescent;
+
+	int bmpWidth;
+	int bmpHeight;
+	unsigned char* bmpBuffer;
+} LoadFontData;
+
+static void cleanUpLoadFontTaskData( LoadFontData* data )
+{
+	if( data == NULL ) return;
+
+	mem_Release( data->packRange.chardata_for_range );
+	mem_Release( data->packRange.array_of_unicode_codepoints );
+	mem_Release( data->bmpBuffer );
+
+	mem_Release( data );
+}
+
+static void bindFontTask( void* data )
+{
+	int newFont = 0;
+	Vector2* mins = NULL;
+	Vector2* maxes = NULL;
+	int* retIDs = NULL;
+	LoadFontData* fontData = NULL;
+
+	if( data == NULL ) {
+		llog( LOG_ERROR, "NULL data passed to bindFontTask." );
+		goto clean_up;
+	}
+	fontData = (LoadFontData*)data;
+
+	// find an unused font ID
+	while( fonts[newFont].glyphsBuffer != NULL ) {
+		++newFont;
+	}
+	if( newFont >= MAX_FONTS ) {
+		llog( LOG_ERROR, "Unable to find empty font to use for %s", fontData->fileName );
+		goto clean_up;
+	}
+
+	// got the data, bind the images and create the font
+	// create all the glyphs for displaying
+	mins = mem_Allocate( sizeof( Vector2 ) * fontData->packRange.num_chars );
+	maxes = mem_Allocate( sizeof( Vector2 ) * fontData->packRange.num_chars );
+	retIDs = mem_Allocate( sizeof( int ) * fontData->packRange.num_chars );
+	if( ( mins == NULL ) || ( maxes == NULL ) || ( retIDs == NULL ) ) {
+		newFont = -1;
+		llog( LOG_ERROR, "Unable to allocate image data for %s", fontData->fileName );
+		goto clean_up;
+	}
+
+	// extract all the rectangles so we can split the image correctly
+	for( int i = 0; i < fontData->packRange.num_chars; ++i ) {
+		mins[i].x = fontData->packRange.chardata_for_range[i].x0;
+		mins[i].y = fontData->packRange.chardata_for_range[i].y0;
+		maxes[i].x = fontData->packRange.chardata_for_range[i].x1;
+		maxes[i].y = fontData->packRange.chardata_for_range[i].y1;
+	}
+
+	// create the images for the glyphs and record everything
+	//  clamp to either on or off
+	fonts[newFont].packageID = img_SplitAlphaBitmap( fontData->bmpBuffer, fontData->bmpWidth, fontData->bmpHeight,
+		fontData->packRange.num_chars, ST_ALPHA_ONLY, mins, maxes, retIDs );
+	if( fonts[newFont].packageID < 0 ) {
+		llog( LOG_ERROR, "Unable to split images for font %s", fontData->fileName );
+		newFont = -1;
+		goto clean_up;
+	}
+
+	sb_Add( fonts[newFont].glyphsBuffer, fontData->packRange.num_chars );
+	if( fonts[newFont].glyphsBuffer == NULL ) {
+		newFont = -1;
+		llog( LOG_ERROR, "Unable to allocate glyphs for %s", fontData->fileName );
+		goto clean_up;
+	}
+
+	fonts[newFont].ascent = fontData->ascent;
+	fonts[newFont].descent = fontData->descent;
+	fonts[newFont].lineGap = fontData->lineGap;
+	fonts[newFont].nextLineDescent = fontData->nextLineDescent;
+
+	for( int i = 0; i < fontData->packRange.num_chars; ++i ) {
+		fonts[newFont].glyphsBuffer[i].codepoint = fontData->packRange.array_of_unicode_codepoints[i];
+		fonts[newFont].glyphsBuffer[i].imageID = retIDs[i];
+		fonts[newFont].glyphsBuffer[i].advance = fontData->packRange.chardata_for_range[i].xadvance;
+
+		if( fonts[newFont].glyphsBuffer[i].codepoint == missingChar ) {
+			fonts[newFont].missingCharGlyphIdx = i;
+		}
+
+		// set the offset for each glyph, the x0, y0, x1, and y1 of the quad determines the coordinates of the rectangle to use to render
+		//  the glyph as an offset of it's position, so we just set the offset as the middle point of that rectangle
+		stbtt_aligned_quad quad;
+		float dummyX = 0.0f;
+		float dummyY = 0.0f;
+		Vector2 offset = { 0.0f, 0.0f };
+		stbtt_GetPackedQuad( fontData->packRange.chardata_for_range, fontData->bmpWidth, fontData->bmpHeight, i, &dummyX, &dummyY, &quad, 0 );
+
+		offset.x = ( quad.x0 + quad.x1 ) / 2.0f;
+		offset.y = ( quad.y0 + quad.y1 ) / 2.0f;
+		img_SetOffset( retIDs[i], offset );
+	}
+
+	// all done, set our new font
+	(*(fontData->outFontID)) = newFont;
+
+clean_up:
+	mem_Release( mins );
+	mem_Release( maxes );
+	mem_Release( retIDs );
+
+	cleanUpLoadFontTaskData( fontData );
+}
+
+static void loadFontTask( void* data )
+{
+	uint8_t* buffer = NULL;
+	SDL_RWops* rwopsFile = NULL;
+
+	if( data == NULL ) {
+		return;
+	}
+
+	LoadFontData* fontData = (LoadFontData*)data;
+
+	// load the actual data here
+	size_t bufferSize = 1024 * 1024;
+	buffer = mem_Allocate( bufferSize * sizeof( uint8_t ) ); // megabyte sized buffer, should never load a file larger than this
+	if( buffer == NULL ) {
+		llog( LOG_WARN, "Error allocating font data buffer for %s", fontData->fileName );
+		goto failure;
+	}
+
+	rwopsFile = SDL_RWFromFile( fontData->fileName, "r" );
+	if( rwopsFile == NULL ) {
+		llog( LOG_ERROR, "Error opening font file %s", fontData->fileName );
+		goto failure;
+	}
+
+	size_t numRead = SDL_RWread( rwopsFile, (void*)buffer, sizeof( uint8_t ), bufferSize );
+	if( numRead >= bufferSize ) {
+		llog( LOG_ERROR, "Too much data read in from file %s", fontData->fileName );
+		goto clean_up;
+	}
+
+	// get some of the basic font stuff, need to do this so we can handle multiple lines of text
+	int ascent, descent, lineGap;
+	float scale;
+	stbtt_fontinfo font;
+	stbtt_InitFont( &font, buffer, 0 );
+	stbtt_GetFontVMetrics( &font, &ascent, &descent, &lineGap );
+	scale = stbtt_ScaleForPixelHeight( &font, fontData->packRange.font_size );
+	fontData->ascent = (float)ascent * scale;
+	fontData->descent = (float)descent * scale;
+	fontData->lineGap = (float)lineGap * scale;
+	fontData->nextLineDescent = fontData->ascent - fontData->descent + fontData->lineGap;
+	
+	// pack and create the 1 channel bitmap
+	// TODO: Better estimates of the width and height (find largest glyph we'll use and calculate using that?)
+	// TODO: clip the height to what we actually use
+	stbtt_pack_context packContext;
+	fontData->bmpWidth = 1024;
+	fontData->bmpHeight = 1024;
+	fontData->bmpBuffer = mem_Allocate( sizeof( unsigned char ) * fontData->bmpWidth * fontData->bmpHeight ); // the 4 allows room for expansion
+	if( fontData->bmpBuffer == NULL ) {
+		llog( LOG_ERROR, "Unable to allocate bitmap memory for %s", fontData->fileName );
+		goto failure;
+	}
+	// TODO: Test oversampling
+	if( !stbtt_PackBegin( &packContext, fontData->bmpBuffer, fontData->bmpWidth, fontData->bmpHeight, 0, 1, NULL ) ) {
+		llog( LOG_ERROR, "Unable to begin packing ranges for %s", fontData->fileName );
+		goto failure;
+	}
+//#error this looks to be where the issue is happening, something is wrong with the data that is loaded or how it's parsed
+	// so, how do we debug this?
+	// the data we're getting from PackFontRanges seems to be invalid, whatever we're getting in is invalid
+	// stbtt_PackFontRangesRenderIntoRects
+	// the code points are completely wrong, but only here
+	int wasPacked = stbtt_PackFontRanges( &packContext, (unsigned char*)buffer, 0, &( fontData->packRange ), 1 );
+	stbtt_PackEnd( &packContext );
+	if( !wasPacked ) {
+		llog( LOG_ERROR, "Unable to pack ranges for %s", fontData->fileName );
+		goto failure;
+	}
+
+	if( !jq_AddMainThreadJob( bindFontTask, data ) ) {
+		goto failure;
+	} else {
+		goto clean_up;
+	}
+
+failure:
+	cleanUpLoadFontTaskData( fontData );
+
+clean_up:
+	mem_Release( buffer );
+	SDL_RWclose( rwopsFile );
+}
+
+/*
+Loads the font at file name on a seperate thread. Uses a height of pixelHeight.
+This will initialize a bunch of stuff but not do any of the loading.
+ Puts the resulting font ID into outFontID.
+*/
+void txt_ThreadedLoadFont( const char* fileName, float pixelHeight, int* outFontID )
+{
+	(*outFontID) = -1;
+
+	LoadFontData* data = mem_Allocate( sizeof( LoadFontData ) );
+	if( data == NULL ) {
+		llog( LOG_WARN, "Unable to create data for threaded font load for file %s", fileName );
+		return;
+	}
+
+	// initalize all the data we'll need
+	data->fileName = fileName;
+	data->outFontID = outFontID;
+
+	data->packRange.font_size = pixelHeight;
+	data->packRange.num_chars = fontPackRange.num_chars;
+	data->packRange.first_unicode_codepoint_in_range = fontPackRange.first_unicode_codepoint_in_range;
+
+	data->packRange.chardata_for_range = mem_Allocate( sizeof( stbtt_packedchar ) * data->packRange.num_chars );
+
+	size_t codePointsSize = sizeof( data->packRange.array_of_unicode_codepoints[0] ) * sb_Count( fontPackRange.array_of_unicode_codepoints );
+	data->packRange.array_of_unicode_codepoints = mem_Allocate( codePointsSize );
+	memcpy( data->packRange.array_of_unicode_codepoints, fontPackRange.array_of_unicode_codepoints, codePointsSize );
+
+	data->bmpBuffer = NULL;
+
+	if( !jq_AddJob( loadFontTask, data ) ) {
+		cleanUpLoadFontTaskData( data );
+	}
+}
+
 void txt_UnloadFont( int fontID )
 {
 	assert( fontID >= 0 );
@@ -405,6 +654,8 @@ void txt_DisplayString( const char* utf8Str, Vector2 pos, Color clr, HorizTextAl
 {
 	assert( utf8Str != NULL );
 
+	if( fontID < 0 ) return;
+
 	// TODO: Alignment options?
 	// TODO: Handle multi-line text better (sometimes letters overlap right now)
 	const uint8_t* str = (uint8_t*)utf8Str;
@@ -477,6 +728,10 @@ bool txt_DisplayTextArea( const uint8_t* utf8Str, Vector2 upperLeft, Vector2 siz
 	int camFlags, int8_t depth )
 {
 	assert( utf8Str != NULL );
+
+	if( fontID < 0 ) {
+		return false;
+	}
 
 	const uint8_t* str = (uint8_t*)utf8Str;
 

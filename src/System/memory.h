@@ -5,8 +5,19 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+// TODO: Make thread safe! Lets start out with the easiest way and just have a mutex we use around the various
+//  memory functions.
+/*
+Need to make this thread safe! But how? With all the functionality I want for it, especially for debugging
+ we'll need to use a mutex for each pool. Will also need internal versions of the logging functions that don't
+ lock the mutex (assume it has already been locked at the top).
+ We'll just wrap each function in mutex lock/unlock. Will be the quickest way to get this working.
+ Will also need internal versions of the logging and debugging functions that don't lock the mutex.
+*/
+
 int mem_Init( size_t totalSize );
 void mem_CleanUp( void );
+
 void mem_Log( void );
 void mem_LogAddressBlockData( void* ptr, const char* extra );
 void mem_Verify( void );

@@ -38,6 +38,12 @@ Loads the font at fileName, with a height of pixelHeight.
 int txt_LoadFont( const char* fileName, float pixelHeight );
 
 /*
+Loads the font at file name on a seperate thread. Uses a height of pixelHeight.
+ Puts the resulting font ID into outFontID
+*/
+void txt_ThreadedLoadFont( const char* fileName, float pixelHeight, int* outFontID );
+
+/*
 Frees up the font specified by fontID.
 */
 void txt_UnloadFont( int fontID );

@@ -23,6 +23,29 @@ typedef struct {
 	Texture texture;
 } AtlasResult;
 
+typedef struct {
+	unsigned char* data;
+	int width, height, reqComp, comp;
+} LoadedImage;
+
+/*
+Clean up anything that was created in a loaded image.
+*/
+void gfxUtil_ReleaseLoadedImage( LoadedImage* image );
+
+/*
+Converts the LoadedImage into a texture, putting everything in outTexture. All LoadedImages are assumed to be in RGBA format.
+ Returns >= 0 if everything went fine, < 0 if something went wrong.
+*/
+int gfxUtil_CreateTextureFromLoadedImage( GLenum texFormat, LoadedImage* image, Texture* outTexture );
+
+/*
+ Loads the data from fileName into outLoadedImage, used as an intermediary between loading and creating
+  a texture.
+  Returns >= 0 on success, < 0 on failure.
+*/
+int gfxUtil_LoadImage( const char* fileName, LoadedImage* outLoadedImage );
+
 /*
 Loads the image at the file name. Takes in a pointer to a Texture structure that it puts all the generated data into.
  Returns >= 0 on success, < 0 on failure.

@@ -27,6 +27,7 @@
 #include "gameState.h"
 #include "Game/gameScreen.h"
 #include "Game/testAStarScreen.h"
+#include "Game/testJobQueueScreen.h"
 
 #include "System/memory.h"
 #include "System/systems.h"
@@ -35,6 +36,8 @@
 
 #include "Graphics\debugRendering.h"
 #include "Graphics\glPlatform.h"
+
+#include "System/jobQueue.h"
 
 #define RENDER_WIDTH 800
 #define RENDER_HEIGHT 600
@@ -62,6 +65,8 @@ the second number is how many times per second it will update */
 
 void cleanUp( void )
 {
+	jq_ShutDown( );
+
 	SDL_DestroyWindow( window );
 	window = NULL;
 
@@ -159,9 +164,7 @@ int initEverything( void )
 	oglCFGFile = cfg_OpenFile( "opengl.cfg" );
 #endif
 	cfg_GetInt( oglCFGFile, "MAJOR", 3, &majorVersion );
-	printf( "major: %i\n", majorVersion );
 	cfg_GetInt( oglCFGFile, "MINOR", 3, &minorVersion );
-	printf( "minor: %i\n", minorVersion );
 	cfg_GetInt( oglCFGFile, "RED_SIZE", 8, &redSize );
 	cfg_GetInt( oglCFGFile, "GREEN_SIZE", 8, &greenSize );
 	cfg_GetInt( oglCFGFile, "BLUE_SIZE", 8, &blueSize );
@@ -339,6 +342,9 @@ void mainLoop( void* v )
 		inGameIMGUI.clear = true;
 	}
 
+	// process all the jobs we need the main thread for, using this reduces the need for synchronization
+	jq_ProcessMainThreadJobs( );
+
 	// do the actual drawing for this frame
 	float dt = (float)tickDelta / 1000.0f;
 	cam_Update( dt );
@@ -349,11 +355,12 @@ void mainLoop( void* v )
 
 int main( int argc, char** argv )
 {
-#ifdef _DEBUG
+/*#ifdef _DEBUG
 	SDL_LogSetAllPriority( SDL_LOG_PRIORITY_VERBOSE );
 #else
 	SDL_LogSetAllPriority( SDL_LOG_PRIORITY_WARN );
-#endif
+#endif//*/
+
 	SDL_LogSetAllPriority( SDL_LOG_PRIORITY_VERBOSE );
 
 	if( initEverything( ) < 0 ) {
@@ -371,7 +378,8 @@ int main( int argc, char** argv )
 #endif
 
 	//gsmEnterState( &globalFSM, &gameScreenState );
-	gsmEnterState( &globalFSM, &testAStarScreenState );
+	//gsmEnterState( &globalFSM, &testAStarScreenState );
+	gsmEnterState( &globalFSM, &testJobQueueScreenState );
 
 #if defined( __EMSCRIPTEN__ )
 	emscripten_set_main_loop_arg( mainLoop, NULL, -1, 1 );
