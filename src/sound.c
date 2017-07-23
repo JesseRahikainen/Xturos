@@ -48,7 +48,7 @@ void snd_ChangeStreamVolume( int streamID, float volume ) { }
 void snd_ChangeStreamPan( int streamID, float pan ) { }
 void snd_UnloadStream( int streamID ) { }
 
-#else
+#else//*/
 
 // TODO: Get pitch shifting working with stereo sounds.
 typedef struct {

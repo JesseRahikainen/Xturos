@@ -60,7 +60,7 @@
       </PrecompiledHeader>
       <WarningLevel>Level4</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;_LIB;GLEW_STATIC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;_LIB;GLEW_STATIC;THREAD_SUPPORT;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <TreatWarningAsError>true</TreatWarningAsError>
       <ExceptionHandling>false</ExceptionHandling>
@@ -83,7 +83,7 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;GLEW_STATIC;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;GLEW_STATIC;_LIB;THREAD_SUPPORT;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <TreatWarningAsError>true</TreatWarningAsError>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <DisableSpecificWarnings>4100;4189;4201;4996;4127;4756</DisableSpecificWarnings>
@@ -102,6 +102,7 @@
     <ClInclude Include="src\Game\gameScreen.h" />
     <ClInclude Include="src\Game\testAStarScreen.h" />
     <ClInclude Include="src\Game\testJobQueueScreen.h" />
+    <ClInclude Include="src\Game\testSoundsScreen.h" />
     <ClInclude Include="src\Graphics\camera.h" />
     <ClInclude Include="src\Graphics\color.h" />
     <ClInclude Include="src\Graphics\debugRendering.h" />
@@ -151,6 +152,7 @@
     <ClCompile Include="src\Game\gameScreen.c" />
     <ClCompile Include="src\Game\testAStarScreen.c" />
     <ClCompile Include="src\Game\testJobQueueScreen.c" />
+    <ClCompile Include="src\Game\testSoundsScreen.c" />
     <ClCompile Include="src\Graphics\camera.c" />
     <ClCompile Include="src\Graphics\color.c" />
     <ClCompile Include="src\Graphics\debugRendering.c" />

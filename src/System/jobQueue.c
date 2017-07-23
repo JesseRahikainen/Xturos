@@ -51,8 +51,6 @@ int jq_Initialize( uint8_t numThreads )
 {
 	assert( numThreads > 0 );
 
-	SDL_AtomicSet( &quitFlag, 0 );
-
 	sbThreadPool = NULL;
 	jobQueue.ringBuffer = NULL;
 	mainThreadQueue.ringBuffer = NULL;
@@ -68,6 +66,9 @@ int jq_Initialize( uint8_t numThreads )
 		jq_ShutDown( );
 		return -1;
 	}
+
+#ifdef THREAD_SUPPORT
+	SDL_AtomicSet( &quitFlag, 0 );
 
 	jobQueueSemaphore = SDL_CreateSemaphore( 0 );
 	if( jobQueueSemaphore == NULL ) {
@@ -98,17 +99,20 @@ int jq_Initialize( uint8_t numThreads )
 		jq_ShutDown( );
 		return -1;
 	}
+#else
+	llog( LOG_INFO, "Compiled without support for threads, all jobs will be run on main thread." );
+#endif
 
 	return 0;
 }
 
 void jq_ShutDown( void )
 {
+#ifdef THREAD_SUPPORT
 	// signal to the threads that they need to shut down
 	SDL_AtomicSet( &quitFlag, 1 );
 
 	// wait for all the threads to shut down
-	printf( "thread count: %i\n", sb_Count( sbThreadPool ) );
 	for( size_t i = 0; i < sb_Count( sbThreadPool ); ++i ) {
 		SDL_SemPost( jobQueueSemaphore ); // get the threads to wake up
 
@@ -121,6 +125,7 @@ void jq_ShutDown( void )
 
 	SDL_DestroySemaphore( jobQueueSemaphore );
 	jobQueueSemaphore = NULL;
+#endif
 
 	jrq_CleanUp( &mainThreadQueue );
 	jrq_CleanUp( &jobQueue );
@@ -156,8 +161,14 @@ bool jq_AddMainThreadJob( JobProcessFunc proc, void* data )
 }
 
 // Goes through all the jobs added to the main thread and processes them
+//  If there is no threading support then all other jobs are processed here as well
 void jq_ProcessMainThreadJobs( void )
 {
+#ifndef THREAD_SUPPORT
+	while( jrq_ProcessNext( &jobQueue ) )
+		;
+#endif
+
 	while( jrq_ProcessNext( &mainThreadQueue ) )
 		;
 }

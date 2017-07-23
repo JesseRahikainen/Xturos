@@ -23,6 +23,7 @@ bool jq_ProcessNextJob( void );
 bool jq_AllJobsDone( void );
 
 // Goes through all the jobs added to the main thread and processes them
+//  If there is no threading support then all other jobs are processed here as well
 void jq_ProcessMainThreadJobs( void );
 
 #endif /* inclusion guard */

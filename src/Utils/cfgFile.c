@@ -26,13 +26,14 @@ typedef struct {
 // opens the file, returns NULL if it fails.
 void* cfg_OpenFile( const char* fileName )
 {
-	if( SDL_strlen( fileName ) >= 128 ) {
+	if( SDL_strlen( fileName ) >= ( FILE_PATH_LEN - 1 ) ) {
 		llog( LOG_ERROR, "Configuration file path too long" );
 		return NULL;
 	}
 
 	CFGFile* newFile = (CFGFile*)mem_Allocate( sizeof( CFGFile ) );
 	if( newFile == NULL ) {
+		llog( LOG_INFO, "Unable to open configuration file." );
 		return NULL;
 	}
 	newFile->sbAttributes = NULL;
@@ -50,6 +51,7 @@ void* cfg_OpenFile( const char* fileName )
 	char buffer[READ_BUFFER_SIZE];
 	size_t numRead;
 	char* fileText = NULL;
+	llog( LOG_INFO, "Stream size: %i", (int)SDL_RWsize( rwopsFile ) );
 	while( ( numRead = SDL_RWread( rwopsFile, (void*)buffer, sizeof( char ), sizeof( buffer ) ) ) != 0 ) {
 		char* c = sb_Add( fileText, (int)numRead );
 		for( size_t i = 0; i < numRead; ++i ) {
@@ -78,6 +80,7 @@ void* cfg_OpenFile( const char* fileName )
 		} else {
 			attr.value = SDL_atoi( token );
 			sb_Push( newFile->sbAttributes, attr );
+			llog( LOG_INFO, "New attribute: %s  %i", attr.fileName, attr.value );
 			gettingAttrName = 1;
 		}
 

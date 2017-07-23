@@ -66,6 +66,14 @@ typedef struct MemoryBlockHeader {
 	uint32_t postGuardValue;
 } MemoryBlockHeader;
 
+#ifdef THREAD_SUPPORT
+	#define LOCK_MEMORY_MUTEX( ) SDL_LockMutex( memoryBlock.mutex )
+	#define UNLOCK_MEMORY_MUTEX( ) SDL_UnlockMutex( memoryBlock.mutex )
+#else
+	#define LOCK_MEMORY_MUTEX( ) 
+	#define UNLOCK_MEMORY_MUTEX( ) 
+#endif
+
 // TODO: have all the functions take in a Memory structure so we can do something like memory pools. But how to do that without
 //   breaking having signatures similar to the standard c library memory allocation functions?
 // Could have an external pool used by everything that isn't in the engine, then a use other pools for in engine stuff
@@ -497,6 +505,7 @@ int mem_Init( size_t totalSize )
 
 	memoryBlock.memory = SDL_malloc(totalSize);
 	if( memoryBlock.memory == NULL ) {
+		llog( LOG_CRITICAL, "Error allocating memory." );
 		goto error_cleanup;
 	}
 
@@ -504,10 +513,13 @@ int mem_Init( size_t totalSize )
 
 	createNewBlock( memoryBlock.memory, NULL, NULL, totalSize - MEMORY_HEADER_SIZE, __FILE__, __LINE__ );
 
+#ifdef THREAD_SUPPORT
 	memoryBlock.mutex = SDL_CreateMutex( );
 	if( memoryBlock.mutex == NULL ) {
+		llog( LOG_CRITICAL, "Unable to create memory mutex: %s", SDL_GetError( ) );
 		goto error_cleanup;
 	}
+#endif
 
 	return 0;
 
@@ -522,65 +534,67 @@ void mem_CleanUp( void )
 	SDL_free( memoryBlock.memory );
 	memoryBlock.memory = NULL;
 
+#ifdef THREAD_SUPPORT
 	SDL_DestroyMutex( memoryBlock.mutex );
+#endif
 }
 
 void mem_Log( void )
 {
-	SDL_LockMutex( memoryBlock.mutex ); {
+	LOCK_MEMORY_MUTEX( ); {
 		internal_log( );
-	} SDL_UnlockMutex( memoryBlock.mutex );
+	} UNLOCK_MEMORY_MUTEX( );
 }
 
 void mem_LogAddressBlockData( void* ptr, const char* extra )
 {
-	SDL_LockMutex( memoryBlock.mutex ); {
+	LOCK_MEMORY_MUTEX( ); {
 		internal_logAddressBlockData( ptr, extra );
-	} SDL_UnlockMutex( memoryBlock.mutex );
+	} UNLOCK_MEMORY_MUTEX( );
 }
 
 void mem_Verify( void )
 {
-	SDL_LockMutex( memoryBlock.mutex ); {
+	LOCK_MEMORY_MUTEX( ); {
 		internal_verify( );
-	} SDL_UnlockMutex( memoryBlock.mutex );
+	} UNLOCK_MEMORY_MUTEX( );
 }
 
 bool mem_GetVerify( void )
 {
 	bool ret;
-	SDL_LockMutex( memoryBlock.mutex ); {
+	LOCK_MEMORY_MUTEX( ); {
 		ret = internal_getVerify( );
-	} SDL_UnlockMutex( memoryBlock.mutex );
+	} UNLOCK_MEMORY_MUTEX( );
 	return ret;
 }
 
 void mem_VerifyPointer( void* p )
 {
-	SDL_LockMutex( memoryBlock.mutex ); {
+	LOCK_MEMORY_MUTEX( ); {
 		internal_verifyPointer( p );
-	} SDL_UnlockMutex( memoryBlock.mutex );
+	} UNLOCK_MEMORY_MUTEX( );
 }
 
 void mem_Report( void )
 {
-	SDL_LockMutex( memoryBlock.mutex ); {
+	LOCK_MEMORY_MUTEX( ); {
 		internal_report( );
-	} SDL_UnlockMutex( memoryBlock.mutex );
+	} UNLOCK_MEMORY_MUTEX( );
 }
 
 void mem_GetReportValues( size_t* totalOut, size_t* inUseOut, size_t* overheadOut, uint32_t* fragmentsOut )
 {
-	SDL_LockMutex( memoryBlock.mutex ); {
+	LOCK_MEMORY_MUTEX( ); {
 		internal_getReportValues( totalOut, inUseOut, overheadOut, fragmentsOut );
-	} SDL_UnlockMutex( memoryBlock.mutex );
+	} UNLOCK_MEMORY_MUTEX( );
 }
 
 void* mem_Allocate_Data( size_t size, const char* fileName, const int line )
 {
 	uint8_t* result = NULL;
 
-	SDL_LockMutex( memoryBlock.mutex ); {
+	LOCK_MEMORY_MUTEX( ); {
 #ifdef TEST_EVERY_CHANGE
 		internal_verify( );
 #endif
@@ -633,7 +647,7 @@ void* mem_Allocate_Data( size_t size, const char* fileName, const int line )
 
 		logWatchedMemoryAddressChange( (MemoryBlockHeader*)( (uint8_t*)result - MEMORY_HEADER_SIZE ), "mem_Allocate_Data", NULL );
 
-	} SDL_UnlockMutex( memoryBlock.mutex );
+	} UNLOCK_MEMORY_MUTEX( );
 
 	return (void*)result;
 }
@@ -641,7 +655,7 @@ void* mem_Allocate_Data( size_t size, const char* fileName, const int line )
 void* mem_Resize_Data( void* memory, size_t newSize, const char* fileName, const int line )
 {
 	void* result = memory;
-	SDL_LockMutex( memoryBlock.mutex ); {
+	LOCK_MEMORY_MUTEX( ); {
 #ifdef TEST_EVERY_CHANGE
 		internal_verify( );
 #endif
@@ -678,31 +692,31 @@ void* mem_Resize_Data( void* memory, size_t newSize, const char* fileName, const
 
 		logWatchedMemoryAddressChange( (MemoryBlockHeader*)( (uintptr_t)result - MEMORY_HEADER_SIZE ), "mem_Resize_Data", NULL );
 
-	} SDL_UnlockMutex( memoryBlock.mutex );
+	} UNLOCK_MEMORY_MUTEX( );
 
 	return result;
 }
 
 void mem_Release_Data( void* memory, const char* fileName, const int line )
 {
-	SDL_LockMutex( memoryBlock.mutex ); {
+	LOCK_MEMORY_MUTEX( ); {
 		internal_release_Data( memory, fileName, line );
-	} SDL_UnlockMutex( memoryBlock.mutex );
+	} UNLOCK_MEMORY_MUTEX( );
 }
 
 void mem_WatchAddress( void* ptr )
 {
-	SDL_LockMutex( memoryBlock.mutex ); {
+	LOCK_MEMORY_MUTEX( ); {
 		internal_watchAddress( ptr );
-	} SDL_UnlockMutex( memoryBlock.mutex );
+	} UNLOCK_MEMORY_MUTEX( );
 }
 
 
 void mem_UnWatchAddress( void* ptr )
 {
-	SDL_LockMutex( memoryBlock.mutex ); {
+	LOCK_MEMORY_MUTEX( ); {
 		internal_unwatchAddress( ptr );
-	} SDL_UnlockMutex( memoryBlock.mutex );
+	} UNLOCK_MEMORY_MUTEX( );
 }
 
 void mem_RunTests( void )

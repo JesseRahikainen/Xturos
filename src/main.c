@@ -28,6 +28,7 @@
 #include "Game/gameScreen.h"
 #include "Game/testAStarScreen.h"
 #include "Game/testJobQueueScreen.h"
+#include "Game/testSoundsScreen.h"
 
 #include "System/memory.h"
 #include "System/systems.h"
@@ -55,7 +56,7 @@ static unsigned int lastTicks;
 static unsigned int physicsTickAcc;
 static SDL_Window* window;
 static SDL_RWops* logFile;
-static const char* windowName = "Tiny Tactics";
+static const char* windowName = "Xturos";
 
 /* making PHYSICS_TICK to something that will result in a whole number should lead to better results
 the second number is how many times per second it will update */
@@ -159,10 +160,13 @@ int initEverything( void )
 
 	void* oglCFGFile;
 #if defined( __EMSCRIPTEN__ )
+	// NOTE: If you run into an errors with opening this file check to see if you're using FireFox, if
+	//  you are then switch to a different browser for testing.
 	oglCFGFile = cfg_OpenFile( "webgl.cfg" );
 #else
 	oglCFGFile = cfg_OpenFile( "opengl.cfg" );
 #endif
+
 	cfg_GetInt( oglCFGFile, "MAJOR", 3, &majorVersion );
 	cfg_GetInt( oglCFGFile, "MINOR", 3, &minorVersion );
 	cfg_GetInt( oglCFGFile, "RED_SIZE", 8, &redSize );
@@ -189,8 +193,10 @@ int initEverything( void )
     SDL_GL_SetAttribute( SDL_GL_DOUBLEBUFFER, 1 );
 //#endif
 
+	llog( LOG_INFO, "%i.%i", majorVersion, minorVersion );
 	window = SDL_CreateWindow( windowName, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
 		WINDOW_WIDTH, WINDOW_HEIGHT, SDL_WINDOW_SHOWN | SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE );
+
 	if( window == NULL ) {
 		llog( LOG_ERROR, "%s", SDL_GetError( ) );
 		return -1;
@@ -379,7 +385,8 @@ int main( int argc, char** argv )
 
 	//gsmEnterState( &globalFSM, &gameScreenState );
 	//gsmEnterState( &globalFSM, &testAStarScreenState );
-	gsmEnterState( &globalFSM, &testJobQueueScreenState );
+	//gsmEnterState( &globalFSM, &testJobQueueScreenState );
+	gsmEnterState( &globalFSM, &testSoundsScreenState );
 
 #if defined( __EMSCRIPTEN__ )
 	emscripten_set_main_loop_arg( mainLoop, NULL, -1, 1 );
