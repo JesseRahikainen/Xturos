@@ -484,6 +484,22 @@ int img_GetSize( int idx, Vector2* out )
 }
 
 /*
+Gets the texture id for the image, used if you need to render it directly instead of going through this.
+ Returns whether out was successfully set or not.
+*/
+int img_GetTextureID( int idx, GLuint* out )
+{
+	assert( out != NULL );
+
+	if( ( idx < 0 ) || ( !( images[idx].flags & IMGFLAG_IN_USE ) ) || ( idx >= MAX_IMAGES ) ) {
+		return -1;
+	}
+
+	(*out) = images[idx].textureObj;
+	return 0;
+}
+
+/*
 initializes the structure so only what's used needs to be set, also fill in
   some stuff that all of the queueRenderImage functions use, returns the pointer
   for further setting of other stuff
@@ -756,7 +772,7 @@ int img_Draw3x3_c( int imgUL, int imgUC, int imgUR, int imgML, int imgMC, int im
 	DRAW_SECTION( imgML, leftPosStart, midVertPosStart, leftPosEnd, midVertPosEnd, 1.0f, midHeightScaleStart, 1.0f, midHeightScaleEnd );
 
 	// mid-center
-	DRAW_SECTION( imgML, midHorizPosStart, midVertPosStart, midHorizPosEnd, midVertPosEnd,
+	DRAW_SECTION( imgMC, midHorizPosStart, midVertPosStart, midHorizPosEnd, midVertPosEnd,
 		midWidthScaleStart, midHeightScaleStart, midWidthScaleEnd, midHeightScaleEnd );
 
 	// mid-right

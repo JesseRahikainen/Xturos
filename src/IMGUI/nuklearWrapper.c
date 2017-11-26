@@ -303,7 +303,10 @@ void nk_xu_handleEvent( NuklearWrapper* xu, SDL_Event* evt )
         memcpy( glyph, evt->text.text, NK_UTF_SIZE );
         nk_input_glyph( ctx, glyph );
     } else if( evt->type == SDL_MOUSEWHEEL ) {
-        nk_input_scroll( ctx, (float)evt->wheel.y );
+		struct nk_vec2 scroll;
+		scroll.y = (float)evt->wheel.y;
+		scroll.x = (float)evt->wheel.x;
+        nk_input_scroll( ctx, scroll );
     }
 }
 

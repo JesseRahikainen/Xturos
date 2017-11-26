@@ -10,10 +10,87 @@
 #include "Math/vector2.h"
 #include "Math/mathUtil.h"
 
+// used if we don't want to ever handle collisions between these two types.
+static int invalidCollision( Collider* primary, Collider* secondard, Vector2* outSeparation )
+{
+	return 0;
+}
+
+static int AABBvHalfSpace( Collider* primary, Collider* secondary, Vector2* outSeparation )
+{
+	// just test all the corners, the deepest one determines the separation
+	Vector2 corners[4];
+
+	corners[0] = primary->aabb.center;
+	corners[0].x += primary->aabb.halfDim.x;
+	corners[0].y += primary->aabb.halfDim.y;
+
+	corners[1] = primary->aabb.center;
+	corners[1].x -= primary->aabb.halfDim.x;
+	corners[1].y += primary->aabb.halfDim.y;
+
+	corners[2] = primary->aabb.center;
+	corners[2].x -= primary->aabb.halfDim.x;
+	corners[2].y -= primary->aabb.halfDim.y;
+
+	corners[3] = primary->aabb.center;
+	corners[3].x += primary->aabb.halfDim.x;
+	corners[3].y -= primary->aabb.halfDim.y;
+
+	float deepest = FLT_MAX;
+	for( int i = 0; i < 4; ++i ) {
+		float dist = vec2_DotProduct( &( corners[i] ), &( secondary->halfSpace.normal ) ) - secondary->halfSpace.d;
+		if( dist < deepest ) {
+			deepest = dist;
+		}
+	}
+
+	if( deepest >= 0.0f ) {
+		return 0;
+	}
+
+	vec2_Scale( &( secondary->halfSpace.normal ), -deepest, outSeparation );
+	return 1;
+}
+
+static int HalfSpacevAABB( Collider* primary, Collider* secondary, Vector2* outSeparation )
+{
+	if( AABBvHalfSpace( primary, secondary, outSeparation ) ) {
+		outSeparation->x = -outSeparation->x;
+		outSeparation->y = -outSeparation->y;
+		return 1;
+	}
+
+	return 0;
+}
+
+static int CirclevHalfSpace( Collider* primary, Collider* secondary, Vector2* outSeparation )
+{
+	float dist = vec2_DotProduct( &( primary->circle.center ), &( secondary->halfSpace.normal ) ) - secondary->halfSpace.d;
+	if( dist > primary->circle.radius ) {
+		return 0;
+	}
+
+	vec2_Scale( &( secondary->halfSpace.normal ), ( primary->circle.radius - dist ), outSeparation );
+
+	return 1;
+}
+
+static int HalfSpacevCircle( Collider* primary, Collider* secondary, Vector2* outSeparation )
+{
+	if( CirclevHalfSpace( primary, secondary, outSeparation ) ) {
+		outSeparation->x = -outSeparation->x;
+		outSeparation->y = -outSeparation->y;
+		return 1;
+	}
+
+	return 0;
+}
+
 /*
 Determines if the collider primary overlaps with fixed, and if they do how much primary has to be moved to stop colliding.
 */
-int AABBvAABB( Collider* primary, Collider* fixed, Vector2* outSeparation )
+static int AABBvAABB( Collider* primary, Collider* fixed, Vector2* outSeparation )
 {
 	Vector2 penetration;
 	Vector2 sumDim;
@@ -163,8 +240,9 @@ int CirclevCircle( Collider* primary, Collider* fixed, Vector2* outSeparation )
 /* define all the collider functions, the first should always be the responding object, the second the fixed object */
 typedef int(*CollisionCheck)( Collider* primary, Collider* fixed, Vector2* outSeparation );
 CollisionCheck collisionChecks[NUM_COLLIDER_TYPES][NUM_COLLIDER_TYPES] = {
-	{ AABBvAABB, AABBvCircle },
-	{ CirclevAABB, CirclevCircle }
+	{ AABBvAABB, AABBvCircle, AABBvHalfSpace },
+	{ CirclevAABB, CirclevCircle, CirclevHalfSpace },
+	{ HalfSpacevAABB, HalfSpacevCircle, invalidCollision }
 };
 
 /* raycasting intersection functions */
@@ -265,8 +343,24 @@ int RayCastvCircle( Vector2* start, Vector2* dir, Collider* collider, float* t, 
 	return 1;
 }
 
+int RayCastvHalfSpace( Vector2* start, Vector2* dir, Collider* collider, float* t, Vector2* pt )
+{
+	// if the ray starts inside the half space we'll consider the collision at the rays origin
+
+	float nDotA = vec2_DotProduct( &( collider->halfSpace.normal ), start );
+	float nDotDir = vec2_DotProduct( &( collider->halfSpace.normal ), dir );
+	(*t) = ( collider->halfSpace.d - nDotA ) / nDotDir;
+
+	if( ( (*t) >= 0.0f ) && ( (*t) <= 1.0f ) ) {
+		vec2_AddScaled( start, dir, (*t), pt );
+		return 1;
+	}
+
+	return 0;
+}
+
 typedef int(*RayCastCheck)( Vector2* start, Vector2* dir, Collider* collider, float* t, Vector2* pt );
-RayCastCheck rayCastChecks[NUM_COLLIDER_TYPES] = { RayCastvAABB, RayCastvCircle };
+RayCastCheck rayCastChecks[NUM_COLLIDER_TYPES] = { RayCastvAABB, RayCastvCircle, RayCastvHalfSpace };
 
 /*
 Finds the separation needed for c1 to move and not overlap c2.
@@ -276,6 +370,10 @@ Finds the separation needed for c1 to move and not overlap c2.
 int collision_GetSeparation( Collider* c1, Collider* c2, Vector2* outSeparation )
 {
 	if( ( c1 == NULL ) || ( c2 == NULL ) || ( outSeparation == NULL ) ) {
+		return 0;
+	}
+
+	if( ( c1->type == CT_DEACTIVATED ) || ( c2->type == CT_DEACTIVATED ) ) {
 		return 0;
 	}
 
@@ -452,6 +550,21 @@ float collision_Distance( Collider* collider, Vector2* pos )
 	}
 
 	return dist;
+}
+
+/*
+Helper function to create a half-space collider from a position and normal.
+*/
+void collision_CalculateHalfSpace( const Vector2* pos, const Vector2* normal, Collider* outCollider )
+{
+	assert( outCollider != NULL );
+	assert( pos != NULL );
+	assert( normal != NULL );
+
+	outCollider->type = CT_HALF_SPACE;
+	outCollider->halfSpace.normal = (*normal);
+	vec2_Normalize( &( outCollider->halfSpace.normal ) );
+	outCollider->halfSpace.d = vec2_DotProduct( &( outCollider->halfSpace.normal ), pos );
 }
 
 /*

@@ -50,6 +50,22 @@ void cam_SetProjectionMatrices( int width, int height)
 }
 
 /*
+Directly sets the state of the camera. Only use this if you don't want
+ the camera to lerp between frames.
+ Returns <0 if there's a problem.
+*/
+int cam_SetState( int camera, Vector2 pos, float scale )
+{
+	assert( camera < NUM_CAMERAS );
+
+	cameras[camera].start.pos = pos;
+	cameras[camera].start.scale = scale;
+	cameras[camera].end.pos = pos;
+	cameras[camera].end.scale = scale;
+	return 0;
+}
+
+/*
 Set the state the camera will be at at the end of the next frame.
  Returns <0 if there's a problem.
 */
@@ -63,7 +79,7 @@ int cam_SetNextState( int camera, Vector2 pos, float scale )
 }
 
 /*
-Takes the current state and adds a value to it to set the next state;
+Takes the current state and adds a value to it to set the next state. This will undo any previous call to cam_MoveNextState
  Returns <0 if there's a problem.
 */
 int cam_MoveNextState( int camera, Vector2 delta, float scaleDelta )
@@ -71,6 +87,23 @@ int cam_MoveNextState( int camera, Vector2 delta, float scaleDelta )
 	assert( camera < NUM_CAMERAS );
 	vec2_Add( &( cameras[camera].start.pos ), &delta, &( cameras[camera].end.pos ) );
 	cameras[camera].end.scale = cameras[camera].start.scale + scaleDelta;
+	if( cameras[camera].end.scale < 0.0f ) {
+		cameras[camera].end.scale = 0.0f;
+	}
+	return 0;
+}
+
+int cam_GetCurrPos( int camera, Vector2* outPos )
+{
+	assert( camera < NUM_CAMERAS );
+	(*outPos) = cameras[camera].start.pos;
+	return 0;
+}
+
+int cam_GetNextPos( int camera, Vector2* outPos )
+{
+	assert( camera < NUM_CAMERAS );
+	(*outPos) = cameras[camera].end.pos;
 	return 0;
 }
 

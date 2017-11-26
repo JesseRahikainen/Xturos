@@ -18,6 +18,13 @@ Creates the base projection matrices for all the cameras.
 void cam_SetProjectionMatrices( int width, int height );
 
 /*
+Directly sets the state of the camera. Only use this if you don't want
+ the camera to lerp between frames.
+ Returns <0 if there's a problem.
+*/
+int cam_SetState( int camera, Vector2 pos, float scale );
+
+/*
 Set the state the camera will be at at the end of the next frame.
  Returns <0 if there's a problem.
 */
@@ -28,6 +35,9 @@ Takes the current state and adds a value to it to set the next state;
  Returns <0 if there's a problem.
 */
 int cam_MoveNextState( int camera, Vector2 delta, float scaleDelta );
+
+int cam_GetCurrPos( int camera, Vector2* outPos );
+int cam_GetNextPos( int camera, Vector2* outPos );
 
 /*
 Do everything that needs to be done when starting a new render set.

@@ -72,6 +72,12 @@ Gets the size of the image, putting it into the out Vector2. Returns a negative 
 int img_GetSize( int idx, Vector2* out );
 
 /*
+Gets the texture id for the image, used if you need to render it directly instead of going through this.
+ Returns whether out was successfully set or not.
+*/
+int img_GetTextureID( int idx, GLuint* out );
+
+/*
 Adds to the list of images to draw.
 */
 int img_Draw( int imgID, uint32_t camFlags, Vector2 startPos, Vector2 endPos, int8_t depth );

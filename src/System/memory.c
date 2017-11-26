@@ -85,9 +85,9 @@ typedef struct {
 
 	void* watchedAddress;
 	MemoryBlockHeader* watchedHeader;
-} Memory;
+} MemoryArena;
 
-static Memory memoryBlock;
+static MemoryArena memoryBlock;
 
 static void* watchedAddress = NULL;
 static MemoryBlockHeader* watchedHeader = NULL;

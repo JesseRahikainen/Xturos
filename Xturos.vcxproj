@@ -129,6 +129,12 @@
     <ClInclude Include="src\Others\gl_core.h" />
     <ClInclude Include="src\particles.h" />
     <ClInclude Include="src\sound.h" />
+    <ClInclude Include="src\System\ECPS\ecps_componentBitFlags.h" />
+    <ClInclude Include="src\System\ECPS\ecps_componentTypes.h" />
+    <ClInclude Include="src\System\ECPS\ecps_dataTypes.h" />
+    <ClInclude Include="src\System\ECPS\ecps_values.h" />
+    <ClInclude Include="src\System\ECPS\entityComponentProcessSystem.h" />
+    <ClInclude Include="src\System\entityIDs.h" />
     <ClInclude Include="src\System\jobQueue.h" />
     <ClInclude Include="src\System\jobRingQueue.h" />
     <ClInclude Include="src\System\memory.h" />
@@ -141,9 +147,8 @@
     <ClInclude Include="src\UI\text.h" />
     <ClInclude Include="src\Utils\aStar.h" />
     <ClInclude Include="src\Utils\cfgFile.h" />
-    <ClInclude Include="src\Utils\dictionary.h" />
+    <ClInclude Include="src\Utils\hashMap.h" />
     <ClInclude Include="src\Utils\helpers.h" />
-    <ClInclude Include="src\Utils\idSet.h" />
     <ClInclude Include="src\Utils\stretchyBuffer.h" />
   </ItemGroup>
   <ItemGroup>
@@ -182,6 +187,10 @@
     </ClCompile>
     <ClCompile Include="src\particles.c" />
     <ClCompile Include="src\sound.c" />
+    <ClCompile Include="src\System\ECPS\ecps_componentBitFlags.c" />
+    <ClCompile Include="src\System\ECPS\ecps_componentTypes.c" />
+    <ClCompile Include="src\System\ECPS\entityComponentProcessSystem.c" />
+    <ClCompile Include="src\System\entityIDs.c" />
     <ClCompile Include="src\System\jobQueue.c" />
     <ClCompile Include="src\System\jobRingQueue.c" />
     <ClCompile Include="src\System\memory.c" />
@@ -194,9 +203,8 @@
     <ClCompile Include="src\UI\text.c" />
     <ClCompile Include="src\Utils\aStar.c" />
     <ClCompile Include="src\Utils\cfgFile.c" />
-    <ClCompile Include="src\Utils\dictionary.c" />
+    <ClCompile Include="src\Utils\hashMap.c" />
     <ClCompile Include="src\Utils\helpers.c" />
-    <ClCompile Include="src\Utils\idSet.c" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="todo.txt" />

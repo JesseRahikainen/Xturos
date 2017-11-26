@@ -14,6 +14,7 @@ enum ColliderType {
 	CT_DEACTIVATED = -1,
 	CT_AABB,
 	CT_CIRCLE,
+	CT_HALF_SPACE,
 	NUM_COLLIDER_TYPES
 };
 
@@ -29,10 +30,17 @@ typedef struct {
 	float radius;
 } ColliderCircle;
 
+typedef struct {
+	enum ColliderType type;
+	Vector2 normal;
+	float d;
+} ColliderHalfSpace;
+
 typedef union {
 	enum ColliderType type;
 	ColliderAABB aabb;
 	ColliderCircle circle;
+	ColliderHalfSpace halfSpace;
 } Collider;
 
 typedef struct {
@@ -80,6 +88,11 @@ Finds the closest distance from the position to the collider, useful when you wa
  Returns a negative number if there were any problems.
 */
 float collision_Distance( Collider* collider, Vector2* position );
+
+/*
+Helper function to create a half-space collider from a position and normal.
+*/
+void collision_CalculateHalfSpace( const Vector2* pos, const Vector2* normal, Collider* outCollider );
 
 /*
 Renders collisions, for debugging.
