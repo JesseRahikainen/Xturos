@@ -1,0 +1,3 @@
+ndk-build = make a build
+ant debug = create a debug apk
+ant debug install = create and install debug apk
