@@ -1,7 +1,6 @@
 #include "ecps_componentTypes.h"
 
 #include <stdlib.h>
-#include <stdarg.h>
 #include <string.h>
 
 #include "../../Utils/stretchyBuffer.h"

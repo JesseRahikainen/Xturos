@@ -4,10 +4,11 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#include "../entityIDs.h"
+#include "../../Utils/idSet.h"
 #include "ecps_values.h"
 
 typedef uint32_t ComponentID;
+#define INVALID_COMPONENT_ID UINT32_MAX
 
 typedef int (*VerifyComponent)( EntityID entityID );
 
@@ -16,7 +17,7 @@ typedef struct {
 	size_t size;
 
 	// this was added to make sure the values of a component are correct (e.g. the character doesn't move off the screen)
-	//  more of a debugging tool than something you should use in a game
+	//  more of a debugging tool than something you should use in a game, think of it like an assert( )
 	VerifyComponent verify; 
 } ComponentType;
 
@@ -61,7 +62,7 @@ typedef struct {
 	ComponentTypeCollection componentTypes;
 	bool isRunning;
 	uint32_t id;
-	EntityIDSet idSet;
+	IDSet idSet;
 } ECPS;
 
 typedef struct {
@@ -70,9 +71,9 @@ typedef struct {
 	const PackageStructure* structure;
 } Entity;
 
-typedef void (*PreProcFunc)( void );
-typedef void (*ProcFunc)( const Entity* entity );
-typedef void (*PostProcFunc)( void );
+typedef void (*PreProcFunc)( ECPS* ecps );
+typedef void (*ProcFunc)( ECPS* ecps, const Entity* entity );
+typedef void (*PostProcFunc)( ECPS* ecps );
 
 typedef struct {
 	uint32_t ecpsID;

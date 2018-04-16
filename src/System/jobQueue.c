@@ -16,7 +16,7 @@ static JobRingQueue mainThreadQueue; // used for things that need to be done on 
 // returns if all the jobs are done or not
 bool jq_AllJobsDone( void )
 {
-	return jrq_IsEmpty( &jobQueue );
+	return ( jrq_IsEmpty( &jobQueue ) && !jrq_IsBusy( &jobQueue ) );
 }
 
 // non-static version for if we want the main thread to process jobs as well
@@ -32,10 +32,6 @@ static SDL_Thread** sbThreadPool = NULL;
 #include <stdio.h>
 static int jobThread( void* data )
 {
-	Job job;
-	job.process = NULL;
-	bool hasJob = false;
-
 	// check for new job
 	while( quitFlag.value == 0 ) {
 		if( !jrq_ProcessNext( &jobQueue ) ) {
@@ -86,7 +82,9 @@ int jq_Initialize( uint8_t numThreads )
 
 	size_t numThreadsCreated = 0;
 	for( size_t i = 0; i < sb_Count( sbThreadPool ); ++i ) {
-		sbThreadPool[i] = SDL_CreateThread( jobThread, "", NULL );
+		char name[16];
+		SDL_snprintf( name, SDL_arraysize( name ), "Wrkr_%i", i );
+		sbThreadPool[i] = SDL_CreateThread( jobThread, name, NULL );
 		if( sbThreadPool[i] == NULL ) {
 			llog( LOG_WARN, "Unable to create thread %i! Will continue with fewer threads. Reason: %s", i, SDL_GetError( ) );
 		} else {
@@ -140,13 +138,15 @@ static void addJob( JobProcessFunc proc, void* data, JobRingQueue* queue )
 	jrq_Write( queue, &newJob );
 }
 
+// TODO: Create a copy of the data so we don't have to worry about it disappearing while
+//  it's in use.
 bool jq_AddJob( JobProcessFunc proc, void* data )
 {
 	// trying to use these generates fatal error C1001, so fucking MSVC won't let us do any error checking...
-	//if( proc == NULL ) return;
+	//if( proc == NULL ) return false;
 	/*if( sbJobQueue == NULL ) {
 		llog( LOG_WARN, "Attempting to add job before job queue created." );
-		return;
+		return false;
 	}//*/
 	addJob( proc, data, &jobQueue );
 	SDL_SemPost( jobQueueSemaphore );

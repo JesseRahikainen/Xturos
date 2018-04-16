@@ -22,3 +22,4 @@ Map these to SDL_LOG_PRIORITY_INFO, SDL_LOG_PRIORITY_DEBUG, and SDL_LOG_PRIORITY
 Use SDL_LOG_PRIORITY_INFO for any messages we want sent out no matter what.
 Use SDL_LOG_PRIORITY_DEBUG for more detailed data for info level logs and extra to help trace what's happening.
 Use SDL_LOG_PRIORITY_VERBOSE for log spam and other such things that might effect performance.
+Have this configurable, so we can switch it on the fly.

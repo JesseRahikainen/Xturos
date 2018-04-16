@@ -76,322 +76,349 @@
     <Filter Include="Header Files\System\ECPS">
       <UniqueIdentifier>{5d46147a-c1d1-4d71-860d-63f8f432a042}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Components">
+      <UniqueIdentifier>{119e7b3c-b962-4b30-85d3-9898f61f3d4a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Processes">
+      <UniqueIdentifier>{4822f748-13da-42fc-bdc4-4e07f76dfff7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Processes">
+      <UniqueIdentifier>{019a6174-b869-4c9d-89b2-b0af03fe5784}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Components">
+      <UniqueIdentifier>{506d8916-5270-4d8f-be61-9f5a185da4a8}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\Game\gameScreen.h">
+    <ClInclude Include="..\..\src\Game\gameScreen.h">
       <Filter>Header Files\Game</Filter>
     </ClInclude>
-    <ClInclude Include="src\Graphics\graphics.h">
+    <ClInclude Include="..\..\src\Graphics\graphics.h">
       <Filter>Header Files\Graphics</Filter>
     </ClInclude>
-    <ClInclude Include="src\Graphics\shaderManager.h">
+    <ClInclude Include="..\..\src\Graphics\shaderManager.h">
       <Filter>Header Files\Graphics</Filter>
     </ClInclude>
-    <ClInclude Include="src\Math\mathUtil.h">
+    <ClInclude Include="..\..\src\Math\mathUtil.h">
       <Filter>Header Files\Math</Filter>
     </ClInclude>
-    <ClInclude Include="src\Math\matrix4.h">
+    <ClInclude Include="..\..\src\Math\matrix4.h">
       <Filter>Header Files\Math</Filter>
     </ClInclude>
-    <ClInclude Include="src\Math\vector2.h">
+    <ClInclude Include="..\..\src\Math\vector2.h">
       <Filter>Header Files\Math</Filter>
     </ClInclude>
-    <ClInclude Include="src\Math\vector3.h">
+    <ClInclude Include="..\..\src\Math\vector3.h">
       <Filter>Header Files\Math</Filter>
     </ClInclude>
-    <ClInclude Include="src\collisionDetection.h">
+    <ClInclude Include="..\..\src\collisionDetection.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\gameState.h">
+    <ClInclude Include="..\..\src\gameState.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\music.h">
+    <ClInclude Include="..\..\src\music.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\particles.h">
+    <ClInclude Include="..\..\src\particles.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\sound.h">
+    <ClInclude Include="..\..\src\sound.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\tween.h">
+    <ClInclude Include="..\..\src\tween.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\Graphics\color.h">
+    <ClInclude Include="..\..\src\Graphics\color.h">
       <Filter>Header Files\Graphics</Filter>
     </ClInclude>
-    <ClInclude Include="src\System\memory.h">
+    <ClInclude Include="..\..\src\System\memory.h">
       <Filter>Header Files\System</Filter>
     </ClInclude>
-    <ClInclude Include="src\Graphics\sprites.h">
+    <ClInclude Include="..\..\src\Graphics\sprites.h">
       <Filter>Header Files\Graphics</Filter>
     </ClInclude>
-    <ClInclude Include="src\Graphics\camera.h">
+    <ClInclude Include="..\..\src\Graphics\camera.h">
       <Filter>Header Files\Graphics</Filter>
     </ClInclude>
-    <ClInclude Include="src\Graphics\images.h">
+    <ClInclude Include="..\..\src\Graphics\images.h">
       <Filter>Header Files\Graphics</Filter>
     </ClInclude>
-    <ClInclude Include="src\Graphics\triRendering.h">
+    <ClInclude Include="..\..\src\Graphics\triRendering.h">
       <Filter>Header Files\Graphics</Filter>
     </ClInclude>
-    <ClInclude Include="src\Graphics\debugRendering.h">
+    <ClInclude Include="..\..\src\Graphics\debugRendering.h">
       <Filter>Header Files\Graphics</Filter>
     </ClInclude>
-    <ClInclude Include="src\Graphics\glDebugging.h">
+    <ClInclude Include="..\..\src\Graphics\glDebugging.h">
       <Filter>Header Files\Graphics</Filter>
     </ClInclude>
-    <ClInclude Include="src\Graphics\spineGfx.h">
+    <ClInclude Include="..\..\src\Graphics\spineGfx.h">
       <Filter>Header Files\Graphics</Filter>
     </ClInclude>
-    <ClInclude Include="src\Graphics\gfxUtil.h">
+    <ClInclude Include="..\..\src\Graphics\gfxUtil.h">
       <Filter>Header Files\Graphics</Filter>
     </ClInclude>
-    <ClInclude Include="src\Utils\stretchyBuffer.h">
+    <ClInclude Include="..\..\src\Utils\stretchyBuffer.h">
       <Filter>Header Files\Utils</Filter>
     </ClInclude>
-    <ClInclude Include="src\Graphics\imageSheets.h">
+    <ClInclude Include="..\..\src\Graphics\imageSheets.h">
       <Filter>Header Files\Graphics</Filter>
     </ClInclude>
-    <ClInclude Include="src\System\systems.h">
+    <ClInclude Include="..\..\src\System\systems.h">
       <Filter>Header Files\System</Filter>
     </ClInclude>
-    <ClInclude Include="src\Utils\cfgFile.h">
+    <ClInclude Include="..\..\src\Utils\cfgFile.h">
       <Filter>Header Files\Utils</Filter>
     </ClInclude>
-    <ClInclude Include="src\Utils\helpers.h">
+    <ClInclude Include="..\..\src\Utils\helpers.h">
       <Filter>Header Files\Utils</Filter>
     </ClInclude>
-    <ClInclude Include="src\UI\button.h">
+    <ClInclude Include="..\..\src\UI\button.h">
       <Filter>Header Files\UI</Filter>
     </ClInclude>
-    <ClInclude Include="src\UI\checkBox.h">
+    <ClInclude Include="..\..\src\UI\checkBox.h">
       <Filter>Header Files\UI</Filter>
     </ClInclude>
-    <ClInclude Include="src\UI\text.h">
+    <ClInclude Include="..\..\src\UI\text.h">
       <Filter>Header Files\UI</Filter>
     </ClInclude>
-    <ClInclude Include="src\Input\input.h">
+    <ClInclude Include="..\..\src\Input\input.h">
       <Filter>Header Files\Input</Filter>
     </ClInclude>
-    <ClInclude Include="src\Graphics\scissor.h">
+    <ClInclude Include="..\..\src\Graphics\scissor.h">
       <Filter>Header Files\Graphics</Filter>
     </ClInclude>
-    <ClInclude Include="src\IMGUI\nuklearHeader.h">
+    <ClInclude Include="..\..\src\IMGUI\nuklearHeader.h">
       <Filter>Header Files\IMGUI</Filter>
     </ClInclude>
-    <ClInclude Include="src\IMGUI\nuklearWrapper.h">
+    <ClInclude Include="..\..\src\IMGUI\nuklearWrapper.h">
       <Filter>Header Files\IMGUI</Filter>
     </ClInclude>
-    <ClInclude Include="src\Others\gl_core.h">
+    <ClInclude Include="..\..\src\Others\gl_core.h">
       <Filter>Header Files\Others</Filter>
     </ClInclude>
-    <ClInclude Include="src\Graphics\glPlatform.h">
+    <ClInclude Include="..\..\src\Graphics\glPlatform.h">
       <Filter>Header Files\Graphics</Filter>
     </ClInclude>
-    <ClInclude Include="src\System\platformLog.h">
+    <ClInclude Include="..\..\src\System\platformLog.h">
       <Filter>Header Files\System</Filter>
     </ClInclude>
-    <ClInclude Include="src\Math\matrix3.h">
+    <ClInclude Include="..\..\src\Math\matrix3.h">
       <Filter>Header Files\Math</Filter>
     </ClInclude>
-    <ClInclude Include="src\System\random.h">
+    <ClInclude Include="..\..\src\System\random.h">
       <Filter>Header Files\System</Filter>
     </ClInclude>
-    <ClInclude Include="src\Game\testAStarScreen.h">
+    <ClInclude Include="..\..\src\Game\testAStarScreen.h">
       <Filter>Header Files\Game</Filter>
     </ClInclude>
-    <ClInclude Include="src\Utils\aStar.h">
+    <ClInclude Include="..\..\src\Utils\aStar.h">
       <Filter>Header Files\Utils</Filter>
     </ClInclude>
-    <ClInclude Include="src\System\jobQueue.h">
+    <ClInclude Include="..\..\src\System\jobQueue.h">
       <Filter>Header Files\System</Filter>
     </ClInclude>
-    <ClInclude Include="src\Game\testJobQueueScreen.h">
+    <ClInclude Include="..\..\src\Game\testJobQueueScreen.h">
       <Filter>Header Files\Game</Filter>
     </ClInclude>
-    <ClInclude Include="src\System\jobRingQueue.h">
+    <ClInclude Include="..\..\src\System\jobRingQueue.h">
       <Filter>Header Files\System</Filter>
     </ClInclude>
-    <ClInclude Include="src\Game\testSoundsScreen.h">
+    <ClInclude Include="..\..\src\Game\testSoundsScreen.h">
       <Filter>Header Files\Game</Filter>
     </ClInclude>
-    <ClInclude Include="src\Utils\hashMap.h">
+    <ClInclude Include="..\..\src\Utils\hashMap.h">
       <Filter>Header Files\Utils</Filter>
     </ClInclude>
-    <ClInclude Include="src\System\entityIDs.h">
-      <Filter>Header Files\System</Filter>
-    </ClInclude>
-    <ClInclude Include="src\System\ECPS\ecps_componentBitFlags.h">
+    <ClInclude Include="..\..\src\System\ECPS\ecps_componentBitFlags.h">
       <Filter>Header Files\System\ECPS</Filter>
     </ClInclude>
-    <ClInclude Include="src\System\ECPS\ecps_componentTypes.h">
+    <ClInclude Include="..\..\src\System\ECPS\ecps_componentTypes.h">
       <Filter>Header Files\System\ECPS</Filter>
     </ClInclude>
-    <ClInclude Include="src\System\ECPS\ecps_dataTypes.h">
+    <ClInclude Include="..\..\src\System\ECPS\ecps_dataTypes.h">
       <Filter>Header Files\System\ECPS</Filter>
     </ClInclude>
-    <ClInclude Include="src\System\ECPS\ecps_values.h">
+    <ClInclude Include="..\..\src\System\ECPS\ecps_values.h">
       <Filter>Header Files\System\ECPS</Filter>
     </ClInclude>
-    <ClInclude Include="src\System\ECPS\entityComponentProcessSystem.h">
+    <ClInclude Include="..\..\src\System\ECPS\entityComponentProcessSystem.h">
       <Filter>Header Files\System\ECPS</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Utils\idSet.h">
+      <Filter>Header Files\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Components\GeneralComponents.h">
+      <Filter>Header Files\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Processes\GeneralProcesses.h">
+      <Filter>Header Files\Processes</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\Game\gameScreen.c">
+    <ClCompile Include="..\..\src\Game\gameScreen.c">
       <Filter>Source Files\Game</Filter>
     </ClCompile>
-    <ClCompile Include="src\Graphics\graphics.c">
+    <ClCompile Include="..\..\src\Graphics\graphics.c">
       <Filter>Source Files\Graphics</Filter>
     </ClCompile>
-    <ClCompile Include="src\Graphics\shaderManager.c">
+    <ClCompile Include="..\..\src\Graphics\shaderManager.c">
       <Filter>Source Files\Graphics</Filter>
     </ClCompile>
-    <ClCompile Include="src\Math\mathUtil.c">
+    <ClCompile Include="..\..\src\Math\mathUtil.c">
       <Filter>Source Files\Math</Filter>
     </ClCompile>
-    <ClCompile Include="src\Math\matrix4.c">
+    <ClCompile Include="..\..\src\Math\matrix4.c">
       <Filter>Source Files\Math</Filter>
     </ClCompile>
-    <ClCompile Include="src\Math\vector2.c">
+    <ClCompile Include="..\..\src\Math\vector2.c">
       <Filter>Source Files\Math</Filter>
     </ClCompile>
-    <ClCompile Include="src\Math\vector3.c">
+    <ClCompile Include="..\..\src\Math\vector3.c">
       <Filter>Source Files\Math</Filter>
     </ClCompile>
-    <ClCompile Include="src\collisionDetection.c">
+    <ClCompile Include="..\..\src\collisionDetection.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\gameState.c">
+    <ClCompile Include="..\..\src\gameState.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\main.c">
+    <ClCompile Include="..\..\src\main.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\particles.c">
+    <ClCompile Include="..\..\src\particles.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\sound.c">
+    <ClCompile Include="..\..\src\sound.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\tween.c">
+    <ClCompile Include="..\..\src\tween.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\Graphics\color.c">
+    <ClCompile Include="..\..\src\Graphics\color.c">
       <Filter>Source Files\Graphics</Filter>
     </ClCompile>
-    <ClCompile Include="src\System\memory.c">
+    <ClCompile Include="..\..\src\System\memory.c">
       <Filter>Source Files\System</Filter>
     </ClCompile>
-    <ClCompile Include="src\Graphics\sprites.c">
+    <ClCompile Include="..\..\src\Graphics\sprites.c">
       <Filter>Source Files\Graphics</Filter>
     </ClCompile>
-    <ClCompile Include="src\Graphics\camera.c">
+    <ClCompile Include="..\..\src\Graphics\camera.c">
       <Filter>Source Files\Graphics</Filter>
     </ClCompile>
-    <ClCompile Include="src\Graphics\images.c">
+    <ClCompile Include="..\..\src\Graphics\images.c">
       <Filter>Source Files\Graphics</Filter>
     </ClCompile>
-    <ClCompile Include="src\Graphics\triRendering.c">
+    <ClCompile Include="..\..\src\Graphics\triRendering.c">
       <Filter>Source Files\Graphics</Filter>
     </ClCompile>
-    <ClCompile Include="src\Graphics\debugRendering.c">
+    <ClCompile Include="..\..\src\Graphics\debugRendering.c">
       <Filter>Source Files\Graphics</Filter>
     </ClCompile>
-    <ClCompile Include="src\Graphics\glDebugging.c">
+    <ClCompile Include="..\..\src\Graphics\glDebugging.c">
       <Filter>Source Files\Graphics</Filter>
     </ClCompile>
-    <ClCompile Include="src\Graphics\spineGfx.c">
+    <ClCompile Include="..\..\src\Graphics\spineGfx.c">
       <Filter>Source Files\Graphics</Filter>
     </ClCompile>
-    <ClCompile Include="src\Graphics\gfxUtil.c">
+    <ClCompile Include="..\..\src\Graphics\gfxUtil.c">
       <Filter>Source Files\Graphics</Filter>
     </ClCompile>
-    <ClCompile Include="src\Graphics\imageSheets.c">
+    <ClCompile Include="..\..\src\Graphics\imageSheets.c">
       <Filter>Source Files\Graphics</Filter>
     </ClCompile>
-    <ClCompile Include="src\System\systems.c">
+    <ClCompile Include="..\..\src\System\systems.c">
       <Filter>Source Files\System</Filter>
     </ClCompile>
-    <ClCompile Include="src\Utils\cfgFile.c">
+    <ClCompile Include="..\..\src\Utils\cfgFile.c">
       <Filter>Source Files\Utils</Filter>
     </ClCompile>
-    <ClCompile Include="src\UI\button.c">
+    <ClCompile Include="..\..\src\UI\button.c">
       <Filter>Source Files\UI</Filter>
     </ClCompile>
-    <ClCompile Include="src\UI\checkBox.c">
+    <ClCompile Include="..\..\src\UI\checkBox.c">
       <Filter>Source Files\UI</Filter>
     </ClCompile>
-    <ClCompile Include="src\UI\text.c">
+    <ClCompile Include="..\..\src\UI\text.c">
       <Filter>Source Files\UI</Filter>
     </ClCompile>
-    <ClCompile Include="src\Input\input.c">
+    <ClCompile Include="..\..\src\Input\input.c">
       <Filter>Source Files\Input</Filter>
     </ClCompile>
-    <ClCompile Include="src\Graphics\scissor.c">
+    <ClCompile Include="..\..\src\Graphics\scissor.c">
       <Filter>Source Files\Graphics</Filter>
     </ClCompile>
-    <ClCompile Include="src\IMGUI\nuklearWrapper.c">
+    <ClCompile Include="..\..\src\IMGUI\nuklearWrapper.c">
       <Filter>Source Files\IMGUI</Filter>
     </ClCompile>
-    <ClCompile Include="src\Others\gl_core.c">
+    <ClCompile Include="..\..\src\Others\gl_core.c">
       <Filter>Source Files\Others</Filter>
     </ClCompile>
-    <ClCompile Include="src\Graphics\glPlatform.c">
+    <ClCompile Include="..\..\src\Graphics\glPlatform.c">
       <Filter>Source Files\Graphics</Filter>
     </ClCompile>
-    <ClCompile Include="src\System\platformLog.c">
+    <ClCompile Include="..\..\src\System\platformLog.c">
       <Filter>Source Files\System</Filter>
     </ClCompile>
-    <ClCompile Include="src\Utils\helpers.c">
+    <ClCompile Include="..\..\src\Utils\helpers.c">
       <Filter>Source Files\Utils</Filter>
     </ClCompile>
-    <ClCompile Include="src\Math\matrix3.c">
+    <ClCompile Include="..\..\src\Math\matrix3.c">
       <Filter>Source Files\Math</Filter>
     </ClCompile>
-    <ClCompile Include="src\Others\stb_vorbis_sdl.c">
+    <ClCompile Include="..\..\src\Others\stb_vorbis_sdl.c">
       <Filter>Source Files\Others</Filter>
     </ClCompile>
-    <ClCompile Include="src\System\random.c">
+    <ClCompile Include="..\..\src\System\random.c">
       <Filter>Source Files\System</Filter>
     </ClCompile>
-    <ClCompile Include="src\Game\testAStarScreen.c">
+    <ClCompile Include="..\..\src\Game\testAStarScreen.c">
       <Filter>Source Files\Game</Filter>
     </ClCompile>
-    <ClCompile Include="src\Utils\aStar.c">
+    <ClCompile Include="..\..\src\Utils\aStar.c">
       <Filter>Source Files\Utils</Filter>
     </ClCompile>
-    <ClCompile Include="src\System\jobQueue.c">
+    <ClCompile Include="..\..\src\System\jobQueue.c">
       <Filter>Source Files\System</Filter>
     </ClCompile>
-    <ClCompile Include="src\Game\testJobQueueScreen.c">
+    <ClCompile Include="..\..\src\Game\testJobQueueScreen.c">
       <Filter>Source Files\Game</Filter>
     </ClCompile>
-    <ClCompile Include="src\System\jobRingQueue.c">
+    <ClCompile Include="..\..\src\System\jobRingQueue.c">
       <Filter>Source Files\System</Filter>
     </ClCompile>
-    <ClCompile Include="src\Game\testSoundsScreen.c">
+    <ClCompile Include="..\..\src\Game\testSoundsScreen.c">
       <Filter>Source Files\Game</Filter>
     </ClCompile>
-    <ClCompile Include="src\Utils\hashMap.c">
+    <ClCompile Include="..\..\src\Utils\hashMap.c">
       <Filter>Source Files\Utils</Filter>
     </ClCompile>
-    <ClCompile Include="src\System\entityIDs.c">
-      <Filter>Source Files\System</Filter>
-    </ClCompile>
-    <ClCompile Include="src\System\ECPS\ecps_componentBitFlags.c">
+    <ClCompile Include="..\..\src\System\ECPS\ecps_componentBitFlags.c">
       <Filter>Source Files\System\ECPS</Filter>
     </ClCompile>
-    <ClCompile Include="src\System\ECPS\ecps_componentTypes.c">
+    <ClCompile Include="..\..\src\System\ECPS\ecps_componentTypes.c">
       <Filter>Source Files\System\ECPS</Filter>
     </ClCompile>
-    <ClCompile Include="src\System\ECPS\entityComponentProcessSystem.c">
+    <ClCompile Include="..\..\src\System\ECPS\entityComponentProcessSystem.c">
       <Filter>Source Files\System\ECPS</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Utils\idSet.c">
+      <Filter>Source Files\Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Processes\GeneralProcesses.c">
+      <Filter>Source Files\Processes</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Components\GeneralComponents.c">
+      <Filter>Source Files\Components</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <Text Include="todo.txt">
+    <Text Include="..\..\readme.txt">
+      <Filter>_Text</Filter>
+    </Text>
+    <Text Include="..\..\todo.txt">
       <Filter>_Text</Filter>
     </Text>
   </ItemGroup>

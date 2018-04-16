@@ -62,6 +62,7 @@ bool ecps_DoesEntityHaveComponentByID( ECPS* ecps, EntityID entityID, ComponentI
 //  puts in NULL if the entity doesn't have that component
 bool ecps_GetComponentFromEntity( const Entity* entity, ComponentID componentID, void** outData );
 bool ecps_GetComponentFromEntityByID( ECPS* ecps, EntityID entityID, ComponentID componentID, void** outData );
+bool ecps_GetEntityAndComponentByID( ECPS* ecps, EntityID entityID, ComponentID componentID, Entity* outEntity, void** outData );
 void ecps_DestroyEntity( ECPS* ecps, const Entity* entity );
 void ecps_DestroyEntityByID( ECPS* ecps, EntityID entityID );
 

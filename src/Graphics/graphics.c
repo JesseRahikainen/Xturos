@@ -90,7 +90,7 @@ int gfx_Init( SDL_Window* window, int desiredRenderWidth, int desiredRenderHeigh
 	// setup opengl
 	glContext = SDL_GL_CreateContext( window );
 	if( glContext == NULL ) {
-		llog( LOG_INFO, "Error in initRendering while creating context: %s", SDL_GetError( ) );
+		llog( LOG_ERROR, "Error in initRendering while creating context: %s", SDL_GetError( ) );
 		return -1;
 	}
 	SDL_GL_MakeCurrent( window, glContext );

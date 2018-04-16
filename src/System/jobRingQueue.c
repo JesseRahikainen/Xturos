@@ -1,6 +1,7 @@
 #include "jobQueue.h"
 
 #include <assert.h>
+#include <string.h>
 
 #include "memory.h"
 
@@ -17,6 +18,7 @@ int jrq_Init( JobRingQueue* queue, size_t size )
 	memset( queue->ringBuffer, 0, size * sizeof( queue->ringBuffer[0] ) );
 	SDL_AtomicSet( &( queue->head ), 0 );
 	SDL_AtomicSet( &( queue->tail ), 0 );
+	SDL_AtomicSet( &( queue->busy ), 0 );
 
 	return 0;
 }
@@ -47,9 +49,12 @@ bool jrq_ProcessNext( JobRingQueue* queue )
 	int idx = queue->tail.value;
 	if( idx != queue->head.value ) {
 		if( SDL_AtomicCAS( &( queue->tail ), idx, ( idx + 1 ) % queue->size ) ) {
+			SDL_AtomicAdd( &( queue->busy ), 1 );
 
 			if( queue->ringBuffer[idx].process != NULL ) queue->ringBuffer[idx].process( queue->ringBuffer[idx].data );
 			queue->ringBuffer[idx].process = NULL; // invalidate the job
+
+			SDL_AtomicAdd( &( queue->busy ), -1 );
 
 			return true;
 		}
@@ -62,3 +67,7 @@ bool jrq_IsEmpty( JobRingQueue* queue )
 	return ( queue->head.value == queue->tail.value );
 }
 
+bool jrq_IsBusy( JobRingQueue* queue )
+{
+	return ( queue->busy.value > 0 );
+}

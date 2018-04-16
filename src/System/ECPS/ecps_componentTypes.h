@@ -2,6 +2,7 @@
 #define COMPONENT_TYPES
 
 #include <stdint.h>
+#include <stdarg.h>
 
 #include "ecps_componentBitFlags.h"
 #include "ecps_dataTypes.h"

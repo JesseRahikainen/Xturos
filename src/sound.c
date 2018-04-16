@@ -114,7 +114,7 @@ static float* workingBuffer = NULL;
 
 static Sample samples[MAX_SAMPLES];
 static Sound playingSounds[MAX_PLAYING_SOUNDS];
-static struct IDSet playingIDSet; // we want to be able to change the currently playing sounds, this will help
+static IDSet playingIDSet; // we want to be able to change the currently playing sounds, this will help
 
 static StreamingSound streamingSounds[MAX_STREAMING_SOUNDS];
 

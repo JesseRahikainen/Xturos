@@ -35,8 +35,8 @@
 #include "System/platformLog.h"
 #include "System/random.h"
 
-#include "Graphics\debugRendering.h"
-#include "Graphics\glPlatform.h"
+#include "Graphics/debugRendering.h"
+#include "Graphics/glPlatform.h"
 
 #include "System/jobQueue.h"
 
@@ -163,6 +163,8 @@ int initEverything( void )
 	// NOTE: If you run into an errors with opening this file check to see if you're using FireFox, if
 	//  you are then switch to a different browser for testing.
 	oglCFGFile = cfg_OpenFile( "webgl.cfg" );
+#elif defined( __ANDROID__ )
+	oglCFGFile = cfg_OpenFile( "androidgl.cfg" );
 #else
 	oglCFGFile = cfg_OpenFile( "opengl.cfg" );
 #endif

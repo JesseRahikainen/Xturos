@@ -16,6 +16,7 @@ typedef struct {
 	Job* ringBuffer;
 	SDL_atomic_t head;
 	SDL_atomic_t tail;
+	SDL_atomic_t busy; // a count of how many jobs are currently being processed
 } JobRingQueue;
 
 int jrq_Init( JobRingQueue* queue, size_t size );
@@ -24,5 +25,6 @@ void jrq_Write( JobRingQueue* queue, Job* jobby );
 // do the next job available in the ring buffer, returns if anything was actually done
 bool jrq_ProcessNext( JobRingQueue* queue );
 bool jrq_IsEmpty( JobRingQueue* queue );
+bool jrq_IsBusy( JobRingQueue* queue );
 
 #endif /* inclusion guard */

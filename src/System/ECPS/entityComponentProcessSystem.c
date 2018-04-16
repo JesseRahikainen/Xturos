@@ -7,13 +7,14 @@
 
 #include "../../Utils/stretchyBuffer.h"
 
-#include "../entityIDs.h"
+#include "../../Utils/idSet.h"
 #include "ecps_componentTypes.h"
 #include "ecps_values.h"
 
 #include "../platformLog.h"
 
 static const EntityDirectoryEntry EMPTY_EDE = { -1, 0 };
+static const size_t ID_SET_SIZE = UINT16_MAX;
 
 //EntityIDSet idSet;
 
@@ -53,7 +54,7 @@ static bool createProcessVA( ECPS* ecps,
 
 static void modifyEntityDirectoryEntry( ECPS* ecps, EntityID entityID, int32_t packedArrayIdx, size_t offset )
 {
-	size_t idx = (size_t)eids_GetIdx( entityID );
+	size_t idx = (size_t)idSet_GetIndex( entityID );
 	int cnt = sb_Count( ecps->componentData.sbEntityDirectory );
 
 	// grow if necessary
@@ -176,7 +177,7 @@ static uint32_t createOrFindPackagedArray( ECPS* ecps, const ComponentBitFlags* 
 static void removeEntityFromArray( ECPS* ecps, EntityID entityID )
 {
 	// find entity spot
-	uint32_t idx = eids_GetIdx( entityID );
+	uint32_t idx = idSet_GetIndex( entityID );
 	assert( idx < sb_Count( ecps->componentData.sbEntityDirectory ) );
 	int32_t packedArrayIdx = ecps->componentData.sbEntityDirectory[idx].packedArrayIdx;
 	EntityDirectoryEntry* removedEDE = &( ecps->componentData.sbEntityDirectory[idx] );
@@ -201,7 +202,7 @@ void ecps_StartInitialization( ECPS* ecps )
 	ecps->id = ecpsCurrID;
 	++ecpsCurrID;
 
-	eids_Clear( &( ecps->idSet ) );
+	idSet_Init( &( ecps->idSet ), ID_SET_SIZE );
 
 	ecps->componentData.sbBitFlags = NULL;
 	ecps->componentData.sbComponentArrays = NULL;
@@ -220,7 +221,7 @@ void ecps_CleanUp( ECPS* ecps )
 	assert( ecps != NULL );
 
 	ecps_ct_CleanUp( &( ecps->componentTypes ) );
-	eids_Clear( &( ecps->idSet ) );
+	idSet_Destroy( &( ecps->idSet ) );
 }
 
 // adds a component type and returns the id to reference it by
@@ -232,6 +233,7 @@ ComponentID ecps_AddComponentType( ECPS* ecps, const char* name, size_t size, Ve
 	// component types can only be added before we've started running
 	assert( !( ecps->isRunning ) );
 	assert( sb_Count( ecps->componentTypes.sbTypes ) < MAX_NUM_COMPONENT_TYPES );
+	assert( sb_Count( ecps->componentTypes.sbTypes ) < INVALID_COMPONENT_ID );
 
 	ComponentType newType;
 
@@ -278,7 +280,7 @@ void ecps_RunProcess( ECPS* ecps, Process* process )
 
 	// then run the process, looping through all the entities
 	if( process->preProc != NULL ) {
-		process->preProc( );
+		process->preProc( ecps );
 	}
 
 	if( process->proc != NULL ) {
@@ -300,7 +302,7 @@ void ecps_RunProcess( ECPS* ecps, Process* process )
 						entity.id = entityID;
 						entity.data = data;
 						entity.structure = &( pca->structure );
-						process->proc( &entity );
+						process->proc( ecps, &entity );
 					}
 					dataIdx += pca->entitySize;
 				}
@@ -309,7 +311,7 @@ void ecps_RunProcess( ECPS* ecps, Process* process )
 	}
 
 	if( process->postProc != NULL ) {
-		process->postProc( );
+		process->postProc( ecps );
 	}
 }
 
@@ -321,7 +323,7 @@ EntityID ecps_CreateEntity( ECPS* ecps, Entity* outEntity, size_t numComponents,
 	assert( ecps != NULL );
 	assert( outEntity != NULL );
 
-	EntityID entityID = eids_Create( &( ecps->idSet ) );
+	EntityID entityID = idSet_ClaimID( &( ecps->idSet ) );
 	va_list list;
 
 	if( entityID == 0 ) {
@@ -369,7 +371,7 @@ bool ecps_GetEntityByID( ECPS* ecps, EntityID entityID, Entity* outEntity )
 	assert( outEntity != NULL );
 
 	// get the packaged component array
-	uint32_t idx = eids_GetIdx( entityID );
+	uint32_t idx = idSet_GetIndex( entityID );
 
 	if( idx >= sb_Count( ecps->componentData.sbEntityDirectory ) ) {
 		return false;
@@ -423,7 +425,7 @@ int ecps_AddComponentToEntity( ECPS* ecps, Entity* entity, ComponentID component
 
 	int32_t toPackedArrayIndex = -1;
 
-	uint32_t idx = eids_GetIdx( entity->id );
+	uint32_t idx = idSet_GetIndex( entity->id );
 
 	if( idx >= sb_Count( ecps->componentData.sbEntityDirectory ) ) {
 		return -2;
@@ -527,7 +529,7 @@ int ecps_RemoveComponentFromEntity( ECPS* ecps, Entity* entity, ComponentID comp
 
 	int32_t toPackedArrayIndex = -1;
 
-	uint32_t idx = eids_GetIdx( entity->id );
+	uint32_t idx = idSet_GetIndex( entity->id );
 
 	size_t entityDirectoryCount = sb_Count( ecps->componentData.sbEntityDirectory );
 	if( idx >= sb_Count( ecps->componentData.sbEntityDirectory ) ) {
@@ -622,6 +624,12 @@ bool ecps_GetComponentFromEntity( const Entity* entity, ComponentID componentID,
 	assert( entity != NULL );
 	assert( outData != NULL );
 
+	if( componentID == INVALID_COMPONENT_ID ) {
+		llog( LOG_ERROR, "Attempting to retrieve an invalid component type from entity %08X", entity->id );
+		(*outData) = NULL;
+		return false;
+	}
+
 	if( entity->structure->entries[componentID].offset < 0 ) {
 		(*outData) = NULL;
 		return false;
@@ -644,6 +652,18 @@ bool ecps_GetComponentFromEntityByID( ECPS* ecps, EntityID entityID, ComponentID
 	return ecps_GetComponentFromEntity( &entity, componentID, outData );
 }
 
+bool ecps_GetEntityAndComponentByID( ECPS* ecps, EntityID entityID, ComponentID componentID, Entity* outEntity, void** outData )
+{
+	assert( ecps != NULL );
+	assert( outEntity != NULL );
+
+	if( !ecps_GetEntityByID( ecps, entityID, outEntity ) ) {
+		return false;
+	}
+
+	return ecps_GetComponentFromEntity( outEntity, componentID, outData );
+}
+
 void ecps_DestroyEntity( ECPS* ecps, const Entity* entity )
 {
 	assert( entity != NULL );
@@ -655,14 +675,14 @@ void ecps_DestroyEntityByID( ECPS* ecps, EntityID entityID )
 	assert( ecps != NULL );
 
 	removeEntityFromArray( ecps, entityID );
-	eids_Destroy( &( ecps->idSet ), entityID );
+	idSet_ReleaseID( &( ecps->idSet ), entityID );
 }
 
 void ecps_DestroyAllEntities( ECPS* ecps )
 {
 	assert( ecps != NULL );
 
-	eids_Clear( &( ecps->idSet ) );
+	idSet_Clear( &( ecps->idSet ) );
 
 	// clear out all the entity data
 	sb_Release( ecps->componentData.sbBitFlags );

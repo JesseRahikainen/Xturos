@@ -1,7 +1,7 @@
 #include "platformLog.h"
 
 #if defined( __ANDROID__ )
-	#define ANDROID_LOG_TAG "Tiny Tactics"
+	#define ANDROID_LOG_TAG "Game Name"
 	#define LOG( priority, str, ap ) __android_log_vprint( ( priority ), ANDROID_LOG_TAG, ( str ), ( ap ) )
 #elif defined( __EMSCRIPTEN__ )
 	#define LOG( priority, str, ap ) vprintf( ( str ), ( ap ) ); printf( "\n" )
