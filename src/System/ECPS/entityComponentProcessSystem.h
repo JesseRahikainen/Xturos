@@ -27,10 +27,13 @@ bool ecps_CreateProcess( ECPS* ecps,
 // run a process, must have been created with the associated entity-component-process system
 void ecps_RunProcess( ECPS* ecps, Process* process );
 
-// creates an entity with the associated components, returns the id of the entity
+// creates an entity with the associated components, excepts the variable argument list to be
+//  interleaved { ComponentID id, void* compData } groupings
+//  the memory pointed to by compData is copied into the component specified by id for the
+//  new entity
+//  returns the id of the entity
 //  the returned id is 0 if the creation fails
-//  the outEntity can be used to access and set the component data after it's created
-EntityID ecps_CreateEntity( ECPS* ecps, Entity* outEntity, size_t numComponents, ... );
+EntityID ecps_CreateEntity( ECPS* ecps, size_t numComponents, ... );
 
 // finds the entity with the given id
 bool ecps_GetEntityByID( ECPS* ecps, EntityID entityID, Entity* outEntity );
@@ -38,13 +41,14 @@ bool ecps_GetEntityByID( ECPS* ecps, EntityID entityID, Entity* outEntity );
 // adds a component to the specified entity
 //  if the entity already has this component this acts like an expensive ecps_GetComponentFromEntity( )
 //  returns >= 0 if successful, < 0 if unsuccesful
-//  outData will be a pointer to the added component, unless it was NULL, in which case it will still be NULL
+//  data should be a pointer to the data used to initialize the new component, if it's NULL it will set whatever
+//   memory is created for the component to 0
 //  modifies the passed in Entity to match the new structure
 //  returns whether the addition was a success or not
-int ecps_AddComponentToEntity( ECPS* ecps, Entity* entity, ComponentID componentID, void** outData );
+int ecps_AddComponentToEntity( ECPS* ecps, Entity* entity, ComponentID componentID, void* data );
 
 // acts as ecps_AddComponentToEntity( ), but uses an EntityID instead of an Entity structure
-int ecps_AddComponentToEntityByID( ECPS* ecps, EntityID entityID, ComponentID componentID, void** outData );
+int ecps_AddComponentToEntityByID( ECPS* ecps, EntityID entityID, ComponentID componentID, void* data );
 
 // removed a component from the specified entity
 //  if the entity doesn't have this component it will do nothing

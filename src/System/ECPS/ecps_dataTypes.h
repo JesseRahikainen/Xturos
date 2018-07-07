@@ -63,6 +63,8 @@ typedef struct {
 	bool isRunning;
 	uint32_t id;
 	IDSet idSet;
+	uint8_t* sbCommandBuffer;
+	bool isRunningProcess;
 } ECPS;
 
 typedef struct {

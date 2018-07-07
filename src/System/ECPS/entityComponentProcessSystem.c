@@ -16,6 +16,54 @@
 static const EntityDirectoryEntry EMPTY_EDE = { -1, 0 };
 static const size_t ID_SET_SIZE = UINT16_MAX;
 
+typedef enum {
+	CMD_INVALID,
+	CMD_CREATE_ENTITY,
+	CMD_DESTROY_ENTITY,
+	CMD_ADD_COMPONENT,
+	CMD_REMOVE_COMPONENT
+} CommandType;
+
+// the data after this command will define the components added and the initial data for them
+typedef struct {
+	CommandType cmd;
+	EntityID id;
+	uint32_t numComps;
+	//uint8_t* data;
+} CreateEntityCommand;
+
+typedef struct {
+	CommandType cmd;
+	EntityID id;
+} DestroyEntityCommand;
+
+// the data after this command will define the initial value for the components
+typedef struct {
+	CommandType cmd;
+	EntityID id;
+	ComponentID compID;
+	//uint8_t* data;
+} AddComponentCommand;
+
+typedef struct {
+	CommandType cmd;
+	EntityID id;
+	ComponentID compID;
+} RemoveComponentCommand;
+
+typedef union {
+	CommandType cmd;
+	CreateEntityCommand create;
+	DestroyEntityCommand destroy;
+	AddComponentCommand add;
+	RemoveComponentCommand remove;
+} Command;
+
+static uint8_t* runCreateCommand( ECPS* ecps, uint8_t* commandData );
+static uint8_t* runAddComponentCommand( ECPS* ecps, uint8_t* commandData );
+static uint8_t* runRemoveComponentCommand( ECPS* ecps, uint8_t* commandData );
+static uint8_t* runDestroyEntityCommand( ECPS* ecps, uint8_t* commandData );
+
 //EntityIDSet idSet;
 
 // just a simple number to track whether processes were created with the associated system or not
@@ -198,6 +246,9 @@ void ecps_StartInitialization( ECPS* ecps )
 
 	ecps->isRunning = false;
 
+	ecps->sbCommandBuffer = NULL;
+	ecps->isRunningProcess = true;
+
 	ecps_ct_Init( &( ecps->componentTypes ) );
 	ecps->id = ecpsCurrID;
 	++ecpsCurrID;
@@ -220,6 +271,7 @@ void ecps_CleanUp( ECPS* ecps )
 {
 	assert( ecps != NULL );
 
+	sb_Release( ecps->sbCommandBuffer );
 	ecps_ct_CleanUp( &( ecps->componentTypes ) );
 	idSet_Destroy( &( ecps->idSet ) );
 }
@@ -275,6 +327,8 @@ void ecps_RunProcess( ECPS* ecps, Process* process )
 	assert( ecps != NULL );
 	assert( ecps->isRunning );
 
+	size_t presize = sb_Count( ecps->sbCommandBuffer );
+
 	// verify the process is part of the entity-component-process system
 	assert( ( ecps->id ) == ( process->ecpsID ) );
 
@@ -283,6 +337,7 @@ void ecps_RunProcess( ECPS* ecps, Process* process )
 		process->preProc( ecps );
 	}
 
+	ecps->isRunningProcess = true;
 	if( process->proc != NULL ) {
 		// will need to iterate through all entities that have the components the process is looking for
 		size_t numCompArrays = sb_Count( ecps->componentData.sbComponentArrays );
@@ -297,7 +352,7 @@ void ecps_RunProcess( ECPS* ecps, Process* process )
 					// first should always be the entity id
 					void* data = (void*)( &( pca->sbData[dataIdx] ) );
 					EntityID entityID = *( (EntityID*)data );
-					if( entityID != 0 ) {
+					if( entityID != INVALID_ENTITY_ID ) {
 						Entity entity;
 						entity.id = entityID;
 						entity.data = data;
@@ -309,34 +364,59 @@ void ecps_RunProcess( ECPS* ecps, Process* process )
 			}
 		}
 	}
+	ecps->isRunningProcess = false;
 
 	if( process->postProc != NULL ) {
 		process->postProc( ecps );
 	}
+
+	if( sb_Count( ecps->sbCommandBuffer ) > 0 ) {
+		// run the command buffer
+		uint8_t* cmdBuffer = ecps->sbCommandBuffer;
+		uint8_t* bufferEnd = &( sb_Last( ecps->sbCommandBuffer ) );
+
+		size_t size = sb_Count( ecps->sbCommandBuffer );
+		int numCmds = 0;
+		while( cmdBuffer < bufferEnd ) {
+			mem_Verify( );
+			++numCmds;
+			CommandType cmdType = *( (CommandType*)cmdBuffer );
+			switch( cmdType ) {
+			case CMD_ADD_COMPONENT:
+				cmdBuffer = runAddComponentCommand( ecps, cmdBuffer );
+				break;
+			case CMD_CREATE_ENTITY:
+				cmdBuffer = runCreateCommand( ecps, cmdBuffer );
+				break;
+			case CMD_DESTROY_ENTITY:
+				cmdBuffer = runDestroyEntityCommand( ecps, cmdBuffer );
+				break;
+			case CMD_REMOVE_COMPONENT:
+				cmdBuffer = runRemoveComponentCommand( ecps, cmdBuffer );
+				break;
+			default:
+				assert( false && "Invalid command" );
+				break;
+			}
+			mem_Verify( );
+			assert( cmdBuffer <= ( bufferEnd + 1 ) );
+		}
+
+		sb_Clear( ecps->sbCommandBuffer );
+	}
 }
 
-// creates an entity with the associated components, returns the id of the entity
-//  the returned id is 0 if the creation fails
-//  the outEntity can be used to access and set the component data after it's created
-EntityID ecps_CreateEntity( ECPS* ecps, Entity* outEntity, size_t numComponents, ... )
+static void createEntityVA( ECPS* ecps, EntityID entityID, size_t numComponents, va_list va )
 {
-	assert( ecps != NULL );
-	assert( outEntity != NULL );
-
-	EntityID entityID = idSet_ClaimID( &( ecps->idSet ) );
 	va_list list;
-
-	if( entityID == 0 ) {
-		return 0;
-	}
 
 	ComponentBitFlags entityBitFlags;
 
-	// verify all the components
-	va_start( list, numComponents ); {
+	va_copy( list, va ); {
 		memset( &entityBitFlags, 0, sizeof( ComponentBitFlags ) );
 		for( size_t i = 0; i < numComponents; ++i ) {
 			ComponentID compID = va_arg( list, ComponentID );
+			va_arg( list, void* );
 			//assert( ecps_ct_IsComponentTypeValid( &( ecps->componentTypes ), compID ) );
 			if( ecps_ct_IsComponentTypeValid( &( ecps->componentTypes ), compID ) ) {
 				ecps_cbf_SetFlagOn( &entityBitFlags, compID );
@@ -354,12 +434,150 @@ EntityID ecps_CreateEntity( ECPS* ecps, Entity* outEntity, size_t numComponents,
 
 	// add the entity to the list
 	size_t currOffset = allocateDataForEntity( ecps, pcaIdx );
-	( *(EntityID*)( &( ecps->componentData.sbComponentArrays[pcaIdx].sbData[currOffset] ) ) ) = entityID;
+	uint8_t* baseData = (uint8_t*)( &( ecps->componentData.sbComponentArrays[pcaIdx].sbData[currOffset] ) );
+	( *(EntityID*)( baseData ) ) = entityID;
 	modifyEntityDirectoryEntry( ecps, entityID, pcaIdx, currOffset );
 
-	outEntity->id = entityID;
-	outEntity->structure = &( ecps->componentData.sbComponentArrays[pcaIdx].structure );
-	outEntity->data = &( ecps->componentData.sbComponentArrays[pcaIdx].sbData[currOffset] );
+	va_copy( list, va ); {
+		for( size_t i = 0; i < numComponents; ++i ) {
+			ComponentID compID = va_arg( list, ComponentID );
+			void* compData = va_arg( list, void* );
+			size_t compSize = ecps->componentTypes.sbTypes[compID].size;
+			
+			if( compSize > 0 ) {
+				if( compData != NULL ) {
+					// have data, copy it
+					memcpy( &( baseData[ecps->componentData.sbComponentArrays[pcaIdx].structure.entries[compID].offset] ), compData, compSize );
+				} else {
+					// no data, zero it out
+					memset( &( baseData[ecps->componentData.sbComponentArrays[pcaIdx].structure.entries[compID].offset] ), 0, compSize );
+				}
+			}
+		}
+	} va_end( list );
+}
+
+static void pushCreateCommand( ECPS* ecps, EntityID entityID, size_t numComponents, va_list va )
+{
+	va_list list;
+
+	// first gather how much memory we'll need to allocate, should be slightly faster to do a 
+	//  single allocation than multiple
+	size_t totalSize = sizeof( CreateEntityCommand );
+	va_copy( list, va ); {
+		for( size_t i = 0; i < numComponents; ++i ) {
+			ComponentID compID = va_arg( list, ComponentID );
+			va_arg( list, void* );
+
+			totalSize += sizeof( ComponentID );
+			totalSize += ecps->componentTypes.sbTypes[compID].size;
+		}
+	} va_end( list );
+
+	// allocate the space
+	uint8_t* currMem = sb_Add( ecps->sbCommandBuffer, totalSize );
+	
+	// now copy all the data over
+	//  first the command specific stuff
+	CreateEntityCommand cmd;
+	cmd.cmd = CMD_CREATE_ENTITY;
+	cmd.id = entityID;
+	cmd.numComps = numComponents;
+	memcpy( currMem, &cmd, sizeof( CreateEntityCommand ) );
+	currMem += sizeof( CreateEntityCommand );
+
+	//  then the components and their data
+	va_copy( list, va ); {
+		for( size_t i = 0; i < numComponents; ++i ) {
+			ComponentID compID = va_arg( list, ComponentID );
+			void* compData = va_arg( list, void* );
+
+			memcpy( currMem, &compID, sizeof( ComponentID ) );
+			currMem += sizeof( ComponentID );
+
+			size_t compSize = ecps->componentTypes.sbTypes[compID].size;
+			if( compSize > 0 ) {
+				if( compData != NULL ) {
+					// have data, copy it
+					memcpy( currMem, compData, compSize );
+				} else {
+					// no data, zero it out
+					memset( currMem, 0, compSize );
+				}
+			}
+			currMem += compSize;
+		}
+	} va_end( list );
+}
+
+// returns past end of command
+static uint8_t* runCreateCommand( ECPS* ecps, uint8_t* commandData )
+{
+	CreateEntityCommand* cmd = (CreateEntityCommand*)commandData;
+	uint8_t* data;
+
+	ComponentBitFlags entityBitFlags;
+
+	memset( &entityBitFlags, 0, sizeof( ComponentBitFlags ) );
+	data = commandData + sizeof( CreateEntityCommand );
+	for( size_t i = 0; i < cmd->numComps; ++i ) {
+		ComponentID compID = *( (ComponentID*)( data ) ); data += sizeof( ComponentID );
+		data += ecps->componentTypes.sbTypes[compID].size; // skip past the data for now
+
+		if( ecps_ct_IsComponentTypeValid( &( ecps->componentTypes ), compID ) ) {
+			ecps_cbf_SetFlagOn( &entityBitFlags, compID );
+		} else {
+			llog( LOG_DEBUG, "Creating an entity with invalid component at varg position: %i", i );
+		}
+	}
+
+	ecps_cbf_SetFlagOn( &entityBitFlags, sharedComponent_ID );
+	ecps_cbf_SetFlagOn( &entityBitFlags, sharedComponent_Enabled );
+
+	// find or create the packaged array for this entity
+	uint32_t pcaIdx = createOrFindPackagedArray( ecps, &entityBitFlags );
+
+	// add the entity to the list
+	size_t currOffset = allocateDataForEntity( ecps, pcaIdx );
+	uint8_t* baseData = (uint8_t*)( &( ecps->componentData.sbComponentArrays[pcaIdx].sbData[currOffset] ) );
+	( *(EntityID*)( baseData ) ) = cmd->id;
+	modifyEntityDirectoryEntry( ecps, cmd->id, pcaIdx, currOffset );
+
+	data = commandData + sizeof( CreateEntityCommand );
+	for( size_t i = 0; i < cmd->numComps; ++i ) {
+		ComponentID compID = *( (ComponentID*)( data ) ); data += sizeof( ComponentID );
+		size_t compSize = ecps->componentTypes.sbTypes[compID].size;
+		memcpy( &( baseData[ecps->componentData.sbComponentArrays[pcaIdx].structure.entries[compID].offset] ), (void*)data, compSize );
+		data += compSize;
+	}
+
+	return data;
+}
+
+// creates an entity with the associated components, expects the variable argument list to be
+//  interleaved { ComponentID id, void* compData } groupings
+//  the memory pointed to by compData is copied into the component specified by id for the
+//  new entity
+//  returns the id of the entity
+//  the returned id is 0 if the creation fails
+EntityID ecps_CreateEntity( ECPS* ecps, size_t numComponents, ... )
+{
+	assert( ecps != NULL );
+
+	EntityID entityID = idSet_ClaimID( &( ecps->idSet ) );
+	va_list list;
+
+	if( entityID == 0 ) {
+		return 0;
+	}
+
+	va_start( list, numComponents ); {
+		if( ecps->isRunningProcess ) {
+			pushCreateCommand( ecps, entityID, numComponents, list );
+		} else {
+			createEntityVA( ecps, entityID, numComponents, list );
+		}
+	} va_end( list );
 
 	return entityID;
 }
@@ -368,7 +586,6 @@ EntityID ecps_CreateEntity( ECPS* ecps, Entity* outEntity, size_t numComponents,
 bool ecps_GetEntityByID( ECPS* ecps, EntityID entityID, Entity* outEntity )
 {
 	assert( ecps != NULL );
-	assert( outEntity != NULL );
 
 	// get the packaged component array
 	uint32_t idx = idSet_GetIndex( entityID );
@@ -391,29 +608,17 @@ bool ecps_GetEntityByID( ECPS* ecps, EntityID entityID, Entity* outEntity )
 		return false;
 	}
 
-	outEntity->id = entityID;
-	outEntity->data = (void*)( &( pca->sbData[posOffset] ) );
-	outEntity->structure = &( pca->structure );
+	if( outEntity != NULL ) {
+		outEntity->id = entityID;
+		outEntity->data = (void*)( &( pca->sbData[posOffset] ) );
+		outEntity->structure = &( pca->structure );
+	}
 
 	return true;
 }
 
-// adds a component to the specified entity
-//  if the entity already has this component this acts like an expensive ecps_GetComponentFromEntity( )
-//  returns >= 0 if successful, < 0 if unsuccesful
-//  outData will be a pointer to the added component, unless it was NULL, in which case it will still be NULL
-//  modifies the passed in Entity to match the new structure
-//  returns whether the addition was a success or not
-int ecps_AddComponentToEntity( ECPS* ecps, Entity* entity, ComponentID componentID, void** outData )
+static int immediateAddComponentToEntity( ECPS* ecps, Entity* entity, ComponentID componentID, void* data )
 {
-	assert( ecps != NULL );
-	assert( entity != NULL );
-
-	if( !ecps_ct_IsComponentTypeValid( &( ecps->componentTypes ), componentID ) ) {
-		llog( LOG_DEBUG, "Attempting to add invalid component to entity." );
-		return -1;
-	}
-
 	ComponentBitFlags oldBitFlags;
 	ComponentBitFlags newBitFlags;
 
@@ -486,17 +691,78 @@ int ecps_AddComponentToEntity( ECPS* ecps, Entity* entity, ComponentID component
 		entity->data = toData;
 	}
 
-	// set the data to use for initialization
-	if( outData != NULL ) {
+	// set the data to use for initialization, as long as data needs to be set
+	if( ecps->componentTypes.sbTypes[componentID].size > 0 ) {
 		uint8_t* bytes = (uint8_t*)( entity->data );
-		(*outData) = &( bytes[ ( entity->structure )->entries[componentID].offset ] );
+		if( data != NULL ) {
+			// copy the data
+			memcpy( &( bytes[ ( entity->structure )->entries[componentID].offset ] ), data, ecps->componentTypes.sbTypes[componentID].size );
+		} else {
+			// set the data to 0
+			memset( &( bytes[ ( entity->structure )->entries[componentID].offset ] ), 0, ecps->componentTypes.sbTypes[componentID].size );
+		}
 	}
 
 	return 0;
 }
 
+static void pushAddComponentCommand( ECPS* ecps, Entity* entity, ComponentID componentID, void* data )
+{
+	AddComponentCommand cmd;
+	cmd.cmd = CMD_ADD_COMPONENT;
+	cmd.id = entity->id;
+	cmd.compID = componentID;
+
+	size_t compSize = ecps->componentTypes.sbTypes[componentID].size;
+	size_t totalSize = sizeof( AddComponentCommand ) + compSize;
+
+	uint8_t* cmdData = sb_Add( ecps->sbCommandBuffer, totalSize );
+
+	memcpy( cmdData, &cmd, sizeof( AddComponentCommand ) );
+	cmdData += sizeof( AddComponentCommand );
+	memcpy( cmdData, data, compSize );
+}
+
+// returns the point in the command buffer after the add component command
+static uint8_t* runAddComponentCommand( ECPS* ecps, uint8_t* commandData )
+{
+	AddComponentCommand* cmd = (AddComponentCommand*)commandData;
+	uint8_t* data = commandData + sizeof( AddComponentCommand );
+
+	Entity entity;
+	ecps_GetEntityByID( ecps, cmd->id, &entity );
+	immediateAddComponentToEntity( ecps, &entity, cmd->compID, (void*)data );
+
+	return ( data + ecps->componentTypes.sbTypes[cmd->compID].size );
+}
+
+// adds a component to the specified entity
+//  if the entity already has this component this acts like an expensive ecps_GetComponentFromEntity( )
+//  returns >= 0 if successful, < 0 if unsuccesful
+//  data should be a pointer to the data used to initialize the new component, if it's NULL it will set whatever
+//   memory is created for the component to 0
+//  modifies the passed in Entity to match the new structure
+//  returns whether the addition was a success or not
+int ecps_AddComponentToEntity( ECPS* ecps, Entity* entity, ComponentID componentID, void* data )
+{
+	assert( ecps != NULL );
+	assert( entity != NULL );
+
+	if( !ecps_ct_IsComponentTypeValid( &( ecps->componentTypes ), componentID ) ) {
+		llog( LOG_DEBUG, "Attempting to add invalid component to entity." );
+		return -1;
+	}
+
+	if( ecps->isRunningProcess ) {
+		pushAddComponentCommand( ecps, entity, componentID, data );
+		return 0;
+	} else {
+		return immediateAddComponentToEntity( ecps, entity, componentID, data );
+	}
+}
+
 // acts as ecps_AddComponentToEntity( ), but uses an entityID instead of an Entity structure
-int ecps_AddComponentToEntityByID( ECPS* ecps, EntityID entityID, ComponentID componentID, void** outData )
+int ecps_AddComponentToEntityByID( ECPS* ecps, EntityID entityID, ComponentID componentID, void* data )
 {
 	assert( ecps != NULL );
 
@@ -506,18 +772,11 @@ int ecps_AddComponentToEntityByID( ECPS* ecps, EntityID entityID, ComponentID co
 		return -4;
 	}
 
-	return ecps_AddComponentToEntity( ecps, &entity, componentID, outData );
+	return ecps_AddComponentToEntity( ecps, &entity, componentID, data );
 }
 
-// removed a component from the specified entity
-//  if the entity doesn't have this component it will do nothing
-//  returns >= 0 if successful, < 0 if unsuccesful
-//  modifies the passed in Entity to match the new structure
-int ecps_RemoveComponentFromEntity( ECPS* ecps, Entity* entity, ComponentID componentID )
+static int immediateRemoveComponentFromEntity( ECPS* ecps, Entity* entity, ComponentID componentID )
 {
-	assert( ecps != NULL );
-	assert( entity != NULL );
-
 	ComponentBitFlags oldBitFlags;
 	ComponentBitFlags newBitFlags;
 
@@ -584,6 +843,46 @@ int ecps_RemoveComponentFromEntity( ECPS* ecps, Entity* entity, ComponentID comp
 	entity->data = toData;
 
 	return 0;
+}
+
+static void pushRemoveComponentCommand( ECPS* ecps, Entity* entity, ComponentID componentID )
+{
+	RemoveComponentCommand cmd;
+	cmd.cmd = CMD_REMOVE_COMPONENT;
+	cmd.id = entity->id;
+	cmd.compID = componentID;
+
+	uint8_t* cmdData = sb_Add( ecps->sbCommandBuffer, sizeof( RemoveComponentCommand ) );
+
+	memcpy( cmdData, &cmd, sizeof( RemoveComponentCommand ) );
+}
+
+static uint8_t* runRemoveComponentCommand( ECPS* ecps, uint8_t* commandData )
+{
+	RemoveComponentCommand* cmd = (RemoveComponentCommand*)commandData;
+
+	Entity entity;
+	ecps_GetEntityByID( ecps, cmd->id, &entity );
+	immediateRemoveComponentFromEntity( ecps, &entity, cmd->compID );
+
+	return ( commandData + sizeof( RemoveComponentCommand ) );
+}
+
+// removed a component from the specified entity
+//  if the entity doesn't have this component it will do nothing
+//  returns >= 0 if successful, < 0 if unsuccesful
+//  modifies the passed in Entity to match the new structure
+int ecps_RemoveComponentFromEntity( ECPS* ecps, Entity* entity, ComponentID componentID )
+{
+	assert( ecps != NULL );
+	assert( entity != NULL );
+
+	if( ecps->isRunningProcess ) {
+		pushRemoveComponentCommand( ecps, entity, componentID );
+		return 0;
+	} else {
+		return immediateRemoveComponentFromEntity( ecps, entity, componentID );
+	}
 }
 
 int ecps_RemoveComponentFromEntityByID( ECPS* ecps, EntityID entityID, ComponentID componentID )
@@ -664,6 +963,32 @@ bool ecps_GetEntityAndComponentByID( ECPS* ecps, EntityID entityID, ComponentID 
 	return ecps_GetComponentFromEntity( outEntity, componentID, outData );
 }
 
+static void immediateDestroyEntity( ECPS* ecps, EntityID entityID )
+{
+	removeEntityFromArray( ecps, entityID );
+	idSet_ReleaseID( &( ecps->idSet ), entityID );
+}
+
+static void pushDestroyEntityCommand( ECPS* ecps, EntityID id )
+{
+	DestroyEntityCommand cmd;
+	cmd.cmd = CMD_DESTROY_ENTITY;
+	cmd.id = id;
+	
+	uint8_t* cmdData = sb_Add( ecps->sbCommandBuffer, sizeof( DestroyEntityCommand ) );
+
+	memcpy( cmdData, &cmd, sizeof( DestroyEntityCommand ) );
+}
+
+static uint8_t* runDestroyEntityCommand( ECPS* ecps, uint8_t* commandData )
+{
+	DestroyEntityCommand* cmd = (DestroyEntityCommand*)commandData;
+
+	immediateDestroyEntity( ecps, cmd->id );
+
+	return ( commandData + sizeof( DestroyEntityCommand ) );
+}
+
 void ecps_DestroyEntity( ECPS* ecps, const Entity* entity )
 {
 	assert( entity != NULL );
@@ -674,13 +999,17 @@ void ecps_DestroyEntityByID( ECPS* ecps, EntityID entityID )
 {
 	assert( ecps != NULL );
 
-	removeEntityFromArray( ecps, entityID );
-	idSet_ReleaseID( &( ecps->idSet ), entityID );
+	if( ecps->isRunningProcess ) {
+		pushDestroyEntityCommand( ecps, entityID );
+	} else {
+		immediateDestroyEntity( ecps, entityID );
+	}
 }
 
 void ecps_DestroyAllEntities( ECPS* ecps )
 {
 	assert( ecps != NULL );
+	assert( !( ecps->isRunningProcess ) );
 
 	idSet_Clear( &( ecps->idSet ) );
 
