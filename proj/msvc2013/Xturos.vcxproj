@@ -98,7 +98,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\collisionDetection.h" />
-    <ClInclude Include="..\..\src\Components\GeneralComponents.h" />
+    <ClInclude Include="..\..\src\Components\generalComponents.h" />
     <ClInclude Include="..\..\src\gameState.h" />
     <ClInclude Include="..\..\src\Game\gameScreen.h" />
     <ClInclude Include="..\..\src\Game\testAStarScreen.h" />
@@ -129,7 +129,7 @@
     <ClInclude Include="..\..\src\music.h" />
     <ClInclude Include="..\..\src\Others\gl_core.h" />
     <ClInclude Include="..\..\src\particles.h" />
-    <ClInclude Include="..\..\src\Processes\GeneralProcesses.h" />
+    <ClInclude Include="..\..\src\Processes\generalProcesses.h" />
     <ClInclude Include="..\..\src\sound.h" />
     <ClInclude Include="..\..\src\System\ECPS\ecps_componentBitFlags.h" />
     <ClInclude Include="..\..\src\System\ECPS\ecps_componentTypes.h" />
@@ -155,7 +155,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\collisionDetection.c" />
-    <ClCompile Include="..\..\src\Components\GeneralComponents.c" />
+    <ClCompile Include="..\..\src\Components\generalComponents.c" />
     <ClCompile Include="..\..\src\gameState.c" />
     <ClCompile Include="..\..\src\Game\gameScreen.c" />
     <ClCompile Include="..\..\src\Game\testAStarScreen.c" />
@@ -189,7 +189,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="..\..\src\particles.c" />
-    <ClCompile Include="..\..\src\Processes\GeneralProcesses.c" />
+    <ClCompile Include="..\..\src\Processes\generalProcesses.c" />
     <ClCompile Include="..\..\src\sound.c" />
     <ClCompile Include="..\..\src\System\ECPS\ecps_componentBitFlags.c" />
     <ClCompile Include="..\..\src\System\ECPS\ecps_componentTypes.c" />

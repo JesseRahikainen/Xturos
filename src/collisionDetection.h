@@ -15,6 +15,7 @@ enum ColliderType {
 	CT_AABB,
 	CT_CIRCLE,
 	CT_HALF_SPACE,
+	CT_LINE_SEGMENT,
 	NUM_COLLIDER_TYPES
 };
 
@@ -36,11 +37,18 @@ typedef struct {
 	float d;
 } ColliderHalfSpace;
 
+typedef struct {
+	enum ColliderType type;
+	Vector2 posOne;
+	Vector2 posTwo;
+} ColliderLineSegment;
+
 typedef union {
 	enum ColliderType type;
 	ColliderAABB aabb;
 	ColliderCircle circle;
 	ColliderHalfSpace halfSpace;
+	ColliderLineSegment lineSegment;
 } Collider;
 
 typedef struct {

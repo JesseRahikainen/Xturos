@@ -10,7 +10,130 @@
 #include "Math/vector2.h"
 #include "Math/mathUtil.h"
 
-// used if we don't want to ever handle collisions between these two types.
+// raycasting intersection functions
+int RayCastvAABBAxis( float rayStart, float dir, float boxMin, float boxMax, float* tMin, float* tMax )
+{
+	float ood;
+	float t1, t2;
+	float swap;
+
+	if( fabsf( dir ) < 0.001f ) {
+		/* ray parallel to axis, no hit unless origin within slab */
+		if( ( rayStart < boxMin ) || ( rayStart > boxMax ) ) {
+			return 0;
+		}
+	} else {
+		/* compute intersection of the ray with the near and far line of the slab */
+		ood = 1.0f / dir;
+		t1 = ( boxMin - rayStart ) * ood;
+		t2 = ( boxMax - rayStart ) * ood;
+
+		/* make t1 the intersection with the near plane, t2 with the far plane */
+		if( t1 > t2 ) {
+			swap = t1;
+			t1 = t2;
+			t2 = swap;
+		}
+
+		/* compute intersection */
+		(*tMin) = MAX( (*tMin), t1 );
+		(*tMax) = MIN( (*tMax), t2 );
+
+		if( (*tMin) > (*tMax) ) {
+			return 0;
+		}
+	}
+
+	return 1;
+}
+
+int LineAABBTest( Vector2* start, Vector2* end, Collider* collider, float maxAllowedT, float minAllowedT, float* t, Vector2* pt )
+{
+	float tMin, tMax;
+
+	tMin = minAllowedT;
+	tMax = maxAllowedT;
+
+	if( !RayCastvAABBAxis( start->v[0], end->v[0],
+							( collider->aabb.center.v[0] - collider->aabb.halfDim.v[0] ), ( collider->aabb.center.v[0] + collider->aabb.halfDim.v[0] ),
+							&tMin, &tMax ) ) {
+		return 0;
+	}
+
+	if( !RayCastvAABBAxis( start->v[1], end->v[1],
+							( collider->aabb.center.v[1] - collider->aabb.halfDim.v[1] ), ( collider->aabb.center.v[1] + collider->aabb.halfDim.v[1] ),
+							&tMin, &tMax ) ) {
+		return 0;
+	}
+
+	vec2_AddScaled( start, end, tMin, pt );
+	(*t) = tMin;
+
+	return 1;
+}
+
+int RayCastvAABB( Vector2* start, Vector2* dir, Collider* collider, float* t, Vector2* pt )
+{
+	return LineAABBTest( start, dir, collider, FLT_MAX, 0.0f, t, pt );
+}
+
+int RayCastvCircle( Vector2* start, Vector2* dir, Collider* collider, float* t, Vector2* pt )
+{
+	Vector2 startCircOrig;
+	float a, b, c, discr;
+
+
+	/* translate the sphere to the origin */
+	vec2_Subtract( start, &( collider->circle.center ), &startCircOrig );
+	b = 2.0f * 	vec2_DotProduct( &startCircOrig, dir );
+	c = vec2_DotProduct( &startCircOrig, &startCircOrig ) - ( collider->circle.radius * collider->circle.radius );
+
+	/* rays origin is outside the circle, and it's pointing away, so no chance of hitting */
+	if( ( c > 0.0f ) && ( b > 0.0f ) ) {
+		return 0;
+	}
+
+	a = vec2_DotProduct( dir, dir );
+	discr = ( b * b ) - ( 4 * a * c );
+
+	/* ray missed the circle */
+	if( discr < 0.0f ) {
+		return 0;
+	}
+
+	(*t) = ( -b - sqrtf( discr ) ) / ( 2 * a );
+
+	/* if the ray starts inside the sphere */
+	if( (*t) < 0.0f ) {
+		(*t) = 0.0f;
+	}
+
+	vec2_AddScaled( start, dir, (*t), pt );
+
+	return 1;
+}
+
+int RayCastvHalfSpace( Vector2* start, Vector2* dir, Collider* collider, float* t, Vector2* pt )
+{
+	// if the ray starts inside the half space we'll consider the collision at the rays origin
+
+	float nDotA = vec2_DotProduct( &( collider->halfSpace.normal ), start );
+	float nDotDir = vec2_DotProduct( &( collider->halfSpace.normal ), dir );
+	(*t) = ( collider->halfSpace.d - nDotA ) / nDotDir;
+
+	if( ( (*t) >= 0.0f ) && ( (*t) <= 1.0f ) ) {
+		vec2_AddScaled( start, dir, (*t), pt );
+		return 1;
+	}
+
+	return 0;
+}
+
+typedef int(*RayCastCheck)( Vector2* start, Vector2* dir, Collider* collider, float* t, Vector2* pt );
+RayCastCheck rayCastChecks[NUM_COLLIDER_TYPES] = { RayCastvAABB, RayCastvCircle, RayCastvHalfSpace };
+
+// Standard Collision Functions
+//  used if we don't want to ever handle collisions between these two types.
 static int invalidCollision( Collider* primary, Collider* secondard, Vector2* outSeparation )
 {
 	return 0;
@@ -237,130 +360,120 @@ int CirclevCircle( Collider* primary, Collider* fixed, Vector2* outSeparation )
 	return 1;
 }
 
-/* define all the collider functions, the first should always be the responding object, the second the fixed object */
-typedef int(*CollisionCheck)( Collider* primary, Collider* fixed, Vector2* outSeparation );
-CollisionCheck collisionChecks[NUM_COLLIDER_TYPES][NUM_COLLIDER_TYPES] = {
-	{ AABBvAABB, AABBvCircle, AABBvHalfSpace },
-	{ CirclevAABB, CirclevCircle, CirclevHalfSpace },
-	{ HalfSpacevAABB, HalfSpacevCircle, invalidCollision }
-};
-
-/* raycasting intersection functions */
-int RayCastvAABBAxis( float rayStart, float dir, float boxMin, float boxMax, float* tMin, float* tMax )
+int AABBvLineSegment( Collider* primary, Collider* fixed, Vector2* outSeparation )
 {
-	float ood;
-	float t1, t2;
-	float swap;
+	Vector2 collPt;
+	float t;
 
-	if( fabsf( dir ) < 0.001f ) {
-		/* ray parallel to axis, no hit unless origin within slab */
-		if( ( rayStart < boxMin ) || ( rayStart > boxMax ) ) {
-			return 0;
-		}
-	} else {
-		/* compute intersection of the ray with the near and far line of the slab */
-		ood = 1.0f / dir;
-		t1 = ( boxMin - rayStart ) * ood;
-		t2 = ( boxMax - rayStart ) * ood;
-
-		/* make t1 the intersection with the near plane, t2 with the far plane */
-		if( t1 > t2 ) {
-			swap = t1;
-			t1 = t2;
-			t2 = swap;
-		}
-
-		/* compute intersection */
-		(*tMin) = MAX( (*tMin), t1 );
-		(*tMax) = MIN( (*tMax), t2 );
-
-		if( (*tMin) > (*tMax) ) {
-			return 0;
-		}
-	}
-
-	return 1;
-}
-
-int RayCastvAABB( Vector2* start, Vector2* dir, Collider* collider, float* t, Vector2* pt )
-{
-	float tMin, tMax;
-
-	tMin = 0.0f;
-	tMax = 1.0f;
-
-	if( !RayCastvAABBAxis( start->v[0], dir->v[0],
-							( collider->aabb.center.v[0] - collider->aabb.halfDim.v[0] ), ( collider->aabb.center.v[0] + collider->aabb.halfDim.v[0] ),
-							&tMin, &tMax ) ) {
-		return 0;
-	}
-
-	if( !RayCastvAABBAxis( start->v[1], dir->v[1],
-							( collider->aabb.center.v[1] - collider->aabb.halfDim.v[1] ), ( collider->aabb.center.v[1] + collider->aabb.halfDim.v[1] ),
-							&tMin, &tMax ) ) {
-		return 0;
-	}
-
-	vec2_AddScaled( start, dir, tMin, pt );
-	(*t) = tMin;
-
-	return 1;
-}
-
-int RayCastvCircle( Vector2* start, Vector2* dir, Collider* collider, float* t, Vector2* pt )
-{
-	Vector2 startCircOrig;
-	float a, b, c, discr;
-
-
-	/* translate the sphere to the origin */
-	vec2_Subtract( start, &( collider->circle.center ), &startCircOrig );
-	b = 2.0f * 	vec2_DotProduct( &startCircOrig, dir );
-	c = vec2_DotProduct( &startCircOrig, &startCircOrig ) - ( collider->circle.radius * collider->circle.radius );
-
-	/* rays origin is outside the circle, and it's pointing away, so no chance of hitting */
-	if( ( c > 0.0f ) && ( b > 0.0f ) ) {
-		return 0;
-	}
-
-	a = vec2_DotProduct( dir, dir );
-	discr = ( b * b ) - ( 4 * a * c );
-
-	/* ray missed the circle */
-	if( discr < 0.0f ) {
-		return 0;
-	}
-
-	(*t) = ( -b - sqrtf( discr ) ) / ( 2 * a );
-
-	/* if the ray starts inside the sphere */
-	if( (*t) < 0.0f ) {
-		(*t) = 0.0f;
-	}
-
-	vec2_AddScaled( start, dir, (*t), pt );
-
-	return 1;
-}
-
-int RayCastvHalfSpace( Vector2* start, Vector2* dir, Collider* collider, float* t, Vector2* pt )
-{
-	// if the ray starts inside the half space we'll consider the collision at the rays origin
-
-	float nDotA = vec2_DotProduct( &( collider->halfSpace.normal ), start );
-	float nDotDir = vec2_DotProduct( &( collider->halfSpace.normal ), dir );
-	(*t) = ( collider->halfSpace.d - nDotA ) / nDotDir;
-
-	if( ( (*t) >= 0.0f ) && ( (*t) <= 1.0f ) ) {
-		vec2_AddScaled( start, dir, (*t), pt );
+	if( LineAABBTest( &( fixed->lineSegment.posOne ), &( fixed->lineSegment.posTwo ), primary, 1.0f, 0.0f, &t, &collPt ) ) {
+		// the line segment is fixed
+		vec2_Subtract( &( fixed->lineSegment.posOne ), &collPt, outSeparation );
 		return 1;
 	}
 
 	return 0;
 }
 
-typedef int(*RayCastCheck)( Vector2* start, Vector2* dir, Collider* collider, float* t, Vector2* pt );
-RayCastCheck rayCastChecks[NUM_COLLIDER_TYPES] = { RayCastvAABB, RayCastvCircle, RayCastvHalfSpace };
+int LineSegmentvAABB( Collider* primary, Collider* fixed, Vector2* outSeparation )
+{
+	if( AABBvLineSegment( fixed, primary, outSeparation ) ) {
+		outSeparation->v[0] = -( outSeparation->v[0] );
+		outSeparation->v[1] = -( outSeparation->v[1] );
+		return 1;
+	}
+	return 0;
+}
+
+int CirclevLineSegment( Collider* primary, Collider* fixed, Vector2* outSeparation )
+{
+	Vector2 collPt;
+	float t;
+	Vector2 dir;
+	vec2_Subtract( &( fixed->lineSegment.posTwo ), &( fixed->lineSegment.posOne ), &dir );
+	float len = vec2_Normalize( &dir );
+
+	int ret = RayCastvCircle( &( fixed->lineSegment.posOne ), &dir, primary, &t, &collPt );
+	if( ret && ( t <= len ) ) {
+		vec2_Subtract( &( fixed->lineSegment.posOne ), &collPt, outSeparation );
+		return 1;
+	}
+	return 0;
+}
+
+int LineSegmentvCircle( Collider* primary, Collider* fixed, Vector2* outSeparation )
+{
+	if( CirclevLineSegment( fixed, primary, outSeparation ) ) {
+		outSeparation->v[0] = -( outSeparation->v[0] );
+		outSeparation->v[1] = -( outSeparation->v[1] );
+		return 1;
+	}
+	return 0;
+}
+
+int HalfSpacevLineSegment( Collider* primary, Collider* fixed, Vector2* outSeparation )
+{
+	Vector2 collPt;
+	float t;
+	Vector2 dir;
+	vec2_Subtract( &( fixed->lineSegment.posTwo ), &( fixed->lineSegment.posOne ), &dir );
+	float len = vec2_Normalize( &dir );
+
+	int ret = RayCastvHalfSpace( &( fixed->lineSegment.posOne ), &dir, primary, &t, &collPt );
+	if( ret && ( t <= len ) ) {
+		vec2_Subtract( &( fixed->lineSegment.posOne ), &collPt, outSeparation );
+		return 1;
+	}
+	return 0;
+}
+
+int LineSegmentvHalfSpace( Collider* primary, Collider* fixed, Vector2* outSeparation )
+{
+	if( HalfSpacevLineSegment( fixed, primary, outSeparation ) ) {
+		outSeparation->v[0] = -( outSeparation->v[0] );
+		outSeparation->v[1] = -( outSeparation->v[1] );
+		return 1;
+	}
+	return 0;
+}
+
+// this will not currently detect collinear collisions between line segments
+int LineSegmentvLineSegment( Collider* primary, Collider* fixed, Vector2* outSeparation )
+{
+	float a1 = signed2DTriArea( &( primary->lineSegment.posOne ), &( primary->lineSegment.posTwo ), &( fixed->lineSegment.posTwo ) );
+	float a2 = signed2DTriArea( &( primary->lineSegment.posOne ), &( primary->lineSegment.posTwo ), &( fixed->lineSegment.posOne ) );
+
+	// if the signs of a1 and a2 match there is no chance of collision
+	if( a1 * a2 >= 0.0f ) {
+		return 0;
+	}
+
+	float a3 = signed2DTriArea( &( fixed->lineSegment.posOne ), &( fixed->lineSegment.posTwo ), &( primary->lineSegment.posOne ) );
+	float a4 = a3 + a2 - a1;
+	if( a3 * a4 >= 0.0f ) {
+		return 0;
+	}
+
+	float t = a3 / ( a3 - a4 );
+	Vector2 collPt;
+	vec2_Lerp( &( primary->lineSegment.posOne ), &( primary->lineSegment.posTwo ), t, &collPt );
+	
+	if( t > 0.5f ) {
+		vec2_Subtract( &collPt, &( primary->lineSegment.posTwo ), outSeparation );
+	} else {
+		vec2_Subtract( &collPt, &( primary->lineSegment.posOne ), outSeparation );
+	}
+
+	return 1;
+}
+
+/* define all the collider functions, the first should always be the responding object, the second the fixed object */
+typedef int(*CollisionCheck)( Collider* primary, Collider* fixed, Vector2* outSeparation );
+CollisionCheck collisionChecks[NUM_COLLIDER_TYPES][NUM_COLLIDER_TYPES] = {
+	{ AABBvAABB, AABBvCircle, AABBvHalfSpace, AABBvLineSegment },
+	{ CirclevAABB, CirclevCircle, CirclevHalfSpace, CirclevLineSegment },
+	{ HalfSpacevAABB, HalfSpacevCircle, invalidCollision, HalfSpacevLineSegment },
+	{ LineSegmentvAABB, LineSegmentvCircle, LineSegmentvHalfSpace, LineSegmentvLineSegment }
+};
 
 /*
 Finds the separation needed for c1 to move and not overlap c2.

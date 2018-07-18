@@ -249,10 +249,10 @@
     <ClInclude Include="..\..\src\Utils\idSet.h">
       <Filter>Header Files\Utils</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\Components\GeneralComponents.h">
+    <ClInclude Include="..\..\src\Components\generalComponents.h">
       <Filter>Header Files\Components</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\Processes\GeneralProcesses.h">
+    <ClInclude Include="..\..\src\Processes\generalProcesses.h">
       <Filter>Header Files\Processes</Filter>
     </ClInclude>
   </ItemGroup>
@@ -407,11 +407,11 @@
     <ClCompile Include="..\..\src\Utils\idSet.c">
       <Filter>Source Files\Utils</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\Processes\GeneralProcesses.c">
-      <Filter>Source Files\Processes</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\Components\GeneralComponents.c">
+    <ClCompile Include="..\..\src\Components\generalComponents.c">
       <Filter>Source Files\Components</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Processes\generalProcesses.c">
+      <Filter>Source Files\Processes</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
