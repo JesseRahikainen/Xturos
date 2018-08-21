@@ -196,3 +196,8 @@ float sqDistPointSegment( const Vector2* segOne, const Vector2* segTwo, const Ve
 
 	return vec2_DotProduct( &posMinOne, &posMinOne ) - ( ( e * e ) / f );
 }
+
+float signed2DTriArea( const Vector2* a, const Vector2* b, const Vector2* c )
+{
+	return ( ( a->x - c->x ) * ( b->y - c->y ) - ( a->y - c->y ) * ( b->x - c->x ) );
+}

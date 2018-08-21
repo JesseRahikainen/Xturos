@@ -37,4 +37,6 @@ float jerkLerp( float t );
 void closestPtToSegment( const Vector2* segOne, const Vector2* segTwo, const Vector2* pos, Vector2* outPos, float* outParam );
 float sqDistPointSegment( const Vector2* segOne, const Vector2* segTwo, const Vector2* pos );
 
+float signed2DTriArea( const Vector2* a, const Vector2* b, const Vector2* c );
+
 #endif // inclusion guard

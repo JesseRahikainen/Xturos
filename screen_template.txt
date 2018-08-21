@@ -1,0 +1,54 @@
+.h
+#ifndef <TEMP>_SCREEN_H
+#define <TEMP>_SCREEN_H
+
+#include "../gameState.h"
+
+struct GameState <temp>ScreenState;
+
+#endif // inclusion guard
+
+<temp>.c
+
+#include "<temp>Screen.h"
+
+#include "../Graphics/graphics.h"
+#include "../Graphics/images.h"
+#include "../Graphics/spineGfx.h"
+#include "../Graphics/camera.h"
+#include "../Graphics/debugRendering.h"
+#include "../Graphics/imageSheets.h"
+
+static int <temp>Screen_Enter( void )
+{
+	cam_TurnOnFlags( 0, 1 );
+	
+	gfx_SetClearColor( CLR_BLACK );
+
+	return 1;
+}
+
+static int <temp>Screen_Exit( void )
+{
+	return 1;
+}
+
+static void <temp>Screen_ProcessEvents( SDL_Event* e )
+{
+}
+
+static void <temp>Screen_Process( void )
+{
+}
+
+static void <temp>Screen_Draw( void )
+{
+
+}
+
+static void <temp>Screen_PhysicsTick( float dt )
+{
+}
+
+struct GameState <temp>ScreenState = { <temp>Screen_Enter, <temp>Screen_Exit, <temp>Screen_ProcessEvents,
+	<temp>Screen_Process, <temp>Screen_Draw, <temp>Screen_PhysicsTick };
