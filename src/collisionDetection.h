@@ -7,6 +7,7 @@ http://www.metanetsoftware.com/technique/tutorialA.html
 */
 
 #include <stddef.h>
+#include <stdbool.h>
 #include "Math/vector2.h"
 #include "Graphics/color.h"
 
@@ -107,5 +108,13 @@ Renders collisions, for debugging.
 */
 void collision_DebugDrawing( Collider* collision, unsigned int camFlags, Color color );
 void collision_CollectionDebugDrawing( ColliderCollection collection, unsigned int camFlags, Color color );
+
+// Determines if and where two line segments overlap
+//  separate function because we may want to know this without having to create the necessary collision data
+bool collision_LineSegmentCollision( Vector2* l0p0, Vector2* l0p1, Vector2* l1p0, Vector2* l1p1, Vector2* outCollPos, float* outT );
+
+// Checks to see if the passed in point is inside the complex polygon defined by the list of points sbPolygon.
+//  sbPolygon must be a stretchy buffer.
+bool collision_IsPointInsideComplexPolygon( Vector2* pos, Vector2* sbPolygon );
 
 #endif

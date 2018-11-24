@@ -9,6 +9,7 @@
 #include "Graphics/debugRendering.h"
 #include "Math/vector2.h"
 #include "Math/mathUtil.h"
+#include "Utils/stretchyBuffer.h"
 
 // raycasting intersection functions
 int RayCastvAABBAxis( float rayStart, float dir, float boxMin, float boxMax, float* tMin, float* tMax )
@@ -436,34 +437,127 @@ int LineSegmentvHalfSpace( Collider* primary, Collider* fixed, Vector2* outSepar
 	return 0;
 }
 
-// this will not currently detect collinear collisions between line segments
-int LineSegmentvLineSegment( Collider* primary, Collider* fixed, Vector2* outSeparation )
+#include "System\platformLog.h"
+// if the line segments are collinear we find the first position along line 0 that hits line 1
+bool collision_LineSegmentCollision( Vector2* l0p0, Vector2* l0p1, Vector2* l1p0, Vector2* l1p1, Vector2* outCollPos, float* outT )
 {
-	float a1 = signed2DTriArea( &( primary->lineSegment.posOne ), &( primary->lineSegment.posTwo ), &( fixed->lineSegment.posTwo ) );
-	float a2 = signed2DTriArea( &( primary->lineSegment.posOne ), &( primary->lineSegment.posTwo ), &( fixed->lineSegment.posOne ) );
+	// https://stackoverflow.com/questions/563198/how-do-you-detect-where-two-line-segments-intersect
+//#error need to redo this, isn't finding every collision it should
+	assert( l0p0 != NULL );
+	assert( l0p1 != NULL );
+	assert( l1p0 != NULL );
+	assert( l1p1 != NULL );
+	assert( outCollPos != NULL );
+	assert( outT != NULL );
+	if( FLT_EQ( vec2_DistSqrd( l0p0, l0p1 ), 0.0f ) ) return false;
+	if( FLT_EQ( vec2_DistSqrd( l1p0, l1p1 ), 0.0f ) ) return false;
 
-	// if the signs of a1 and a2 match there is no chance of collision
-	if( a1 * a2 >= 0.0f ) {
-		return 0;
+	Vector2 l0m;
+	Vector2 l1m;
+	Vector2 diffl01p0;
+
+	// need them in parametric form
+	vec2_Subtract( l0p1, l0p0, &l0m );
+	vec2_Subtract( l1p1, l1p0, &l1m );
+
+	vec2_Subtract( l1p0, l0p0, &diffl01p0 );
+
+	// p = l0p0
+	// q = l1p0
+	// r = l0m
+	// s = l1m
+	// four cases:
+	//  1. r x s == 0 and (q-p) x r = 0
+	//     Lines are collinear, see if they overlap
+	//  2. r x s == 0 and (q-p) x r != 0
+	//     Lines are parallel and non-intersecting
+	//  3. r x s != 0 and 0<=t<=1 and 0<=u<=1, lines meet at p+tr=q+us
+	//  4. Otherwise the two line segments are not parallel but do not intersect
+
+	float dirCross = vec2_CrossProduct( &l0m, &l1m );
+	float diffDirCross = vec2_CrossProduct( &diffl01p0, &l0m );
+
+	if( FLT_EQ( dirCross, 0.0f ) ) {
+		if( FLT_EQ( diffDirCross, 0.0f ) ) {
+			// collinear, see if they overlap
+			float rDotr = vec2_DotProduct( &l0m, &l0m );
+			assert( !FLT_EQ( rDotr, 0.0f ) );
+			
+			float t0 = vec2_DotProduct( &diffl01p0, &l0m ) / rDotr;
+			float t1 = t0 + ( vec2_DotProduct( &l1m, &l0m ) / rDotr );
+
+			// if [t0,t1] intersects [0,1] then there was a hit
+			//  find the lowest of t0 and t1, then clamp to the range [0,1]
+			float baseSign = sign( 0.0f - t0 );
+			if( ( baseSign != sign( 1.0f - t0 ) ) ||
+				( baseSign != sign( 0.0f - t1 ) ) ||
+				( baseSign != sign( 1.0f - t1 ) ) ) {
+
+				(*outT) = MIN( MIN( t0, t1 ), 0.0f );
+				vec2_Lerp( l0p0, l0p1, (*outT), outCollPos );
+				return true;
+			}
+		}
+		// otherwise they are parallel and non-interesecting
+	} else {
+		float t = vec2_CrossProduct( &diffl01p0, &l1m ) / dirCross;
+		float u = diffDirCross / dirCross;
+
+		if( FLT_GE( t, 0.0f ) && FLT_LE( t, 1.0f ) && FLT_GE( u, 0.0f ) && FLT_LE( u, 1.0f ) ) {
+			// got a collision point
+			(*outT) = t;
+			vec2_Lerp( l0p0, l0p1, t, outCollPos );
+			return true;
+		}
+		// otherwise they are not parallel and do not intersect
 	}
 
-	float a3 = signed2DTriArea( &( fixed->lineSegment.posOne ), &( fixed->lineSegment.posTwo ), &( primary->lineSegment.posOne ) );
+	return false; //*/
+
+	/*float a1 = signed2DTriArea( l0p0, l0p1, l1p1 );
+	float a2 = signed2DTriArea( l0p0, l0p1, l1p0 );
+
+	// if the signs of a1 and a2 match there is no chance of collision
+	//  except if they're collinear, which this doesn't detect
+	if( a1 * a2 >= 0.0f ) {
+		llog( LOG_DEBUG, "fail at a1 * a2" );
+		return false;
+	}
+
+	float a3 = signed2DTriArea( l1p0, l1p1, l0p0 );
 	float a4 = a3 + a2 - a1;
 	if( a3 * a4 >= 0.0f ) {
-		return 0;
+		llog( LOG_DEBUG, "fail at a3 * a4" );
+		return false;
 	}
 
 	float t = a3 / ( a3 - a4 );
+	vec2_Lerp( l0p0, l0p1, t, outCollPos );
+	(*outT) = t;
+
+	return true;//*/
+}
+
+// this will not currently detect collinear collisions between line segments
+int LineSegmentvLineSegment( Collider* primary, Collider* fixed, Vector2* outSeparation )
+{
 	Vector2 collPt;
-	vec2_Lerp( &( primary->lineSegment.posOne ), &( primary->lineSegment.posTwo ), t, &collPt );
-	
-	if( t > 0.5f ) {
-		vec2_Subtract( &collPt, &( primary->lineSegment.posTwo ), outSeparation );
-	} else {
-		vec2_Subtract( &collPt, &( primary->lineSegment.posOne ), outSeparation );
+	float t;
+	if( collision_LineSegmentCollision(
+		&( primary->lineSegment.posOne ), &( primary->lineSegment.posTwo ),
+		&( fixed->lineSegment.posOne ), &( fixed->lineSegment.posTwo ),
+		&collPt, &t ) ) {
+
+		if( t > 0.5f ) {
+			vec2_Subtract( &collPt, &( primary->lineSegment.posTwo ), outSeparation );
+		} else {
+			vec2_Subtract( &collPt, &( primary->lineSegment.posOne ), outSeparation );
+		}
+
+		return 1;
 	}
 
-	return 1;
+	return 0;
 }
 
 /* define all the collider functions, the first should always be the responding object, the second the fixed object */
@@ -709,4 +803,36 @@ void collision_CollectionDebugDrawing( ColliderCollection collection, unsigned i
 		current = (Collider*)( data + ( i * collection.stride ) );
 		collision_DebugDrawing( current, camFlags, color );
 	}
+}
+
+bool collision_IsPointInsideComplexPolygon( Vector2* pos, Vector2* sbPolygon )
+{
+	assert( pos != NULL );
+	assert( sbPolygon != NULL );
+	assert( sb_Count( sbPolygon ) >= 3 );
+
+	// http://alienryderflex.com/polygon/
+
+	// we have to trace a horizontal ray starting at pos, if it hits an odd number
+	//  of segments of the polygon then it's inside
+	// we'll assume the ray goes along the positive x-axis
+
+	size_t j = sb_Count( sbPolygon ) - 1;
+	bool oddNodes = false;
+
+	for( size_t i = 0; i < sb_Count( sbPolygon ); ++i ) {
+		if( ( ( ( sbPolygon[i].y < pos->y ) && ( sbPolygon[j].y >= pos->y ) ) ||
+			  ( ( sbPolygon[j].y < pos->y ) && ( sbPolygon[i].x >= pos->y ) ) ) &&  // if the points y coord is in range of the line segments
+			( ( sbPolygon[i].x <= pos->x ) || ( sbPolygon[j].x <= pos->x ) ) ) {
+
+			// find where along the segment it would collide
+			float t = ( pos->y - sbPolygon[i].y ) / ( sbPolygon[j].y - sbPolygon[i].y );
+			// get the x coord of the position
+			float x = sbPolygon[i].x + ( t * ( sbPolygon[j].x - sbPolygon[i].x ) );
+			// see if we hit
+			oddNodes ^= ( x < pos->x );
+		}
+	}
+
+	return oddNodes;
 }

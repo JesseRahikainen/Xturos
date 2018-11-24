@@ -218,7 +218,7 @@ int initEverything( void )
 	llog( LOG_INFO, "Mixer successfully initialized" );
 
 	cam_Init( );
-	cam_SetProjectionMatrices( RENDER_WIDTH, RENDER_HEIGHT );
+	cam_SetProjectionMatrices( RENDER_WIDTH, RENDER_HEIGHT, false );
 	llog( LOG_INFO, "Cameras successfully initialized" );
 
 	input_InitMouseInputArea( RENDER_WIDTH, RENDER_HEIGHT );

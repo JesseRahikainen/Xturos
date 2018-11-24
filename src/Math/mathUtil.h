@@ -33,10 +33,18 @@ float randFloatVar( float mid, float var );
 float sign( float val );
 Vector3* vec2ToVec3( const Vector2* vec2, float z, Vector3* out );
 float jerkLerp( float t );
+float remap( float origMin, float origMax, float val, float newMin, float newMax );
 
 void closestPtToSegment( const Vector2* segOne, const Vector2* segTwo, const Vector2* pos, Vector2* outPos, float* outParam );
 float sqDistPointSegment( const Vector2* segOne, const Vector2* segTwo, const Vector2* pos );
 
 float signed2DTriArea( const Vector2* a, const Vector2* b, const Vector2* c );
+
+#define FLOAT_TOLERANCE 0.0001f
+// used for testing floats within a certain tolerance, TODO: configurable tolerance?
+#define FLT_EQ( f, t ) ( ( ( ( f ) - ( t ) ) <= FLOAT_TOLERANCE ) && ( ( f ) - ( t ) >= -FLOAT_TOLERANCE ) )
+#define FLT_LE( f, t ) ( ( f ) - ( t ) <= FLOAT_TOLERANCE )
+#define FLT_GE( f, t ) ( ( f ) - ( t ) >= -FLOAT_TOLERANCE )
+#define FLT_BETWEEN( f, low, high ) ( FLT_LE( f, high ) && FLT_GE( f, low ) )
 
 #endif // inclusion guard

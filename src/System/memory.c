@@ -183,7 +183,7 @@ static void logWatchedMemoryAddressChange( MemoryBlockHeader* adjHeader, const c
 	if( watchedHeader == NULL ) return;
 	if( adjHeader == NULL ) return;
 
-	// see if the adjust memory block header, and the watched memory block overlap at all
+	// see if the adjusted memory block header, and the watched memory block overlap at all
 	void* watchedStart = (void*)watchedHeader;
 	void* watchedEnd = (void*)( ( (uint8_t*)watchedHeader ) + MEMORY_HEADER_SIZE + watchedHeader->size );
 

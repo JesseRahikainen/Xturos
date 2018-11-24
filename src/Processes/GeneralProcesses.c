@@ -24,6 +24,7 @@ static void render( ECPS* ecps, const Entity* entity )
 	GCSpriteData* sd = NULL;
 	GCScaleData* scale = NULL;
 	GCColorData* color = NULL;
+	GCRotData* rot = NULL;
 
 	ecps_GetComponentFromEntity( entity, gcPosCompID, &pos );
 	ecps_GetComponentFromEntity( entity, gcSpriteCompID, &sd );
@@ -49,7 +50,16 @@ static void render( ECPS* ecps, const Entity* entity )
 		color->currClr = futureClr;
 	}
 
-	img_Draw_sv_c( sd->img, sd->camFlags, currPos, futurePos, currScale, futureScale, currClr, futureClr, sd->depth );
+	float currRot = 0.0f;
+	float futureRot = 0.0f;
+	if( ecps_GetComponentFromEntity( entity, gcRotCompID, &rot ) ) {
+		currRot = rot->currRot;
+		futureRot = rot->futureRot;
+
+		rot->currRot = rot->futureRot;
+	}
+
+	img_Draw_sv_c_r( sd->img, sd->camFlags, currPos, futurePos, currScale, futureScale, currClr, futureClr, currRot, futureRot, sd->depth );
 
 	pos->currPos = pos->futurePos;
 }

@@ -146,10 +146,16 @@ Vector3* vec2ToVec3( const Vector2* vec2, float z, Vector3* out )
 	return out;
 }
 
+// maps [0,1] the an arc starting and ending at y = 0 and the peak at 0.5 where y = 1
 float jerkLerp( float t )
 {
 	t = clamp( 0.0f, 1.0f, t );
 	return ( 1.0f - ( ( 1.0f - t ) * ( 1.0f - t ) ) );
+}
+
+float remap( float origMin, float origMax, float val, float newMin, float newMax )
+{
+	return lerp( newMin, newMax, inverseLerp( origMin, origMax, val ) );
 }
 
 // Real-Time Collision Detection, pg 128

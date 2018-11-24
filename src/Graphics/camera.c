@@ -23,6 +23,18 @@ static float endTime;
 
 static int currCamera;
 
+static void createStandardProjectionMatrix( int width, int height, Matrix4* outMat )
+{
+	mat4_CreateOrthographicProjection( 0.0f, (float)width, 0.0f, (float)height, -1000.0f, 1000.0f, outMat );
+}
+
+static void createZeroedProjectionMatrix( int width, int height, Matrix4* outMat )
+{
+	float halfWidth = width / 2.0f;
+	float halfHeight = height / 2.0f;
+	mat4_CreateOrthographicProjection( -halfWidth, halfWidth, -halfHeight, halfHeight, -1000.0f, 1000.0f, outMat );
+}
+
 /*
 Initialize all the cameras, set them to the identity.
 */
@@ -38,15 +50,53 @@ void cam_Init( void )
 
 /*
 Creates the base projection matrices for all the cameras.
+ If zeroed is true it will create matrices with (0,0) being the center, otherwise (0,0) will be the upper left
 */
-void cam_SetProjectionMatrices( int width, int height)
+void cam_SetProjectionMatrices( int width, int height, bool zeroed )
 {
 	Matrix4 proj;
-	mat4_CreateOrthographicProjection( 0.0f, (float)width, 0.0f, (float)height, -1000.0f, 1000.0f, &proj );
+
+	if( zeroed ) {
+		createZeroedProjectionMatrix( width, height, &proj );
+	} else {
+		createStandardProjectionMatrix( width, height, &proj );
+	}
 
 	for( int i = 0; i < NUM_CAMERAS; ++i ) {
 		cameras[i].projectionMat = proj;
 	}
+}
+
+/*
+Sets the camera projection matrix with (0,0) being the center
+*/
+void cam_SetCenteredProjectionMatrix( int cam, int width, int height )
+{
+	SDL_assert( cam >= 0 );
+	SDL_assert( cam < NUM_CAMERAS );
+	createZeroedProjectionMatrix( width, height, &( cameras[cam].projectionMat ) );
+}
+
+/*
+Sets the camera projection matrix with (0,0) being the upper left corner
+*/
+void cam_SetStandardProjectionMatrix( int cam, int width, int height )
+{
+	SDL_assert( cam >= 0 );
+	SDL_assert( cam < NUM_CAMERAS );
+	createStandardProjectionMatrix( width, height, &( cameras[cam].projectionMat ) );
+}
+
+/*
+Sets a custom projection matrix for a camera
+*/
+void cam_SetCustomProjectionMatrix( int cam, Matrix4* mat )
+{
+	SDL_assert( cam >= 0 );
+	SDL_assert( cam < NUM_CAMERAS );
+	SDL_assert( mat != NULL );
+
+	memcpy( &( cameras[cam].projectionMat ), mat, sizeof( Matrix4 ) );
 }
 
 /*
@@ -73,7 +123,8 @@ int cam_SetNextState( int camera, Vector2 pos, float scale )
 {
 	assert( camera < NUM_CAMERAS );
 
-	cameras[camera].end.pos = pos;
+	vec2_Scale( &pos, scale, &(cameras[camera].end.pos ) );
+	//cameras[camera].end.pos = pos;
 	cameras[camera].end.scale = scale;
 	return 0;
 }
@@ -104,6 +155,20 @@ int cam_GetNextPos( int camera, Vector2* outPos )
 {
 	assert( camera < NUM_CAMERAS );
 	(*outPos) = cameras[camera].end.pos;
+	return 0;
+}
+
+int cam_GetCurrScale( int camera, float* outScale )
+{
+	assert( camera < NUM_CAMERAS );
+	(*outScale) = cameras[camera].start.scale;
+	return 0;
+}
+
+int cam_GetNextScale( int camera, float* outScale )
+{
+	assert( camera < NUM_CAMERAS );
+	(*outScale) = cameras[camera].end.scale;
 	return 0;
 }
 
@@ -147,7 +212,8 @@ int cam_GetVPMatrix( int camera, Matrix4* out )
 	float scale = lerp( cameras[camera].start.scale, cameras[camera].end.scale, t );
 	mat4_CreateScale( scale, scale, 1.0f, &scaleTf );
 
-	mat4_Multiply( &transTf, &scaleTf, &view );
+	//mat4_Multiply( &transTf, &scaleTf, &view );
+	mat4_Multiply( &scaleTf, &transTf, &view );
 	
 	mat4_Multiply( &( cameras[camera].projectionMat ), &view, out );
 	

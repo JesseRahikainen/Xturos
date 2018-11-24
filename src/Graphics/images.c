@@ -855,7 +855,7 @@ void img_Render( float normTimeElapsed )
 	};
 
 	for( int idx = 0; idx <= lastDrawInstruction; ++idx ) {
-		Vector2 verts[4];
+		TriVert verts[4];
 
 		// generate the sprites matrix
 		Matrix4 modelTf;
@@ -871,19 +871,19 @@ void img_Render( float normTimeElapsed )
 		createRenderTransform( &pos, &sclSz, rot, &renderBuffer[idx].offset, &modelTf );
 
 		for( int i = 0; i < 4; ++i ) {
-			mat4_TransformVec2Pos( &modelTf, &( unitSqVertPos[i] ), &( verts[i] ) );
+			mat4_TransformVec2Pos( &modelTf, &( unitSqVertPos[i] ), &( verts[i].pos ) );
+			verts[i].uv = renderBuffer[idx].uvs[i];
+			verts[i].col = col;
 		}
 
 		int transparent = ( renderBuffer[idx].flags & IMGFLAG_HAS_TRANSPARENCY ) != 0;
 
 		triRenderer_Add( verts[indices[0]], verts[indices[1]], verts[indices[2]],
-			renderBuffer[idx].uvs[indices[0]], renderBuffer[idx].uvs[indices[1]], renderBuffer[idx].uvs[indices[2]],
-			renderBuffer[idx].shaderType, renderBuffer[idx].textureObj, col,
+			renderBuffer[idx].shaderType, renderBuffer[idx].textureObj,
 			renderBuffer[idx].scissorID, renderBuffer[idx].camFlags, renderBuffer[idx].depth,
 			transparent );
 		triRenderer_Add( verts[indices[3]], verts[indices[4]], verts[indices[5]],
-			renderBuffer[idx].uvs[indices[3]], renderBuffer[idx].uvs[indices[4]], renderBuffer[idx].uvs[indices[5]],
-			renderBuffer[idx].shaderType, renderBuffer[idx].textureObj, col,
+			renderBuffer[idx].shaderType, renderBuffer[idx].textureObj,
 			renderBuffer[idx].scissorID, renderBuffer[idx].camFlags, renderBuffer[idx].depth,
 			transparent );
 	}

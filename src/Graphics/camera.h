@@ -3,6 +3,7 @@
 
 #include <SDL.h>
 #include <stdint.h>
+#include <stdbool.h>
 
 #include "../Math/vector2.h"
 #include "../Math/matrix4.h"
@@ -14,8 +15,24 @@ void cam_Init( void );
 
 /*
 Creates the base projection matrices for all the cameras.
+ If zeroed is true it will create matrices with (0,0) being the center, otherwise (0,0) will be the upper left
 */
-void cam_SetProjectionMatrices( int width, int height );
+void cam_SetProjectionMatrices( int width, int height, bool zeroed );
+
+/*
+Sets the camera projection matrix with (0,0) being the center
+*/
+void cam_SetCenteredProjectionMatrix( int cam, int width, int height );
+
+/*
+Sets the camera projection matrix with (0,0) being the upper left corner
+*/
+void cam_SetStandardProjectionMatrix( int cam, int width, int height );
+
+/*
+Sets a custom projection matrix for a camera
+*/
+void cam_SetCustomProjectionMatrix( int cam, Matrix4* mat );
 
 /*
 Directly sets the state of the camera. Only use this if you don't want
@@ -38,6 +55,8 @@ int cam_MoveNextState( int camera, Vector2 delta, float scaleDelta );
 
 int cam_GetCurrPos( int camera, Vector2* outPos );
 int cam_GetNextPos( int camera, Vector2* outPos );
+int cam_GetCurrScale( int camera, float* outScale );
+int cam_GetNextScale( int camera, float* outScale );
 
 /*
 Do everything that needs to be done when starting a new render set.

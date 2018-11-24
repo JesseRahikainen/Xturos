@@ -15,6 +15,14 @@ typedef enum {
 	NUM_SHADERS
 } ShaderType;
 
+typedef struct {
+	Vector2 pos;
+	Vector2 uv;
+	Color col;
+} TriVert;
+
+TriVert triVert( Vector2 pos, Vector2 uv, Color col );
+
 /*
 Makes all the shaders reload.
 */
@@ -30,10 +38,10 @@ int triRenderer_Init( int renderAreaWidth, int renderAreaHeight );
 We'll assume the array has three vertices in it.
  Return a value < 0 if there's a problem.
 */
-int triRenderer_AddVertices( Vector2* positions, Vector2* uvs, ShaderType shader, GLuint texture, Color color,
+int triRenderer_AddVertices( TriVert* verts, ShaderType shader, GLuint texture,
 	int clippingID, uint32_t camFlags, int8_t depth, int transparent );
-int triRenderer_Add( Vector2 pos0, Vector2 pos1, Vector2 pos2, Vector2 uv0, Vector2 uv1, Vector2 uv2, ShaderType shader, GLuint texture,
-	Color color, int clippingID, uint32_t camFlags, int8_t depth, int transparent );
+int triRenderer_Add( TriVert vert0, TriVert vert1, TriVert vert2, ShaderType shader, GLuint texture,
+	int clippingID, uint32_t camFlags, int8_t depth, int transparent );
 
 /*
 Clears out all the triangles currently stored.

@@ -24,6 +24,8 @@
 
 #include "../System/platformLog.h"
 
+#include "../Utils/stretchyBuffer.h"
+
 static SDL_GLContext glContext;
 
 static float currentTime;
@@ -54,6 +56,9 @@ static enum {
 
 static GLuint mainRenderFBO = 0;
 static GLuint mainRenderRBOs[RBO_COUNT] = { 0, 0 };
+
+static GfxDrawTrisFunc* sbAdditionalDrawFuncs = NULL;
+static GfxClearFunc* sbAdditionalClearFuncs = NULL;
 
 static int generateFBO( GLuint* fboOut, GLuint* rbosOut )
 {
@@ -236,6 +241,10 @@ void gfx_ClearDrawCommands( float timeToEnd )
 	debugRenderer_ClearVertices( );
 	img_ClearDrawInstructions( );
 	scissor_Clear( );
+
+	for( size_t i = 0; i < sb_Count( sbAdditionalClearFuncs ); ++i ) {
+		sbAdditionalClearFuncs[i]( );
+	}
 	
 	endTime = timeToEnd;
 	currentTime = 0.0f;
@@ -261,6 +270,10 @@ static void dynamicSizeRender( float dt, float t )
 		triRenderer_Clear( );
 			img_Render( t );
 			spine_RenderInstances( t );
+
+			for( size_t i = 0; i < sb_Count( sbAdditionalDrawFuncs ); ++i ) {
+				sbAdditionalDrawFuncs[i]( t );
+			}
 		triRenderer_Render( );
 
 		// in game ui stuff
@@ -326,4 +339,34 @@ void gfx_Render( float dt )
 #else
 	dynamicSizeRender( dt, t );
 #endif
+}
+
+void gfx_AddDrawTrisFunc( GfxDrawTrisFunc newFunc )
+{
+	sb_Push( sbAdditionalDrawFuncs, newFunc );
+}
+
+void gfx_RemoveDrawTrisFunc( GfxDrawTrisFunc oldFunc )
+{
+	for( size_t i = 0; i < sb_Count( sbAdditionalDrawFuncs ); ++i ) {
+		if( sbAdditionalDrawFuncs[i] == oldFunc ) {
+			sb_Remove( sbAdditionalDrawFuncs, i );
+			--i;
+		}
+	}
+}
+
+void gfx_AddClearCommand( GfxClearFunc newFunc )
+{
+	sb_Push( sbAdditionalClearFuncs, newFunc );
+}
+
+void gfx_RemoveClearCommand( GfxClearFunc oldFunc )
+{
+	for( size_t i = 0; i < sb_Count( sbAdditionalClearFuncs ); ++i ) {
+		if( sbAdditionalClearFuncs[i] == oldFunc ) {
+			sb_Remove( sbAdditionalClearFuncs, i );
+			--i;
+		}
+	}
 }

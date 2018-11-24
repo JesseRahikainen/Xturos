@@ -2,6 +2,7 @@
 #define IMAGES_H
 
 #include <stdint.h>
+#include <stdbool.h>
 #include <SDL.h>
 #include "../Math/vector2.h"
 #include "color.h"

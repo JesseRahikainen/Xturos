@@ -444,21 +444,22 @@ static void drawCharacter( SpineInstance* spine )
 				spRegionAttachment* regionAttachment = (spRegionAttachment*)attachment;
 				spRegionAttachment_computeWorldVertices( regionAttachment, slot->bone, vertices );
 
-				Vector2 positions[4];
-				Vector2 uvs[4];
+				TriVert verts[4];
 
 				for( int i = 0; i < 4; ++i ) {
-					positions[i].x = vertices[2*i];
-					positions[i].y = vertices[(2*i)+1];
+					verts[i].pos.x = vertices[2*i];
+					verts[i].pos.y = vertices[(2*i)+1];
 
-					uvs[i].s = regionAttachment->uvs[2*i];
-					uvs[i].t = regionAttachment->uvs[(2*i)+1];
+					verts[i].uv.s = regionAttachment->uvs[2*i];
+					verts[i].uv.t = regionAttachment->uvs[(2*i)+1];
+
+					verts[i].col = col;
 				}
 
 				texture = (Texture*)((spAtlasRegion*)regionAttachment->rendererObject)->page->rendererObject;
 
-				triRenderer_Add( positions[0], positions[1], positions[2], uvs[0], uvs[1], uvs[2], ST_DEFAULT, texture->textureID, col, 0, camFlags, depth, texture->flags & TF_IS_TRANSPARENT );
-				triRenderer_Add( positions[0], positions[2], positions[3], uvs[0], uvs[2], uvs[3], ST_DEFAULT, texture->textureID, col, 0, camFlags, depth, texture->flags & TF_IS_TRANSPARENT );
+				triRenderer_Add( verts[0], verts[1], verts[2], ST_DEFAULT, texture->textureID, 0, camFlags, depth, texture->flags & TF_IS_TRANSPARENT );
+				triRenderer_Add( verts[0], verts[2], verts[3], ST_DEFAULT, texture->textureID, 0, camFlags, depth, texture->flags & TF_IS_TRANSPARENT );
 			} break;
 		/*case SP_ATTACHMENT_BOUNDING_BOX: {
 				// if we're debugging 
@@ -488,20 +489,19 @@ static void drawCharacter( SpineInstance* spine )
 				texture = (Texture*)((spAtlasRegion*)meshAttachment->rendererObject)->page->rendererObject;
 
 				for( int i = 0; i < meshAttachment->trianglesCount; i+=3 ) {
-					Vector2 verts[3];
-					Vector2 uvs[3];
+					TriVert verts[3];
 					
 					for( int j = 0; j < 3; ++j ) {
 						int baseIndex = meshAttachment->triangles[i+j] * 2;
-						verts[j].x = spineVertices[baseIndex];
-						verts[j].y = spineVertices[baseIndex+1];
+						verts[j].pos.x = spineVertices[baseIndex];
+						verts[j].pos.y = spineVertices[baseIndex+1];
 
-						uvs[j].x = meshAttachment->uvs[baseIndex];
-						uvs[j].y = meshAttachment->uvs[baseIndex+1];
+						verts[i].uv.s = meshAttachment->uvs[baseIndex];
+						verts[i].uv.t = meshAttachment->uvs[baseIndex+1];
 					}
 
 					//debugRenderer_Triangle( camFlags, verts[0], verts[1], verts[2], CLR_GREEN );
-					triRenderer_AddVertices( verts, uvs, ST_DEFAULT, texture->textureID, col, 0, camFlags, depth, texture->flags & TF_IS_TRANSPARENT );
+					triRenderer_AddVertices( verts, ST_DEFAULT, texture->textureID, 0, camFlags, depth, texture->flags & TF_IS_TRANSPARENT );
 				}
 			} break;
 		default:

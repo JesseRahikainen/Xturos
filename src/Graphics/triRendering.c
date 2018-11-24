@@ -10,6 +10,7 @@
 #include "glDebugging.h"
 #include "scissor.h"
 #include "../System/platformLog.h"
+#include "../Math/mathUtil.h"
 
 typedef struct {
 	Vector3 pos;
@@ -57,6 +58,15 @@ TriangleList transparentTriangles;
 #define Z_ORDER_OFFSET ( 1.0f / (float)( 2 * ( MAX_TRIS + 1 ) ) )
 
 static ShaderProgram shaderPrograms[NUM_SHADERS];
+
+TriVert triVert( Vector2 pos, Vector2 uv, Color col )
+{
+	TriVert v;
+	v.pos = pos;
+	v.uv = uv;
+	v.col = col;
+	return v;
+}
 
 int triRenderer_LoadShaders( void )
 {
@@ -160,9 +170,96 @@ int triRenderer_Init( int renderAreaWidth, int renderAreaHeight )
 	return 0;
 }
 
-int addTriangle( TriangleList* triList, Vector2 pos0, Vector2 pos1, Vector2 pos2, Vector2 uv0, Vector2 uv1, Vector2 uv2,
-	ShaderType shader, GLuint texture, Color color, int clippingID, uint32_t camFlags, int8_t depth )
+static bool isTriAxisSeparating( Vector2* p0, Vector2* p1, Vector2* p2 )
 {
+	float temp;
+	Vector2 projTriPt0, projTriPt2;
+	float triPt0Dot, triPt2Dot;
+	float triMin, triMax;
+	float quadMin, quadMax;
+
+	Vector2 orthoAxis;
+	vec2_Subtract( p0, p1, &orthoAxis );
+	temp = orthoAxis.x;
+	orthoAxis.x = -orthoAxis.y;
+	orthoAxis.y = temp;
+	vec2_Normalize( &orthoAxis ); // is this necessary?
+
+	// since we're generating it from p0 and p1 that means they should both project to the same
+	//  value on the axis, so we only need to project p0 and p2
+	vec2_ProjOnto( p0, &orthoAxis, &projTriPt0 );
+	vec2_ProjOnto( p2, &orthoAxis, &projTriPt2 );
+	triPt0Dot = vec2_DotProduct( &orthoAxis, &projTriPt0 );
+	triPt2Dot = vec2_DotProduct( &orthoAxis, &projTriPt2 );
+
+	if( triPt0Dot > triPt2Dot ) {
+		triMin = triPt2Dot;
+		triMax = triPt0Dot;
+	} else {
+		triMin = triPt0Dot;
+		triMax = triPt2Dot;
+	}
+
+	// now find min and max for AABB on this axis, we know all points will be <+/-1,+/-1>
+	float dotPP = orthoAxis.x + orthoAxis.y;
+	float dotPN = orthoAxis.x - orthoAxis.y;
+	float dotNN = -orthoAxis.x - orthoAxis.y;
+	float dotNP = -orthoAxis.x + orthoAxis.y;
+
+	quadMin = MIN( dotPP, MIN( dotPN, MIN( dotNN, dotNP ) ) );
+	quadMax = MAX( dotPP, MAX( dotPN, MAX( dotNN, dotNP ) ) );
+
+	return ( FLT_LT( quadMax, triMin ) || FLT_GT( quadMin, triMax ) );
+}
+
+// test to see if the triangle intersects the AABB centered on (0,0) with sides of length 2
+static bool testTriangle( Vector2* p0, Vector2* p1, Vector2* p2 )
+{
+	// we'll need an optimized version of the SAT test, since we always know the position and size
+	//  of the AABB we can precompute things
+
+	// first test to see if there is a horizontal or vertical axis that separates
+	if( FLT_LT( p0->x, -1.0f ) && FLT_LT( p1->x, -1.0f ) && FLT_LT( p2->x, -1.0f ) ) return false;
+	if( FLT_GT( p0->x, 1.0f ) && FLT_GT( p1->x, 1.0f ) && FLT_GT( p2->x, 1.0f ) ) return false;
+
+	if( FLT_LT( p0->y, -1.0f ) && FLT_LT( p1->y, -1.0f ) && FLT_LT( p2->y, -1.0f ) ) return false;
+	if( FLT_GT( p0->y, 1.0f ) && FLT_GT( p1->y, 1.0f ) && FLT_GT( p2->y, 1.0f ) ) return false;
+
+	// now test to see if the segments of the triangle generate a separating axis
+	if( isTriAxisSeparating( p0, p1, p2 ) ) return false;
+	if( isTriAxisSeparating( p1, p2, p0 ) ) return false;
+	if( isTriAxisSeparating( p2, p0, p1 ) ) return false;
+
+	return true;
+}
+
+static int addTriangle( TriangleList* triList, TriVert vert0, TriVert vert1, TriVert vert2,
+	ShaderType shader, GLuint texture, int clippingID, uint32_t camFlags, int8_t depth )
+{
+	// test to see if the triangle can be culled
+	bool anyInside = false;
+	for( int currCamera = cam_StartIteration( ); ( currCamera != -1 ) && !anyInside; currCamera = cam_GetNextActiveCam( ) ) {
+		if( cam_GetFlags( currCamera ) & camFlags ) {
+			Matrix4 vpMat;
+			cam_GetVPMatrix( currCamera, &vpMat );
+
+			// issue! if the triangle is too large, and all it's vertices are off screen while the triangle still intersects the screen it won't draw
+			//  so we'll also have to test the sign of each access, if it's different between
+			Vector2 p0, p1, p2;
+			mat4_TransformVec2Pos( &vpMat, &( vert0.pos ), &p0 );
+			mat4_TransformVec2Pos( &vpMat, &( vert1.pos ), &p1 );
+			mat4_TransformVec2Pos( &vpMat, &( vert2.pos ), &p2 );
+			anyInside = testTriangle( &p0, &p1, &p2 );
+/*#define TEST_VERT( v )	mat4_TransformVec2Pos( &vpMat, &( v ), &test ); \
+						anyInside = anyInside || ( FLT_GE( test.x, -1.0f ) && FLT_LE( test.x, 1.0f ) && FLT_GE( test.y, -1.0f ) && FLT_LE( test.y, 1.0f ) );
+			TEST_VERT( vert0.pos );
+			TEST_VERT( vert1.pos );
+			TEST_VERT( vert2.pos );
+#undef TEST_VERT//*/
+		}
+	}
+	if( !anyInside ) return 0;
+
 	if( triList->lastTriIndex >= ( MAX_TRIS - 1 ) ) {
 		llog( LOG_VERBOSE, "Triangle list full." );
 		return -1;
@@ -179,20 +276,17 @@ int addTriangle( TriangleList* triList, Vector2 pos0, Vector2 pos1, Vector2 pos2
 	triList->triangles[idx].scissorID = clippingID;
 	int baseIdx = idx * 3;
 
-	vec2ToVec3( &( pos0 ), z, &( triList->vertices[baseIdx].pos ) );
-	triList->vertices[baseIdx].col = color;
-	triList->vertices[baseIdx].uv = uv0;
-	triList->triangles[idx].vertexIndices[0] = baseIdx;
+#define ADD_VERT( v, offset ) \
+	vec2ToVec3( &( (v).pos ), z, &( triList->vertices[baseIdx + (offset)].pos ) ); \
+	triList->vertices[baseIdx + (offset)].col = (v).col; \
+	triList->vertices[baseIdx + (offset)].uv = (v).uv; \
+	triList->triangles[idx].vertexIndices[(offset)] = baseIdx + (offset);
 
-	vec2ToVec3( &( pos1 ), z, &( triList->vertices[baseIdx+1].pos ) );
-	triList->vertices[baseIdx+1].col = color;
-	triList->vertices[baseIdx+1].uv = uv1;
-	triList->triangles[idx].vertexIndices[1] = baseIdx + 1;
+	ADD_VERT( vert0, 0 );
+	ADD_VERT( vert1, 1 );
+	ADD_VERT( vert2, 2 );
 
-	vec2ToVec3( &( pos2 ), z, &( triList->vertices[baseIdx+2].pos ) );
-	triList->vertices[baseIdx+2].col = color;
-	triList->vertices[baseIdx+2].uv = uv2;
-	triList->triangles[idx].vertexIndices[2] = baseIdx + 2;
+#undef ADD_VERT
 
 	return 0;
 }
@@ -201,20 +295,19 @@ int addTriangle( TriangleList* triList, Vector2 pos0, Vector2 pos1, Vector2 pos2
 We'll assume the array has three vertices in it.
  Return a value < 0 if there's a problem.
 */
-int triRenderer_AddVertices( Vector2* positions, Vector2* uvs, ShaderType shader, GLuint texture, Color color,
+int triRenderer_AddVertices( TriVert* verts, ShaderType shader, GLuint texture,
 	int clippingID, uint32_t camFlags, int8_t depth, int transparent )
 {
-	return triRenderer_Add( positions[0], positions[1], positions[2], uvs[0], uvs[1], uvs[2],
-		shader, texture, color, clippingID, camFlags, depth, transparent );
+	return triRenderer_Add( verts[0], verts[1], verts[2], shader, texture, clippingID, camFlags, depth, transparent );
 }
 
-int triRenderer_Add( Vector2 pos0, Vector2 pos1, Vector2 pos2, Vector2 uv0, Vector2 uv1, Vector2 uv2, ShaderType shader, GLuint texture,
-	Color color, int clippingID, uint32_t camFlags, int8_t depth, int transparent )
+int triRenderer_Add( TriVert vert0, TriVert vert1, TriVert vert2, ShaderType shader, GLuint texture,
+	int clippingID, uint32_t camFlags, int8_t depth, int transparent )
 {
 	if( transparent ) {
-		return addTriangle( &transparentTriangles, pos0, pos1, pos2, uv0, uv1, uv2, shader, texture, color, clippingID, camFlags, depth );
+		return addTriangle( &transparentTriangles, vert0, vert1, vert2, shader, texture, clippingID, camFlags, depth );
 	} else {
-		return addTriangle( &solidTriangles, pos0, pos1, pos2, uv0, uv1, uv2, shader, texture, color, clippingID, camFlags, depth );
+		return addTriangle( &solidTriangles, vert0, vert1, vert2, shader, texture, clippingID, camFlags, depth );
 	}
 }
 

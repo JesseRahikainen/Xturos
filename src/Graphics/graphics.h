@@ -5,6 +5,10 @@
 #include "../Math/vector2.h"
 #include "color.h"
 
+// t is in the range [0,1], where 0 is the start of the current draw cycle and 1 is the end
+typedef void (*GfxDrawTrisFunc)( float t );
+typedef void (*GfxClearFunc)( void );
+
 /* ======= Rendering ======= */
 /*
 Initial setup for the rendering instruction buffer.
@@ -42,5 +46,12 @@ Goes through everything in the render buffer and does the actual rendering.
 Resets the render buffer.
 */
 void gfx_Render( float deltaTime );
+
+// Used to add additional calls to pass triangles to be rendered.
+void gfx_AddDrawTrisFunc( GfxDrawTrisFunc newFunc );
+void gfx_RemoveDrawTrisFunc( GfxDrawTrisFunc oldFunc );
+
+void gfx_AddClearCommand( GfxClearFunc newFunc ); 
+void gfx_RemoveClearCommand( GfxClearFunc oldFunc ); 
 
 #endif
