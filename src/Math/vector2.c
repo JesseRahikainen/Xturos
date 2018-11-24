@@ -192,6 +192,22 @@ float vec2_SpineRotationRadians( const Vector2* v )
 	return dir;
 }
 
+Vector2* vec2_ProjOnto( const Vector2* vec, const Vector2* onto, Vector2* out )
+{
+	assert( vec != NULL );
+	assert( onto != NULL );
+	assert( out != NULL );
+
+	float mult;
+
+	mult = ( ( vec->v[0] * onto->v[0] ) + ( vec->v[1] * onto->v[1] ) ) / ( ( onto->v[0] * onto->v[0] ) + ( onto->v[1] * onto->v[1] ) );
+
+	out->v[0] = onto->v[0] * mult;
+	out->v[1] = onto->v[1] * mult;
+
+	return out;
+}
+
 void vec2_Dump( const Vector2* vec, const char* extra )
 {
 	assert( vec != NULL );

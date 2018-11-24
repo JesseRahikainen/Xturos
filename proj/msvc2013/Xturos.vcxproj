@@ -107,6 +107,7 @@
     <ClInclude Include="..\..\src\Graphics\camera.h" />
     <ClInclude Include="..\..\src\Graphics\color.h" />
     <ClInclude Include="..\..\src\Graphics\debugRendering.h" />
+    <ClInclude Include="..\..\src\Graphics\geomTrail.h" />
     <ClInclude Include="..\..\src\Graphics\gfxUtil.h" />
     <ClInclude Include="..\..\src\Graphics\glDebugging.h" />
     <ClInclude Include="..\..\src\Graphics\glPlatform.h" />
@@ -164,6 +165,7 @@
     <ClCompile Include="..\..\src\Graphics\camera.c" />
     <ClCompile Include="..\..\src\Graphics\color.c" />
     <ClCompile Include="..\..\src\Graphics\debugRendering.c" />
+    <ClCompile Include="..\..\src\Graphics\geomTrail.c" />
     <ClCompile Include="..\..\src\Graphics\gfxUtil.c" />
     <ClCompile Include="..\..\src\Graphics\glDebugging.c" />
     <ClCompile Include="..\..\src\Graphics\glPlatform.c" />

@@ -58,6 +58,8 @@ float vec2_RotationRadians( const Vector2* v );
 Vector2* vec2_NormalFromSpineRot( float rotRad, Vector2* out );
 float vec2_SpineRotationRadians( const Vector2* v );
 
+Vector2* vec2_ProjOnto( const Vector2* vec, const Vector2* onto, Vector2* out );
+
 void vec2_Dump( const Vector2* vec, const char* extra );
 
 #endif /* end inclusion guard */

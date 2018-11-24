@@ -255,6 +255,9 @@
     <ClInclude Include="..\..\src\Processes\generalProcesses.h">
       <Filter>Header Files\Processes</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\Graphics\geomTrail.h">
+      <Filter>Header Files\Graphics</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\Game\gameScreen.c">
@@ -412,6 +415,9 @@
     </ClCompile>
     <ClCompile Include="..\..\src\Processes\generalProcesses.c">
       <Filter>Source Files\Processes</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Graphics\geomTrail.c">
+      <Filter>Source Files\Graphics</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

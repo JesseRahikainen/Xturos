@@ -45,6 +45,8 @@ float signed2DTriArea( const Vector2* a, const Vector2* b, const Vector2* c );
 #define FLT_EQ( f, t ) ( ( ( ( f ) - ( t ) ) <= FLOAT_TOLERANCE ) && ( ( f ) - ( t ) >= -FLOAT_TOLERANCE ) )
 #define FLT_LE( f, t ) ( ( f ) - ( t ) <= FLOAT_TOLERANCE )
 #define FLT_GE( f, t ) ( ( f ) - ( t ) >= -FLOAT_TOLERANCE )
+#define FLT_LT( f, t ) ( ( f ) - ( t ) < FLOAT_TOLERANCE )
+#define FLT_GT( f, t ) ( ( f ) - ( t ) > -FLOAT_TOLERANCE )
 #define FLT_BETWEEN( f, low, high ) ( FLT_LE( f, high ) && FLT_GE( f, low ) )
 
 #endif // inclusion guard
