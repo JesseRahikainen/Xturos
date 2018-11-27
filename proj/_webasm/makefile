@@ -1,19 +1,19 @@
-# so we'll need the directories that we're going to use
-# and then we'll need to call emcc
-
 NUKLEAR_DIR = F:/Data/Libraries/nuklear-master
 SPINE_DIR = F:/Data/Libraries/spine-runtimes-master/spine-c
 STB_DIR = F:/Data/Libraries/stb-master
 
-CSRC = $(wildcard ../src/*.c) \
-       $(wildcard ../src/Graphics/*.c) \
-       $(wildcard ../src/IMGUI/*.c) \
-	   $(wildcard ../src/Input/*.c) \
-	   $(wildcard ../src/Math/*.c) \
-	   $(wildcard ../src/System/*.c) \
-	   $(wildcard ../src/UI/*.c) \
-	   $(wildcard ../src/Utils/*.c) \
-	   $(wildcard ../src/Game/*.c) \
+CSRC = $(wildcard ../../src/*.c) \
+       $(wildcard ../../src/Graphics/*.c) \
+       $(wildcard ../../src/IMGUI/*.c) \
+	   $(wildcard ../../src/Input/*.c) \
+	   $(wildcard ../../src/Math/*.c) \
+	   $(wildcard ../../src/System/*.c) \
+	   $(wildcard ../../src/System/ECPS/*.c) \
+	   $(wildcard ../../src/UI/*.c) \
+	   $(wildcard ../../src/Utils/*.c) \
+	   $(wildcard ../../src/Components/*.c) \
+	   $(wildcard ../../src/Processes/*.c) \
+	   $(wildcard ../../src/Game/*.c) \
 	   $(wildcard $(SPINE_DIR)/src/spine/*.c)
 
 OBJS = $(CSRC:.c=.o)
@@ -28,7 +28,9 @@ CFLAGS = -s WASM=1 \
 		 -I$(NUKLEAR_DIR) \
 		 -I$(STB_DIR) \
 		 -I$(SPINE_DIR)/include \
-		 --preload-file ../bin@/
+		 --emrun \
+		 --preload-file ../../bin/data@/ \
+		 --no-heap-copy
 		 
 OUT = Xturos.html
 RBUILD = release_build

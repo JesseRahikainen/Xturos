@@ -20,6 +20,7 @@ NOTE: We're storing the string pointer passed in, so we're assuming it will not 
 
 #include <stdint.h>
 #include <stdbool.h>
+#include <string.h>
 
 typedef uint32_t (*HashFunc)( const char* );
 

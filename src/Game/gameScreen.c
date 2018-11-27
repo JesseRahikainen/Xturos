@@ -9,6 +9,7 @@
 #include "../UI/text.h"
 #include "../System/platformLog.h"
 #include "../System/random.h"
+#include "../Utils/helpers.h"
 
 #include "../System/ECPS/entityComponentProcessSystem.h"
 
@@ -51,7 +52,7 @@ static void spawning( ECPS* ecps, const Entity* entity )
 	llog( LOG_DEBUG, " Spawning entities" );
 	EntityID entities[2] = { INVALID_ENTITY_ID, INVALID_ENTITY_ID };
 
-	for( int i = 0; i < ARRAYSIZE( entities ); ++i ) {
+	for( int i = 0; i < ARRAY_SIZE( entities ); ++i ) {
 		if( rand_Choice( NULL ) ) {
 			llog( LOG_DEBUG, " - Is an attacker" );
 			AttackingData data;
