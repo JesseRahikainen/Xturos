@@ -45,14 +45,14 @@
     <LinkIncremental>true</LinkIncremental>
     <TargetName>$(ProjectName)-dbg</TargetName>
     <OutDir>$(SolutionDir)\..\..\bin\win32\</OutDir>
-    <IncludePath>F:\Data\Libraries\stb-master;F:\Data\Libraries\SDL2-2.0.5\include;F:\Data\Libraries\spine-runtimes-master\spine-c\include;F:\Data\Libraries\nuklear-master;$(IncludePath)</IncludePath>
-    <LibraryPath>F:\Data\Libraries\spine-runtimes-master\spine-c\lib;F:\Data\Libraries\SDL2-2.0.5\lib\x86;$(LibraryPath)</LibraryPath>
+    <IncludePath>F:\Data\Libraries\stb-master;F:\Data\Libraries\SDL2-2.0.9\include;F:\Data\Libraries\spine-runtimes-master\spine-c\include;F:\Data\Libraries\nuklear-master;$(IncludePath)</IncludePath>
+    <LibraryPath>F:\Data\Libraries\spine-runtimes-master\spine-c\lib;F:\Data\Libraries\SDL2-2.0.9\lib\x86;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
     <OutDir>$(SolutionDir)\..\..\bin\win32\</OutDir>
-    <IncludePath>F:\Data\Libraries\stb-master;F:\Data\Libraries\SDL2-2.0.5\include;F:\Data\Libraries\spine-runtimes-master\spine-c\include;F:\Data\Libraries\nuklear-master;$(IncludePath)</IncludePath>
-    <LibraryPath>F:\Data\Libraries\spine-runtimes-master\spine-c\lib;F:\Data\Libraries\SDL2-2.0.5\lib\x86;$(LibraryPath)</LibraryPath>
+    <IncludePath>F:\Data\Libraries\stb-master;F:\Data\Libraries\SDL2-2.0.9\include;F:\Data\Libraries\spine-runtimes-master\spine-c\include;F:\Data\Libraries\nuklear-master;$(IncludePath)</IncludePath>
+    <LibraryPath>F:\Data\Libraries\spine-runtimes-master\spine-c\lib;F:\Data\Libraries\SDL2-2.0.9\lib\x86;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>

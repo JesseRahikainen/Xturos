@@ -21,7 +21,7 @@
 #define MAX_STREAMING_SOUNDS 8
 #define STREAMING_BUFFER_SAMPLES 4096
 
-#if defined( __EMSCRIPTEN__ )
+/*#if defined( __EMSCRIPTEN__ )
 
 // can't get sound working with emscripten right now, get it working later
 int snd_Init( unsigned int numGroups ) { return 0; }
@@ -103,8 +103,13 @@ static SDL_AudioCVT workingConverter;
 
 static const Uint8 WORKING_CHANNELS = 2;
 static const SDL_AudioFormat WORKING_FORMAT = AUDIO_F32;
-static const int WORKING_RATE = 44100;
-static Uint16 AUDIO_SAMPLES = 1024;//4096;
+// if the WORKING_RATE isn't 48000 some browsers use too small of an audio buffer
+#if defined( __EMSCRIPTEN__ )
+  static const int WORKING_RATE = 48000;
+#else
+  static const int WORKING_RATE = 44100;
+#endif
+static Uint16 AUDIO_SAMPLES = 1024;
 static int workingConversionNeeded;
 static int workingBufferSize;
 
@@ -127,6 +132,8 @@ static SoundGroup* sbSoundGroups;
 
 static float masterVolume = 1.0f;
 
+static float testTimePassed = 0.0f;
+
 // stereo LRLRLR order
 void mixerCallback( void* userdata, Uint8* stream, int len )
 {
@@ -139,6 +146,18 @@ void mixerCallback( void* userdata, Uint8* stream, int len )
 	int numSamples = ( ( len / actual.channels ) / ( ( SDL_AUDIO_MASK_BITSIZE & actual.format ) / 8 ) );
 	int workingSize = numSamples * WORKING_CHANNELS * ( ( SDL_AUDIO_MASK_BITSIZE & WORKING_FORMAT ) / 8 );
 
+#if 0
+	int soundFreq = 440; // wave length
+	float step = 1.0f / WORKING_RATE;
+	// for testing audio output
+	for( int s = 0; s < numSamples; ++s ) {
+		int streamIdx = ( s * WORKING_CHANNELS );
+		testTimePassed += 1.0f / WORKING_RATE;
+		float v = sinf( testTimePassed * soundFreq * M_TWO_PI_F );
+		workingBuffer[streamIdx] = v * 0.1f;
+		workingBuffer[streamIdx+1] = v * 0.1f;
+	}
+#else
 	// advance each playing sound
 	EntityID id = idSet_GetFirstValidID( &playingIDSet );
 	for( EntityID id = idSet_GetFirstValidID( &playingIDSet ); id != INVALID_ENTITY_ID; id = idSet_GetNextValidID( &playingIDSet, id ) ) {
@@ -257,15 +276,19 @@ void mixerCallback( void* userdata, Uint8* stream, int len )
 			streamingSounds[i].playing = false;
 		}
 	}
+#endif
 
 	// convert working buffer to destination buffer
-	workingConverter.len = workingSize;
+	/*workingConverter.len = workingSize;
 	workingConverter.buf = (Uint8*)workingBuffer;
 	SDL_ConvertAudio( &workingConverter );
 
 	// now copy the data over to the stream
 	int cvtSize = (int)( workingConverter.len * workingConverter.len_ratio );
-	memcpy( stream, workingConverter.buf, cvtSize );
+	if( test ) llog( LOG_DEBUG, "cvtSize: %i", cvtSize );
+	memcpy( stream, workingConverter.buf, cvtSize );//*/
+
+	memcpy( stream, workingBuffer, workingSize );
 }
 
 int snd_LoadSample( const char* fileName, Uint8 desiredChannels, bool loops )
@@ -313,7 +336,11 @@ int snd_LoadSample( const char* fileName, Uint8 desiredChannels, bool loops )
 	}
 	loadConverter.buf = (Uint8*)data;
 
-	SDL_ConvertAudio( &loadConverter );
+	if( SDL_ConvertAudio( &loadConverter ) < 0 ) {
+		llog( LOG_ERROR, "Unable to convert sound: %s", SDL_GetError( ) );
+		newIdx = -1;
+		goto clean_up;
+	}
 
 	// store it
 	samples[newIdx].data = mem_Allocate( loadConverter.len_cvt );
@@ -468,7 +495,7 @@ int snd_Init( unsigned int numGroups )
 
 	SDL_memset( &desired, 0, sizeof( desired ) );
 	desired.freq = WORKING_RATE;
-	desired.format = AUDIO_S16;
+	desired.format = WORKING_FORMAT;
 	desired.channels = WORKING_CHANNELS;
 	desired.samples = AUDIO_SAMPLES;
 	desired.callback = mixerCallback;
@@ -480,6 +507,24 @@ int snd_Init( unsigned int numGroups )
 	}
 
 	devID = SDL_OpenAudioDevice( NULL, 0, &desired, &actual, SDL_AUDIO_ALLOW_FORMAT_CHANGE );
+
+	llog( LOG_DEBUG,
+		"Desired:\n"
+		"  freq: %i\n"
+		"   fmt: 0x%x\n"
+		"  chnl: %i\n"
+		"  smpl: %i\n"
+		"   fsz: %i\n",
+		desired.freq, desired.format, desired.channels, desired.samples, ( SDL_AUDIO_MASK_BITSIZE & desired.format ) );
+
+	llog( LOG_DEBUG,
+		"Actual:\n"
+		"  freq: %i\n"
+		"   fmt: 0x%x\n"
+		"  chnl: %i\n"
+		"  smpl: %i\n"
+		"   fsz: %i\n",
+		actual.freq, actual.format, actual.channels, actual.samples, ( SDL_AUDIO_MASK_BITSIZE & actual.format ) );
 
 	if( devID == 0 ) {
 		llog( LOG_CRITICAL, "Failed to open audio device: %s", SDL_GetError( ) );
@@ -496,11 +541,27 @@ int snd_Init( unsigned int numGroups )
 		return -1;
 	}
 
+	llog( LOG_DEBUG,
+		"Convert:\n"
+		"  need: %i\n"
+		"   src: 0x%x\n"
+		"   dst: 0x%x\n"
+		"  rate: %Lf\n"
+		"   len: %i\n"
+		"  lenm: %i\n"
+		"  rtio: %Lf\n",
+		workingConverter.needed, workingConverter.src_format, workingConverter.dst_format, workingConverter.rate_incr, workingConverter.len, workingConverter.len_cvt, workingConverter.len_mult,
+		workingConverter.len_ratio );
+
 	int numSamples = ( ( actual.size / actual.channels ) / ( ( SDL_AUDIO_MASK_BITSIZE & actual.format ) / 8 ) );
 	int workingSize = numSamples * WORKING_CHANNELS * ( ( SDL_AUDIO_MASK_BITSIZE & WORKING_FORMAT ) / 8 );
 
+	llog( LOG_DEBUG, "numSamples: %i", numSamples );
+	llog( LOG_DEBUG, "workingSize: %i", workingSize );
+
 	SDL_LockAudioDevice( devID );
 	workingBufferSize = workingSize * workingConverter.len_mult;
+	llog( LOG_DEBUG, "workingBufferSize: %i", workingBufferSize );
 	workingBuffer = mem_Allocate( workingBufferSize );
 	SDL_UnlockAudioDevice( devID );
 	if( workingBuffer == NULL ) {
@@ -799,4 +860,4 @@ void snd_UnloadStream( int streamID )
 	} SDL_UnlockAudioDevice( devID );
 }
 
-#endif // emscripten test
+//#endif // emscripten test
