@@ -279,16 +279,16 @@ void mixerCallback( void* userdata, Uint8* stream, int len )
 #endif
 
 	// convert working buffer to destination buffer
-	/*workingConverter.len = workingSize;
+	workingConverter.len = workingSize;
 	workingConverter.buf = (Uint8*)workingBuffer;
 	SDL_ConvertAudio( &workingConverter );
 
 	// now copy the data over to the stream
 	int cvtSize = (int)( workingConverter.len * workingConverter.len_ratio );
-	if( test ) llog( LOG_DEBUG, "cvtSize: %i", cvtSize );
-	memcpy( stream, workingConverter.buf, cvtSize );//*/
+	memcpy( stream, workingConverter.buf, cvtSize );
 
-	memcpy( stream, workingBuffer, workingSize );
+	// raw copy, for testing
+	//memcpy( stream, workingBuffer, workingSize );
 }
 
 int snd_LoadSample( const char* fileName, Uint8 desiredChannels, bool loops )
@@ -508,24 +508,6 @@ int snd_Init( unsigned int numGroups )
 
 	devID = SDL_OpenAudioDevice( NULL, 0, &desired, &actual, SDL_AUDIO_ALLOW_FORMAT_CHANGE );
 
-	llog( LOG_DEBUG,
-		"Desired:\n"
-		"  freq: %i\n"
-		"   fmt: 0x%x\n"
-		"  chnl: %i\n"
-		"  smpl: %i\n"
-		"   fsz: %i\n",
-		desired.freq, desired.format, desired.channels, desired.samples, ( SDL_AUDIO_MASK_BITSIZE & desired.format ) );
-
-	llog( LOG_DEBUG,
-		"Actual:\n"
-		"  freq: %i\n"
-		"   fmt: 0x%x\n"
-		"  chnl: %i\n"
-		"  smpl: %i\n"
-		"   fsz: %i\n",
-		actual.freq, actual.format, actual.channels, actual.samples, ( SDL_AUDIO_MASK_BITSIZE & actual.format ) );
-
 	if( devID == 0 ) {
 		llog( LOG_CRITICAL, "Failed to open audio device: %s", SDL_GetError( ) );
 		return -1;
@@ -541,27 +523,11 @@ int snd_Init( unsigned int numGroups )
 		return -1;
 	}
 
-	llog( LOG_DEBUG,
-		"Convert:\n"
-		"  need: %i\n"
-		"   src: 0x%x\n"
-		"   dst: 0x%x\n"
-		"  rate: %Lf\n"
-		"   len: %i\n"
-		"  lenm: %i\n"
-		"  rtio: %Lf\n",
-		workingConverter.needed, workingConverter.src_format, workingConverter.dst_format, workingConverter.rate_incr, workingConverter.len, workingConverter.len_cvt, workingConverter.len_mult,
-		workingConverter.len_ratio );
-
 	int numSamples = ( ( actual.size / actual.channels ) / ( ( SDL_AUDIO_MASK_BITSIZE & actual.format ) / 8 ) );
 	int workingSize = numSamples * WORKING_CHANNELS * ( ( SDL_AUDIO_MASK_BITSIZE & WORKING_FORMAT ) / 8 );
 
-	llog( LOG_DEBUG, "numSamples: %i", numSamples );
-	llog( LOG_DEBUG, "workingSize: %i", workingSize );
-
 	SDL_LockAudioDevice( devID );
 	workingBufferSize = workingSize * workingConverter.len_mult;
-	llog( LOG_DEBUG, "workingBufferSize: %i", workingBufferSize );
 	workingBuffer = mem_Allocate( workingBufferSize );
 	SDL_UnlockAudioDevice( devID );
 	if( workingBuffer == NULL ) {
