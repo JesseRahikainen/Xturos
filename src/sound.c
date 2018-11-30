@@ -21,35 +21,6 @@
 #define MAX_STREAMING_SOUNDS 8
 #define STREAMING_BUFFER_SAMPLES 4096
 
-/*#if defined( __EMSCRIPTEN__ )
-
-// can't get sound working with emscripten right now, get it working later
-int snd_Init( unsigned int numGroups ) { return 0; }
-void snd_CleanUp( ) { }
-void snd_SetFocus( bool hasFocus ) { }
-float snd_GetMasterVolume( void ) { return 0.0f; }
-void snd_SetMasterVolume( float volume ) { }
-float snd_GetVolume( unsigned int group ) { return 0.0f; }
-void snd_SetVolume( float volume, unsigned int group ) { }
-int snd_LoadSample( const char* fileName, Uint8 desiredChannels, bool loops ) { return 0; }
-void snd_ThreadedLoadSample( const char* fileName, Uint8 desiredChannels, bool loops, int* outID ) { (*outID) = 0; }
-EntityID snd_Play( int sampleID, float volume, float pitch, float pan, unsigned int group ) { return 0; }
-void snd_ChangeSoundVolume( EntityID soundID, float volume ) { }
-void snd_ChangeSoundPitch( EntityID soundID, float pitch ) { }
-void snd_ChangeSoundPan( EntityID soundID, float pan ) { }
-void snd_Stop( EntityID soundID ) { }
-void snd_UnloadSample( int sampleID ) { }
-int snd_LoadStreaming( const char* fileName, bool loops, unsigned int group ) { return 0; }
-void snd_PlayStreaming( int streamID, float volume, float pan ) { }
-void snd_StopStreaming( int streamID ) { }
-void snd_StopStreamingAllBut( int streamID ) { }
-bool snd_IsStreamPlaying( int streamID ) { return false; }
-void snd_ChangeStreamVolume( int streamID, float volume ) { }
-void snd_ChangeStreamPan( int streamID, float pan ) { }
-void snd_UnloadStream( int streamID ) { }
-
-#else//*/
-
 // TODO: Get pitch shifting working with stereo sounds.
 typedef struct {
 	int sample;
@@ -73,11 +44,6 @@ typedef struct {
 //  to use this in the immediate future
 typedef struct {
 	bool playing;
-	float* buffer;
-
-	int bufferCurrPos;
-	int bufferUsed;
-	int bufferCount;
 
 	stb_vorbis* access;
 
@@ -86,31 +52,25 @@ typedef struct {
 	bool loops;
 	unsigned int group;
 
-	// this stuff may be able to be removed
-	int totalSamples; // numSamples * channels ( channels 1 if access has 1 channel, 2 otherwise )
-	int totalSize; // the number of bytes in the buffer
-
 	Uint8 channels;
 
-	SDL_AudioCVT cvt;
+	bool readDone;
+	SDL_AudioStream* sdlStream; // does all the conversion automatically
 } StreamingSound;
 
-static SDL_AudioSpec desired;
-static SDL_AudioSpec actual;
+static Uint8 workingSilence = 0;
 static SDL_AudioDeviceID devID = 0;
 
-static SDL_AudioCVT workingConverter;
-
-static const Uint8 WORKING_CHANNELS = 2;
-static const SDL_AudioFormat WORKING_FORMAT = AUDIO_F32;
-// if the WORKING_RATE isn't 48000 some browsers use too small of an audio buffer
+#define WORKING_CHANNELS 2
+#define WORKING_FORMAT AUDIO_F32
+// if the WORKING_RATE isn't 48000 some browsers use too small of an audio buffer for the mixer callback which causes popping
+// TODO: Figure out why and fix it, or make sure it's something entirely on their end and therefore nothing i have control over
 #if defined( __EMSCRIPTEN__ )
   static const int WORKING_RATE = 48000;
 #else
   static const int WORKING_RATE = 44100;
 #endif
 static Uint16 AUDIO_SAMPLES = 1024;
-static int workingConversionNeeded;
 static int workingBufferSize;
 
 static Sample sineWave;
@@ -134,17 +94,20 @@ static float masterVolume = 1.0f;
 
 static float testTimePassed = 0.0f;
 
+#define STREAM_READ_BUFFER_SIZE ( STREAMING_BUFFER_SAMPLES * WORKING_CHANNELS * sizeof( short ) )
+static short streamReadBuffer[STREAM_READ_BUFFER_SIZE];
+static float* sbStreamWorkingBuffer = NULL;
+
 // stereo LRLRLR order
 void mixerCallback( void* userdata, Uint8* stream, int len )
 {
-	memset( stream, len, actual.silence );
+	memset( stream, len, workingSilence );
 	memset( workingBuffer, 0, workingBufferSize );
 	if( workingBuffer == NULL ) {
 		return;
 	}
 
-	int numSamples = ( ( len / actual.channels ) / ( ( SDL_AUDIO_MASK_BITSIZE & actual.format ) / 8 ) );
-	int workingSize = numSamples * WORKING_CHANNELS * ( ( SDL_AUDIO_MASK_BITSIZE & WORKING_FORMAT ) / 8 );
+	int numSamples = ( len / WORKING_CHANNELS ) / ( ( SDL_AUDIO_MASK_BITSIZE & WORKING_FORMAT ) / 8 );
 
 #if 0
 	int soundFreq = 440; // wave length
@@ -207,93 +170,69 @@ void mixerCallback( void* userdata, Uint8* stream, int len )
 		StreamingSound* stream = &( streamingSounds[i] );
 		bool soundDone = false;
 		float volume = stream->volume * sbSoundGroups[stream->group].volume * masterVolume;
-		for( int s = 0; ( s < numSamples ) && !soundDone; ++s ) {
-			// if the next position would be past what we have loaded then load some more
-			if( ( stream->bufferCurrPos + stream->channels ) > stream->bufferUsed ) {
-				// copy over the parts that we still need to the start
-				int n = 0;
-				for( int x = (int)stream->bufferCurrPos; x < stream->bufferUsed; ++x, ++n ) {
-					stream->buffer[n] = stream->buffer[x];
+
+		// if the next buffer fill would be past what we have loaded then load some more
+		//  note: the SDL_AudioStreamAvailable return value is in bytes
+		while( ( SDL_AudioStreamAvailable( stream->sdlStream ) < len ) && !( stream->readDone ) ) {
+			int read = 0;
+			int request = STREAM_READ_BUFFER_SIZE / sizeof( short );
+			size_t test = ARRAY_SIZE( streamReadBuffer );
+			// returns the number of samples stored per channel
+			int samplesPerChannel = stb_vorbis_get_samples_short_interleaved(
+				stream->access, stream->access->channels, streamReadBuffer, request );
+			read = samplesPerChannel * sizeof( short );
+
+			SDL_AudioStreamPut( stream->sdlStream, streamReadBuffer, samplesPerChannel * stream->channels * sizeof( short ) );
+
+			// reached the end of the file, are we looping?
+			if( read != request ) {
+				if( stream->loops ) {
+					stb_vorbis_seek_start( stream->access );
+				} else {
+					stream->readDone = true;
+					SDL_AudioStreamFlush( stream->sdlStream );
 				}
-
-				int read = 0;
-				int totalReadBytes = 0;
-				int samplesRead = n;
-				stream->bufferCurrPos = n;
-				stream->bufferUsed = n;
-				short* readBuffer = (short*)( &( stream->buffer[n] ) );
-				bool readDone = false;
-				do {
-					// request == num shorts
-					int request = stream->totalSamples - samplesRead;
-					read = stb_vorbis_get_samples_short_interleaved(
-						stream->access, stream->access->channels, readBuffer, request ); 
-					read *= stream->access->channels;
-					totalReadBytes += read * sizeof( short );
-					samplesRead += read;
-
-					// reached the end of the file, are we looping?
-					if( read != request ) {
-						if( stream->loops ) {
-							stb_vorbis_seek_start( stream->access );
-							readBuffer = (short*)( (uintptr_t)readBuffer + totalReadBytes );
-						} else {
-							readDone = true;
-						}
-					}
-				} while( !readDone && ( samplesRead < stream->totalSamples ) );
-
-				// now convert what we read in to our working data format
-				stream->cvt.buf = (Uint8*)( &( stream->buffer[n] ) );
-				stream->cvt.len = totalReadBytes;
-				SDL_ConvertAudio( &( stream->cvt ) );
-				stream->bufferUsed += stream->cvt.len_cvt / sizeof( stream->buffer[0] );
-			}
-
-			if( (int)( stream->bufferCurrPos ) < stream->bufferUsed ) {
-			// then just mix those samples
-			int streamIdx = ( s * WORKING_CHANNELS );
-			
-			// we're assuming stereo output here
-			if( stream->access->channels == 1 ) {
-				float data = stream->buffer[stream->bufferCurrPos] * volume;
-/* left */		workingBuffer[streamIdx] += data * inverseLerp( 1.0f, 0.0f, stream->pan );
-/* right */		workingBuffer[streamIdx+1] += data * inverseLerp( -1.0f, 0.0f, stream->pan );
-				stream->bufferCurrPos += 1;
-			} else {
-				// if the sample is stereo then we ignore panning
-				workingBuffer[streamIdx] += stream->buffer[(int)stream->bufferCurrPos] * volume;
-				workingBuffer[streamIdx+1] += stream->buffer[(int)stream->bufferCurrPos + 1] * volume;
-				stream->bufferCurrPos += 2;
-			}
-			} else {
-				soundDone = true;
-				stream->playing = false;
 			}
 		}
 
-		if( soundDone ) {
-			streamingSounds[i].playing = false;
+		// read data from the audio stream until there is no more left or the end of the buffer to fill
+		int bytesToStream = numSamples * stream->channels * sizeof( sbStreamWorkingBuffer[0] );
+		sb_Reserve( sbStreamWorkingBuffer, (size_t)bytesToStream );
+		int gotten = SDL_AudioStreamGet( stream->sdlStream, sbStreamWorkingBuffer, bytesToStream );
+		if( gotten < 0 ) {
+			llog( LOG_ERROR, "Error reading from sdlStream: %s", SDL_GetError( ) );
+			stream->playing = false;
+			continue;
+		} else if( gotten == 0 ) {
+			// end of stream
+			stream->playing = false;
+		}
+
+		int samplesGotten = gotten / ( stream->channels * sizeof( sbStreamWorkingBuffer[0] ) );
+		for( int s = 0; s < samplesGotten; ++s ) {
+			// then just mix those samples
+			int streamIdx = ( s * WORKING_CHANNELS );
+			int workingIdx = ( s * stream->channels );
+			
+			// we're assuming stereo output here
+			if( stream->access->channels == 1 ) {
+				float data = sbStreamWorkingBuffer[workingIdx] * volume;
+				workingBuffer[streamIdx] += data * inverseLerp( 1.0f, 0.0f, stream->pan );		// left
+				workingBuffer[streamIdx+1] += data * inverseLerp( -1.0f, 0.0f, stream->pan );   // right
+			} else {
+				// if the sample is stereo then we ignore panning
+				workingBuffer[streamIdx] += sbStreamWorkingBuffer[workingIdx] * volume;
+				workingBuffer[streamIdx+1] += sbStreamWorkingBuffer[workingIdx + 1] * volume;
+			}
 		}
 	}
 #endif
 
-	// convert working buffer to destination buffer
-	workingConverter.len = workingSize;
-	workingConverter.buf = (Uint8*)workingBuffer;
-	SDL_ConvertAudio( &workingConverter );
-
-	// now copy the data over to the stream
-	int cvtSize = (int)( workingConverter.len * workingConverter.len_ratio );
-	memcpy( stream, workingConverter.buf, cvtSize );
-
-	// raw copy, for testing
-	//memcpy( stream, workingBuffer, workingSize );
+	memcpy( stream, workingBuffer, len );
 }
 
 int snd_LoadSample( const char* fileName, Uint8 desiredChannels, bool loops )
 {
-	// TODO: Get multiple channels working, will probably only support up to 2
 	assert( ( desiredChannels >= 1 ) && ( desiredChannels <= 2 ) );
 
 	int newIdx = -1;
@@ -489,10 +428,11 @@ int snd_Init( unsigned int numGroups )
 	SDL_memset( samples, 0, ARRAY_SIZE( samples ) * sizeof( samples[0] ) );
 	for( int i = 0; i < MAX_STREAMING_SOUNDS; ++i ) {
 		streamingSounds[i].access = NULL;
-		streamingSounds[i].buffer = NULL;
+		streamingSounds[i].sdlStream = NULL;
 		streamingSounds[i].playing = false;
 	}
 
+	SDL_AudioSpec desired;
 	SDL_memset( &desired, 0, sizeof( desired ) );
 	desired.freq = WORKING_RATE;
 	desired.format = WORKING_FORMAT;
@@ -506,7 +446,8 @@ int snd_Init( unsigned int numGroups )
 		return -1;
 	}
 
-	devID = SDL_OpenAudioDevice( NULL, 0, &desired, &actual, SDL_AUDIO_ALLOW_FORMAT_CHANGE );
+	// sending 0 will cause SDL to convert everything automatically
+	devID = SDL_OpenAudioDevice( NULL, 0, &desired, NULL, 0 );
 
 	if( devID == 0 ) {
 		llog( LOG_CRITICAL, "Failed to open audio device: %s", SDL_GetError( ) );
@@ -514,20 +455,11 @@ int snd_Init( unsigned int numGroups )
 	}
 	SDL_PauseAudioDevice( devID, 0 );
 
-	workingConversionNeeded = SDL_BuildAudioCVT( &workingConverter,
-		WORKING_FORMAT, WORKING_CHANNELS, WORKING_RATE,
-		actual.format, actual.channels, actual.freq );
+	workingSilence = desired.silence;
 
-	if( workingConversionNeeded < 0 ) {
-		llog( LOG_CRITICAL, "Failed to build conversion: %s", SDL_GetError( ) );
-		return -1;
-	}
-
-	int numSamples = ( ( actual.size / actual.channels ) / ( ( SDL_AUDIO_MASK_BITSIZE & actual.format ) / 8 ) );
-	int workingSize = numSamples * WORKING_CHANNELS * ( ( SDL_AUDIO_MASK_BITSIZE & WORKING_FORMAT ) / 8 );
+	workingBufferSize = desired.samples * desired.channels * ( ( SDL_AUDIO_MASK_BITSIZE & WORKING_FORMAT ) / 8 );
 
 	SDL_LockAudioDevice( devID );
-	workingBufferSize = workingSize * workingConverter.len_mult;
 	workingBuffer = mem_Allocate( workingBufferSize );
 	SDL_UnlockAudioDevice( devID );
 	if( workingBuffer == NULL ) {
@@ -555,6 +487,7 @@ int snd_Init( unsigned int numGroups )
 
 void snd_CleanUp( )
 {
+	sb_Release( sbStreamWorkingBuffer );
 	if( workingBuffer != NULL ) {
 		SDL_LockAudioDevice( devID ); {
 			mem_Release( workingBuffer );
@@ -720,7 +653,7 @@ int snd_LoadStreaming( const char* fileName, bool loops, unsigned int group )
 	}
 
 	int error;
-	streamingSounds[newIdx].access = stb_vorbis_open_filename( fileName, &error, NULL ); // alloc?
+	streamingSounds[newIdx].access = stb_vorbis_open_filename( fileName, &error, NULL );
 	if( streamingSounds[newIdx].access == NULL ) {
 		llog( LOG_ERROR, "Unable to acquire a handle to streaming sound %s", fileName );
 		return -1;
@@ -735,19 +668,6 @@ int snd_LoadStreaming( const char* fileName, bool loops, unsigned int group )
 		streamingSounds[newIdx].channels = 2;
 	}
 
-	if( SDL_BuildAudioCVT( &( streamingSounds[newIdx].cvt ),
-		AUDIO_S16, (Uint8)( streamingSounds[newIdx].access->channels ), streamingSounds[newIdx].access->sample_rate,
-		WORKING_FORMAT, streamingSounds[newIdx].channels, WORKING_RATE ) < 0 ) {
-		llog( LOG_ERROR, "Unable to create converter for streaming sound." );
-		stb_vorbis_close( streamingSounds[newIdx].access );
-		return -1;
-	}
-
-
-	streamingSounds[newIdx].totalSamples = STREAMING_BUFFER_SAMPLES * streamingSounds[newIdx].channels;
-	// so cvt.len can be at most: ( streamingSounds[newIdx].totalSamples * ( ( SDL_AUDIO_MASK_BITSIZE & WORKING_FORMAT ) / 8 ) )
-	streamingSounds[newIdx].totalSize = streamingSounds[newIdx].totalSamples * ( ( SDL_AUDIO_MASK_BITSIZE & WORKING_FORMAT ) / 8 ) * streamingSounds[newIdx].cvt.len_mult;
-
 	return newIdx;
 }
 
@@ -756,16 +676,23 @@ void snd_PlayStreaming( int streamID, float volume, float pan ) // todo: fade in
 	assert( ( streamID >= 0 ) && ( streamID < MAX_STREAMING_SOUNDS ) );
 	SDL_LockAudioDevice( devID ); {
 		if( ( streamingSounds[streamID].access != NULL ) && !streamingSounds[streamID].playing ) {
+
+			streamingSounds[streamID].sdlStream = SDL_NewAudioStream( AUDIO_S16,
+				(Uint8)( streamingSounds[streamID].access->channels ), streamingSounds[streamID].access->sample_rate,
+				WORKING_FORMAT, streamingSounds[streamID].channels, WORKING_RATE );
+
+			if( streamingSounds[streamID].sdlStream == NULL ) {
+				llog( LOG_ERROR, "Unable to create SDL_AudioStream for streaming sound." );
+				return;
+			}
+
 			streamingSounds[streamID].playing = true;
 			streamingSounds[streamID].volume = volume;
 			streamingSounds[streamID].pan = pan;
 
 			stb_vorbis_seek_start( streamingSounds[streamID].access );
 
-			// allocate buffer memory for the streaming sound
-			streamingSounds[streamID].buffer = mem_Allocate( streamingSounds[streamID].totalSize );
-			streamingSounds[streamID].bufferCurrPos = 0;
-			streamingSounds[streamID].bufferUsed = 0;
+			streamingSounds[streamID].readDone = false;
 		}
 	} SDL_UnlockAudioDevice( devID );
 }
@@ -775,8 +702,8 @@ void snd_StopStreaming( int streamID )
 	assert( ( streamID >= 0 ) && ( streamID < MAX_STREAMING_SOUNDS ) );
 	SDL_LockAudioDevice( devID ); {
 		streamingSounds[streamID].playing = false;
-		mem_Release( streamingSounds[streamID].buffer );
-		streamingSounds[streamID].buffer = NULL;
+		SDL_FreeAudioStream( streamingSounds[streamID].sdlStream );
+		streamingSounds[streamID].sdlStream = NULL;
 	} SDL_UnlockAudioDevice( devID );
 }
 
@@ -787,8 +714,8 @@ void snd_StopStreamingAllBut( int streamID )
 			if( i == streamID ) continue;
 			if( ( streamingSounds[i].access != NULL ) && streamingSounds[i].playing ) {
 				streamingSounds[i].playing = false;
-				mem_Release( streamingSounds[i].buffer );
-				streamingSounds[i].buffer = NULL;
+				SDL_FreeAudioStream( streamingSounds[streamID].sdlStream );
+				streamingSounds[streamID].sdlStream = NULL;
 			}
 		}
 	} SDL_UnlockAudioDevice( devID );
@@ -823,7 +750,7 @@ void snd_UnloadStream( int streamID )
 		streamingSounds[streamID].playing = false;
 		stb_vorbis_close( streamingSounds[streamID].access );
 		streamingSounds[streamID].access = NULL;
+		SDL_FreeAudioStream( streamingSounds[streamID].sdlStream );
+		streamingSounds[streamID].sdlStream = NULL;
 	} SDL_UnlockAudioDevice( devID );
 }
-
-//#endif // emscripten test
