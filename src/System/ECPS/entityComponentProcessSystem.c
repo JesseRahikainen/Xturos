@@ -264,6 +264,7 @@ void ecps_StartInitialization( ECPS* ecps )
 void ecps_FinishInitialization( ECPS* ecps )
 {
 	ecps->isRunning = true;
+	ecps->isRunningProcess = false;
 }
 
 // Clean up all the resources

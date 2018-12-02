@@ -11,6 +11,7 @@
 #include "../Math/vector3.h"
 #include "../Math/matrix4.h"
 #include "../System/platformLog.h"
+#include "../UI/text.h"
 
 #include "../Components/GeneralComponents.h"
 
@@ -64,6 +65,67 @@ static void render( ECPS* ecps, const Entity* entity )
 	pos->currPos = pos->futurePos;
 }
 
+// ***** Render 3x3 Process
+//  Is there a way to wrap this up into the general render process?
+Process gp3x3RenderProc;
+static void render3x3( ECPS* ecps, const Entity* entity )
+{
+	GCPosData* pos = NULL;
+	GC3x3SpriteData* sd = NULL;
+	GCScaleData* scale = NULL;
+	GCColorData* color = NULL;
+	GCRotData* rot = NULL;
+
+	ecps_GetComponentFromEntity( entity, gcPosCompID, &pos );
+	ecps_GetComponentFromEntity( entity, gc3x3SpriteCompID, &sd );
+
+	Vector2 currPos = pos->currPos;
+	Vector2 futurePos = pos->futurePos;
+
+	Vector2 currScale = VEC2_ONE;
+	Vector2 futureScale = VEC2_ONE;
+	ecps_GetComponentFromEntity( entity, gcScaleCompID, &scale );
+	currScale = scale->currScale;
+	futureScale = scale->futureScale;
+
+	scale->currScale = futureScale;
+
+	Color currClr = CLR_WHITE;
+	Color futureClr = CLR_WHITE;
+	if( ecps_GetComponentFromEntity( entity, gcClrCompID, &color ) ) {
+		currClr = color->currClr;
+		futureClr = color->futureClr;
+
+		color->currClr = futureClr;
+	}
+
+	img_Draw3x3v_c( sd->imgs, sd->camFlags, currPos, futurePos, currScale, futureScale, currClr, futureClr, sd->depth );
+
+	pos->currPos = pos->futurePos;
+}
+
+// ***** Render Text Boxes Process
+Process gpTextRenderProc;
+static void renderText( ECPS* ecps, const Entity* entity )
+{
+	GCTextData* txt = NULL;
+	GCPosData* pos = NULL; // pos is centered
+	GCScaleData* scale = NULL; // scale is used as size
+
+	ecps_GetComponentFromEntity( entity, gcPosCompID, &pos );
+	ecps_GetComponentFromEntity( entity, gcTextCompID, &txt );
+	ecps_GetComponentFromEntity( entity, gcScaleCompID, &scale );
+
+	Vector2 currPos = pos->currPos;
+
+	Vector2 currScale = scale->currScale;
+
+	Vector2 topLeft;
+	vec2_AddScaled( &currPos, &currScale, -0.5f, &topLeft );
+
+	txt_DisplayTextArea( txt->text, topLeft, currScale, txt->clr, HORIZ_ALIGN_CENTER, VERT_ALIGN_CENTER, txt->fontID, 0, NULL, txt->camFlags, txt->depth );
+}
+
 // ***** Clickable Objects
 #define PR_IDLE = 0;
 #define PR_OVER = 1;
@@ -93,6 +155,8 @@ static PointerResponseState pointerResponseState = PRS_IDLE;
 
 static EntityID currChosenPointerResponseID = INVALID_ENTITY_ID;
 static int32_t currChosenPriority = INT32_MIN;
+
+static EntityID prevChosenPointerResponseID = INVALID_ENTITY_ID;
 
 static void pointerResponseGetMouse( ECPS* ecps )
 {
@@ -194,7 +258,14 @@ static void pointerResponseFinalize_Mouse( ECPS* ecps )
 	}
 
 	if( pointerResponseState == PRS_OVER ) {
-		if( pointerResponseMousePressed ) {
+		// TODO: Make sure this won't cause issues with multiple overlapping buttons
+		if( currChosenPointerResponseID != prevChosenPointerResponseID ) {
+			pointerResponseState = PRS_IDLE;
+
+			if( ecps_GetEntityAndComponentByID( ecps, prevChosenPointerResponseID, gcPointerResponseCompID, &entity, &prd ) ) {
+				if( prd->leaveResponse != NULL ) prd->leaveResponse( &entity );
+			}
+		} else if( pointerResponseMousePressed ) {
 			// if the mouse button was pressed, then transition to clicked over state and call the clicked resonse
 			focusedPointerResponseID = currChosenPointerResponseID;
 			pointerResponseState = PRS_CLICKED_OVER;
@@ -226,7 +297,6 @@ static void pointerResponseFinalize_Mouse( ECPS* ecps )
 	if( pointerResponseState == PRS_CLICKED_NOT_OVER ) {
 		if( pointerResponseMouseReleased ) {
 			// mouse released, but not over focused button, no response
-			//  if we have some sort of response here we can deal with the columns like we want
 			pointerResponseState = PRS_IDLE;
 		} else if( pointerResponseState == currChosenPriority ) {
 			// mouse moved back over button, over response, press response? create a secondary press response for just graphics?
@@ -235,6 +305,24 @@ static void pointerResponseFinalize_Mouse( ECPS* ecps )
 			if( ecps_GetEntityAndComponentByID( ecps, currChosenPointerResponseID, gcPointerResponseCompID, &entity, &prd ) ) {
 				if( prd->overResponse != NULL ) prd->overResponse( &entity );
 			}
+		}
+	}
+
+	prevChosenPointerResponseID = currChosenPointerResponseID;
+	pointerResponseMousePressed = false;
+	pointerResponseMouseReleased = false;
+}
+
+// needed to handle button presses
+void gp_PointerResponseEventHandler( SDL_Event * evt )
+{
+	if( evt->type == SDL_MOUSEBUTTONDOWN ) {
+		if( evt->button.button == SDL_BUTTON_LEFT ) {
+			pointerResponseMousePressed = true;
+		}
+	} else if( evt->type == SDL_MOUSEBUTTONUP ) {
+		if( evt->button.button == SDL_BUTTON_LEFT ) {
+			pointerResponseMouseReleased = true;
 		}
 	}
 }
@@ -253,6 +341,16 @@ void gp_RegisterProcesses( ECPS* ecps )
 	SDL_assert( gcPosCompID != INVALID_COMPONENT_ID );
 	SDL_assert( gcSpriteCompID != INVALID_COMPONENT_ID );
 	ecps_CreateProcess( ecps, "DRAW", NULL, render, NULL, &gpRenderProc, 2, gcPosCompID, gcSpriteCompID );
+
+	SDL_assert( gcPosCompID != INVALID_COMPONENT_ID );
+	SDL_assert( gc3x3SpriteCompID != INVALID_COMPONENT_ID );
+	SDL_assert( gcScaleCompID != INVALID_COMPONENT_ID ); // TODO?: create a separate component for size instead of scale
+	ecps_CreateProcess( ecps, "3x3", NULL, render3x3, NULL, &gp3x3RenderProc, 3, gcPosCompID, gc3x3SpriteCompID, gcScaleCompID );
+
+	SDL_assert( gcPosCompID != INVALID_COMPONENT_ID );
+	SDL_assert( gcTextCompID != INVALID_COMPONENT_ID );
+	SDL_assert( gcScaleCompID != INVALID_COMPONENT_ID ); // TODO?: create a separate component for size instead of scale
+	ecps_CreateProcess( ecps, "TEXT", NULL, renderText, NULL, &gpTextRenderProc, gcPosCompID, gcTextCompID, gcScaleCompID );
 
 	SDL_assert( gcPosCompID != INVALID_COMPONENT_ID );
 	SDL_assert( gcPointerResponseCompID != INVALID_COMPONENT_ID );

@@ -1,6 +1,8 @@
 #ifndef GENERAL_COMPONENTS_H
 #define GENERAL_COMPONENTS_H
 
+#include <stdint.h>
+
 #include "../System/ECPS/entityComponentProcessSystem.h"
 #include "../Math/vector2.h"
 #include "../Graphics/color.h"
@@ -38,6 +40,13 @@ typedef struct {
 extern ComponentID gcSpriteCompID;
 
 typedef struct {
+	int imgs[9]; // tl, tc, tr, ml, mc, mr, bl, bc, br
+	int8_t depth;
+	uint32_t camFlags;
+} GC3x3SpriteData;
+extern ComponentID gc3x3SpriteCompID;
+
+typedef struct {
 	Vector2 halfDim;
 } GCAABBCollisionData;
 extern ComponentID gcAABBCollCompID;
@@ -61,6 +70,16 @@ typedef struct {
 extern ComponentID gcPointerResponseCompID;
 
 extern ComponentID gcCleanUpFlagCompID;
+
+// for right now all text will be draw centered
+typedef struct {
+	int camFlags;
+	int8_t depth;
+	const uint8_t* text;
+	int fontID;
+	Color clr; // assuming any color components aren't for this, need to find a better way to do this
+} GCTextData;
+extern ComponentID gcTextCompID;
 
 void gc_Register( ECPS* ecps );
 
