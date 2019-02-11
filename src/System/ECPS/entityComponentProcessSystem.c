@@ -678,7 +678,7 @@ static int immediateAddComponentToEntity( ECPS* ecps, Entity* entity, ComponentI
 		toStructure = &( ecps->componentData.sbComponentArrays[toPackedArrayIndex].structure );
 
 		// copy over
-		//  NOTE: We directly access the fromStructure here as teh allocateDataForEntity can invalidate our old pointer
+		//  NOTE: We directly access the fromStructure here as the allocateDataForEntity( ) function can invalidate our old pointer
 		entityCopy( ecps, fromData, &( ecps->componentData.sbComponentArrays[fromPackedArrayIndex].structure ), toData, toStructure );
 
 		// remove from old array and update entity directory entry
@@ -831,8 +831,8 @@ static int immediateRemoveComponentFromEntity( ECPS* ecps, Entity* entity, Compo
 	toData = &( ecps->componentData.sbComponentArrays[toPackedArrayIndex].sbData[currOffset] );
 	toStructure = &( ecps->componentData.sbComponentArrays[toPackedArrayIndex].structure );
 
-	// copy over
-	entityCopy( ecps, fromData, fromStructure, toData, toStructure );
+	// copy over, because createOrFindPackagedArray( ) can invalidate the fromStructure pointer we just access the structure directly
+	entityCopy( ecps, fromData, &( ecps->componentData.sbComponentArrays[fromPackedArrayIndex].structure ), toData, toStructure );
 
 	// remove from old array and update entity directory entry
 	freeUpDataFromEntity( ecps, fromPackedArrayIndex, fromCompArrayPos );
