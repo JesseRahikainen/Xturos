@@ -258,6 +258,9 @@
     <ClInclude Include="..\..\src\Graphics\geomTrail.h">
       <Filter>Header Files\Graphics</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\Game\testPointerResponseScreen.h">
+      <Filter>Header Files\Game</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\Game\gameScreen.c">
@@ -419,12 +422,18 @@
     <ClCompile Include="..\..\src\Graphics\geomTrail.c">
       <Filter>Source Files\Graphics</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\Game\testPointerResponseScreen.c">
+      <Filter>Source Files\Game</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Text Include="..\..\readme.txt">
       <Filter>_Text</Filter>
     </Text>
     <Text Include="..\..\todo.txt">
+      <Filter>_Text</Filter>
+    </Text>
+    <Text Include="..\..\screen_template.txt">
       <Filter>_Text</Filter>
     </Text>
   </ItemGroup>

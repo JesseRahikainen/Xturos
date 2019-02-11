@@ -45,14 +45,14 @@
     <LinkIncremental>true</LinkIncremental>
     <TargetName>$(ProjectName)-dbg</TargetName>
     <OutDir>$(SolutionDir)\..\..\bin\win32\</OutDir>
-    <IncludePath>F:\Data\Libraries\stb-master;F:\Data\Libraries\SDL2-2.0.9\include;F:\Data\Libraries\spine-runtimes-master\spine-c\include;F:\Data\Libraries\nuklear-master;$(IncludePath)</IncludePath>
-    <LibraryPath>F:\Data\Libraries\spine-runtimes-master\spine-c\lib;F:\Data\Libraries\SDL2-2.0.9\lib\x86;$(LibraryPath)</LibraryPath>
+    <IncludePath>F:\Data\Libraries\stb-master;F:\Data\Libraries\SDL2-2.0.9_src\include;F:\Data\Libraries\spine-runtimes-master\spine-c\include;F:\Data\Libraries\nuklear-master;$(IncludePath)</IncludePath>
+    <LibraryPath>F:\Data\Libraries\spine-runtimes-master\spine-c\lib;F:\Data\Libraries\SDL2-2.0.9_src\VisualC\Win32\Debug;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
     <OutDir>$(SolutionDir)\..\..\bin\win32\</OutDir>
-    <IncludePath>F:\Data\Libraries\stb-master;F:\Data\Libraries\SDL2-2.0.9\include;F:\Data\Libraries\spine-runtimes-master\spine-c\include;F:\Data\Libraries\nuklear-master;$(IncludePath)</IncludePath>
-    <LibraryPath>F:\Data\Libraries\spine-runtimes-master\spine-c\lib;F:\Data\Libraries\SDL2-2.0.9\lib\x86;$(LibraryPath)</LibraryPath>
+    <IncludePath>F:\Data\Libraries\stb-master;F:\Data\Libraries\SDL2-2.0.9_src\include;F:\Data\Libraries\spine-runtimes-master\spine-c\include;F:\Data\Libraries\nuklear-master;$(IncludePath)</IncludePath>
+    <LibraryPath>F:\Data\Libraries\spine-runtimes-master\spine-c\lib;F:\Data\Libraries\SDL2-2.0.9_src\VisualC\Win32\Release;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -103,6 +103,7 @@
     <ClInclude Include="..\..\src\Game\gameScreen.h" />
     <ClInclude Include="..\..\src\Game\testAStarScreen.h" />
     <ClInclude Include="..\..\src\Game\testJobQueueScreen.h" />
+    <ClInclude Include="..\..\src\Game\testPointerResponseScreen.h" />
     <ClInclude Include="..\..\src\Game\testSoundsScreen.h" />
     <ClInclude Include="..\..\src\Graphics\camera.h" />
     <ClInclude Include="..\..\src\Graphics\color.h" />
@@ -161,6 +162,7 @@
     <ClCompile Include="..\..\src\Game\gameScreen.c" />
     <ClCompile Include="..\..\src\Game\testAStarScreen.c" />
     <ClCompile Include="..\..\src\Game\testJobQueueScreen.c" />
+    <ClCompile Include="..\..\src\Game\testPointerResponseScreen.c" />
     <ClCompile Include="..\..\src\Game\testSoundsScreen.c" />
     <ClCompile Include="..\..\src\Graphics\camera.c" />
     <ClCompile Include="..\..\src\Graphics\color.c" />
@@ -214,6 +216,7 @@
   </ItemGroup>
   <ItemGroup>
     <Text Include="..\..\readme.txt" />
+    <Text Include="..\..\screen_template.txt" />
     <Text Include="..\..\todo.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

@@ -487,9 +487,10 @@ int snd_Init( unsigned int numGroups )
 
 void snd_CleanUp( )
 {
-	sb_Release( sbStreamWorkingBuffer );
+	snd_StopStreamingAllBut( -1 );
 	if( workingBuffer != NULL ) {
 		SDL_LockAudioDevice( devID ); {
+			sb_Release( sbStreamWorkingBuffer );
 			mem_Release( workingBuffer );
 			workingBuffer = NULL;
 		} SDL_UnlockAudioDevice( devID );

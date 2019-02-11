@@ -1,8 +1,6 @@
 #ifndef SPINE_GFX_H
 #define SPINE_GFX_H
 
-// TODO: Change the rendering system, will need to manually call the render to allow for scissor commands to be processed correctly.
-
 #include <stdint.h>
 #include <spine/spine.h>
 #include "../Math/vector2.h"

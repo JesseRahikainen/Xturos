@@ -187,7 +187,6 @@ static void pointerResponseGetMouse( ECPS* ecps )
 
 static void pointerResponseDetectState( ECPS* ecps, const Entity* entity )
 {
-	// TODO: Test this!
 	if( !pointerResponseMouseValid ) return;
 
 	GCPointerResponseData* responseData = NULL;
@@ -258,7 +257,6 @@ static void pointerResponseFinalize_Mouse( ECPS* ecps )
 	}
 
 	if( pointerResponseState == PRS_OVER ) {
-		// TODO: Make sure this won't cause issues with multiple overlapping buttons
 		if( currChosenPointerResponseID != prevChosenPointerResponseID ) {
 			pointerResponseState = PRS_IDLE;
 
