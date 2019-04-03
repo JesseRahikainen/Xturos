@@ -6,6 +6,8 @@ Based on this:
 http://www.metanetsoftware.com/technique/tutorialA.html
 */
 
+// TODO: Rename and adjust everything
+
 #include <stddef.h>
 #include <stdbool.h>
 #include "Math/vector2.h"
@@ -67,6 +69,9 @@ Finds the separation needed for c1 to move and not overlap c2.
 */
 int collision_GetSeparation( Collider* c1, Collider* c2, Vector2* outSeparation );
 
+// just test to see if the mainCollider intersects any entries in the collection
+bool collision_Test( Collider* mainCollider, ColliderCollection collection );
+
 /*
 Finds and handles the all collisions between mainCollider and the colliders in the list.
  NOTE: You shouldn't modify the passed in colliders in the response.
@@ -115,6 +120,6 @@ bool collision_LineSegmentCollision( Vector2* l0p0, Vector2* l0p1, Vector2* l1p0
 
 // Checks to see if the passed in point is inside the complex polygon defined by the list of points sbPolygon.
 //  sbPolygon must be a stretchy buffer.
-bool collision_IsPointInsideComplexPolygon( Vector2* pos, Vector2* sbPolygon );
+bool collision_IsPointInsideComplexPolygon( Vector2* pos, Vector2* polygon, size_t numPoints );
 
 #endif

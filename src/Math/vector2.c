@@ -166,6 +166,16 @@ Vector2* vec2_NormalFromRot( float rotRad, Vector2* out )
 	return out;
 }
 
+Vector2* vec2_FromPolar( float rotRad, float magnitude, Vector2* out )
+{
+	assert( out != NULL );
+
+	out->x = sinf( rotRad ) * magnitude;
+	out->y = -cosf( rotRad ) * magnitude;
+
+	return out;
+}
+
 float vec2_RotationRadians( const Vector2* v )
 {
 	assert( v != NULL );
@@ -206,6 +216,33 @@ Vector2* vec2_ProjOnto( const Vector2* vec, const Vector2* onto, Vector2* out )
 	out->v[1] = onto->v[1] * mult;
 
 	return out;
+}
+
+Vector2* vec2_PerpRight( const Vector2* v, Vector2* out )
+{
+	assert( v != NULL );
+	assert( out != NULL );
+
+	out->x = -( v->y );
+	out->y = v->x;
+
+	return out;
+}
+
+Vector2* vec2_PerpLeft( const Vector2* v, Vector2* out )
+{
+	assert( v != NULL );
+	assert( out != NULL );
+
+	out->x = v->y;
+	out->y = -( v->x );
+
+	return out;
+}
+
+bool vec2_Comp( const Vector2* lhs, const Vector2* rhs )
+{
+	return ( FLT_EQ( lhs->x, rhs->x ) && FLT_EQ( lhs->y, rhs->y ) );
 }
 
 void vec2_Dump( const Vector2* vec, const char* extra )

@@ -24,6 +24,8 @@
 #include "UI/text.h"
 #include "Input/input.h"
 
+#include "System/gameTime.h"
+
 #include "gameState.h"
 #include "Game/gameScreen.h"
 #include "Game/testAStarScreen.h"
@@ -58,12 +60,6 @@ static unsigned int physicsTickAcc;
 static SDL_Window* window;
 static SDL_RWops* logFile;
 static const char* windowName = "Xturos";
-
-/* making PHYSICS_TICK to something that will result in a whole number should lead to better results
-the second number is how many times per second it will update */
-//#define PHYSICS_TICK ( 1000 / 5 )
-#define PHYSICS_TICK ( 1000 / 60 )
-#define PHYSICS_DELTA ( (float)PHYSICS_TICK / 1000.0f )
 
 void cleanUp( void )
 {
@@ -328,27 +324,22 @@ void mainLoop( void* v )
 	// process movement, collision, and other things that require a delta time
 	numPhysicsProcesses = 0;
 	while( physicsTickAcc > PHYSICS_TICK ) {
-		sys_PhysicsTick( PHYSICS_DELTA );
-		gsmPhysicsTick( &globalFSM, PHYSICS_DELTA );
+		sys_PhysicsTick( PHYSICS_DT );
+		gsmPhysicsTick( &globalFSM, PHYSICS_DT );
 		physicsTickAcc -= PHYSICS_TICK;
 		++numPhysicsProcesses;
 	}
 
 	// rendering
-	editorIMGUI.clear = false;
-	inGameIMGUI.clear = false;
 	if( numPhysicsProcesses > 0 ) {
 		// set the new render positions
-		renderDelta = PHYSICS_DELTA * (float)numPhysicsProcesses;
+		renderDelta = PHYSICS_DT * (float)numPhysicsProcesses;
 		gfx_ClearDrawCommands( renderDelta );
 		cam_FinalizeStates( renderDelta );
 
 		// set up rendering for everything
 		sys_Draw( );
 		gsmDraw( &globalFSM );
-
-		editorIMGUI.clear = true;
-		inGameIMGUI.clear = true;
 	}
 
 	// process all the jobs we need the main thread for, using this reduces the need for synchronization
@@ -356,9 +347,10 @@ void mainLoop( void* v )
 
 	// do the actual drawing for this frame
 	float dt = (float)tickDelta / 1000.0f;
+	gt_SetRenderTimeDelta( dt );
 	cam_Update( dt );
 	gfx_Render( dt );
-	// flip here so we don't have to store the window anywhere else
+
 	SDL_GL_SwapWindow( window );
 }
 

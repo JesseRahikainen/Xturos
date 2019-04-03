@@ -261,6 +261,9 @@
     <ClInclude Include="..\..\src\Game\testPointerResponseScreen.h">
       <Filter>Header Files\Game</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\System\gameTime.h">
+      <Filter>Header Files\System</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\Game\gameScreen.c">
@@ -424,6 +427,9 @@
     </ClCompile>
     <ClCompile Include="..\..\src\Game\testPointerResponseScreen.c">
       <Filter>Source Files\Game</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\System\gameTime.c">
+      <Filter>Source Files\System</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

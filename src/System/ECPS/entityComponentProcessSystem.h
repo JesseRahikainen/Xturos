@@ -73,4 +73,7 @@ void ecps_DestroyEntityByID( ECPS* ecps, EntityID entityID );
 // clears out all entities, not ids will be valid after this is called
 void ecps_DestroyAllEntities( ECPS* ecps );
 
+// debugging stuff
+void ecps_DumpAllEntities( ECPS* ecps, const char* tag );
+
 #endif

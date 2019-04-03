@@ -1027,3 +1027,46 @@ void ecps_DestroyAllEntities( ECPS* ecps )
 	sb_Release( ecps->componentData.sbEntityDirectory );
 	ecps->componentData.sbEntityDirectory = NULL;
 }
+
+// lists all entities and the type of components they have
+void ecps_DumpAllEntities( ECPS* ecps, const char* tag )
+{
+	if( tag == NULL ) {
+		llog( LOG_DEBUG, "Starting entity dump:" );
+	} else {
+		llog( LOG_DEBUG, "Starting entity dump (%s):", tag );
+	}
+
+	char* sbTypeList = NULL;
+	for( EntityID id = idSet_GetFirstValidID( &( ecps->idSet ) ); id != INVALID_ENTITY_ID; id = idSet_GetNextValidID( &( ecps->idSet ), id ) ) {
+		Entity entity;
+		
+		// we should always be able to find the entity
+		assert( ecps_GetEntityByID( ecps, id, &entity ) ); 
+
+		bool isFirst = true;
+		sb_Clear( sbTypeList );
+		for( ComponentID compID = 0; compID < sb_Count( ecps->componentTypes.sbTypes ); ++compID ) {
+			if( ecps_DoesEntityHaveComponent( &entity, compID ) ) {
+				char* name = ecps->componentTypes.sbTypes[compID].name;
+				size_t len = strnlen( name, 32 );
+
+				if( isFirst ) {
+					isFirst = false;
+				} else {
+					sb_Push( sbTypeList, ',' );
+					sb_Push( sbTypeList, ' ' );
+				}
+
+				for( size_t c = 0; c < len; ++c ) {
+					sb_Push( sbTypeList, name[c] );
+				}
+			}
+		}
+		sb_Push( sbTypeList, '\0' );
+
+		llog( LOG_DEBUG, "  0x%08X: %s", entity.id, sbTypeList );//*/
+	}
+
+	sb_Release( sbTypeList );
+}

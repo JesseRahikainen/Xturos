@@ -20,7 +20,9 @@ float lerp( float from, float to, float t );
 
 float radianRotLerp( float from, float to, float t );
 float degreeRotLerp( float from, float to, float t );
+float radianRotDiff( float from, float to );
 float degreeRotDiff( float from, float to );
+float radianRotWrap( float rad );
 float degreeRotWrap( float deg );
 float spineDegRotToEngineDegRot( float spineDeg );
 float engineDegRotToSpineDegRot( float engineDeg );
@@ -48,5 +50,11 @@ float signed2DTriArea( const Vector2* a, const Vector2* b, const Vector2* c );
 #define FLT_LT( f, t ) ( ( f ) - ( t ) < FLOAT_TOLERANCE )
 #define FLT_GT( f, t ) ( ( f ) - ( t ) > -FLOAT_TOLERANCE )
 #define FLT_BETWEEN( f, low, high ) ( FLT_LE( f, high ) && FLT_GE( f, low ) )
+
+// finds the squared distance from the point pos to the line segment defined by lineA to lineB
+float sqrdDistToSegment( Vector2* pos, Vector2* lineA, Vector2* lineB );
+
+// returns if pos is within lineWidth distance from all the points polygon
+bool isPointOnPolygon( Vector2* pos, Vector2* polygon, size_t numPoints, float lineWidth );
 
 #endif // inclusion guard

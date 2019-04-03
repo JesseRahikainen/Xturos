@@ -43,6 +43,25 @@ float degreeRotLerp( float from, float to, float t )
 	return ( from + ( diff * sgn * clamp( 0.0f, 1.0f, t ) ) );
 }
 
+float radianRotDiff( float from, float to )
+{
+	assert( from >= -M_PI_F );
+	assert( from <= M_PI_F );
+	assert( to >= -M_PI_F );
+	assert( to <= M_PI_F );
+	float diff = to - from;
+
+	if( diff > M_PI_F ) {
+		diff -= M_TWO_PI_F;
+	}
+
+	while( diff < -M_PI_F ) {
+		diff += M_TWO_PI_F;
+	}
+
+	return diff;
+}
+
 float degreeRotDiff( float from, float to )
 {
 	assert( from >= -180.0f );
@@ -60,6 +79,19 @@ float degreeRotDiff( float from, float to )
 	}
 
 	return diff;
+}
+
+float radianRotWrap( float rad )
+{
+	while( rad > M_PI_F ) {
+		rad -= M_TWO_PI_F;
+	}
+
+	while( rad < -M_PI_F ) {
+		rad += M_TWO_PI_F;
+	}
+
+	return rad;
 }
 
 float degreeRotWrap( float deg )
@@ -206,4 +238,49 @@ float sqDistPointSegment( const Vector2* segOne, const Vector2* segTwo, const Ve
 float signed2DTriArea( const Vector2* a, const Vector2* b, const Vector2* c )
 {
 	return ( ( a->x - c->x ) * ( b->y - c->y ) - ( a->y - c->y ) * ( b->x - c->x ) );
+}
+
+// finds the squared distance from the point pos to the line segment defined by lineA to lineB
+float sqrdDistToSegment( Vector2* pos, Vector2* lineA, Vector2* lineB )
+{
+	assert( pos != NULL );
+	assert( lineA != NULL );
+	assert( lineB != NULL );
+
+	Vector2 ab;
+	vec2_Subtract( lineB, lineA, &ab );
+
+	Vector2 ap;
+	vec2_Subtract( pos, lineA, &ap );
+
+	Vector2 bp;
+	vec2_Subtract( pos, lineB, &bp );
+
+	float e = vec2_DotProduct( &ap, &ab );
+
+	if( e <= 0.0f ) {
+		return vec2_DotProduct( &ap, &ap );
+	}
+
+	float f = vec2_DotProduct( &ab, &ab );
+	if( e >= f ) {
+		return vec2_DotProduct( &bp, &bp );
+	}
+
+	return vec2_DotProduct( &ap, &ap ) - ( ( e * e ) / f );
+}
+
+// returns if pos is within lineWidth distance from all the points polygon
+bool isPointOnPolygon( Vector2* pos, Vector2* polygon, size_t numPoints, float lineWidth )
+{
+	float halfWidthSqrd = lineWidth / 2.0f;
+	halfWidthSqrd *= halfWidthSqrd;
+
+	for( size_t i = 0; i < numPoints; ++i ) {
+		if( sqrdDistToSegment( pos, polygon + i, polygon + ( ( i + 1 ) % numPoints ) ) <= halfWidthSqrd ) {
+			return true;
+		}
+	}
+
+	return false;
 }

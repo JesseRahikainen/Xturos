@@ -36,8 +36,6 @@ typedef struct {
 
 	bool useRelativeMousePos;
 
-	bool clear;
-
 	struct nk_context ctx;
 	struct nk_font_atlas fontAtlas;
 } NuklearWrapper;
@@ -53,5 +51,6 @@ void nk_xu_fontStashEnd( NuklearWrapper* xu );
 void nk_xu_handleEvent( NuklearWrapper* xu, SDL_Event* e );
 void nk_xu_render( NuklearWrapper* xu );
 void nk_xu_shutdown( NuklearWrapper* xu );
+void nk_xu_clear( NuklearWrapper* xu );
 
 #endif

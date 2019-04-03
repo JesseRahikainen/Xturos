@@ -138,6 +138,7 @@
     <ClInclude Include="..\..\src\System\ECPS\ecps_dataTypes.h" />
     <ClInclude Include="..\..\src\System\ECPS\ecps_values.h" />
     <ClInclude Include="..\..\src\System\ECPS\entityComponentProcessSystem.h" />
+    <ClInclude Include="..\..\src\System\gameTime.h" />
     <ClInclude Include="..\..\src\System\jobQueue.h" />
     <ClInclude Include="..\..\src\System\jobRingQueue.h" />
     <ClInclude Include="..\..\src\System\memory.h" />
@@ -198,6 +199,7 @@
     <ClCompile Include="..\..\src\System\ECPS\ecps_componentBitFlags.c" />
     <ClCompile Include="..\..\src\System\ECPS\ecps_componentTypes.c" />
     <ClCompile Include="..\..\src\System\ECPS\entityComponentProcessSystem.c" />
+    <ClCompile Include="..\..\src\System\gameTime.c" />
     <ClCompile Include="..\..\src\System\jobQueue.c" />
     <ClCompile Include="..\..\src\System\jobRingQueue.c" />
     <ClCompile Include="..\..\src\System\memory.c" />

@@ -2,6 +2,8 @@
 #ifndef VECTOR_2_H
 #define VECTOR_2_H
 
+#include <stdbool.h>
+
 typedef struct {
 	union {
 		struct {
@@ -53,12 +55,18 @@ float vec2_DistSqrd( const Vector2* v1, const Vector2* v2 );
 float vec2_Normalize( Vector2* vec );
 
 Vector2* vec2_NormalFromRot( float rotRad, Vector2* out );
+Vector2* vec2_FromPolar( float rotRad, float magnitude, Vector2* out );
 float vec2_RotationRadians( const Vector2* v );
 
 Vector2* vec2_NormalFromSpineRot( float rotRad, Vector2* out );
 float vec2_SpineRotationRadians( const Vector2* v );
 
 Vector2* vec2_ProjOnto( const Vector2* vec, const Vector2* onto, Vector2* out );
+
+Vector2* vec2_PerpRight( const Vector2* v, Vector2* out );
+Vector2* vec2_PerpLeft( const Vector2* v, Vector2* out );
+
+bool vec2_Comp( const Vector2* lhs, const Vector2* rhs );
 
 void vec2_Dump( const Vector2* vec, const char* extra );
 

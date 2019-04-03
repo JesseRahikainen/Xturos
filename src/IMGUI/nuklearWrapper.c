@@ -9,6 +9,7 @@
 #include "../System/memory.h"
 #include "../Math/matrix4.h"
 #include "../Input/input.h"
+#include "../System/platformLog.h"
 
 #include "../Graphics/debugRendering.h"
 
@@ -193,7 +194,6 @@ void nk_xu_init( NuklearWrapper* xu, SDL_Window* win, bool useRelativeMousePos, 
 	xu->renderHeight = renderHeight;
 
 	xu->useRelativeMousePos = useRelativeMousePos;
-	xu->clear = true;
 }
 
 void nk_xu_fontStashBegin( NuklearWrapper* xu, struct nk_font_atlas** atlas )
@@ -393,7 +393,7 @@ void nk_xu_render( NuklearWrapper* xu )
 
 			GL( glDrawElements( GL_TRIANGLES, (GLsizei)cmd->elem_count, GL_UNSIGNED_SHORT, offset ) );
 
-#if 0 // for debugging rendering
+#if 0 // for debugging rendering, TODO: make this work with the version of nuklear we're using
 #pragma warning(push)
 #pragma warning(disable: 4305)
 			for( unsigned short i = (unsigned short)offset; i < cmd->elem_count; i+=3 ) {
@@ -428,12 +428,9 @@ void nk_xu_render( NuklearWrapper* xu )
 				debugRenderer_Line( 0xFFFFFFFF, v2_0, v2_1, clr );
 			}
 #endif
-
 			offset += cmd->elem_count;
-
-			
 		}
-		if( xu->clear ) nk_clear( &( xu->ctx ) );
+		nk_clear( &( xu->ctx ) );
 	}
 
 	GL( glUseProgram( 0 ) );

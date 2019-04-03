@@ -10,6 +10,7 @@
 #include "Math/vector2.h"
 #include "Math/mathUtil.h"
 #include "Utils/stretchyBuffer.h"
+#include "System/platformLog.h"
 
 // raycasting intersection functions
 int RayCastvAABBAxis( float rayStart, float dir, float boxMin, float boxMax, float* tMin, float* tMax )
@@ -48,21 +49,21 @@ int RayCastvAABBAxis( float rayStart, float dir, float boxMin, float boxMax, flo
 	return 1;
 }
 
-int LineAABBTest( Vector2* start, Vector2* end, Collider* collider, float maxAllowedT, float minAllowedT, float* t, Vector2* pt )
+int LineAABBTest( Vector2* start, Vector2* end, ColliderAABB* aabb, float maxAllowedT, float minAllowedT, float* t, Vector2* pt )
 {
 	float tMin, tMax;
 
 	tMin = minAllowedT;
 	tMax = maxAllowedT;
 
-	if( !RayCastvAABBAxis( start->v[0], end->v[0],
-							( collider->aabb.center.v[0] - collider->aabb.halfDim.v[0] ), ( collider->aabb.center.v[0] + collider->aabb.halfDim.v[0] ),
+	if( !RayCastvAABBAxis( start->v[0], ( end->v[0] - start->v[0] ),
+							( aabb->center.v[0] - aabb->halfDim.v[0] ), ( aabb->center.v[0] + aabb->halfDim.v[0] ),
 							&tMin, &tMax ) ) {
 		return 0;
 	}
 
-	if( !RayCastvAABBAxis( start->v[1], end->v[1],
-							( collider->aabb.center.v[1] - collider->aabb.halfDim.v[1] ), ( collider->aabb.center.v[1] + collider->aabb.halfDim.v[1] ),
+	if( !RayCastvAABBAxis( start->v[1], ( end->v[1] - start->v[1] ),
+							( aabb->center.v[1] - aabb->halfDim.v[1] ), ( aabb->center.v[1] + aabb->halfDim.v[1] ),
 							&tMin, &tMax ) ) {
 		return 0;
 	}
@@ -75,7 +76,7 @@ int LineAABBTest( Vector2* start, Vector2* end, Collider* collider, float maxAll
 
 int RayCastvAABB( Vector2* start, Vector2* dir, Collider* collider, float* t, Vector2* pt )
 {
-	return LineAABBTest( start, dir, collider, FLT_MAX, 0.0f, t, pt );
+	return LineAABBTest( start, dir, &(collider->aabb), FLT_MAX, 0.0f, t, pt );
 }
 
 int RayCastvCircle( Vector2* start, Vector2* dir, Collider* collider, float* t, Vector2* pt )
@@ -137,6 +138,7 @@ RayCastCheck rayCastChecks[NUM_COLLIDER_TYPES] = { RayCastvAABB, RayCastvCircle,
 //  used if we don't want to ever handle collisions between these two types.
 static int invalidCollision( Collider* primary, Collider* secondard, Vector2* outSeparation )
 {
+	llog( LOG_WARN, "Attempting to detect a collision between two collider types that has no valid detection method." );
 	return 0;
 }
 
@@ -366,7 +368,7 @@ int AABBvLineSegment( Collider* primary, Collider* fixed, Vector2* outSeparation
 	Vector2 collPt;
 	float t;
 
-	if( LineAABBTest( &( fixed->lineSegment.posOne ), &( fixed->lineSegment.posTwo ), primary, 1.0f, 0.0f, &t, &collPt ) ) {
+	if( LineAABBTest( &( fixed->lineSegment.posOne ), &( fixed->lineSegment.posTwo ), &(primary->aabb), 1.0f, 0.0f, &t, &collPt ) ) {
 		// the line segment is fixed
 		vec2_Subtract( &( fixed->lineSegment.posOne ), &collPt, outSeparation );
 		return 1;
@@ -437,7 +439,6 @@ int LineSegmentvHalfSpace( Collider* primary, Collider* fixed, Vector2* outSepar
 	return 0;
 }
 
-#include "System\platformLog.h"
 // if the line segments are collinear we find the first position along line 0 that hits line 1
 bool collision_LineSegmentCollision( Vector2* l0p0, Vector2* l0p1, Vector2* l1p0, Vector2* l1p1, Vector2* outCollPos, float* outT )
 {
@@ -585,6 +586,31 @@ int collision_GetSeparation( Collider* c1, Collider* c2, Vector2* outSeparation 
 	}
 
 	return collisionChecks[c1->type][c2->type]( c1, c2, outSeparation );
+}
+
+// just test to see if the mainCollider intersects any entries in the collection
+bool collision_Test( Collider* mainCollider, ColliderCollection collection )
+{
+	if( ( mainCollider == NULL ) || ( mainCollider->type == CT_DEACTIVATED ) ) {
+		return false;
+	}
+
+	Collider* current;
+	char* data = (char*)collection.firstCollider;
+	Vector2 ignore;
+	for( int idx = 0; idx < collection.count; ++idx ) {
+		current = (Collider*)( data + ( idx * collection.stride ) );
+
+		if( current->type == CT_DEACTIVATED ) {
+			continue;
+		}
+
+		if( collisionChecks[mainCollider->type][current->type]( mainCollider, current, &ignore ) ) {
+			return true;
+		}
+	}
+
+	return false;
 }
 
 /*
@@ -754,6 +780,9 @@ float collision_Distance( Collider* collider, Vector2* pos )
 	case CT_DEACTIVATED: {
 		dist = -1.0f;
 	} break;
+	default:
+		llog( LOG_WARN, "Attempting to find distance from collider what has no distance function." );
+		break;
 	}
 
 	return dist;
@@ -791,6 +820,9 @@ void collision_DebugDrawing( Collider* collision, unsigned int camFlags, Color c
 	case CT_CIRCLE:
 		debugRenderer_Circle( camFlags, collision->circle.center, collision->circle.radius, color );
 		break;
+	case CT_LINE_SEGMENT:
+		debugRenderer_Line( camFlags, collision->lineSegment.posOne, collision->lineSegment.posTwo, color );
+		break;
 	}
 }
 
@@ -805,11 +837,11 @@ void collision_CollectionDebugDrawing( ColliderCollection collection, unsigned i
 	}
 }
 
-bool collision_IsPointInsideComplexPolygon( Vector2* pos, Vector2* sbPolygon )
+bool collision_IsPointInsideComplexPolygon( Vector2* pos, Vector2* polygon, size_t numPts )
 {
 	assert( pos != NULL );
-	assert( sbPolygon != NULL );
-	assert( sb_Count( sbPolygon ) >= 3 );
+	assert( polygon != NULL );
+	assert( numPts >= 3 );
 
 	// http://alienryderflex.com/polygon/
 
@@ -817,21 +849,23 @@ bool collision_IsPointInsideComplexPolygon( Vector2* pos, Vector2* sbPolygon )
 	//  of segments of the polygon then it's inside
 	// we'll assume the ray goes along the positive x-axis
 
-	size_t j = sb_Count( sbPolygon ) - 1;
+	size_t j = numPts - 1;
 	bool oddNodes = false;
 
-	for( size_t i = 0; i < sb_Count( sbPolygon ); ++i ) {
-		if( ( ( ( sbPolygon[i].y < pos->y ) && ( sbPolygon[j].y >= pos->y ) ) ||
-			  ( ( sbPolygon[j].y < pos->y ) && ( sbPolygon[i].x >= pos->y ) ) ) &&  // if the points y coord is in range of the line segments
-			( ( sbPolygon[i].x <= pos->x ) || ( sbPolygon[j].x <= pos->x ) ) ) {
+	for( size_t i = 0; i < numPts; ++i ) {
+		if( ( ( ( polygon[i].y < pos->y ) && ( polygon[j].y >= pos->y ) ) ||
+			  ( ( polygon[j].y < pos->y ) && ( polygon[i].y >= pos->y ) ) ) &&
+			( ( polygon[i].x <= pos->x ) || ( polygon[j].x <= pos->x ) ) ) {
 
 			// find where along the segment it would collide
-			float t = ( pos->y - sbPolygon[i].y ) / ( sbPolygon[j].y - sbPolygon[i].y );
+			float t = ( pos->y - polygon[i].y ) / ( polygon[j].y - polygon[i].y );
 			// get the x coord of the position
-			float x = sbPolygon[i].x + ( t * ( sbPolygon[j].x - sbPolygon[i].x ) );
+			float x = polygon[i].x + ( t * ( polygon[j].x - polygon[i].x ) );
 			// see if we hit
 			oddNodes ^= ( x < pos->x );
 		}
+
+		j = i;
 	}
 
 	return oddNodes;
