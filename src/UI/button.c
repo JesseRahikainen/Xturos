@@ -21,11 +21,11 @@
 #define ANIM_LENGTH 0.75f
 #define MAX_BUTTONS 64
 #define BUTTON_TEXT_LEN 32
-static enum ButtonState { BS_NORMAL, BS_FOCUSED, BS_CLICKED, NUM_STATES };
+enum ButtonState { BS_NORMAL, BS_FOCUSED, BS_CLICKED, NUM_STATES };
 
 static int systemID = -1;
 
-static struct Button {
+struct Button {
 
 	int* slicedBorder;
 	int imgID;

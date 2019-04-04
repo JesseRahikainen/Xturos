@@ -20,14 +20,14 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v120</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
     <CLRSupport>false</CLRSupport>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v120</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
@@ -65,13 +65,13 @@
       <TreatWarningAsError>true</TreatWarningAsError>
       <ExceptionHandling>false</ExceptionHandling>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
-      <DisableSpecificWarnings>4100;4189;4201;4996;4127;4756</DisableSpecificWarnings>
+      <DisableSpecificWarnings>4100;4189;4201;4996;4127;4756;6385;6386;26451;6255;6385;26451;4456;4457</DisableSpecificWarnings>
       <PreprocessToFile>false</PreprocessToFile>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>spine-c-dbg.lib;SDL2.lib;SDL2main.lib;opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>spine-c-dbg.lib;SDL2.lib;SDL2main.lib;opengl32.lib;legacy_stdio_definitions.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <IgnoreSpecificDefaultLibraries>msvcrt.lib</IgnoreSpecificDefaultLibraries>
     </Link>
   </ItemDefinitionGroup>
@@ -86,14 +86,14 @@
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;GLEW_STATIC;_LIB;THREAD_SUPPORT;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <TreatWarningAsError>true</TreatWarningAsError>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
-      <DisableSpecificWarnings>4100;4189;4201;4996;4127;4756</DisableSpecificWarnings>
+      <DisableSpecificWarnings>4100;4189;4201;4996;4127;4756;6385;6386;26451;6255;6385;26451;4456;4457</DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>spine-c.lib;SDL2.lib;SDL2main.lib;opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>spine-c.lib;SDL2.lib;SDL2main.lib;opengl32.lib;legacy_stdio_definitions.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -105,6 +105,7 @@
     <ClInclude Include="..\..\src\Game\testJobQueueScreen.h" />
     <ClInclude Include="..\..\src\Game\testPointerResponseScreen.h" />
     <ClInclude Include="..\..\src\Game\testSoundsScreen.h" />
+    <ClInclude Include="..\..\src\Game\testSteeringScreen.h" />
     <ClInclude Include="..\..\src\Graphics\camera.h" />
     <ClInclude Include="..\..\src\Graphics\color.h" />
     <ClInclude Include="..\..\src\Graphics\debugRendering.h" />
@@ -165,6 +166,7 @@
     <ClCompile Include="..\..\src\Game\testJobQueueScreen.c" />
     <ClCompile Include="..\..\src\Game\testPointerResponseScreen.c" />
     <ClCompile Include="..\..\src\Game\testSoundsScreen.c" />
+    <ClCompile Include="..\..\src\Game\testSteeringScreen.c" />
     <ClCompile Include="..\..\src\Graphics\camera.c" />
     <ClCompile Include="..\..\src\Graphics\color.c" />
     <ClCompile Include="..\..\src\Graphics\debugRendering.c" />

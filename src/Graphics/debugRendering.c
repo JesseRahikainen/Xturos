@@ -31,7 +31,6 @@ static DebugVertex debugBuffer[MAX_VERTS];
 static int lastDebugVert;
 
 static GLuint debugIndicesBuffer[MAX_VERTS];
-static int lastDebugIndex;
 
 static ShaderProgram debugShaderProgram;
 

@@ -26,7 +26,7 @@ static char shaderContents[MAX_SHADER_SIZE + 1];
 static struct Shader* shaders;
 static int numShaders;
 
-static int isValidShader( int shaderIdx, struct Shader* shaders )
+static int isValidShader( int shaderIdx, struct Shader* shaderList )
 {
 	// < 0 is the flag for not using that shader, so it doesn't matter
 	if( shaderIdx < 0 ) {
@@ -39,7 +39,7 @@ static int isValidShader( int shaderIdx, struct Shader* shaders )
 	}
 
 	GLboolean isShader = GL_FALSE;
-	GLR( isShader, glIsShader( shaders[shaderIdx].id ) );
+	GLR( isShader, glIsShader( shaderList[shaderIdx].id ) );
 	if( isShader == GL_FALSE ) {
 		llog( LOG_WARN, "Shader index does not point to a valid shader." );
 		return 0;

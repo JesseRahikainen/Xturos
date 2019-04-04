@@ -15,7 +15,7 @@
 #define MAX_CHECK_BOXES 32
 #define TEXT_LEN 32
 
-static enum CheckBoxState { CBS_NORMAL, CBS_FOCUSED, CBS_CLICKED };
+enum CheckBoxState { CBS_NORMAL, CBS_FOCUSED, CBS_CLICKED };
 
 typedef struct {
 	int inUse;

@@ -446,14 +446,14 @@ static void drawCharacter( SpineInstance* spine )
 
 				TriVert verts[4];
 
-				for( int i = 0; i < 4; ++i ) {
-					verts[i].pos.x = vertices[2*i];
-					verts[i].pos.y = vertices[(2*i)+1];
+				for( int x = 0; x < 4; ++x ) {
+					verts[x].pos.x = vertices[2*x];
+					verts[x].pos.y = vertices[(2*x)+1];
 
-					verts[i].uv.s = regionAttachment->uvs[2*i];
-					verts[i].uv.t = regionAttachment->uvs[(2*i)+1];
+					verts[x].uv.s = regionAttachment->uvs[2*x];
+					verts[x].uv.t = regionAttachment->uvs[(2*x)+1];
 
-					verts[i].col = col;
+					verts[x].col = col;
 				}
 
 				texture = (Texture*)((spAtlasRegion*)regionAttachment->rendererObject)->page->rendererObject;
@@ -488,16 +488,16 @@ static void drawCharacter( SpineInstance* spine )
 
 				texture = (Texture*)((spAtlasRegion*)meshAttachment->rendererObject)->page->rendererObject;
 
-				for( int i = 0; i < meshAttachment->trianglesCount; i+=3 ) {
+				for( int x = 0; x < meshAttachment->trianglesCount; x+=3 ) {
 					TriVert verts[3];
 					
 					for( int j = 0; j < 3; ++j ) {
-						int baseIndex = meshAttachment->triangles[i+j] * 2;
+						int baseIndex = meshAttachment->triangles[x+j] * 2;
 						verts[j].pos.x = spineVertices[baseIndex];
 						verts[j].pos.y = spineVertices[baseIndex+1];
 
-						verts[i].uv.s = meshAttachment->uvs[baseIndex];
-						verts[i].uv.t = meshAttachment->uvs[baseIndex+1];
+						verts[x].uv.s = meshAttachment->uvs[baseIndex];
+						verts[x].uv.t = meshAttachment->uvs[baseIndex+1];
 					}
 
 					//debugRenderer_Triangle( camFlags, verts[0], verts[1], verts[2], CLR_GREEN );

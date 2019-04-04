@@ -32,6 +32,7 @@
 #include "Game/testJobQueueScreen.h"
 #include "Game/testSoundsScreen.h"
 #include "Game/testPointerResponseScreen.h"
+#include "Game/testSteeringScreen.h"
 
 #include "System/memory.h"
 #include "System/systems.h"
@@ -382,7 +383,8 @@ int main( int argc, char** argv )
 	//gsmEnterState( &globalFSM, &testAStarScreenState );
 	//gsmEnterState( &globalFSM, &testJobQueueScreenState );
 	//gsmEnterState( &globalFSM, &testSoundsScreenState );
-	gsmEnterState( &globalFSM, &testPointerResponseScreenState );
+	//gsmEnterState( &globalFSM, &testPointerResponseScreenState );
+	gsmEnterState( &globalFSM, &testSteeringScreenState );
 
 #if defined( __EMSCRIPTEN__ )
 	emscripten_set_main_loop_arg( mainLoop, NULL, -1, 1 );

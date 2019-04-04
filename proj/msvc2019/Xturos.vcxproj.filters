@@ -264,6 +264,9 @@
     <ClInclude Include="..\..\src\System\gameTime.h">
       <Filter>Header Files\System</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\Game\testSteeringScreen.h">
+      <Filter>Header Files\Game</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\Game\gameScreen.c">
@@ -430,6 +433,9 @@
     </ClCompile>
     <ClCompile Include="..\..\src\System\gameTime.c">
       <Filter>Source Files\System</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Game\testSteeringScreen.c">
+      <Filter>Source Files\Game</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

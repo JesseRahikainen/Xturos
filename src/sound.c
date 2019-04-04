@@ -99,9 +99,9 @@ static short streamReadBuffer[STREAM_READ_BUFFER_SIZE];
 static float* sbStreamWorkingBuffer = NULL;
 
 // stereo LRLRLR order
-void mixerCallback( void* userdata, Uint8* stream, int len )
+void mixerCallback( void* userdata, Uint8* streamData, int len )
 {
-	memset( stream, len, workingSilence );
+	memset( streamData, len, workingSilence );
 	memset( workingBuffer, 0, workingBufferSize );
 	if( workingBuffer == NULL ) {
 		return;
@@ -122,7 +122,6 @@ void mixerCallback( void* userdata, Uint8* stream, int len )
 	}
 #else
 	// advance each playing sound
-	EntityID id = idSet_GetFirstValidID( &playingIDSet );
 	for( EntityID id = idSet_GetFirstValidID( &playingIDSet ); id != INVALID_ENTITY_ID; id = idSet_GetNextValidID( &playingIDSet, id ) ) {
 		int i = idSet_GetIndex( id );
 		Sound* snd = &( playingSounds[i] );
@@ -228,7 +227,7 @@ void mixerCallback( void* userdata, Uint8* stream, int len )
 	}
 #endif
 
-	memcpy( stream, workingBuffer, len );
+	memcpy( streamData, workingBuffer, len );
 }
 
 int snd_LoadSample( const char* fileName, Uint8 desiredChannels, bool loops )
@@ -621,7 +620,6 @@ void snd_UnloadSample( int sampleID )
 
 	SDL_LockAudioDevice( devID ); {
 		// find all playing sounds using this sample and stop them
-		EntityID id = idSet_GetFirstValidID( &playingIDSet );
 		for( EntityID id = idSet_GetFirstValidID( &playingIDSet ); id != INVALID_ENTITY_ID; id = idSet_GetNextValidID( &playingIDSet, id ) ) {
 			int idx = idSet_GetIndex( id );
 			if( playingSounds[idx].sample == sampleID ) {
