@@ -1,6 +1,8 @@
 #ifndef MATRIX_3_H
 #define MATRIX_3_H
 
+#include <stdbool.h>
+
 #include "vector3.h"
 #include "vector2.h"
 
@@ -44,5 +46,7 @@ Matrix3* mat3_CreateTranslation( float fwd, float side, Matrix3* out );
 Vector2* mat3_TransformVec2Dir( const Matrix3* m, const Vector2* v, Vector2* out );
 Vector2* mat3_TransformVec2Pos( const Matrix3* m, const Vector2* v, Vector2* out );
 Vector2* mat3_TransformVec2Pos_InPlace( const Matrix3* m, Vector2* v );
+
+bool mat3_Inverse( const Matrix3* m, Matrix3* out );
 
 #endif /* inclusion guard */

@@ -80,6 +80,8 @@ Gets the view matrix for the specified camera.
 */
 int cam_GetInverseViewMatrix( int camera, Matrix4* out );
 
+int cam_ScreenPosToWorldPos( int camera, const Vector2* screenPos, Vector2* out );
+
 /*
 Turns on render flags for the camera.
  Returns <0 if there's a problem.

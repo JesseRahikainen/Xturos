@@ -220,23 +220,19 @@ void btn_Draw( void )
 void btn_Process( void )
 {
 	int i;
-	Vector3 mousePos;
-	Vector3 transMousePos = { 0.0f, 0.0f, 0.0f };
+	Vector2 transMousePos = { 0.0f, 0.0f };
 	Vector2 diff;
 	enum ButtonState prevState;
 
 	/* see if the mouse is positioned over any buttons */
-	Vector2 mouse2DPos;
-	if( !input_GetMousePosition( &mouse2DPos ) ) {
+	Vector2 mousePos;
+	if( !input_GetMousePosition( &mousePos ) ) {
 		return;
 	}
-	vec2ToVec3( &mouse2DPos, 0.0f, &mousePos );
 
 	for( int currCamera = cam_StartIteration( ); currCamera != -1; currCamera = cam_GetNextActiveCam( ) ) {
 		unsigned int camFlags = cam_GetFlags( currCamera );
-		Matrix4 camMat;
-		cam_GetInverseViewMatrix( currCamera, &camMat );
-		mat4_TransformVec3Pos( &camMat, &mousePos, &transMousePos );
+		cam_ScreenPosToWorldPos( currCamera, &mousePos, &transMousePos );
 
 		for( i = 0; i < MAX_BUTTONS; ++i ) {
 			if( buttons[i].inUse == 0 ) {

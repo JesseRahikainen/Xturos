@@ -175,3 +175,30 @@ Matrix3* mat3_SetRotation( float rotDeg, Matrix3* out )
 
 	return out;
 }
+
+bool mat3_Inverse( const Matrix3* m, Matrix3* out )
+{
+	assert( m != NULL );
+	assert( out != NULL );
+
+	float det = ( m->m[0] * ( ( m->m[4] * m->m[8] ) - ( m->m[7] * m->m[5] ) ) ) -
+		( m->m[3] * ( ( m->m[1] * m->m[8] ) - ( m->m[7] * m->m[2] ) ) ) -
+		( m->m[6] * ( ( m->m[1] * m->m[5] ) - ( m->m[4] * m->m[2] ) ) );
+
+	if( FLT_EQ( det, FLOAT_TOLERANCE ) ) {
+		return false;
+	}
+
+	float invDet = 1 / det;
+	out->m[0] = invDet * ( ( m->m[4] * m->m[8] ) - ( m->m[7] * m->m[5] ) );
+	out->m[1] = invDet * ( ( m->m[7] * m->m[2] ) - ( m->m[1] * m->m[8] ) );
+	out->m[2] = invDet * ( ( m->m[1] * m->m[5] ) - ( m->m[4] * m->m[2] ) );
+	out->m[3] = invDet * ( ( m->m[6] * m->m[5] ) - ( m->m[3] * m->m[8] ) );
+	out->m[4] = invDet * ( ( m->m[0] * m->m[8] ) - ( m->m[6] * m->m[2] ) );
+	out->m[5] = invDet * ( ( m->m[3] * m->m[2] ) - ( m->m[0] * m->m[5] ) );
+	out->m[6] = invDet * ( ( m->m[3] * m->m[7] ) - ( m->m[6] * m->m[4] ) );
+	out->m[7] = invDet * ( ( m->m[6] * m->m[1] ) - ( m->m[0] * m->m[7] ) );
+	out->m[8] = invDet * ( ( m->m[0] * m->m[4] ) - ( m->m[3] * m->m[1] ) );
+
+	return true;
+}

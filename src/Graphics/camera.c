@@ -13,6 +13,7 @@ typedef struct {
 	CameraState end;
 	uint32_t renderFlags;
 	Matrix4 projectionMat;
+	Vector2 inverseOffset;
 } Camera;
 
 #define NUM_CAMERAS 16
@@ -55,15 +56,19 @@ Creates the base projection matrices for all the cameras.
 void cam_SetProjectionMatrices( int width, int height, bool zeroed )
 {
 	Matrix4 proj;
+	Vector2 invOffset;
 
 	if( zeroed ) {
 		createZeroedProjectionMatrix( width, height, &proj );
+		invOffset = vec2( -width / 2.0f, -height / 2.0f );
 	} else {
 		createStandardProjectionMatrix( width, height, &proj );
+		invOffset = VEC2_ZERO;
 	}
 
 	for( int i = 0; i < NUM_CAMERAS; ++i ) {
 		cameras[i].projectionMat = proj;
+		cameras[i].inverseOffset = invOffset;
 	}
 }
 
@@ -75,6 +80,7 @@ void cam_SetCenteredProjectionMatrix( int cam, int width, int height )
 	SDL_assert( cam >= 0 );
 	SDL_assert( cam < NUM_CAMERAS );
 	createZeroedProjectionMatrix( width, height, &( cameras[cam].projectionMat ) );
+	cameras[cam].inverseOffset = vec2( -width / 2.0f, -height / 2.0f );
 }
 
 /*
@@ -85,6 +91,7 @@ void cam_SetStandardProjectionMatrix( int cam, int width, int height )
 	SDL_assert( cam >= 0 );
 	SDL_assert( cam < NUM_CAMERAS );
 	createStandardProjectionMatrix( width, height, &( cameras[cam].projectionMat ) );
+	cameras[cam].inverseOffset = VEC2_ZERO;
 }
 
 /*
@@ -146,6 +153,7 @@ int cam_MoveNextState( int camera, Vector2 delta, float scaleDelta )
 
 int cam_GetCurrPos( int camera, Vector2* outPos )
 {
+	assert( outPos != NULL );
 	assert( camera < NUM_CAMERAS );
 	(*outPos) = cameras[camera].start.pos;
 	return 0;
@@ -153,6 +161,7 @@ int cam_GetCurrPos( int camera, Vector2* outPos )
 
 int cam_GetNextPos( int camera, Vector2* outPos )
 {
+	assert( outPos != NULL );
 	assert( camera < NUM_CAMERAS );
 	(*outPos) = cameras[camera].end.pos;
 	return 0;
@@ -160,6 +169,7 @@ int cam_GetNextPos( int camera, Vector2* outPos )
 
 int cam_GetCurrScale( int camera, float* outScale )
 {
+	assert( outScale != NULL );
 	assert( camera < NUM_CAMERAS );
 	(*outScale) = cameras[camera].start.scale;
 	return 0;
@@ -167,6 +177,7 @@ int cam_GetCurrScale( int camera, float* outScale )
 
 int cam_GetNextScale( int camera, float* outScale )
 {
+	assert( outScale != NULL );
 	assert( camera < NUM_CAMERAS );
 	(*outScale) = cameras[camera].end.scale;
 	return 0;
@@ -198,6 +209,7 @@ Gets the view projection matrix for the specified camera.
 */
 int cam_GetVPMatrix( int camera, Matrix4* out )
 {
+	assert( out != NULL );
 	assert( camera < NUM_CAMERAS );
 
 	Vector2 pos;
@@ -212,7 +224,6 @@ int cam_GetVPMatrix( int camera, Matrix4* out )
 	float scale = lerp( cameras[camera].start.scale, cameras[camera].end.scale, t );
 	mat4_CreateScale( scale, scale, 1.0f, &scaleTf );
 
-	//mat4_Multiply( &transTf, &scaleTf, &view );
 	mat4_Multiply( &scaleTf, &transTf, &view );
 	
 	mat4_Multiply( &( cameras[camera].projectionMat ), &view, out );
@@ -226,6 +237,7 @@ Gets the view matrix for the specified camera.
 */
 int cam_GetInverseViewMatrix( int camera, Matrix4* out )
 {
+	assert( out != NULL );
 	assert( camera < NUM_CAMERAS );
 
 	Matrix4 transTf, scaleTf;
@@ -239,9 +251,26 @@ int cam_GetInverseViewMatrix( int camera, Matrix4* out )
 	mat4_CreateScale( scale, scale, 1.0f, &scaleTf );
 
 	memcpy( out, &IDENTITY_MATRIX, sizeof( Matrix4 ) );
-	mat4_Multiply( out, &scaleTf, out );
 	mat4_Multiply( out, &transTf, out );
+	mat4_Multiply( out, &scaleTf, out );
 	
+	return 0;
+}
+
+//#error get this working with a centered screen!
+int cam_ScreenPosToWorldPos( int camera, const Vector2* screenPos, Vector2* out )
+{
+	assert( screenPos != NULL );
+	assert( out != NULL );
+	assert( camera < NUM_CAMERAS );
+
+	Matrix4 invView;
+	cam_GetInverseViewMatrix( camera, &invView );
+
+	Vector2 pos = *screenPos;
+	vec2_Add( &pos, &( cameras[camera].inverseOffset ), &pos );
+	mat4_TransformVec2Pos( &invView, &pos, out );
+
 	return 0;
 }
 
