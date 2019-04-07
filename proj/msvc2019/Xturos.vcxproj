@@ -124,6 +124,7 @@
     <ClInclude Include="..\..\src\IMGUI\nuklearHeader.h" />
     <ClInclude Include="..\..\src\IMGUI\nuklearWrapper.h" />
     <ClInclude Include="..\..\src\Input\input.h" />
+    <ClInclude Include="..\..\src\Math\fixedPoint.h" />
     <ClInclude Include="..\..\src\Math\mathUtil.h" />
     <ClInclude Include="..\..\src\Math\matrix3.h" />
     <ClInclude Include="..\..\src\Math\matrix4.h" />
@@ -185,6 +186,7 @@
     <ClCompile Include="..\..\src\IMGUI\nuklearWrapper.c" />
     <ClCompile Include="..\..\src\Input\input.c" />
     <ClCompile Include="..\..\src\main.c" />
+    <ClCompile Include="..\..\src\Math\fixedPoint.c" />
     <ClCompile Include="..\..\src\Math\mathUtil.c" />
     <ClCompile Include="..\..\src\Math\matrix3.c" />
     <ClCompile Include="..\..\src\Math\matrix4.c" />
