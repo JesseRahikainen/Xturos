@@ -5,9 +5,9 @@
 // this is a simple state machine for right now, will most likely modify it to be heirarchical at some point
 //  but it's not necessary now
 
-struct GameStateMachine globalFSM = { NULL };
+GameStateMachine globalFSM = { NULL };
 
-void gsmEnterState( struct GameStateMachine* fsm, struct GameState* newState )
+void gsmEnterState( GameStateMachine* fsm, GameState* newState )
 {
 	assert( fsm );
 
@@ -22,7 +22,7 @@ void gsmEnterState( struct GameStateMachine* fsm, struct GameState* newState )
 	fsm->currentState = newState;
 }
 
-void gsmProcessEvents( struct GameStateMachine* fsm, SDL_Event* e )
+void gsmProcessEvents( GameStateMachine* fsm, SDL_Event* e )
 {
 	assert( fsm );
 
@@ -31,7 +31,7 @@ void gsmProcessEvents( struct GameStateMachine* fsm, SDL_Event* e )
 	}
 }
 
-void gsmProcess( struct GameStateMachine* fsm )
+void gsmProcess( GameStateMachine* fsm )
 {
 	assert( fsm );
 
@@ -40,7 +40,7 @@ void gsmProcess( struct GameStateMachine* fsm )
 	}
 }
 
-void gsmDraw( struct GameStateMachine* fsm )
+void gsmDraw( GameStateMachine* fsm )
 {
 	assert( fsm );
 
@@ -49,7 +49,7 @@ void gsmDraw( struct GameStateMachine* fsm )
 	}
 }
 
-void gsmPhysicsTick( struct GameStateMachine* fsm, float dt )
+void gsmPhysicsTick( GameStateMachine* fsm, float dt )
 {
 	if( ( fsm->currentState != NULL ) && ( fsm->currentState->physicsTick != NULL ) ) {
 		fsm->currentState->physicsTick( dt );

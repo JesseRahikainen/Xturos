@@ -352,5 +352,5 @@ static void testAStarScreen_PhysicsTick( float dt )
 {
 }
 
-struct GameState testAStarScreenState = { testAStarScreen_Enter, testAStarScreen_Exit, testAStarScreen_ProcessEvents,
+GameState testAStarScreenState = { testAStarScreen_Enter, testAStarScreen_Exit, testAStarScreen_ProcessEvents,
 	testAStarScreen_Process, testAStarScreen_Draw, testAStarScreen_PhysicsTick };

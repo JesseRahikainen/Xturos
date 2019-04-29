@@ -3,6 +3,6 @@
 
 #include "../gameState.h"
 
-struct GameState testPointerResponseScreenState;
+GameState testPointerResponseScreenState;
 
 #endif // inclusion guard

@@ -3,7 +3,7 @@
 #ifndef ENGINE_GAMESTATE_H
 #define ENGINE_GAMESTATE_H
 
-struct GameState {
+typedef struct _GameState {
 	int (*enter)(void);
 	int (*exit)(void);
 
@@ -12,19 +12,19 @@ struct GameState {
 	void (*draw)(void);
 	void (*physicsTick)(float);
 
-	struct GameState* childState;
-};
+	struct _GameState* childState;
+} GameState;
 
-struct GameStateMachine {
-	struct GameState* currentState;
-};
+typedef struct {
+	GameState* currentState;
+} GameStateMachine;
 
-struct GameStateMachine globalFSM;
+GameStateMachine globalFSM;
 
-void gsmEnterState( struct GameStateMachine* fsm, struct GameState* newState );
-void gsmProcessEvents( struct GameStateMachine* fsm, SDL_Event* e );
-void gsmProcess( struct GameStateMachine* fsm );
-void gsmDraw( struct GameStateMachine* fsm );
-void gsmPhysicsTick( struct GameStateMachine* fsm, float dt );
+void gsmEnterState( GameStateMachine* fsm, GameState* newState );
+void gsmProcessEvents( GameStateMachine* fsm, SDL_Event* e );
+void gsmProcess( GameStateMachine* fsm );
+void gsmDraw( GameStateMachine* fsm );
+void gsmPhysicsTick( GameStateMachine* fsm, float dt );
 
 #endif

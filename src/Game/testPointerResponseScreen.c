@@ -126,5 +126,5 @@ static void testPointerResponseScreen_PhysicsTick( float dt )
 {
 }
 
-struct GameState testPointerResponseScreenState = { testPointerResponseScreen_Enter, testPointerResponseScreen_Exit, testPointerResponseScreen_ProcessEvents,
+GameState testPointerResponseScreenState = { testPointerResponseScreen_Enter, testPointerResponseScreen_Exit, testPointerResponseScreen_ProcessEvents,
 	testPointerResponseScreen_Process, testPointerResponseScreen_Draw, testPointerResponseScreen_PhysicsTick };

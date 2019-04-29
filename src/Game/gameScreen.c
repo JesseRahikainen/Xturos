@@ -298,5 +298,5 @@ static void gameScreen_PhysicsTick( float dt )
 	ecps_RunProcess( &testECPS, &selfDestructProc );
 }
 
-struct GameState gameScreenState = { gameScreen_Enter, gameScreen_Exit, gameScreen_ProcessEvents,
+GameState gameScreenState = { gameScreen_Enter, gameScreen_Exit, gameScreen_ProcessEvents,
 	gameScreen_Process, gameScreen_Draw, gameScreen_PhysicsTick };

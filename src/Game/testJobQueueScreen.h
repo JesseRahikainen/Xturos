@@ -3,6 +3,6 @@
 
 #include "../gameState.h"
 
-struct GameState testJobQueueScreenState;
+GameState testJobQueueScreenState;
 
 #endif // inclusion guard

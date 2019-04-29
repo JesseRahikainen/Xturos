@@ -100,9 +100,11 @@
     <ClInclude Include="..\..\src\collisionDetection.h" />
     <ClInclude Include="..\..\src\Components\generalComponents.h" />
     <ClInclude Include="..\..\src\gameState.h" />
+    <ClInclude Include="..\..\src\Game\bordersTestScreen.h" />
     <ClInclude Include="..\..\src\Game\gameScreen.h" />
     <ClInclude Include="..\..\src\Game\testAStarScreen.h" />
     <ClInclude Include="..\..\src\Game\testJobQueueScreen.h" />
+    <ClInclude Include="..\..\src\Game\testMCTSScreen.h" />
     <ClInclude Include="..\..\src\Game\testPointerResponseScreen.h" />
     <ClInclude Include="..\..\src\Game\testSoundsScreen.h" />
     <ClInclude Include="..\..\src\Game\testSteeringScreen.h" />
@@ -162,9 +164,11 @@
     <ClCompile Include="..\..\src\collisionDetection.c" />
     <ClCompile Include="..\..\src\Components\generalComponents.c" />
     <ClCompile Include="..\..\src\gameState.c" />
+    <ClCompile Include="..\..\src\Game\bordersTestScreen.c" />
     <ClCompile Include="..\..\src\Game\gameScreen.c" />
     <ClCompile Include="..\..\src\Game\testAStarScreen.c" />
     <ClCompile Include="..\..\src\Game\testJobQueueScreen.c" />
+    <ClCompile Include="..\..\src\Game\testMCTSScreen.c" />
     <ClCompile Include="..\..\src\Game\testPointerResponseScreen.c" />
     <ClCompile Include="..\..\src\Game\testSoundsScreen.c" />
     <ClCompile Include="..\..\src\Game\testSteeringScreen.c" />

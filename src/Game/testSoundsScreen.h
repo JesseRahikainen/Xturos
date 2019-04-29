@@ -3,6 +3,6 @@
 
 #include "../gameState.h"
 
-struct GameState testSoundsScreenState;
+GameState testSoundsScreenState;
 
 #endif // inclusion guard

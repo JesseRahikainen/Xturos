@@ -242,5 +242,5 @@ static void testSteeringScreen_PhysicsTick( float dt )
 	vehiclePhysics( dt );
 }
 
-struct GameState testSteeringScreenState = { testSteeringScreen_Enter, testSteeringScreen_Exit, testSteeringScreen_ProcessEvents,
+GameState testSteeringScreenState = { testSteeringScreen_Enter, testSteeringScreen_Exit, testSteeringScreen_ProcessEvents,
 	testSteeringScreen_Process, testSteeringScreen_Draw, testSteeringScreen_PhysicsTick };

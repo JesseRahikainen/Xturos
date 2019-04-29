@@ -3,6 +3,6 @@
 
 #include "../gameState.h"
 
-struct GameState testSteeringScreenState;
+GameState testSteeringScreenState;
 
 #endif // inclusion guard

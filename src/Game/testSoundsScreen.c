@@ -78,5 +78,5 @@ static void testSoundsScreen_PhysicsTick( float dt )
 {
 }
 
-struct GameState testSoundsScreenState = { testSoundsScreen_Enter, testSoundsScreen_Exit, testSoundsScreen_ProcessEvents,
+GameState testSoundsScreenState = { testSoundsScreen_Enter, testSoundsScreen_Exit, testSoundsScreen_ProcessEvents,
 	testSoundsScreen_Process, testSoundsScreen_Draw, testSoundsScreen_PhysicsTick };

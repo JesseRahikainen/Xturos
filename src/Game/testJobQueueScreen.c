@@ -204,5 +204,5 @@ static void testJobQueueScreen_PhysicsTick( float dt )
 {
 }
 
-struct GameState testJobQueueScreenState = { testJobQueueScreen_Enter, testJobQueueScreen_Exit, testJobQueueScreen_ProcessEvents,
+GameState testJobQueueScreenState = { testJobQueueScreen_Enter, testJobQueueScreen_Exit, testJobQueueScreen_ProcessEvents,
 	testJobQueueScreen_Process, testJobQueueScreen_Draw, testJobQueueScreen_PhysicsTick };

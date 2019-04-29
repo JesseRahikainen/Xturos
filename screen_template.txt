@@ -4,7 +4,7 @@
 
 #include "../gameState.h"
 
-struct GameState <temp>ScreenState;
+GameState <temp>ScreenState;
 
 #endif // inclusion guard
 
@@ -50,5 +50,5 @@ static void <temp>Screen_PhysicsTick( float dt )
 {
 }
 
-struct GameState <temp>ScreenState = { <temp>Screen_Enter, <temp>Screen_Exit, <temp>Screen_ProcessEvents,
+GameState <temp>ScreenState = { <temp>Screen_Enter, <temp>Screen_Exit, <temp>Screen_ProcessEvents,
 	<temp>Screen_Process, <temp>Screen_Draw, <temp>Screen_PhysicsTick };
