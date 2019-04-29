@@ -1,0 +1,90 @@
+
+blue_mob.png
+size: 128,64
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+Images/body
+  rotate: false
+  xy: 2, 14
+  size: 43, 45
+  orig: 43, 45
+  offset: 0, 0
+  index: -1
+Images/eye
+  rotate: false
+  xy: 62, 40
+  size: 19, 19
+  orig: 19, 19
+  offset: 0, 0
+  index: -1
+Images/l_b_0_leg
+  rotate: false
+  xy: 98, 39
+  size: 12, 20
+  orig: 12, 20
+  offset: 0, 0
+  index: -1
+Images/l_b_1_leg
+  rotate: false
+  xy: 59, 5
+  size: 9, 15
+  orig: 9, 15
+  offset: 0, 0
+  index: -1
+Images/l_b_2_leg
+  rotate: false
+  xy: 21, 2
+  size: 10, 10
+  orig: 10, 10
+  offset: 0, 0
+  index: -1
+Images/l_f_0_leg
+  rotate: false
+  xy: 112, 41
+  size: 13, 18
+  orig: 13, 18
+  offset: 0, 0
+  index: -1
+Images/l_f_1_leg
+  rotate: false
+  xy: 47, 10
+  size: 10, 18
+  orig: 10, 18
+  offset: 0, 0
+  index: -1
+Images/l_f_2_leg
+  rotate: false
+  xy: 33, 3
+  size: 10, 9
+  orig: 10, 9
+  offset: 0, 0
+  index: -1
+Images/r_b_leg
+  rotate: false
+  xy: 47, 30
+  size: 13, 29
+  orig: 13, 29
+  offset: 0, 0
+  index: -1
+Images/r_f_0_leg
+  rotate: false
+  xy: 83, 36
+  size: 13, 23
+  orig: 13, 23
+  offset: 0, 0
+  index: -1
+Images/r_f_1_leg
+  rotate: false
+  xy: 62, 22
+  size: 10, 16
+  orig: 10, 16
+  offset: 0, 0
+  index: -1
+Images/r_f_2_leg
+  rotate: false
+  xy: 2, 3
+  size: 17, 9
+  orig: 17, 9
+  offset: 0, 0
+  index: -1

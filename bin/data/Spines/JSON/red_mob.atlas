@@ -1,0 +1,62 @@
+
+red_mob.png
+size: 128,128
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+Images/head
+  rotate: false
+  xy: 86, 69
+  size: 23, 45
+  orig: 23, 45
+  offset: 0, 0
+  index: -1
+Images/left_claw
+  rotate: false
+  xy: 2, 20
+  size: 20, 94
+  orig: 20, 94
+  offset: 0, 0
+  index: -1
+Images/left_fore
+  rotate: false
+  xy: 2, 2
+  size: 19, 16
+  orig: 19, 16
+  offset: 0, 0
+  index: -1
+Images/left_upper
+  rotate: false
+  xy: 46, 27
+  size: 18, 13
+  orig: 18, 13
+  offset: 0, 0
+  index: -1
+Images/right_claw
+  rotate: false
+  xy: 24, 26
+  size: 20, 88
+  orig: 20, 88
+  offset: 0, 0
+  index: -1
+Images/right_fore
+  rotate: false
+  xy: 46, 42
+  size: 26, 21
+  orig: 26, 21
+  offset: 0, 0
+  index: -1
+Images/right_upper
+  rotate: false
+  xy: 111, 100
+  size: 13, 14
+  orig: 13, 14
+  offset: 0, 0
+  index: -1
+Images/torso
+  rotate: false
+  xy: 46, 65
+  size: 38, 49
+  orig: 38, 49
+  offset: 0, 0
+  index: -1

@@ -12,6 +12,9 @@
 #include "../Utils/stretchyBuffer.h"
 #include "../Input/input.h"
 
+// Have wanted this multiple times for LD but always decided it would take too long to implement.
+//  So here's an example to work from in the future.
+
 static int* sbTiles = NULL;
 
 #define MAP_WIDTH 32

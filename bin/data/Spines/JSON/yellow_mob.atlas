@@ -1,0 +1,69 @@
+
+yellow_mob.png
+size: 256,64
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+Images/body
+  rotate: false
+  xy: 31, 21
+  size: 32, 34
+  orig: 32, 34
+  offset: 0, 0
+  index: -1
+Images/lump_1
+  rotate: false
+  xy: 99, 26
+  size: 32, 29
+  orig: 32, 29
+  offset: 0, 0
+  index: -1
+Images/lump_2
+  rotate: false
+  xy: 186, 34
+  size: 21, 21
+  orig: 21, 21
+  offset: 0, 0
+  index: -1
+Images/lump_3
+  rotate: false
+  xy: 161, 30
+  size: 23, 25
+  orig: 23, 25
+  offset: 0, 0
+  index: -1
+Images/lump_4
+  rotate: false
+  xy: 209, 35
+  size: 21, 20
+  orig: 21, 20
+  offset: 0, 0
+  index: -1
+Images/lump_5
+  rotate: false
+  xy: 65, 22
+  size: 32, 33
+  orig: 32, 33
+  offset: 0, 0
+  index: -1
+Images/lump_6
+  rotate: false
+  xy: 31, 2
+  size: 24, 17
+  orig: 24, 17
+  offset: 0, 0
+  index: -1
+Images/mask
+  rotate: false
+  xy: 133, 27
+  size: 26, 28
+  orig: 26, 28
+  offset: 0, 0
+  index: -1
+Images/neck
+  rotate: false
+  xy: 2, 6
+  size: 27, 49
+  orig: 27, 49
+  offset: 0, 0
+  index: -1
