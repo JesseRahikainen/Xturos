@@ -102,6 +102,7 @@
     <ClInclude Include="..\..\src\gameState.h" />
     <ClInclude Include="..\..\src\Game\bordersTestScreen.h" />
     <ClInclude Include="..\..\src\Game\gameScreen.h" />
+    <ClInclude Include="..\..\src\Game\hexTestScreen.h" />
     <ClInclude Include="..\..\src\Game\testAStarScreen.h" />
     <ClInclude Include="..\..\src\Game\testJobQueueScreen.h" />
     <ClInclude Include="..\..\src\Game\testPointerResponseScreen.h" />
@@ -156,6 +157,7 @@
     <ClInclude Include="..\..\src\Utils\cfgFile.h" />
     <ClInclude Include="..\..\src\Utils\hashMap.h" />
     <ClInclude Include="..\..\src\Utils\helpers.h" />
+    <ClInclude Include="..\..\src\Utils\hexGrid.h" />
     <ClInclude Include="..\..\src\Utils\idSet.h" />
     <ClInclude Include="..\..\src\Utils\stretchyBuffer.h" />
   </ItemGroup>
@@ -165,6 +167,7 @@
     <ClCompile Include="..\..\src\gameState.c" />
     <ClCompile Include="..\..\src\Game\bordersTestScreen.c" />
     <ClCompile Include="..\..\src\Game\gameScreen.c" />
+    <ClCompile Include="..\..\src\Game\hexTestScreen.c" />
     <ClCompile Include="..\..\src\Game\testAStarScreen.c" />
     <ClCompile Include="..\..\src\Game\testJobQueueScreen.c" />
     <ClCompile Include="..\..\src\Game\testPointerResponseScreen.c" />
@@ -220,6 +223,7 @@
     <ClCompile Include="..\..\src\Utils\cfgFile.c" />
     <ClCompile Include="..\..\src\Utils\hashMap.c" />
     <ClCompile Include="..\..\src\Utils\helpers.c" />
+    <ClCompile Include="..\..\src\Utils\hexGrid.c" />
     <ClCompile Include="..\..\src\Utils\idSet.c" />
   </ItemGroup>
   <ItemGroup>

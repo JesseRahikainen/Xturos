@@ -145,7 +145,7 @@ int img_Load( const char* fileName, ShaderType shaderType )
 }
 
 typedef struct {
-	const char* fileName;
+	char* fileName;
 	ShaderType shaderType;
 	int* outIdx;
 	LoadedImage loadedImage;
@@ -199,6 +199,7 @@ static void bindImageJob( void* data )
 
 clean_up:
 	gfxUtil_ReleaseLoadedImage( &( loadData->loadedImage ) );
+	mem_Release( loadData->fileName );
 	mem_Release( loadData );
 }
 
@@ -223,6 +224,8 @@ Loads the image in a seperate thread. Puts the resulting image index into outIdx
 */
 void img_ThreadedLoad( const char* fileName, ShaderType shaderType, int* outIdx )
 {
+	assert( fileName != NULL );
+
 	// set it to something that won't draw anything
 	(*outIdx) = -1;
 
@@ -235,7 +238,15 @@ void img_ThreadedLoad( const char* fileName, ShaderType shaderType, int* outIdx 
 		return;
 	}
 
-	data->fileName = fileName;
+	size_t fileNameLen = strlen( fileName );
+	data->fileName = mem_Allocate( fileNameLen + 1 );
+	if( data->fileName == NULL ) {
+		llog( LOG_WARN, "Unable to create file name storage for threaded image lead for fle %s", fileName );
+		mem_Release( data );
+		return;
+	}
+	strcpy_s( data->fileName, fileNameLen, fileName );
+
 	data->shaderType = shaderType;
 	data->outIdx = outIdx;
 	data->loadedImage.data = NULL;

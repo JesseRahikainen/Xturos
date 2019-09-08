@@ -34,6 +34,7 @@
 #include "Game/testPointerResponseScreen.h"
 #include "Game/testSteeringScreen.h"
 #include "Game/bordersTestScreen.h"
+#include "Game/hexTestScreen.h"
 
 #include "System/memory.h"
 #include "System/systems.h"
@@ -113,7 +114,10 @@ static void initIMGUI( NuklearWrapper* imgui, bool useRelativeMousePos, int widt
 
 int unalignedAccess( void )
 {
-	int* is = malloc( sizeof( int ) * 100 );
+#pragma warning( push )
+#pragma warning( disable : 6011) // this is for testing behavior of a platform, never used in the rest of the program so it should cause no issues
+	int* is = (int*)malloc( sizeof( int ) * 100 );
+
 	for( int i = 0; i < 100; ++i ) {
 		is[i] = i;
 	}
@@ -122,6 +126,7 @@ int unalignedAccess( void )
 	int* intData = (int*)((char*)&( p[1] ) );
 	int unalignedInt = *intData;
 	return unalignedInt;
+#pragma warning( pop )
 }
 
 int initEverything( void )
@@ -386,7 +391,8 @@ int main( int argc, char** argv )
 	//gsmEnterState( &globalFSM, &testSoundsScreenState );
 	//gsmEnterState( &globalFSM, &testPointerResponseScreenState );
 	//gsmEnterState( &globalFSM, &testSteeringScreenState );
-	gsmEnterState( &globalFSM, &bordersTestScreenState );
+	//gsmEnterState( &globalFSM, &bordersTestScreenState );
+	gsmEnterState( &globalFSM, &hexTestScreenState );
 
 #if defined( __EMSCRIPTEN__ )
 	emscripten_set_main_loop_arg( mainLoop, NULL, -1, 1 );
