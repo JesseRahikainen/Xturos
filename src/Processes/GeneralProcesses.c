@@ -18,8 +18,9 @@
 // move all of these into separate files?
 
 // ***** Render Process
-Process gpRenderProc;
-static void render( ECPS* ecps, const Entity* entity )
+
+// assume we're using the general components, just need to know what component ids to use then
+void gp_GeneralRender( ECPS* ecps, const Entity* entity, ComponentID posCompID, ComponentID sprCompID, ComponentID scaleCompID, ComponentID clrCompID, ComponentID rotCompID )
 {
 	GCPosData* pos = NULL;
 	GCSpriteData* sd = NULL;
@@ -27,15 +28,15 @@ static void render( ECPS* ecps, const Entity* entity )
 	GCColorData* color = NULL;
 	GCRotData* rot = NULL;
 
-	ecps_GetComponentFromEntity( entity, gcPosCompID, &pos );
-	ecps_GetComponentFromEntity( entity, gcSpriteCompID, &sd );
+	ecps_GetComponentFromEntity( entity, posCompID, &pos );
+	ecps_GetComponentFromEntity( entity, sprCompID, &sd );
 
 	Vector2 currPos = pos->currPos;
 	Vector2 futurePos = pos->futurePos;
 
 	Vector2 currScale = VEC2_ONE;
 	Vector2 futureScale = VEC2_ONE;
-	if( ecps_GetComponentFromEntity( entity, gcScaleCompID, &scale ) ) {
+	if( ecps_GetComponentFromEntity( entity, scaleCompID, &scale ) ) {
 		currScale = scale->currScale;
 		futureScale = scale->futureScale;
 
@@ -44,7 +45,7 @@ static void render( ECPS* ecps, const Entity* entity )
 
 	Color currClr = CLR_WHITE;
 	Color futureClr = CLR_WHITE;
-	if( ecps_GetComponentFromEntity( entity, gcClrCompID, &color ) ) {
+	if( ecps_GetComponentFromEntity( entity, clrCompID, &color ) ) {
 		currClr = color->currClr;
 		futureClr = color->futureClr;
 
@@ -53,7 +54,7 @@ static void render( ECPS* ecps, const Entity* entity )
 
 	float currRot = 0.0f;
 	float futureRot = 0.0f;
-	if( ecps_GetComponentFromEntity( entity, gcRotCompID, &rot ) ) {
+	if( ecps_GetComponentFromEntity( entity, rotCompID, &rot ) ) {
 		currRot = rot->currRot;
 		futureRot = rot->futureRot;
 
@@ -63,6 +64,13 @@ static void render( ECPS* ecps, const Entity* entity )
 	img_Draw_sv_c_r( sd->img, sd->camFlags, currPos, futurePos, currScale, futureScale, currClr, futureClr, currRot, futureRot, sd->depth );
 
 	pos->currPos = pos->futurePos;
+}
+
+
+Process gpRenderProc;
+static void render( ECPS* ecps, const Entity* entity )
+{
+	gp_GeneralRender( ecps, entity, gcPosCompID, gcSpriteCompID, gcScaleCompID, gcClrCompID, gcRotCompID );
 }
 
 // ***** Render 3x3 Process

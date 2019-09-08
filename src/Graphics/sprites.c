@@ -6,179 +6,233 @@
 #include "color.h"
 #include "../System/systems.h"
 #include "../System/platformLog.h"
+#include "../System/ECPS/entityComponentProcessSystem.h"
+#include "../Processes/generalProcesses.h"
+#include "../Components/generalComponents.h"
 
 // Possibly improve this by putting all the storage into a separate thing, so we can have multiple sets of sprites we could draw
 //  at different times without having to create and destroy them constantly, if we start needing something like that
 
-typedef struct {
-	Vector2 pos;
-	float rot;
-	Color col;
-	Vector2 scale;
-} SpriteState;
+static ECPS spriteECPS;
 
-typedef struct {
-	int image;
+static ComponentID posCompID = INVALID_COMPONENT_ID;
+static ComponentID clrCompID = INVALID_COMPONENT_ID;
+static ComponentID rotCompID = INVALID_COMPONENT_ID;
+static ComponentID scaleCompID = INVALID_COMPONENT_ID;
+static ComponentID spriteCompID = INVALID_COMPONENT_ID;
 
-	SpriteState oldState;
-	SpriteState newState;
-
-	uint32_t camFlags;
-	int8_t depth;
-} Sprite;
-
-#define NUM_SPRITES 1000
-static Sprite sprites[NUM_SPRITES];
+static Process renderProc;
 
 static int systemID = -1;
 
-#define SPRITE_ID_VALID( id ) ( ( ( id ) >= 0 ) && ( ( id ) < NUM_SPRITES ) )
-
-void spr_Init( void )
+static void render( ECPS* ecps, const Entity* entity )
 {
-	for( int i = 0; i < NUM_SPRITES; ++i ) {
-		sprites[i].image = -1;
-	}
+	gp_GeneralRender( ecps, entity, posCompID, spriteCompID, scaleCompID, clrCompID, rotCompID );
 }
 
-void spr_Draw( void )
+static void draw( void )
 {
-	for( int i = 0; i < ( sizeof( sprites ) / sizeof( sprites[0] ) ); ++i ) {
-		if( sprites[i].image != -1 ) {
-			img_Draw_sv_c_r( sprites[i].image, sprites[i].camFlags, sprites[i].oldState.pos, sprites[i].newState.pos,
-				sprites[i].oldState.scale, sprites[i].newState.scale, sprites[i].oldState.col, sprites[i].newState.col,
-				sprites[i].oldState.rot, sprites[i].newState.rot, sprites[i].depth );
-			sprites[i].oldState = sprites[i].newState;
-		}
-	}
+	ecps_RunProcess( &spriteECPS, &renderProc );
 }
 
-int spr_Create( int image, uint32_t camFlags, Vector2 pos, Vector2 scale, float rotRad, Color col, int8_t depth )
+int spr_Init( void )
 {
-	int idx;
-	for( idx = 0; ( idx < NUM_SPRITES ) && ( sprites[idx].image != -1 ); ++idx ) ;
-	if( idx >= NUM_SPRITES ) {
-		llog( LOG_DEBUG, "Failed to create sprite, storage full.");
+	ecps_StartInitialization( &spriteECPS ); {
+		posCompID = ecps_AddComponentType( &spriteECPS, "POS", sizeof( GCPosData ), NULL );
+		spriteCompID = ecps_AddComponentType( &spriteECPS, "SPRT", sizeof( GCSpriteData ), NULL );
+		scaleCompID = ecps_AddComponentType( &spriteECPS, "SCL", sizeof( GCScaleData ), NULL );
+		clrCompID = ecps_AddComponentType( &spriteECPS, "CLR", sizeof( GCColorData ), NULL );
+		rotCompID = ecps_AddComponentType( &spriteECPS, "ROT", sizeof( GCRotData ), NULL );
+
+		ecps_CreateProcess( &spriteECPS, "DRAW", NULL, render, NULL, &renderProc, 2, posCompID, spriteCompID );
+	} ecps_FinishInitialization( &spriteECPS );
+
+	systemID = sys_Register( NULL, NULL, draw, NULL );
+
+	if( systemID < 0 ) {
 		return -1;
 	}
 
-	sprites[idx].image = image;
-	sprites[idx].depth = depth;
-	sprites[idx].newState.pos = pos;
-	sprites[idx].newState.scale = scale;
-	sprites[idx].newState.rot = rotRad;
-	sprites[idx].newState.col = col;
-	sprites[idx].oldState = sprites[idx].newState;
-	sprites[idx].camFlags = camFlags;
-
-	return idx;
+	return 0;
 }
 
-void spr_Destroy( int sprite )
+void spr_CleanUp( void )
 {
-	sprites[sprite].image = -1;
+	sys_UnRegister( systemID );
+
+	ecps_DestroyAllEntities( &spriteECPS );
+	ecps_CleanUp( &spriteECPS );
 }
 
-void spr_GetColor( int sprite, Color* outCol )
+EntityID spr_CreateSprite( int image, uint32_t camFlags, Vector2 pos, Vector2 scale, float rotRad, Color col, int8_t depth )
 {
-	(*outCol) = sprites[sprite].newState.col;
+	// we'll assume entities have every component type
+	GCPosData posData;
+	posData.currPos = pos;
+	posData.futurePos = pos;
+
+	GCSpriteData spriteData;
+	spriteData.camFlags = camFlags;
+	spriteData.depth = depth;
+	spriteData.img = image;
+
+	GCScaleData scaleData;
+	scaleData.currScale = scale;
+	scaleData.futureScale = scale;
+
+	GCColorData colorData;
+	colorData.currClr = col;
+	colorData.futureClr = col;
+
+	GCRotData rotData;
+	rotData.currRot = rotRad;
+	rotData.futureRot = rotRad;
+
+	return ecps_CreateEntity( &spriteECPS, 5,
+		posCompID, &posData,
+		spriteCompID, &spriteData,
+		scaleCompID, &scaleData,
+		clrCompID, &colorData,
+		rotCompID, &rotData );
 }
 
-void spr_SetColor( int sprite, Color* col )
+void spr_DestroySprite( EntityID sprite )
 {
-	sprites[sprite].newState.col = *col;
+	ecps_DestroyEntityByID( &spriteECPS, sprite );
 }
 
-void spr_GetPosition( int sprite, Vector2* outPos )
-{
-	(*outPos) = sprites[sprite].oldState.pos;
-}
-
-void spr_Update( int sprite, const Vector2* newPos, const Vector2* newScale, float newRot )
-{
-	assert( newPos != NULL );
-	assert( newScale != NULL );
-
-	if( !SPRITE_ID_VALID( sprite ) ) return;
-
-	sprites[sprite].newState.pos = *newPos;
-	sprites[sprite].newState.rot = newRot;
-	sprites[sprite].newState.scale = *newScale;
-}
-
-void spr_Update_p( int sprite, const Vector2* newPos )
-{
-	assert( newPos != NULL );
-
-	if( !SPRITE_ID_VALID( sprite ) ) return;
-
-	sprites[sprite].newState.pos = *newPos;
-}
-
-void spr_Update_pc( int sprite, const Vector2* newPos, const Color* clr )
-{
-	assert( newPos != NULL );
-	assert( clr != NULL );
-
-	if( !SPRITE_ID_VALID( sprite ) ) return;
-
-	sprites[sprite].newState.pos = *newPos;
-	sprites[sprite].newState.col = *clr;
-}
-
-void spr_Update_c( int sprite, const Color* clr )
-{
-	assert( clr != NULL );
-
-	if( !SPRITE_ID_VALID( sprite ) ) return;
-
-	sprites[sprite].newState.col = *clr;
-}
-
-void spr_Update_sc( int sprite, const Vector2* newScale, const Color* clr )
-{
-	assert( newScale != NULL );
-	assert( clr != NULL );
-
-	if( !SPRITE_ID_VALID( sprite ) ) return;
-
-	sprites[sprite].newState.col = *clr;
-	sprites[sprite].newState.scale = *newScale;
-}
-
-void spr_Update_psc( int sprite, const Vector2* newPos, const Vector2* newScale, const Color* clr )
+void spr_Update( EntityID sprite, const Vector2* newPos, const Vector2* newScale, float newRot )
 {
 	assert( newPos != NULL );
 	assert( newScale != NULL );
-	assert( clr != NULL );
 
-	if( !SPRITE_ID_VALID( sprite ) ) return;
+	Entity entity;
+	if( !ecps_GetEntityByID( &spriteECPS, sprite, &entity ) ) {
+		return;
+	}
 
-	sprites[sprite].newState.pos = *newPos;
-	sprites[sprite].newState.scale = *newScale;
-	sprites[sprite].newState.col = *clr;
+	GCPosData* pos = NULL;
+	ecps_GetComponentFromEntity( &entity, posCompID, &pos );
+	pos->futurePos = *newPos;
+
+	GCScaleData* scale = NULL;
+	ecps_GetComponentFromEntity( &entity, scaleCompID, &scale );
+	scale->futureScale = *newScale;
+
+	GCRotData* rot = NULL;
+	ecps_GetComponentFromEntity( &entity, rotCompID, &rot );
+	rot->futureRot = newRot;
 }
 
-void spr_UpdateDelta( int sprite, const Vector2* posOffset, const Vector2* scaleOffset, float rotOffset )
+void spr_Update_p( EntityID sprite, const Vector2* newPos )
+{
+	assert( newPos != NULL );
+
+	Entity entity;
+	if( !ecps_GetEntityByID( &spriteECPS, sprite, &entity ) ) {
+		return;
+	}
+
+	GCPosData* pos = NULL;
+	ecps_GetComponentFromEntity( &entity, posCompID, &pos );
+	pos->futurePos = *newPos;
+}
+
+void spr_Update_pc( EntityID sprite, const Vector2* newPos, const Color* clr )
+{
+	assert( newPos != NULL );
+	assert( clr != NULL );
+
+	Entity entity;
+	if( !ecps_GetEntityByID( &spriteECPS, sprite, &entity ) ) {
+		return;
+	}
+
+	GCPosData* pos = NULL;
+	ecps_GetComponentFromEntity( &entity, posCompID, &pos );
+	pos->futurePos = *newPos;
+
+	GCColorData* color = NULL;
+	ecps_GetComponentFromEntity( &entity, clrCompID, &color );
+	color->futureClr = *clr;
+}
+
+void spr_Update_c( EntityID sprite, const Color* clr )
+{
+	assert( clr != NULL );
+
+	Entity entity;
+	if( !ecps_GetEntityByID( &spriteECPS, sprite, &entity ) ) {
+		return;
+	}
+
+	GCColorData* color = NULL;
+	ecps_GetComponentFromEntity( &entity, clrCompID, &color );
+	color->futureClr = *clr;
+}
+
+void spr_Update_sc( EntityID sprite, const Vector2* newScale, const Color* clr )
+{
+	assert( newScale != NULL );
+	assert( clr != NULL );
+
+	Entity entity;
+	if( !ecps_GetEntityByID( &spriteECPS, sprite, &entity ) ) {
+		return;
+	}
+
+	GCScaleData* scale = NULL;
+	ecps_GetComponentFromEntity( &entity, scaleCompID, &scale );
+	scale->futureScale = *newScale;
+
+	GCColorData* color = NULL;
+	ecps_GetComponentFromEntity( &entity, clrCompID, &color );
+	color->futureClr = *clr;
+}
+
+void spr_Update_psc( EntityID sprite, const Vector2* newPos, const Vector2* newScale, const Color* clr )
+{
+	assert( newPos != NULL );
+	assert( newScale != NULL );
+	assert( clr != NULL );
+
+	Entity entity;
+	if( !ecps_GetEntityByID( &spriteECPS, sprite, &entity ) ) {
+		return;
+	}
+
+	GCPosData* pos = NULL;
+	ecps_GetComponentFromEntity( &entity, posCompID, &pos );
+	pos->futurePos = *newPos;
+
+	GCScaleData* scale = NULL;
+	ecps_GetComponentFromEntity( &entity, scaleCompID, &scale );
+	scale->futureScale = *newScale;
+
+	GCColorData* color = NULL;
+	ecps_GetComponentFromEntity( &entity, clrCompID, &color );
+	color->futureClr = *clr;
+}
+
+void spr_UpdateDelta( EntityID sprite, const Vector2* posOffset, const Vector2* scaleOffset, float rotOffset )
 {
 	assert( posOffset != NULL );
 	assert( scaleOffset != NULL );
 
-	if( !SPRITE_ID_VALID( sprite ) ) return;
+	Entity entity;
+	if( !ecps_GetEntityByID( &spriteECPS, sprite, &entity ) ) {
+		return;
+	}
 
-	vec2_Add( &( sprites[sprite].newState.pos ), posOffset, &( sprites[sprite].newState.pos ) );
-	vec2_Add( &( sprites[sprite].newState.scale ), scaleOffset, &( sprites[sprite].newState.scale ) );
-	sprites[sprite].newState.rot += rotOffset;
-}
+	GCPosData* pos = NULL;
+	ecps_GetComponentFromEntity( &entity, posCompID, &pos );
+	vec2_Add( &( pos->futurePos ), posOffset, &( pos->futurePos ) );
 
-int spr_RegisterSystem( void )
-{
-	systemID = sys_Register( NULL, NULL, spr_Draw, NULL );
-	return systemID;
-}
+	GCScaleData* scale = NULL;
+	ecps_GetComponentFromEntity( &entity, scaleCompID, &scale );
+	vec2_Add( &( scale->futureScale ), scaleOffset, &( scale->futureScale ) );
 
-void spr_UnRegisterSystem( void )
-{
-	sys_UnRegister( systemID );
-	systemID = -1;
+	GCRotData* rot = NULL;
+	ecps_GetComponentFromEntity( &entity, rotCompID, &rot );
+	rot->futureRot += rotOffset;
 }
