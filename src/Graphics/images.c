@@ -245,7 +245,7 @@ void img_ThreadedLoad( const char* fileName, ShaderType shaderType, int* outIdx 
 		mem_Release( data );
 		return;
 	}
-	strcpy_s( data->fileName, fileNameLen, fileName );
+	SDL_strlcpy( data->fileName, fileName, fileNameLen );
 
 	data->shaderType = shaderType;
 	data->outIdx = outIdx;

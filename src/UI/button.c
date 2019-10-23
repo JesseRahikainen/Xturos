@@ -149,6 +149,7 @@ void btn_DestroyAll( void )
 
 int btn_RegisterSystem( void )
 {
+	if( systemID != -1 ) return systemID; // don't register twice
 	systemID = sys_Register( btn_ProcessEvents, btn_Process, btn_Draw, btn_Update );
 	return systemID;
 }

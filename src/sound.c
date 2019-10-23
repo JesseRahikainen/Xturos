@@ -249,8 +249,14 @@ int snd_LoadSample( const char* fileName, Uint8 desiredChannels, bool loops )
 	// read the entire file into memory and decode it
 	int channels;
 	int rate;
-	short* data;
+	short* data = NULL;
 	int numSamples = stb_vorbis_decode_filename( fileName, &channels, &rate, &data );
+
+	if( numSamples <= 0 ) {
+		newIdx = -1;
+		llog( LOG_ERROR, "No samples in sound file or file doesn't exist." );
+		goto clean_up;
+	}
 
 	// convert it
 	SDL_AudioCVT loadConverter;
@@ -475,8 +481,8 @@ int snd_Init( unsigned int numGroups )
 	soundCfgFile = cfg_OpenFile( "snd.cfg" );
 	if( soundCfgFile != NULL ) {
 		int vol;
-		cfg_GetInt( soundCfgFile, "vol", 1, &vol );
-		masterVolume = (float)vol;
+		cfg_GetInt( soundCfgFile, "vol", 100, &vol );
+		masterVolume = (float)vol / 100.0f;
 	} else {
 		masterVolume = 1.0f;
 	}
@@ -549,6 +555,10 @@ void snd_SetVolume( float volume, unsigned int group )
 // TODO: Some sort of event system so we can get when a sound has finished playing?
 EntityID snd_Play( int sampleID, float volume, float pitch, float pan, unsigned int group )
 {
+	if( sampleID < 0 ) {
+		return INVALID_ENTITY_ID;
+	}
+
 	assert( group >= 0 );
 	assert( group < sb_Count( sbSoundGroups ) );
 
@@ -672,7 +682,16 @@ int snd_LoadStreaming( const char* fileName, bool loops, unsigned int group )
 
 void snd_PlayStreaming( int streamID, float volume, float pan ) // todo: fade in?
 {
+	if( ( streamID < 0 ) || ( streamID >= MAX_STREAMING_SOUNDS ) ) {
+		return;
+	}
+
 	assert( ( streamID >= 0 ) && ( streamID < MAX_STREAMING_SOUNDS ) );
+
+	if( streamingSounds[streamID].playing ) {
+		return;
+	}
+
 	SDL_LockAudioDevice( devID ); {
 		if( ( streamingSounds[streamID].access != NULL ) && !streamingSounds[streamID].playing ) {
 
@@ -698,6 +717,10 @@ void snd_PlayStreaming( int streamID, float volume, float pan ) // todo: fade in
 
 void snd_StopStreaming( int streamID )
 {
+	if( ( streamID < 0 ) || ( streamID >= MAX_STREAMING_SOUNDS ) ) {
+		return;
+	}
+
 	assert( ( streamID >= 0 ) && ( streamID < MAX_STREAMING_SOUNDS ) );
 	SDL_LockAudioDevice( devID ); {
 		streamingSounds[streamID].playing = false;

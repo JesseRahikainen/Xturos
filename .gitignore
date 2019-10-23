@@ -59,6 +59,8 @@ dlldata.c
 *.pidb
 *.svclog
 *.scc
+*.ipdb
+*.o
 
 # Chutzpah Test files
 _Chutzpah*
@@ -197,3 +199,10 @@ log.txt
 # Avoiding possible copyright issues
 *.ttf
 bin/data/Sounds/*
+
+# Design files
+*.pdn
+/*.png
+
+proj/_webasm/release_build
+proj/_webasm/debug_build

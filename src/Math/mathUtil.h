@@ -1,6 +1,7 @@
 #ifndef MATH_UTIL_H
 #define MATH_UTIL_H
 
+#include <stdlib.h>
 #include "vector2.h"
 #include "vector3.h"
 #include <stdint.h>

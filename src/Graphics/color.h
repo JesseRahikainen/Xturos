@@ -2,6 +2,7 @@
 #define COLOR_H
 
 #include <SDL_pixels.h>
+#include <stdint.h>
 
 /*
 Standard 32-bit colors. Doesn't handle HDR or any fancy stuff.
@@ -32,6 +33,8 @@ static const Color CLR_GREY = { 0.5f, 0.5f, 0.5f, 1.0f };
 static const Color CLR_LIGHT_GREY = { 0.75f, 0.75f, 0.75f, 1.0f };
 
 Color clr( float r, float g, float b, float a );
+Color clr_byte( uint8_t r, uint8_t g, uint8_t b, uint8_t a );
+Color clr_hex( uint32_t c );
 SDL_Color clr_ToSDLColor( const Color* color );
 
 Color* clr_Lerp( const Color* from, const Color* to, float t, Color* out );

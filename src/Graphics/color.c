@@ -14,6 +14,28 @@ Color clr( float r, float g, float b, float a )
 	return c;
 }
 
+Color clr_byte( uint8_t r, uint8_t g, uint8_t b, uint8_t a )
+{
+	Color c;
+
+	c.r = r / 255.0f;
+	c.g = g / 255.0f;
+	c.b = b / 255.0f;
+	c.a = a / 255.0f;
+
+	return c;
+}
+
+Color clr_hex( uint32_t c )
+{
+	uint8_t r = (uint8_t)( ( c >> 24 ) & 0xFF );
+	uint8_t g = (uint8_t)( ( c >> 16 ) & 0xFF );
+	uint8_t b = (uint8_t)( ( c >> 8 ) & 0xFF );
+	uint8_t a = (uint8_t)( c & 0xFF );
+
+	return clr_byte( r, g, b, a );
+}
+
 SDL_Color clr_ToSDLColor( const Color* color )
 {
 	assert( color );

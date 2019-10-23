@@ -1,6 +1,7 @@
 #include "random.h"
 
 #include <stdlib.h>
+#include <math.h>
 
 #include "../Math/mathUtil.h"
 
@@ -112,8 +113,11 @@ float rand_GetRangeFloat( RandomGroup* rg, float min, float max )
 
 int32_t rand_GetRangeS32( RandomGroup* rg, int32_t min, int32_t max )
 {
-	// this can cause issues if min is too low or max is too high
-	return (int32_t)( rand_GetRangeFloat( rg, (float)min, (float)max ) );
+	int32_t range = ( max - min ) + 1;
+	if( range <= 0 ) {
+		return min;
+	}
+	return min + ( next( rg ) % range );
 }
 
 bool rand_Choice( RandomGroup* rg )
