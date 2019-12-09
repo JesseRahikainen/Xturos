@@ -113,6 +113,10 @@ int gfx_Init( SDL_Window* window, int desiredRenderWidth, int desiredRenderHeigh
 		return -1;
 	}
 
+	// set packing and unpacking to 1 byte alignment, works better with our font textures
+	GL( glPixelStorei( GL_PACK_ALIGNMENT, 1 ) );
+	GL( glPixelStorei( GL_UNPACK_ALIGNMENT, 1 ) );
+
 	currentTime = 0.0f;
 	endTime = 0.0f;
 

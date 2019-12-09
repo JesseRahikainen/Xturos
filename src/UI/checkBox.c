@@ -66,7 +66,7 @@ static void draw( void )
 			Vector2 textPos = checkBoxes[i].position;
 			textPos.x += checkBoxes[i].collisionHalfSize.x;
 			txt_DisplayString( checkBoxes[i].text, textPos, CLR_WHITE, HORIZ_ALIGN_LEFT, VERT_ALIGN_CENTER,
-								checkBoxes[i].fontID, checkBoxes[i].camFlags, checkBoxes[i].depth );
+								checkBoxes[i].fontID, checkBoxes[i].camFlags, checkBoxes[i].depth, (float)txt_GetBaseSize( checkBoxes[i].fontID ) );
 		}
 	}
 }

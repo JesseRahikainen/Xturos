@@ -22,9 +22,7 @@
 
 #include "../System/platformLog.h"
 
-/*
-Clean up anything that was created in a loaded image.
-*/
+// Clean up anything that was created in a loaded image.
 void gfxUtil_ReleaseLoadedImage( LoadedImage* image )
 {
 	assert( image != NULL );
@@ -32,10 +30,8 @@ void gfxUtil_ReleaseLoadedImage( LoadedImage* image )
 	stbi_image_free( image->data );
 }
 
-/*
-Converts the LoadedImage into a texture, putting everything in outTexture. All LoadedImages are assumed to be in RGBA format.
- Returns >= 0 if everything went fine, < 0 if something went wrong.
-*/
+// Converts the LoadedImage into a texture, putting everything in outTexture. All LoadedImages are assumed to be in RGBA format.
+//  Returns >= 0 if everything went fine, < 0 if something went wrong.
 int gfxUtil_CreateTextureFromLoadedImage( GLenum texFormat, LoadedImage* image, Texture* outTexture )
 {
 	//GLenum texFormat = GL_RGBA;
@@ -72,11 +68,8 @@ int gfxUtil_CreateTextureFromLoadedImage( GLenum texFormat, LoadedImage* image, 
 	return 0;
 }
 
-/*
- Loads the data from fileName into outLoadedImage, used as an intermediary between loading and creating
-  a texture.
-  Returns >= 0 on success, < 0 on failure.
-*/
+// Loads the data from fileName into outLoadedImage, used as an intermediary between loading and creating a texture.
+//  Returns >= 0 on success, < 0 on failure.
 int gfxUtil_LoadImage( const char* fileName, LoadedImage* outLoadedImage )
 {
 	if( outLoadedImage == NULL ) {
@@ -85,6 +78,7 @@ int gfxUtil_LoadImage( const char* fileName, LoadedImage* outLoadedImage )
 	}
 
 	outLoadedImage->reqComp = 4;
+	outLoadedImage->data = NULL;
 
 #if defined( __ANDROID__ )
 	// android has the assets stored in the apk, so we'll have to access that, SDL will handle whether it's a file stored in
@@ -127,10 +121,29 @@ int gfxUtil_LoadImage( const char* fileName, LoadedImage* outLoadedImage )
 	return 0;
 }
 
-/*
-Loads the image at the file name. Takes in a pointer to a Texture structure that it puts all the generated data into.
- Returns >= 0 on success, < 0 on failure.
-*/
+// Creates a LoadedImage from the data, decoding the data as it would from a file.
+//  Returns >= 0 on success, < 0 on failure.
+int gfxUtil_LoadImageFromMemory( const uint8_t* data, size_t dataSize, int requiredComponents, LoadedImage* outLoadedImage )
+{
+	if( outLoadedImage == NULL ) {
+		llog( LOG_INFO, "Attempting to load an image without a place to store it!" );
+		return -1;
+	}
+
+	outLoadedImage->reqComp = requiredComponents;
+	outLoadedImage->data = stbi_load_from_memory( data, (int)dataSize,
+		&( outLoadedImage->width ), &( outLoadedImage->height ), &( outLoadedImage->comp ), outLoadedImage->reqComp );
+
+	if( outLoadedImage->data == NULL ) {
+		llog( LOG_INFO, "Unable to load image from meory! STB Error: %s", stbi_failure_reason( ) );
+		return -1;
+	}
+
+	return 0;
+}
+
+// Loads the image at the file name. Takes in a pointer to a Texture structure that it puts all the generated data into.
+//  Returns >= 0 on success, < 0 on failure.
 int gfxUtil_LoadTexture( const char* fileName, Texture* outTexture )
 {
 	LoadedImage image = { 0 };
@@ -158,10 +171,8 @@ clean_up:
 	return returnCode;
 }
 
-/*
-Turns an SDL_Surface into a texture. Takes in a pointer to a Texture structure that it puts all the generated data into.
- Returns >= 0 on success, < 0 on failure.
-*/
+// Turns an SDL_Surface into a texture. Takes in a pointer to a Texture structure that it puts all the generated data into.
+//  Returns >= 0 on success, < 0 on failure.
 int gfxUtil_CreateTextureFromSurface( SDL_Surface* surface, Texture* outTexture )
 {
 	// convert the pixels into a texture
@@ -206,10 +217,8 @@ int gfxUtil_CreateTextureFromSurface( SDL_Surface* surface, Texture* outTexture 
 	return 0;
 }
 
-/*
-Turns an RGBA bitmap into a texture.  Takes in a pointer to a Texture structure that it puts all the generated data into.
- Returns >= 0 on success, < 0 on failure.
-*/
+// Turns an RGBA bitmap into a texture.  Takes in a pointer to a Texture structure that it puts all the generated data into.
+//  Returns >= 0 on success, < 0 on failure.
 int gfxUtil_CreateTextureFromRGBABitmap( uint8_t* data, int width, int height, Texture* outTexture )
 {
 	assert( data != NULL );
@@ -238,10 +247,8 @@ clean_up:
 	return returnCode;
 }
 
-/*
-Turns a single channel bitmap into a texture. Takes in a pointer to a Texture structure that it puts all the generated data into.
- Returns >= 0 on success, < 0 on failure.
-*/
+// Turns a single channel bitmap into a texture. Takes in a pointer to a Texture structure that it puts all the generated data into.
+//  Returns >= 0 on success, < 0 on failure.
 int gfxUtil_CreateTextureFromAlphaBitmap( uint8_t* data, int width, int height, Texture* outTexture )
 {
 	assert( data != NULL );
@@ -276,9 +283,7 @@ clean_up:
 	return returnCode;
 }
 
-/*
-Unloads the passed in texture. After doing this the texture will be invalid and should not be used anymore.
-*/
+// Unloads the passed in texture. After doing this the texture will be invalid and should not be used anymore.
 void gfxUtil_UnloadTexture( Texture* texture )
 {
 	glDeleteTextures( 1, &( texture->textureID ) );
@@ -286,9 +291,7 @@ void gfxUtil_UnloadTexture( Texture* texture )
 	texture->flags = 0;
 }
 
-/*
-Returns whether the SDL_Surface has any pixels that have a transparency that aren't completely clear or solid.
-*/
+// Returns whether the SDL_Surface has any pixels that have a transparency that aren't completely clear or solid.
 int gfxUtil_SurfaceIsTranslucent( SDL_Surface* surface )
 {
 	Uint8 r, g, b, a;

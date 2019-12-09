@@ -138,7 +138,7 @@ static int testJobQueueScreen_Enter( void )
 
 	btn_RegisterSystem( );
 
-	font = txt_LoadFont( "Fonts/kenpixel.ttf", 12.0f );
+	font = txt_LoadFont( "Fonts/kenpixel.ttf", 12 );
 
 	//testFont = txt_LoadFont( "Fonts/kenpixel.ttf", 24.0f );
 
@@ -194,10 +194,10 @@ static void testJobQueueScreen_Draw( void )
 	//const char* testString = "Testing some string stuff.\nSeeing if it works.";
 	const char* testString = "ABCDEFGHIJKLMNOPQRSTUVWXYZ\nabcdefghijklmnopqrstuvwxyz\nTest Test Test   ";
 	txt_DisplayString( testString, vec2( 200.0f, 450.0f ), CLR_CYAN,
-		HORIZ_ALIGN_LEFT, VERT_ALIGN_TOP, testFont, 1, 0 );
+		HORIZ_ALIGN_LEFT, VERT_ALIGN_TOP, testFont, 1, 0, 12.0f );
 
 	txt_DisplayString( testString, vec2( 200.0f, 525.0f ), CLR_CYAN,
-		HORIZ_ALIGN_LEFT, VERT_ALIGN_TOP, font, 1, 0 );
+		HORIZ_ALIGN_LEFT, VERT_ALIGN_TOP, font, 1, 0, 12.0f );
 }
 
 static void testJobQueueScreen_PhysicsTick( float dt )

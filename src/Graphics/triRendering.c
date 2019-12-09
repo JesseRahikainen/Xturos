@@ -71,7 +71,7 @@ TriVert triVert( Vector2 pos, Vector2 uv, Color col )
 int triRenderer_LoadShaders( void )
 {
 	llog( LOG_INFO, "Loading triangle renderer shaders." );
-	ShaderDefinition shaderDefs[3];
+	ShaderDefinition shaderDefs[4];
 	ShaderProgramDefinition progDefs[NUM_SHADERS];
 
 	llog( LOG_INFO, "  Destroying shaders." );
@@ -91,6 +91,12 @@ int triRenderer_LoadShaders( void )
 	shaderDefs[2].type = GL_FRAGMENT_SHADER;
 	shaderDefs[2].shaderText = FONT_FRAG_SHADER;
 
+	// simple sdf rendering
+	shaderDefs[3].fileName = NULL;//"Shaders/sdf.frag";
+	shaderDefs[3].type = GL_FRAGMENT_SHADER;
+	shaderDefs[3].shaderText = SIMPLE_SDF_FRAG_SHADER;
+
+
 	progDefs[0].fragmentShader = 1;
 	progDefs[0].vertexShader = 0;
 	progDefs[0].geometryShader = -1;
@@ -100,6 +106,11 @@ int triRenderer_LoadShaders( void )
 	progDefs[1].vertexShader = 0;
 	progDefs[1].geometryShader = -1;
 	progDefs[1].uniformNames = "vpMatrix textureUnit0";
+
+	progDefs[2].fragmentShader = 3;
+	progDefs[2].vertexShader = 0;
+	progDefs[2].geometryShader = -1;
+	progDefs[2].uniformNames = "vpMatrix textureUnit0";
 
 	llog( LOG_INFO, "  Loading shaders." );
 	if( shaders_Load( &( shaderDefs[0] ), sizeof( shaderDefs ) / sizeof( ShaderDefinition ),

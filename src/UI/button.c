@@ -212,7 +212,7 @@ void btn_Draw( void )
 				Vector2 textPos;
 				vec2_Add( &( buttons[i].position ), &( buttons[i].textOffset ), &textPos );
 				txt_DisplayString( buttons[i].text, textPos, buttons[i].fontColor, HORIZ_ALIGN_CENTER, VERT_ALIGN_CENTER,
-									buttons[i].fontID, buttons[i].camFlags, buttons[i].depth );
+									buttons[i].fontID, buttons[i].camFlags, buttons[i].depth, (float)txt_GetBaseSize( buttons[i].fontID ) );
 			}
 		}
 	}

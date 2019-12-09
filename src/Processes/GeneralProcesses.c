@@ -131,7 +131,7 @@ static void renderText( ECPS* ecps, const Entity* entity )
 	Vector2 topLeft;
 	vec2_AddScaled( &currPos, &currScale, -0.5f, &topLeft );
 
-	txt_DisplayTextArea( txt->text, topLeft, currScale, txt->clr, HORIZ_ALIGN_CENTER, VERT_ALIGN_CENTER, txt->fontID, 0, NULL, txt->camFlags, txt->depth );
+	txt_DisplayTextArea( txt->text, topLeft, currScale, txt->clr, HORIZ_ALIGN_CENTER, VERT_ALIGN_CENTER, txt->fontID, 0, NULL, txt->camFlags, txt->depth, (float)txt_GetBaseSize( txt->fontID ) );
 }
 
 // ***** Clickable Objects

@@ -7,6 +7,7 @@
 #include "../Math/vector2.h"
 #include "color.h"
 #include "triRendering.h"
+#include "gfxUtil.h"
 
 /*
 Initializes images.
@@ -28,6 +29,16 @@ Loads the image stored at file name.
  Returns -1 on failure, and prints a message to the log.
 */
 int img_Load( const char* fileName, ShaderType shaderType );
+
+/*
+Creates an image from a LoadedImage.
+*/
+int img_CreateFromLoadedImage( LoadedImage* loadedImg, ShaderType shaderType );
+
+/*
+Creates an image from a texture.
+*/
+int img_CreateFromTexture( Texture* texture, ShaderType shaderType );
 
 /*
 Creates an image from a surface.
@@ -66,6 +77,8 @@ void img_CleanPackage( int packageID );
 Sets an offset to render the image from. The default is the center of the image.
 */
 void img_SetOffset( int idx, Vector2 offset );
+
+void img_ForceTransparency( int idx, bool transparent );
 
 /*
 Gets the size of the image, putting it into the out Vector2. Returns a negative number if there's an issue.

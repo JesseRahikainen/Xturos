@@ -12,6 +12,7 @@
 typedef enum {
 	ST_DEFAULT,
 	ST_ALPHA_ONLY,
+	ST_SIMPLE_SDF,
 	NUM_SHADERS
 } ShaderType;
 

@@ -39,7 +39,7 @@ static int testSoundsScreen_Enter( void )
 
 	snd_SetMasterVolume( 0.25f );
 
-	font = txt_LoadFont( "Fonts/kenpixel.ttf", 32.0f );
+	font = txt_LoadFont( "Fonts/kenpixel.ttf", 32 );
 
 	btn_Create( vec2( 100.0f, 100.0f ), vec2( 100.0f, 100.0f ), vec2( 100.0f, 100.0f ),
 		"Play Sound", font, CLR_BLUE, VEC2_ZERO, NULL, -1, CLR_WHITE, 1, 0, NULL, PlaySound );

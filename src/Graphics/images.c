@@ -42,15 +42,15 @@ static Image images[MAX_IMAGES];
 #define MAX_RENDER_INSTRUCTIONS 1024
 typedef struct {
 	Vector2 pos;
-	Vector2 scaleSize;
+	Vector2 scaledSize;
 	Color color;
 	float rotation;
+	Vector2 offset;
 } DrawInstructionState;
 
 typedef struct {
 	GLuint textureObj;
 	int imageObj;
-	Vector2 offset;
 	Vector2 uvs[4];
 	DrawInstructionState start;
 	DrawInstructionState end;
@@ -65,10 +65,10 @@ static DrawInstruction renderBuffer[MAX_RENDER_INSTRUCTIONS];
 static int lastDrawInstruction;
 
 static const DrawInstruction DEFAULT_DRAW_INSTRUCTION = {
-	0, -1, { 0.0f, 0.0f },
+	0, -1,
 	{ { 0.0f, 0.0f }, { 0.0f, 1.0f }, { 1.0f, 0.0f }, { 1.0f, 1.0f } },
-	{ { 0.0f, 0.0f }, { 1.0f, 1.0f }, { 1.0f, 1.0f, 1.0f, 1.0f }, 0.0f },
-	{ { 0.0f, 0.0f }, { 1.0f, 1.0f }, { 1.0f, 1.0f, 1.0f, 1.0f }, 0.0f },
+	{ { 0.0f, 0.0f }, { 1.0f, 1.0f }, { 1.0f, 1.0f, 1.0f, 1.0f }, 0.0f, { 0.0f, 0.0f } },
+	{ { 0.0f, 0.0f }, { 1.0f, 1.0f }, { 1.0f, 1.0f, 1.0f, 1.0f }, 0.0f, { 0.0f, 0.0f } },
 	0, 0, 0
 };
 
@@ -138,6 +138,66 @@ int img_Load( const char* fileName, ShaderType shaderType )
 	images[newIdx].uvMax = VEC2_ONE;
 	images[newIdx].shaderType = shaderType;
 	if( texture.flags & TF_IS_TRANSPARENT ) {
+		images[newIdx].flags |= IMGFLAG_HAS_TRANSPARENCY;
+	}
+
+	return newIdx;
+}
+
+int img_CreateFromLoadedImage( LoadedImage* loadedImg, ShaderType shaderType )
+{
+	int newIdx = -1;;
+
+	newIdx = findAvailableImageIndex( );
+	if( newIdx < 0 ) {
+		llog( LOG_INFO, "Unable to create image! Image storage full." );
+		return -1;
+	}
+
+	Texture texture;
+	if( gfxUtil_CreateTextureFromLoadedImage( GL_RGBA, loadedImg, &texture ) < 0 ) {
+		llog( LOG_INFO, "Unable to create image!" );
+		return -1;
+	}
+
+	images[newIdx].textureObj = texture.textureID;
+	images[newIdx].size.v[0] = (float)texture.width;
+	images[newIdx].size.v[1] = (float)texture.height;
+	images[newIdx].offset = VEC2_ZERO;
+	images[newIdx].packageID = -1;
+	images[newIdx].flags = IMGFLAG_IN_USE;
+	images[newIdx].nextInPackage = -1;
+	images[newIdx].uvMin = VEC2_ZERO;
+	images[newIdx].uvMax = VEC2_ONE;
+	images[newIdx].shaderType = shaderType;
+	if( texture.flags & TF_IS_TRANSPARENT ) {
+		images[newIdx].flags |= IMGFLAG_HAS_TRANSPARENCY;
+	}
+
+	return newIdx;
+}
+
+int img_CreateFromTexture( Texture* texture, ShaderType shaderType )
+{
+	int newIdx = -1;;
+
+	newIdx = findAvailableImageIndex( );
+	if( newIdx < 0 ) {
+		llog( LOG_INFO, "Unable to create image! Image storage full." );
+		return -1;
+	}
+
+	images[newIdx].textureObj = texture->textureID;
+	images[newIdx].size.v[0] = (float)texture->width;
+	images[newIdx].size.v[1] = (float)texture->height;
+	images[newIdx].offset = VEC2_ZERO;
+	images[newIdx].packageID = -1;
+	images[newIdx].flags = IMGFLAG_IN_USE;
+	images[newIdx].nextInPackage = -1;
+	images[newIdx].uvMin = VEC2_ZERO;
+	images[newIdx].uvMax = VEC2_ONE;
+	images[newIdx].shaderType = shaderType;
+	if( texture->flags & TF_IS_TRANSPARENT ) {
 		images[newIdx].flags |= IMGFLAG_HAS_TRANSPARENCY;
 	}
 
@@ -479,6 +539,23 @@ void img_SetOffset( int idx, Vector2 offset )
 	images[idx].offset = offset;
 }
 
+#include "../Utils/helpers.h"
+void img_ForceTransparency( int idx, bool transparent )
+{
+	assert( idx < MAX_IMAGES );
+	assert( idx >= 0 );
+
+	if( !( images[idx].flags & IMGFLAG_IN_USE ) ) {
+		return;
+	}
+
+	if( transparent ) {
+		TURN_ON_BITS( images[idx].flags, IMGFLAG_HAS_TRANSPARENCY );
+	} else {
+		TURN_OFF_BITS( images[idx].flags, IMGFLAG_HAS_TRANSPARENCY );
+	}
+}
+
 /*
 Gets the size of the image, putting it into the out Vector2. Returns a negative number if there's an issue.
 */
@@ -542,13 +619,14 @@ static DrawInstruction* GetNextRenderInstruction( int imgObj, uint32_t camFlags,
 	ri->imageObj = imgObj;
 	ri->start.pos = startPos;
 	ri->end.pos = endPos;
-	ri->start.scaleSize = images[imgObj].size;
-	ri->end.scaleSize = images[imgObj].size;
+	ri->start.scaledSize = images[imgObj].size;
+	ri->end.scaledSize = images[imgObj].size;
 	ri->start.color = CLR_WHITE;
 	ri->end.color = CLR_WHITE;
 	ri->start.rotation = 0.0f;
 	ri->end.rotation = 0.0f;
-	ri->offset = images[imgObj].offset;
+	ri->start.offset = images[imgObj].offset;
+	ri->end.offset = images[imgObj].offset;
 	ri->flags = images[imgObj].flags;
 	ri->camFlags = camFlags;
 	ri->shaderType = images[imgObj].shaderType;
@@ -580,10 +658,14 @@ Adds to the list of images to draw.
 	return 0;
 
 #define SET_DRAW_INSTRUCTION_SCALE( startX, startY, endX, endY ) \
-	ri->start.scaleSize.x *= startX; \
-	ri->start.scaleSize.y *= startY; \
-	ri->end.scaleSize.x *= endX; \
-	ri->end.scaleSize.y *= endY;
+	ri->start.scaledSize.x *= startX; \
+	ri->start.scaledSize.y *= startY; \
+	ri->end.scaledSize.x *= endX; \
+	ri->end.scaledSize.y *= endY; \
+	ri->start.offset.x *= startX; \
+	ri->start.offset.y *= startY; \
+	ri->end.offset.x *= endX; \
+	ri->end.offset.y *= endY;
 
 #define SET_DRAW_INSTRUCTION_COLOR( startColor, endColor ) \
 	ri->start.color = startColor; \
@@ -870,16 +952,17 @@ void img_Render( float normTimeElapsed )
 
 		// generate the sprites matrix
 		Matrix4 modelTf;
-		Vector2 pos, sclSz;
+		Vector2 pos, sclSz, offset;
 		float rot;
 		Color col;
 
 		vec2_Lerp( &( renderBuffer[idx].start.pos ), &( renderBuffer[idx].end.pos ), normTimeElapsed, &pos );
 		clr_Lerp( &( renderBuffer[idx].start.color ), &( renderBuffer[idx].end.color ), normTimeElapsed, &col );
-		vec2_Lerp( &( renderBuffer[idx].start.scaleSize ), &( renderBuffer[idx].end.scaleSize ), normTimeElapsed, &sclSz );
+		vec2_Lerp( &( renderBuffer[idx].start.scaledSize ), &( renderBuffer[idx].end.scaledSize ), normTimeElapsed, &sclSz );
+		vec2_Lerp( &( renderBuffer[idx].start.offset ), &( renderBuffer[idx].end.offset ), normTimeElapsed, &offset );
 
 		rot = radianRotLerp( renderBuffer[idx].start.rotation, renderBuffer[idx].end.rotation, normTimeElapsed );
-		createRenderTransform( &pos, &sclSz, rot, &renderBuffer[idx].offset, &modelTf );
+		createRenderTransform( &pos, &sclSz, rot, &offset, &modelTf );
 
 		for( int i = 0; i < 4; ++i ) {
 			mat4_TransformVec2Pos( &modelTf, &( unitSqVertPos[i] ), &( verts[i].pos ) );

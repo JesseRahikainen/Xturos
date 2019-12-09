@@ -135,6 +135,23 @@ Handles the platform specific OpenGL stuff.
 	"	}\n" \
 	"}\n"
 
+// gotten from here: https://metalbyexample.com/rendering-text-in-metal-with-signed-distance-fields/
+#define SIMPLE_SDF_FRAG_SHADER \
+	"#version 330\n" \
+	"in vec2 vTex;\n" \
+	"in vec4 vCol;\n" \
+	"uniform sampler2D textureUnit0;\n" \
+	"out vec4 outCol;\n" \
+	"void main( void )\n" \
+	"{\n" \
+	"	float dist = texture2D( textureUnit0, vTex ).r;\n" \
+	"	float edgeDist = 0.5f;\n" \
+	"	//float edgeWidth = 0.7f * length( vec2( dFdx( dist ), dFdy( dist ) ) );\n" \
+	"	float edgeWidth = 0.7f * fwidth( dist );\n" \
+	"	float opacity = smoothstep( edgeDist - edgeWidth, edgeDist + edgeWidth, dist );\n" \
+	"	outCol = vec4( vCol.r, vCol.g, vCol.b, opacity );\n" \
+	"}\n"
+
 #define DEBUG_VERT_SHADER \
 	"#version 330\n" \
 	"uniform mat4 mvpMatrix;\n" \

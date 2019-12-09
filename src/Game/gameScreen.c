@@ -218,7 +218,7 @@ static int gameScreen_Enter( void )
 
 	//img_LoadPackage( 3, fileNames, testImages );
 
-	font = txt_LoadFont( "Fonts/kenpixel.ttf", 128.0f );
+	font = txt_LoadFont( "Fonts/kenpixel.ttf", 128 );
 
 	ecps_StartInitialization( &testECPS ); {
 		spawningCompID = ecps_AddComponentType( &testECPS, "SPAWN", 0, NULL );
@@ -254,7 +254,7 @@ static void gameScreen_Draw( void )
 		img_Draw( imageSheet[i], 1, pos[i], pos[i], 0 );
 	}
 
-	txt_DisplayString( "Testing stuff\nAnd even more stuff\nAnd once more", VEC2_ZERO, CLR_RED, HORIZ_ALIGN_LEFT, VERT_ALIGN_TOP, font, 1, 0 );
+	txt_DisplayString( "Testing stuff\nAnd even more stuff\nAnd once more", VEC2_ZERO, CLR_RED, HORIZ_ALIGN_LEFT, VERT_ALIGN_TOP, font, 1, 0, 128.0f );
 }
 
 static EntityID spawnerEntity = INVALID_ENTITY_ID;
