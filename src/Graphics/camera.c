@@ -224,7 +224,8 @@ int cam_GetVPMatrix( int camera, Matrix4* out )
 	float scale = lerp( cameras[camera].start.scale, cameras[camera].end.scale, t );
 	mat4_CreateScale( scale, scale, 1.0f, &scaleTf );
 
-	mat4_Multiply( &scaleTf, &transTf, &view );
+	//mat4_Multiply( &scaleTf, &transTf, &view );
+	mat4_Multiply( &transTf, &scaleTf, &view );
 	
 	mat4_Multiply( &( cameras[camera].projectionMat ), &view, out );
 	
@@ -251,13 +252,12 @@ int cam_GetInverseViewMatrix( int camera, Matrix4* out )
 	mat4_CreateScale( scale, scale, 1.0f, &scaleTf );
 
 	memcpy( out, &IDENTITY_MATRIX, sizeof( Matrix4 ) );
-	mat4_Multiply( out, &transTf, out );
 	mat4_Multiply( out, &scaleTf, out );
+	mat4_Multiply( out, &transTf, out );
 	
 	return 0;
 }
 
-//#error get this working with a centered screen!
 int cam_ScreenPosToWorldPos( int camera, const Vector2* screenPos, Vector2* out )
 {
 	assert( screenPos != NULL );

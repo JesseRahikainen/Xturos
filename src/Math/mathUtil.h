@@ -28,6 +28,9 @@ float degreeRotWrap( float deg );
 float spineDegRotToEngineDegRot( float spineDeg );
 float engineDegRotToSpineDegRot( float engineDeg );
 
+float hermiteBlend( float t );
+float perlinBlend( float t );
+
 uint8_t lerp_uint8_t( uint8_t from, uint8_t to, float t );
 float inverseLerp( float from, float to, float val );
 float clamp( float min, float max, float val );

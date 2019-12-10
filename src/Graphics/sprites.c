@@ -38,11 +38,11 @@ static void draw( void )
 int spr_Init( void )
 {
 	ecps_StartInitialization( &spriteECPS ); {
-		posCompID = ecps_AddComponentType( &spriteECPS, "POS", sizeof( GCPosData ), NULL );
-		spriteCompID = ecps_AddComponentType( &spriteECPS, "SPRT", sizeof( GCSpriteData ), NULL );
-		scaleCompID = ecps_AddComponentType( &spriteECPS, "SCL", sizeof( GCScaleData ), NULL );
-		clrCompID = ecps_AddComponentType( &spriteECPS, "CLR", sizeof( GCColorData ), NULL );
-		rotCompID = ecps_AddComponentType( &spriteECPS, "ROT", sizeof( GCRotData ), NULL );
+		posCompID = ecps_AddComponentType( &spriteECPS, "POS", sizeof( GCPosData ), NULL, NULL );
+		spriteCompID = ecps_AddComponentType( &spriteECPS, "SPRT", sizeof( GCSpriteData ), NULL, NULL );
+		scaleCompID = ecps_AddComponentType( &spriteECPS, "SCL", sizeof( GCScaleData ), NULL, NULL );
+		clrCompID = ecps_AddComponentType( &spriteECPS, "CLR", sizeof( GCColorData ), NULL, NULL );
+		rotCompID = ecps_AddComponentType( &spriteECPS, "ROT", sizeof( GCRotData ), NULL, NULL );
 
 		ecps_CreateProcess( &spriteECPS, "DRAW", NULL, render, NULL, &renderProc, 2, posCompID, spriteCompID );
 	} ecps_FinishInitialization( &spriteECPS );

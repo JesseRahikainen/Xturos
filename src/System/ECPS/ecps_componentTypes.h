@@ -10,7 +10,7 @@
 uint32_t sharedComponent_Enabled;
 uint32_t sharedComponent_ID;
 
-ComponentID ecps_ct_AddType( ComponentTypeCollection* ctc, const char* name, size_t size, VerifyComponent verify );
+ComponentID ecps_ct_AddType( ComponentTypeCollection* ctc, const char* name, size_t size, CleanUpComponent cleanUp, VerifyComponent verify );
 void ecps_ct_Init( ComponentTypeCollection* ctc );
 void ecps_ct_CreateBitFlagsVA( ComponentBitFlags* outFlags, int numComponents, va_list list );
 void ecps_ct_CreateBitFlags( ComponentBitFlags* outFlags, int numComponents, ... );

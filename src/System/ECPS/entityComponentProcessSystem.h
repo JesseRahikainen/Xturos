@@ -17,7 +17,7 @@ void ecps_CleanUp( ECPS* ecps );
 
 // adds a component type and returns the id to reference it by
 //  this can only be done before
-ComponentID ecps_AddComponentType( ECPS* ecps, const char* name, size_t size, VerifyComponent verify );
+ComponentID ecps_AddComponentType( ECPS* ecps, const char* name, size_t size, CleanUpComponent cleanUp, VerifyComponent verify );
 
 // this attempts to set up a process to be used by the passed in ecps
 bool ecps_CreateProcess( ECPS* ecps,
@@ -74,6 +74,7 @@ void ecps_DestroyEntityByID( ECPS* ecps, EntityID entityID );
 void ecps_DestroyAllEntities( ECPS* ecps );
 
 // debugging stuff
+void ecps_DumpEntity( ECPS* ecps, const Entity* entity, const char* tag );
 void ecps_DumpAllEntities( ECPS* ecps, const char* tag );
 
 #endif

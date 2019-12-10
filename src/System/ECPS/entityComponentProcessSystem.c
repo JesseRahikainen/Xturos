@@ -272,6 +272,10 @@ void ecps_CleanUp( ECPS* ecps )
 {
 	assert( ecps != NULL );
 
+	// need to call the clean up for each entity
+	// TODO: Specialize this out so we don't have to do any of the extra stuff associated with destroying all the entities
+	ecps_DestroyAllEntities( ecps );
+
 	sb_Release( ecps->sbCommandBuffer );
 	ecps_ct_CleanUp( &( ecps->componentTypes ) );
 	idSet_Destroy( &( ecps->idSet ) );
@@ -279,7 +283,7 @@ void ecps_CleanUp( ECPS* ecps )
 
 // adds a component type and returns the id to reference it by
 //  this can only be done before
-ComponentID ecps_AddComponentType( ECPS* ecps, const char* name, size_t size, VerifyComponent verify )
+ComponentID ecps_AddComponentType( ECPS* ecps, const char* name, size_t size, CleanUpComponent cleanUp, VerifyComponent verify )
 {
 	assert( ecps != NULL );
 
@@ -292,6 +296,7 @@ ComponentID ecps_AddComponentType( ECPS* ecps, const char* name, size_t size, Ve
 
 	newType.size = size;
 	newType.verify = verify;
+	newType.cleanUp = cleanUp;
 
 	if( name != NULL ) {
 		strncpy( newType.name, name, sizeof( newType.name ) - 1 );
@@ -678,7 +683,7 @@ static int immediateAddComponentToEntity( ECPS* ecps, Entity* entity, ComponentI
 		toStructure = &( ecps->componentData.sbComponentArrays[toPackedArrayIndex].structure );
 
 		// copy over
-		//  NOTE: We directly access the fromStructure here as the allocateDataForEntity( ) function can invalidate our old pointer
+		//  NOTE: We directly access the fromStructure here as the allocateDataForEntity() function can invalidate our old pointer
 		entityCopy( ecps, fromData, &( ecps->componentData.sbComponentArrays[fromPackedArrayIndex].structure ), toData, toStructure );
 
 		// remove from old array and update entity directory entry
@@ -828,11 +833,20 @@ static int immediateRemoveComponentFromEntity( ECPS* ecps, Entity* entity, Compo
 	toPackedArrayIndex = createOrFindPackagedArray( ecps, &newBitFlags );
 	size_t currOffset = allocateDataForEntity( ecps, toPackedArrayIndex );
 
+	// createOrFindPackagedArray invalidates the fromStructure pointer, so we have to refresh it
+	fromStructure = &( ecps->componentData.sbComponentArrays[fromPackedArrayIndex].structure );
+
 	toData = &( ecps->componentData.sbComponentArrays[toPackedArrayIndex].sbData[currOffset] );
 	toStructure = &( ecps->componentData.sbComponentArrays[toPackedArrayIndex].structure );
 
-	// copy over, because createOrFindPackagedArray( ) can invalidate the fromStructure pointer we just access the structure directly
-	entityCopy( ecps, fromData, &( ecps->componentData.sbComponentArrays[fromPackedArrayIndex].structure ), toData, toStructure );
+	// get the data and do any necessary clean up
+	if( ecps->componentTypes.sbTypes[componentID].cleanUp != NULL ) {
+		void* compData = &( fromData[ fromStructure->entries[componentID].offset ] );
+		ecps->componentTypes.sbTypes[componentID].cleanUp( compData );
+	}
+
+	// copy over
+	entityCopy( ecps, fromData, fromStructure, toData, toStructure );
 
 	// remove from old array and update entity directory entry
 	freeUpDataFromEntity( ecps, fromPackedArrayIndex, fromCompArrayPos );
@@ -964,8 +978,35 @@ bool ecps_GetEntityAndComponentByID( ECPS* ecps, EntityID entityID, ComponentID 
 	return ecps_GetComponentFromEntity( outEntity, componentID, outData );
 }
 
+static void runCleanUpOnEntityComponents( ECPS* ecps, EntityID entityID )
+{
+	// go through all the components in the entity and run clean up code if necessary
+	//  get the structure for the entity
+	uint32_t idx = idSet_GetIndex( entityID );
+	int32_t packedArrayIdx = ecps->componentData.sbEntityDirectory[idx].packedArrayIdx;
+	size_t offset = ecps->componentData.sbEntityDirectory[idx].positionOffset;
+	PackagedComponentArray pca = ecps->componentData.sbComponentArrays[packedArrayIdx];
+	
+	//  get the data for the entity
+	uint8_t* data = (pca.sbData)+offset;
+
+	//  find all types that have a clean up and call them
+	for( uint32_t i = 0; i < MAX_NUM_COMPONENT_TYPES; ++i ) {
+		if( pca.structure.entries[i].offset < 0 ) continue; // not used so skip
+		if( ecps->componentTypes.sbTypes[i].cleanUp == NULL ) continue; // no cleanup necessary, skip
+
+		void* cleanUpData = (void*)( data + pca.structure.entries[i].offset );
+		ecps->componentTypes.sbTypes[i].cleanUp( cleanUpData );
+	}
+	
+}
+
 static void immediateDestroyEntity( ECPS* ecps, EntityID entityID )
 {
+	// run component clean up
+	//  we have to loop through each component the entity contains, and if it has a clean up run it on the data
+	runCleanUpOnEntityComponents( ecps, entityID );
+
 	removeEntityFromArray( ecps, entityID );
 	idSet_ReleaseID( &( ecps->idSet ), entityID );
 }
@@ -1000,6 +1041,8 @@ void ecps_DestroyEntityByID( ECPS* ecps, EntityID entityID )
 {
 	assert( ecps != NULL );
 
+	if( entityID == INVALID_ENTITY_ID ) return;
+
 	if( ecps->isRunningProcess ) {
 		pushDestroyEntityCommand( ecps, entityID );
 	} else {
@@ -1012,6 +1055,12 @@ void ecps_DestroyAllEntities( ECPS* ecps )
 	assert( ecps != NULL );
 	assert( !( ecps->isRunningProcess ) );
 
+	// go through each entity and run necessary clean up
+	//  TODO: we can speed this up by going directly through the data and not looping through the entities
+	for( EntityID currID = idSet_GetFirstValidID( &( ecps->idSet ) ); currID != INVALID_ENTITY_ID; currID = idSet_GetNextValidID( &( ecps->idSet ), currID ) ) {
+		runCleanUpOnEntityComponents( ecps, currID );
+	}
+	
 	idSet_Clear( &( ecps->idSet ) );
 
 	// clear out all the entity data
@@ -1026,6 +1075,42 @@ void ecps_DestroyAllEntities( ECPS* ecps )
 
 	sb_Release( ecps->componentData.sbEntityDirectory );
 	ecps->componentData.sbEntityDirectory = NULL;
+}
+
+// list out the components of one entity
+void ecps_DumpEntity( ECPS* ecps, const Entity* entity, const char* tag )
+{
+	if( tag == NULL ) {
+		llog( LOG_DEBUG, "Starting entity dump:" );
+	} else {
+		llog( LOG_DEBUG, "Starting entity dump (%s):", tag );
+	}
+
+	// we should always be able to find the entity
+	bool isFirst = true;
+	char* sbTypeList = NULL;
+	for( ComponentID compID = 0; compID < sb_Count( ecps->componentTypes.sbTypes ); ++compID ) {
+		if( ecps_DoesEntityHaveComponent( entity, compID ) ) {
+			char* name = ecps->componentTypes.sbTypes[compID].name;
+			size_t len = strnlen( name, 32 );
+
+			if( isFirst ) {
+				isFirst = false;
+			} else {
+				sb_Push( sbTypeList, ',' );
+				sb_Push( sbTypeList, ' ' );
+			}
+
+			for( size_t c = 0; c < len; ++c ) {
+				sb_Push( sbTypeList, name[c] );
+			}
+		}
+	}
+	sb_Push( sbTypeList, '\0' );
+
+	llog( LOG_DEBUG, "  0x%08X: %s", entity->id, sbTypeList );
+
+	sb_Release( sbTypeList );
 }
 
 // lists all entities and the type of components they have

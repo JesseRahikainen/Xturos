@@ -61,7 +61,7 @@ Vector3* mat4_TransformVec3Dir( const Matrix4* m, const Vector3* v, Vector3* out
 Vector3* mat4_TransformVec3Pos( const Matrix4* m, const Vector3* v, Vector3* out );
 Vector3* mat4_TransformVec3Pos_InPlace( const Matrix4* m, Vector3* v );
 Vector2* mat4_TransformVec2Pos( const Matrix4* m, const Vector2* v, Vector2* out );
-
+Vector2* mat4_TransformVec2Pos_InPlace( const Matrix4* m, Vector2* v );
 bool mat4_Invert( const Matrix4* m, Matrix4* out );
 
 int mat4_Compare( Matrix4* m, Matrix4* n );

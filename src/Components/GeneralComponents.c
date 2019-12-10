@@ -14,15 +14,15 @@ ComponentID gcTextCompID = INVALID_COMPONENT_ID;
 
 void gc_Register( ECPS* ecps )
 {
-	gcPosCompID = ecps_AddComponentType( ecps, "GC_POS", sizeof( GCPosData ), NULL );
-	gcClrCompID = ecps_AddComponentType( ecps, "GC_CLR", sizeof( GCColorData ), NULL );
-	gcRotCompID = ecps_AddComponentType( ecps, "GC_ROT", sizeof( GCRotData ), NULL );
-	gcScaleCompID = ecps_AddComponentType( ecps, "GC_SCL", sizeof( GCScaleData ), NULL );
-	gcSpriteCompID = ecps_AddComponentType( ecps, "GC_SPRT", sizeof( GCSpriteData ), NULL );
-	gc3x3SpriteCompID = ecps_AddComponentType( ecps, "GC_3x3", sizeof( GC3x3SpriteData ), NULL );
-	gcAABBCollCompID = ecps_AddComponentType( ecps, "GC_AABB", sizeof( GCAABBCollisionData ), NULL );
-	gcCircleCollCompID = ecps_AddComponentType( ecps, "GC_CIRCLE", sizeof( GCCircleCollisionData ), NULL );
-	gcPointerResponseCompID = ecps_AddComponentType( ecps, "GC_CLICK", sizeof( GCPointerResponseData ), NULL );
-	gcCleanUpFlagCompID = ecps_AddComponentType( ecps, "GC_DEAD", 0, NULL );
-	gcTextCompID = ecps_AddComponentType( ecps, "GC_TXT", sizeof( GCTextData ), NULL );
+	gcPosCompID = ecps_AddComponentType( ecps, "GC_POS", sizeof( GCPosData ), NULL, NULL );
+	gcClrCompID = ecps_AddComponentType( ecps, "GC_CLR", sizeof( GCColorData ), NULL, NULL );
+	gcRotCompID = ecps_AddComponentType( ecps, "GC_ROT", sizeof( GCRotData ), NULL, NULL );
+	gcScaleCompID = ecps_AddComponentType( ecps, "GC_SCL", sizeof( GCScaleData ), NULL, NULL );
+	gcSpriteCompID = ecps_AddComponentType( ecps, "GC_SPRT", sizeof( GCSpriteData ), NULL, NULL );
+	gc3x3SpriteCompID = ecps_AddComponentType( ecps, "GC_3x3", sizeof( GC3x3SpriteData ), NULL, NULL );
+	gcAABBCollCompID = ecps_AddComponentType( ecps, "GC_AABB", sizeof( GCAABBCollisionData ), NULL, NULL );
+	gcCircleCollCompID = ecps_AddComponentType( ecps, "GC_CIRCLE", sizeof( GCCircleCollisionData ), NULL, NULL );
+	gcPointerResponseCompID = ecps_AddComponentType( ecps, "GC_CLICK", sizeof( GCPointerResponseData ), NULL, NULL );
+	gcCleanUpFlagCompID = ecps_AddComponentType( ecps, "GC_DEAD", 0, NULL, NULL );
+	gcTextCompID = ecps_AddComponentType( ecps, "GC_TXT", sizeof( GCTextData ), NULL, NULL );
 }

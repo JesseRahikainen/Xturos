@@ -15,7 +15,7 @@ uint32_t hashFunc_DJB2( const char* str )
 	uint32_t c;
 
 	while( c = *str++ ) {
-		hash = ( ( hash << 5 ) + hash ) + c;
+		hash = ( ( hash << 5 ) + hash ) + c; // ( hash * 33 ) + c
 	}
 
 	return hash;

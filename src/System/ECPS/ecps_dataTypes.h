@@ -11,6 +11,7 @@ typedef uint32_t ComponentID;
 #define INVALID_COMPONENT_ID UINT32_MAX
 
 typedef int (*VerifyComponent)( EntityID entityID );
+typedef void (*CleanUpComponent)( void* data );
 
 typedef struct {
 	char name[32];
@@ -19,6 +20,10 @@ typedef struct {
 	// this was added to make sure the values of a component are correct (e.g. the character doesn't move off the screen)
 	//  more of a debugging tool than something you should use in a game, think of it like an assert( )
 	VerifyComponent verify; 
+
+	// used when there is clean up that needs to be done after a component is removed or
+	//  an entity containing it is destroyed
+	CleanUpComponent cleanUp;
 } ComponentType;
 
 typedef struct {

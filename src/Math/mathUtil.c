@@ -120,6 +120,22 @@ float engineDegRotToSpineDegRot( float engineDeg )
 	return rot;
 }
 
+float hermiteBlend( float t )
+{
+	t = clamp( 0.0f, 1.0f, t );
+	// 3t^2 - 2t^3
+	return ( ( 3.0f * t * t ) - ( 2.0f * t * t * t ) );
+}
+
+// smoother blend (first and second derivatives have a slope of 0)
+//  gotten from Perlin's paper on simplex noise, hence the name
+float perlinBlend( float t )
+{
+	t = clamp( 0.0f, 1.0f, t );
+	// 6t^5 - 15t^4 + 10t^3
+	return ( ( 6.0f * t * t * t * t * t ) - ( 15.0f * t * t * t * t ) + ( 10.0f * t * t * t ) );
+}
+
 uint8_t lerp_uint8_t( uint8_t from, uint8_t to, float t )
 {
 	return (uint8_t)lerp( (float)from, (float)to, t );

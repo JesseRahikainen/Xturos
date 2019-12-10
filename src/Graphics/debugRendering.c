@@ -186,6 +186,24 @@ int debugRenderer_Circle( unsigned int camFlags, Vector2 center, float radius, C
 	return -fail;
 }
 
+int debugRenderer_Ellipse( unsigned int camFlags, Vector2 center, float horizRadius, float vertRadius, Color color )
+{
+	int fail;
+	Vector2 ellipsePos[NUM_CIRC_VERTS];
+
+	for( int i = 0; i < NUM_CIRC_VERTS; ++i ) {
+		ellipsePos[i].v[0] = center.v[0] + ( sinf( ( (float)(i) ) * ( ( 2.0f * (float)M_PI ) / (float)(NUM_CIRC_VERTS) ) ) * horizRadius );
+		ellipsePos[i].v[1] = center.v[1] + ( cosf( ( (float)(i) ) * ( ( 2.0f * (float)M_PI ) / (float)(NUM_CIRC_VERTS) ) ) * vertRadius );
+	}
+
+	fail = 0;
+	for( int i = 0; i < NUM_CIRC_VERTS; ++i ) {
+		fail = fail || debugRenderer_Line( camFlags, ellipsePos[i], ellipsePos[( i + 1 ) % NUM_CIRC_VERTS], color );
+	}
+
+	return -fail;
+}
+
 int debugRenderer_Triangle( unsigned int camFlags, Vector2 pOne, Vector2 pTwo, Vector2 pThree, Color color )
 {
 	int fail = 0;

@@ -361,6 +361,20 @@ Vector2* mat4_TransformVec2Pos( const Matrix4* m, const Vector2* v, Vector2* out
 	return out;
 }
 
+Vector2* mat4_TransformVec2Pos_InPlace( const Matrix4* m, Vector2* v )
+{
+	assert( m != NULL );
+	assert( v != NULL );
+
+	Vector2 temp;
+	memcpy( &temp, v, sizeof( Vector2 ) );
+
+	v->v[0] = ( m->m[0] * temp.v[0] ) + ( m->m[4] * temp.v[1] ) + m->m[12];
+	v->v[1] = ( m->m[1] * temp.v[0] ) + ( m->m[5] * temp.v[1] ) + m->m[13];
+
+	return v;
+}
+
 bool mat4_Invert( const Matrix4* m, Matrix4* out )
 {
 	assert( m != NULL );

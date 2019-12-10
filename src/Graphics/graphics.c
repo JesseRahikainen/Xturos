@@ -322,6 +322,10 @@ static void staticSizeRender( float dt, float t )
 	triRenderer_Clear( );
 		img_Render( t );
 		spine_RenderInstances( t );
+
+		for( size_t i = 0; i < sb_Count( sbAdditionalDrawFuncs ); ++i ) {
+			sbAdditionalDrawFuncs[i]( t );
+		}
 	triRenderer_Render( );
 
 	// now draw all the debug stuff over everything
