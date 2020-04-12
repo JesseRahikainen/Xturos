@@ -2,18 +2,18 @@ NUKLEAR_DIR = F:/Data/Libraries/nuklear-master
 SPINE_DIR = F:/Data/Libraries/spine-runtimes-master/spine-c
 STB_DIR = F:/Data/Libraries/stb-master
 
-CSRC = $(wildcard ../../src/Game/*.c) \
-       $(wildcard ../../src/Game/Graphics/*.c) \
-       $(wildcard ../../src/Game/IMGUI/*.c) \
-	   $(wildcard ../../src/Game/Input/*.c) \
-	   $(wildcard ../../src/Game/Math/*.c) \
-	   $(wildcard ../../src/Game/System/*.c) \
-	   $(wildcard ../../src/Game/System/ECPS/*.c) \
-	   $(wildcard ../../src/Game/UI/*.c) \
-	   $(wildcard ../../src/Game/Utils/*.c) \
-	   $(wildcard ../../src/Game/Components/*.c) \
-	   $(wildcard ../../src/Game/Processes/*.c) \
-	   $(wildcard ../../src/Game/Game/*.c) \
+CSRC = $(wildcard ../../src/*.c) \
+       $(wildcard ../../src/Graphics/*.c) \
+       $(wildcard ../../src/IMGUI/*.c) \
+	   $(wildcard ../../src/Input/*.c) \
+	   $(wildcard ../../src/Math/*.c) \
+	   $(wildcard ../../src/System/*.c) \
+	   $(wildcard ../../src/System/ECPS/*.c) \
+	   $(wildcard ../../src/UI/*.c) \
+	   $(wildcard ../../src/Utils/*.c) \
+	   $(wildcard ../../src/Components/*.c) \
+	   $(wildcard ../../src/Processes/*.c) \
+	   $(wildcard ../../src/Game/*.c) \
 	   $(wildcard $(SPINE_DIR)/src/spine/*.c)
 
 OBJS = $(CSRC:.c=.o)
