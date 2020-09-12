@@ -32,50 +32,53 @@ void gp_GeneralRender( ECPS* ecps, const Entity* entity, ComponentID posCompID, 
 	ecps_GetComponentFromEntity( entity, posCompID, &pos );
 	ecps_GetComponentFromEntity( entity, sprCompID, &sd );
 
-	Vector2 currPos = pos->currPos;
-	Vector2 futurePos = pos->futurePos;
+	int drawID = img_CreateDraw( sd->img, sd->camFlags, pos->currPos, pos->futurePos, sd->depth );
+	pos->currPos = pos->futurePos;
 
-	Vector2 currScale = VEC2_ONE;
-	Vector2 futureScale = VEC2_ONE;
+	//Vector2 currPos = pos->currPos;
+	//Vector2 futurePos = pos->futurePos;
+
+	//Vector2 currScale = VEC2_ONE;
+	//Vector2 futureScale = VEC2_ONE;
 	if( ecps_GetComponentFromEntity( entity, scaleCompID, &scale ) ) {
-		currScale = scale->currScale;
-		futureScale = scale->futureScale;
-
-		scale->currScale = futureScale;
+		//currScale = scale->currScale;
+		//futureScale = scale->futureScale;
+		img_SetDrawScaleV( drawID, scale->currScale, scale->futureScale );
+		scale->currScale = scale->futureScale;
 	}
 
-	Color currClr = CLR_WHITE;
-	Color futureClr = CLR_WHITE;
+	//Color currClr = CLR_WHITE;
+	//Color futureClr = CLR_WHITE;
 	if( ecps_GetComponentFromEntity( entity, clrCompID, &color ) ) {
-		currClr = color->currClr;
-		futureClr = color->futureClr;
-
-		color->currClr = futureClr;
+		//currClr = color->currClr;
+		//futureClr = color->futureClr;
+		img_SetDrawColor( drawID, color->currClr, color->futureClr );
+		color->currClr = color->futureClr;
 	}
 
-	float currRot = 0.0f;
-	float futureRot = 0.0f;
+	//float currRot = 0.0f;
+	//float futureRot = 0.0f;
 	if( ecps_GetComponentFromEntity( entity, rotCompID, &rot ) ) {
-		currRot = rot->currRot;
-		futureRot = rot->futureRot;
-
+		//currRot = rot->currRot;
+		//futureRot = rot->futureRot;
+		img_SetDrawRotation( drawID, rot->currRot, rot->futureRot );
 		rot->currRot = rot->futureRot;
 	}
 
-	float currVal0 = 0.0f;
-	float futureVal0 = 0.0f;
+	//float currVal0 = 0.0f;
+	//float futureVal0 = 0.0f;
 	if( ecps_GetComponentFromEntity( entity, floatVal0CompID, &floatVal0 ) ) {
-		currVal0 = floatVal0->currValue;
-		futureVal0 = floatVal0->futureValue;
-
+		//currVal0 = floatVal0->currValue;
+		//futureVal0 = floatVal0->futureValue;
+		img_SetDrawFloatVal0( drawID, floatVal0->currValue, floatVal0->futureValue );
 		floatVal0->currValue = floatVal0->futureValue;
 
 		//llog( LOG_DEBUG, "val0: %f -> %f", currVal0, futureVal0 );
 	}
 
-	img_Draw_sv_c_r_v( sd->img, sd->camFlags, currPos, futurePos, currScale, futureScale, currClr, futureClr, currRot, futureRot, currVal0, futureVal0, sd->depth );
+	//img_Draw_sv_c_r_v( sd->img, sd->camFlags, currPos, futurePos, currScale, futureScale, currClr, futureClr, currRot, futureRot, currVal0, futureVal0, sd->depth );
 
-	pos->currPos = pos->futurePos;
+	//pos->currPos = pos->futurePos;
 }
 
 
@@ -235,9 +238,77 @@ static void pointerResponseDetectState( ECPS* ecps, const Entity* entity )
 	}
 }
 
-static void pointerResponseFinalize_TouchScreen( void )
+static void pointerResponseFinalize_TouchScreen( ECPS* ecps )
 {
-	// TODO: Get this working. Major difference will be the automatic press on focus.
+	/*
+	Mobile pointer buttons will act slightly differently since you're either touching
+	the screen or not, there is no pointer to hover over the button. We have no over
+	state.
+
+	       +----4----+   +------3------+
+	       V         |   V             |
+	      idle -0-> clicked -1-> clickedNotOver
+		   ^                           |
+		   +------------2--------------+
+
+		  0 - pressed button
+		  1 - move before releasing button
+		  2 - touch released
+		  3 - moved finger over button
+		  4 - touch released
+	*/
+
+	Entity entity;
+	GCPointerResponseData* prd = NULL;
+	if( ( pointerResponseState == PRS_IDLE ) && ( currChosenPointerResponseID != INVALID_ENTITY_ID ) && pointerResponseMousePressed ) {
+		// touch is currently over chosen entity, switch from idle to over, call over and press response
+		pointerResponseState = PRS_CLICKED_OVER;
+		focusedPointerResponseID = currChosenPointerResponseID;
+
+		if( ecps_GetEntityAndComponentByID( ecps, currChosenPointerResponseID, gcPointerResponseCompID, &entity, &prd ) ) {
+			if( prd->overResponse != NULL ) prd->overResponse( &entity );
+			if( prd->pressResponse != NULL ) prd->pressResponse( &entity );
+		}
+	}
+
+	if( pointerResponseState == PRS_CLICKED_OVER ) {
+		if( currChosenPointerResponseID != focusedPointerResponseID ) {
+			// finger was down and is no longer over, leave response
+			pointerResponseState = PRS_CLICKED_NOT_OVER;
+
+			if( ecps_GetEntityAndComponentByID( ecps, focusedPointerResponseID, gcPointerResponseCompID, &entity, &prd ) ) {
+				if( prd->leaveResponse != NULL ) prd->leaveResponse( &entity );
+			}
+		} else if( pointerResponseMouseReleased ) {
+			// finger released over, call release
+			pointerResponseState = PRS_IDLE;
+
+			if( ecps_GetEntityAndComponentByID( ecps, focusedPointerResponseID, gcPointerResponseCompID, &entity, &prd ) ) {
+				if( prd->releaseResponse != NULL ) prd->releaseResponse( &entity );
+			}
+		}
+	}
+
+	if( pointerResponseState == PRS_CLICKED_NOT_OVER ) {
+		if( pointerResponseMouseReleased ) {
+			// finger was released, but not over focused button, no response
+			pointerResponseState = PRS_IDLE;
+			currChosenPointerResponseID = INVALID_ENTITY_ID;
+
+		} else if( pointerResponseState == currChosenPriority ) {
+			// finger moved back over button, over response, press response? create a secondary press response for just graphics?
+			//  or just don't do over, once you're here you're stuck
+			pointerResponseState = PRS_CLICKED_OVER;
+
+			if( ecps_GetEntityAndComponentByID( ecps, currChosenPointerResponseID, gcPointerResponseCompID, &entity, &prd ) ) {
+				if( prd->overResponse != NULL ) prd->overResponse( &entity );
+			}
+		}
+	}
+
+	prevChosenPointerResponseID = currChosenPointerResponseID;
+	pointerResponseMousePressed = false;
+	pointerResponseMouseReleased = false;
 }
 
 static void pointerResponseFinalize_Mouse( ECPS* ecps )

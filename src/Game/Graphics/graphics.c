@@ -16,7 +16,6 @@
 #include "debugRendering.h"
 #include "spineGfx.h"
 #include "triRendering.h"
-#include "scissor.h"
 
 #include "../IMGUI/nuklearWrapper.h"
 
@@ -67,7 +66,8 @@ static int generateFBO( GLuint* fboOut, GLuint* rbosOut )
 
 	//  create the render buffer objects
 	GL( glBindRenderbuffer( GL_RENDERBUFFER, rbosOut[DEPTH_RBO] ) );
-	GL( glRenderbufferStorage( GL_RENDERBUFFER, GL_DEPTH_COMPONENT32, renderWidth, renderHeight ) );
+	//GL( glRenderbufferStorage( GL_RENDERBUFFER, GL_DEPTH_COMPONENT32, renderWidth, renderHeight ) );/*
+	GL( glRenderbufferStorage( GL_RENDERBUFFER, GL_DEPTH32F_STENCIL8, renderWidth, renderHeight ) );//*/
 	
 	GL( glBindRenderbuffer( GL_RENDERBUFFER, rbosOut[COLOR_RBO] ) );
 	GL( glRenderbufferStorage( GL_RENDERBUFFER, GL_RGB8, renderWidth, renderHeight ) );
@@ -75,7 +75,8 @@ static int generateFBO( GLuint* fboOut, GLuint* rbosOut )
 	//  bind the render buffer objects
 	GL( glBindFramebuffer( GL_DRAW_FRAMEBUFFER, (*fboOut) ) );
 	GL( glFramebufferRenderbuffer( GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, rbosOut[COLOR_RBO] ) );
-	GL( glFramebufferRenderbuffer( GL_DRAW_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rbosOut[DEPTH_RBO] ) );
+	//GL( glFramebufferRenderbuffer( GL_DRAW_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rbosOut[DEPTH_RBO] ) );/*
+	GL( glFramebufferRenderbuffer( GL_DRAW_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbosOut[DEPTH_RBO] ) );//*/
 
 	if( checkAndLogFrameBufferCompleteness( GL_DRAW_FRAMEBUFFER, NULL ) < 0 ) {
 		return -1;
@@ -165,11 +166,6 @@ int gfx_Init( SDL_Window* window, int desiredRenderWidth, int desiredRenderHeigh
 	}
 	llog( LOG_INFO, "Triangle renderer initialized." );
 
-	if( scissor_Init( desiredRenderWidth, desiredRenderHeight ) < 0 ) {
-		return -1;
-	}
-	llog( LOG_INFO, "Scissors initialized." );
-
 	gameClearColor = CLR_MAGENTA;
 
 	return 0;
@@ -244,7 +240,6 @@ void gfx_ClearDrawCommands( float timeToEnd )
 {
 	debugRenderer_ClearVertices( );
 	img_ClearDrawInstructions( );
-	scissor_Clear( );
 
 	for( size_t i = 0; i < sb_Count( sbAdditionalClearFuncs ); ++i ) {
 		sbAdditionalClearFuncs[i]( );
@@ -283,7 +278,7 @@ static void dynamicSizeRender( float dt, float t )
 		// in game ui stuff
 		//  note: this sets the glViewport, so if the render width and height of the imgui instance doesn't match the
 		//   render width and height used above that will cause issues with the UI and the debug rendering
-		nk_xu_render( &inGameIMGUI );
+		//nk_xu_render( &inGameIMGUI );
 
 		// now draw all the debug stuff over everything
 		debugRenderer_Render( );
@@ -305,7 +300,7 @@ static void dynamicSizeRender( float dt, float t )
 	GL( glBindFramebuffer( GL_READ_FRAMEBUFFER, 0 ) );
 
 	// editor and debugging ui stuff
-	nk_xu_render( &editorIMGUI );
+	//nk_xu_render( &editorIMGUI );
 }
 
 static void staticSizeRender( float dt, float t )
@@ -345,7 +340,8 @@ void gfx_Render( float dt )
 #if defined( __EMSCRIPTEN__ )
 	staticSizeRender( dt, t );
 #else
-	dynamicSizeRender( dt, t );
+	//staticSizeRender( dt, t );/*
+	dynamicSizeRender( dt, t );//*/
 #endif
 }
 

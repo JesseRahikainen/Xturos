@@ -1042,22 +1042,22 @@ static void runCleanUpOnEntityComponents( ECPS* ecps, EntityID entityID )
 {
 	// go through all the components in the entity and run clean up code if necessary
 	//  get the structure for the entity
-uint32_t idx = idSet_GetIndex( entityID );
-int32_t packedArrayIdx = ecps->componentData.sbEntityDirectory[idx].packedArrayIdx;
-size_t offset = ecps->componentData.sbEntityDirectory[idx].positionOffset;
-PackagedComponentArray pca = ecps->componentData.sbComponentArrays[packedArrayIdx];
+	uint32_t idx = idSet_GetIndex( entityID );
+	int32_t packedArrayIdx = ecps->componentData.sbEntityDirectory[idx].packedArrayIdx;
+	size_t offset = ecps->componentData.sbEntityDirectory[idx].positionOffset;
+	PackagedComponentArray pca = ecps->componentData.sbComponentArrays[packedArrayIdx];
 
-//  get the data for the entity
-uint8_t* data = ( pca.sbData ) + offset;
+	//  get the data for the entity
+	uint8_t* data = ( pca.sbData ) + offset;
 
-//  find all types that have a clean up and call them
-for( uint32_t i = 0; i < MAX_NUM_COMPONENT_TYPES; ++i ) {
-	if( pca.structure.entries[i].offset < 0 ) continue; // not used so skip
-	if( ecps->componentTypes.sbTypes[i].cleanUp == NULL ) continue; // no cleanup necessary, skip
+	//  find all types that have a clean up and call them
+	for( uint32_t i = 0; i < MAX_NUM_COMPONENT_TYPES; ++i ) {
+		if( pca.structure.entries[i].offset < 0 ) continue; // not used so skip
+		if( ecps->componentTypes.sbTypes[i].cleanUp == NULL ) continue; // no cleanup necessary, skip
 
-	void* cleanUpData = (void*)( data + pca.structure.entries[i].offset );
-	ecps->componentTypes.sbTypes[i].cleanUp( cleanUpData );
-}
+		void* cleanUpData = (void*)( data + pca.structure.entries[i].offset );
+		ecps->componentTypes.sbTypes[i].cleanUp( cleanUpData );
+	}
 }
 
 static void immediateDestroyEntity( ECPS* ecps, EntityID entityID )

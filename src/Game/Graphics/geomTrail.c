@@ -228,8 +228,8 @@ static void drawGeomTrailTris( GeomTrail* trail, float t )
 		vert2.col = color1;
 		vert3.col = color1;
 
-		triRenderer_Add( vert0, vert1, vert2, ST_DEFAULT, textureID, 0.0f, 0, trail->camFlags, trail->depth, 1 );
-		triRenderer_Add( vert1, vert3, vert2, ST_DEFAULT, textureID, 0.0f, 0, trail->camFlags, trail->depth, 1 );
+		triRenderer_Add( vert0, vert1, vert2, ST_DEFAULT, textureID, 0.0f, -1, trail->camFlags, trail->depth, TT_TRANSPARENT );
+		triRenderer_Add( vert1, vert3, vert2, ST_DEFAULT, textureID, 0.0f, -1, trail->camFlags, trail->depth, TT_TRANSPARENT );
 	}
 
 	mem_Release( trailRenderGeom );

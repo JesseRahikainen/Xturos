@@ -53,13 +53,17 @@ static void draw( void )
 		}
 
 		if( checkBoxes[i].isChecked ) {
-			img_Draw_sv( checkBoxes[i].checkMarkImgId, checkBoxes[i].camFlags,
+			int drawID = img_CreateDraw( checkBoxes[i].checkMarkImgId, checkBoxes[i].camFlags, checkBoxes[i].position, checkBoxes[i].position, checkBoxes[i].depth );
+			img_SetDrawScaleV( drawID, checkBoxes[i].drawScale, checkBoxes[i].drawScale );
+			/*img_Draw_sv( checkBoxes[i].checkMarkImgId, checkBoxes[i].camFlags,
 				checkBoxes[i].position, checkBoxes[i].position,
-				checkBoxes[i].drawScale, checkBoxes[i].drawScale, checkBoxes[i].depth );
+				checkBoxes[i].drawScale, checkBoxes[i].drawScale, checkBoxes[i].depth );//*/
 		} else {
-			img_Draw_sv( checkBoxes[i].normalImgId, checkBoxes[i].camFlags,
+			int drawID = img_CreateDraw( checkBoxes[i].normalImgId, checkBoxes[i].camFlags, checkBoxes[i].position, checkBoxes[i].position, checkBoxes[i].depth );
+			img_SetDrawScaleV( drawID, checkBoxes[i].drawScale, checkBoxes[i].drawScale );
+			/*img_Draw_sv( checkBoxes[i].normalImgId, checkBoxes[i].camFlags,
 				checkBoxes[i].position, checkBoxes[i].position,
-				checkBoxes[i].drawScale, checkBoxes[i].drawScale, checkBoxes[i].depth );
+				checkBoxes[i].drawScale, checkBoxes[i].drawScale, checkBoxes[i].depth );//*/
 		}
 
 		if( ( checkBoxes[i].text[0] != 0 ) && ( checkBoxes[i].fontID >= 0 ) ) {

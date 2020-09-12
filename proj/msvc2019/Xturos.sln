@@ -1,11 +1,13 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2013
-VisualStudioVersion = 12.0.31101.0
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29613.14
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Xturos", "Xturos.vcxproj", "{52003A75-2AD7-44C0-B8FC-08605C0E25E5}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SDFImageGenerator", "SDFImageGenerator.vcxproj", "{76FAE2C7-0273-41C7-944F-7134BC8957CA}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SpriteSheetGenerator", "SpriteSheetGenerator.vcxproj", "{C19DC230-9753-4F71-A369-E617938D3499}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -29,8 +31,22 @@ Global
 		{76FAE2C7-0273-41C7-944F-7134BC8957CA}.Release|Win32.Build.0 = Release|Win32
 		{76FAE2C7-0273-41C7-944F-7134BC8957CA}.Release|x64.ActiveCfg = Release|x64
 		{76FAE2C7-0273-41C7-944F-7134BC8957CA}.Release|x64.Build.0 = Release|x64
+		{C19DC230-9753-4F71-A369-E617938D3499}.Debug|Win32.ActiveCfg = Debug|Win32
+		{C19DC230-9753-4F71-A369-E617938D3499}.Debug|Win32.Build.0 = Debug|Win32
+		{C19DC230-9753-4F71-A369-E617938D3499}.Debug|x64.ActiveCfg = Debug|x64
+		{C19DC230-9753-4F71-A369-E617938D3499}.Debug|x64.Build.0 = Debug|x64
+		{C19DC230-9753-4F71-A369-E617938D3499}.Release|Win32.ActiveCfg = Release|Win32
+		{C19DC230-9753-4F71-A369-E617938D3499}.Release|Win32.Build.0 = Release|Win32
+		{C19DC230-9753-4F71-A369-E617938D3499}.Release|x64.ActiveCfg = Release|x64
+		{C19DC230-9753-4F71-A369-E617938D3499}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {5CDEE45B-74D9-453A-89A2-9FF1D5DB2890}
+	EndGlobalSection
+	GlobalSection(Performance) = preSolution
+		HasPerformanceSessions = true
 	EndGlobalSection
 EndGlobal

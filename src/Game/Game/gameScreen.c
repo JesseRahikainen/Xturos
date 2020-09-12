@@ -251,7 +251,7 @@ static void gameScreen_Draw( void )
 {
 	//img_Draw( spriteSheetImg, 1, pos[0], pos[0], 0 );
 	for( int i = 0; i < numImagesOnSheet; ++i ) {
-		img_Draw( imageSheet[i], 1, pos[i], pos[i], 0 );
+		img_CreateDraw( imageSheet[i], 1, pos[i], pos[i], 0 );
 	}
 
 	txt_DisplayString( "Testing stuff\nAnd even more stuff\nAnd once more", VEC2_ZERO, CLR_RED, HORIZ_ALIGN_LEFT, VERT_ALIGN_TOP, font, 1, 0, 128.0f );

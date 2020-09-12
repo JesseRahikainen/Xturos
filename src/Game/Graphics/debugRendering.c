@@ -224,6 +224,7 @@ void debugRenderer_Render( void )
 		GL( glDisable( GL_DEPTH_TEST ) );
 		GL( glDepthMask( GL_FALSE ) );
 		GL( glDisable( GL_BLEND ) );
+		GL( glDisable( GL_STENCIL ) );
 
 		GL( glUseProgram( debugShaderProgram.programID ) );
 		GL( glBindVertexArray( debugVAO ) );

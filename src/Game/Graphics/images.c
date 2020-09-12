@@ -8,7 +8,6 @@
 
 #include "../Math/matrix4.h"
 #include "gfxUtil.h"
-#include "scissor.h"
 #include "../System/platformLog.h"
 #include "../Math/mathUtil.h"
 
@@ -58,10 +57,11 @@ typedef struct {
 	DrawInstructionState start;
 	DrawInstructionState end;
 	int flags;
-	int scissorID;
+	int stencilID;
 	uint32_t camFlags;
 	int8_t depth;
 	ShaderType shaderType;
+	bool isStencil;
 } DrawInstruction;
 
 static DrawInstruction renderBuffer[MAX_RENDER_INSTRUCTIONS];
@@ -674,7 +674,8 @@ static DrawInstruction* GetNextRenderInstruction( int imgObj, uint32_t camFlags,
 	ri->camFlags = camFlags;
 	ri->shaderType = images[imgObj].shaderType;
 	ri->depth = depth;
-	ri->scissorID = scissor_GetTopID( );
+	ri->stencilID = -1;
+	ri->isStencil = false;
 	memcpy( ri->uvs, DEFAULT_DRAW_INSTRUCTION.uvs, sizeof( ri->uvs ) );
 
 	ri->uvs[0] = images[imgObj].uvMin;
@@ -688,6 +689,170 @@ static DrawInstruction* GetNextRenderInstruction( int imgObj, uint32_t camFlags,
 	ri->uvs[3] = images[imgObj].uvMax;
 
 	return ri;
+}
+
+int img_CreateDraw( int imgID, uint32_t camFlags, Vector2 startPos, Vector2 endPos, int8_t depth )
+{
+	// the image hasn't been loaded yet, so don't render anything
+	if( imgID < 0 ) {
+		// TODO: Use a temporary image.
+		return -1;
+	}
+
+	if( !( images[imgID].flags & IMGFLAG_IN_USE ) ) {
+		llog( LOG_VERBOSE, "Attempting to draw invalid image: %i", imgID );
+		return -1;
+	}
+
+	if( lastDrawInstruction >= MAX_RENDER_INSTRUCTIONS ) {
+		llog( LOG_VERBOSE, "Render instruction queue full." );
+		return -1;
+	}
+
+	++lastDrawInstruction;
+	DrawInstruction* ri = &( renderBuffer[lastDrawInstruction] );
+
+	*ri = DEFAULT_DRAW_INSTRUCTION;
+	ri->textureObj = images[imgID].textureObj;
+	ri->imageObj = imgID;
+	ri->start.pos = startPos;
+	ri->end.pos = endPos;
+	ri->start.scaledSize = images[imgID].size;
+	ri->end.scaledSize = images[imgID].size;
+	ri->start.color = CLR_WHITE;
+	ri->end.color = CLR_WHITE;
+	ri->start.rotation = 0.0f;
+	ri->end.rotation = 0.0f;
+	ri->start.offset = images[imgID].offset;
+	ri->end.offset = images[imgID].offset;
+	ri->start.floatVal0 = 0.0f;
+	ri->end.floatVal0 = 0.0f;
+	ri->flags = images[imgID].flags;
+	ri->camFlags = camFlags;
+	ri->shaderType = images[imgID].shaderType;
+	ri->depth = depth;
+	ri->stencilID = -1;
+	ri->isStencil = false;
+	memcpy( ri->uvs, DEFAULT_DRAW_INSTRUCTION.uvs, sizeof( ri->uvs ) );
+
+	ri->uvs[0] = images[imgID].uvMin;
+
+	ri->uvs[1].x = images[imgID].uvMin.x;
+	ri->uvs[1].y = images[imgID].uvMax.y;
+
+	ri->uvs[2].x = images[imgID].uvMax.x;
+	ri->uvs[2].y = images[imgID].uvMin.y;
+
+	ri->uvs[3] = images[imgID].uvMax;
+
+	return lastDrawInstruction;
+}
+
+void img_SetDrawScale( int drawID, float start, float end )
+{
+	if( ( drawID < 0 ) || ( drawID > lastDrawInstruction ) ) {
+		llog( LOG_DEBUG, "Attempting to set scale on invalid draw command." );
+		return;
+	}
+
+	renderBuffer[drawID].start.scaledSize.x *= start;
+	renderBuffer[drawID].start.scaledSize.y *= start;
+	renderBuffer[drawID].end.scaledSize.x *= end;
+	renderBuffer[drawID].end.scaledSize.y *= end;
+	renderBuffer[drawID].start.offset.x *= start;
+	renderBuffer[drawID].start.offset.y *= start;
+	renderBuffer[drawID].end.offset.x *= end;
+	renderBuffer[drawID].end.offset.y *= end;
+}
+
+void img_SetDrawScaleV( int drawID, Vector2 start, Vector2 end )
+{
+	if( ( drawID < 0 ) || ( drawID > lastDrawInstruction ) ) {
+		llog( LOG_DEBUG, "Attempting to set scale on invalid draw command." );
+		return;
+	}
+
+	renderBuffer[drawID].start.scaledSize.x *= start.x;
+	renderBuffer[drawID].start.scaledSize.y *= start.y;
+	renderBuffer[drawID].end.scaledSize.x *= end.x;
+	renderBuffer[drawID].end.scaledSize.y *= end.y;
+	renderBuffer[drawID].start.offset.x *= start.x;
+	renderBuffer[drawID].start.offset.y *= start.y;
+	renderBuffer[drawID].end.offset.x *= end.x;
+	renderBuffer[drawID].end.offset.y *= end.y;
+}
+
+void img_SetDrawColor( int drawID, Color start, Color end )
+{
+	if( ( drawID < 0 ) || ( drawID > lastDrawInstruction ) ) {
+		llog( LOG_DEBUG, "Attempting to set color on invalid draw command." );
+		return;
+	}
+
+	renderBuffer[drawID].start.color = start;
+	renderBuffer[drawID].end.color = start;
+
+	if( ( ( start.a > 0.0f ) && ( start.a < 1.0f ) ) ||
+		( ( start.a > 0.0f ) && ( end.a < 1.0f ) ) ) {
+		renderBuffer[drawID].flags |= IMGFLAG_HAS_TRANSPARENCY;
+	}
+}
+
+void img_SetDrawRotation( int drawID, float start, float end )
+{
+	if( ( drawID < 0 ) || ( drawID > lastDrawInstruction ) ) {
+		llog( LOG_DEBUG, "Attempting to set rotation on invalid draw command." );
+		return;
+	}
+
+	renderBuffer[drawID].start.rotation = start;
+	renderBuffer[drawID].end.rotation = start;
+}
+
+void img_SetDrawFloatVal0( int drawID, float start, float end )
+{
+	if( ( drawID < 0 ) || ( drawID > lastDrawInstruction ) ) {
+		llog( LOG_DEBUG, "Attempting to set float val 0 on invalid draw command." );
+		return;
+	}
+
+	renderBuffer[drawID].start.floatVal0 = start;
+	renderBuffer[drawID].end.floatVal0 = start;
+}
+
+void img_SetDrawStencil( int drawID, bool isStencil, int stencilID )
+{
+	if( ( drawID < 0 ) || ( drawID > lastDrawInstruction ) ) {
+		llog( LOG_DEBUG, "Attempting to set stencil values on invalid draw command." );
+		return;
+	}
+
+	if( isStencil && ( ( stencilID < 0 ) || ( stencilID > 7 ) ) ) {
+		llog( LOG_DEBUG, "Attempting to set invalid stencil id on stencil draw command." );
+		return;
+	}
+
+	renderBuffer[drawID].isStencil = isStencil;
+	renderBuffer[drawID].stencilID = stencilID;
+}
+
+void img_SetDrawSize( int drawID, Vector2 start, Vector2 end )
+{
+	if( ( drawID < 0 ) || ( drawID > lastDrawInstruction ) ) {
+		llog( LOG_DEBUG, "Attempting to set size on invalid draw command." );
+		return;
+	}
+
+	// reset the size
+	Vector2 startScale;
+	startScale.x = start.x / renderBuffer[drawID].start.scaledSize.x;
+	startScale.y = start.y / renderBuffer[drawID].start.scaledSize.y;
+
+	Vector2 endScale;
+	endScale.x = start.x / renderBuffer[drawID].end.scaledSize.x;
+	endScale.y = start.y / renderBuffer[drawID].end.scaledSize.y;
+
+	img_SetDrawScaleV( drawID, startScale, endScale );
 }
 
 /*
@@ -717,6 +882,7 @@ Adds to the list of images to draw.
 		( ( endColor.a > 0 ) && ( endColor.a < 1.0f ) )) { \
 		ri->flags |= IMGFLAG_HAS_TRANSPARENCY; }
 
+/*
 #define SET_DRAW_INSTRUCTION_ROT( startRotRad, endRotRad ) \
 	ri->start.rotation = startRotRad; \
 	ri->end.rotation = endRotRad;
@@ -724,58 +890,7 @@ Adds to the list of images to draw.
 #define SET_DRAW_INSTRUCTION_FLOAT_VAL( startVal, endVal ) \
 	ri->start.floatVal0 = startVal; \
 	ri->end.floatVal0 = endVal;
-
-int img_Draw( int imgID, uint32_t camFlags, Vector2 startPos, Vector2 endPos, int8_t depth )
-{
-	DRAW_INSTRUCTION_START;
-	DRAW_INSTRUCTION_END;
-}
-
-int img_Draw_s( int imgID, uint32_t camFlags, Vector2 startPos, Vector2 endPos, float startScale, float endScale, int8_t depth )
-{
-	DRAW_INSTRUCTION_START;
-	SET_DRAW_INSTRUCTION_SCALE( startScale, startScale, endScale, endScale );
-	DRAW_INSTRUCTION_END;
-}
-
-int img_Draw_sv( int imgID, uint32_t camFlags, Vector2 startPos, Vector2 endPos, Vector2 startScale, Vector2 endScale, int8_t depth )
-{
-	DRAW_INSTRUCTION_START;
-	SET_DRAW_INSTRUCTION_SCALE( startScale.x, startScale.y, endScale.x, endScale.y );
-	DRAW_INSTRUCTION_END;
-}
-
-int img_Draw_c( int imgID, uint32_t camFlags, Vector2 startPos, Vector2 endPos, Color startColor, Color endColor, int8_t depth )
-{
-	DRAW_INSTRUCTION_START;
-	SET_DRAW_INSTRUCTION_COLOR( startColor, endColor );
-	DRAW_INSTRUCTION_END;
-}
-
-int img_Draw_r( int imgID, uint32_t camFlags, Vector2 startPos, Vector2 endPos, float startRotRad, float endRotRad, int8_t depth )
-{
-	DRAW_INSTRUCTION_START;
-	SET_DRAW_INSTRUCTION_ROT( startRotRad, endRotRad );
-	DRAW_INSTRUCTION_END;
-}
-
-int img_Draw_s_c( int imgID, uint32_t camFlags, Vector2 startPos, Vector2 endPos, float startScale, float endScale,
-	Color startColor, Color endColor, int8_t depth )
-{
-	DRAW_INSTRUCTION_START;
-	SET_DRAW_INSTRUCTION_SCALE( startScale, startScale, endScale, endScale );
-	SET_DRAW_INSTRUCTION_COLOR( startColor, endColor );
-	DRAW_INSTRUCTION_END;
-}
-
-int img_Draw_s_r( int imgID, uint32_t camFlags, Vector2 startPos, Vector2 endPos, float startScale, float endScale,
-	float startRotRad, float endRotRad, int8_t depth )
-{
-	DRAW_INSTRUCTION_START;
-	SET_DRAW_INSTRUCTION_SCALE( startScale, startScale, endScale, endScale );
-	SET_DRAW_INSTRUCTION_ROT( startRotRad, endRotRad );
-	DRAW_INSTRUCTION_END;
-}
+//*/
 
 int img_Draw_sv_c( int imgID, uint32_t camFlags, Vector2 startPos, Vector2 endPos, Vector2 startScale, Vector2 endScale,
 	Color startColor, Color endColor, int8_t depth )
@@ -783,55 +898,6 @@ int img_Draw_sv_c( int imgID, uint32_t camFlags, Vector2 startPos, Vector2 endPo
 	DRAW_INSTRUCTION_START;
 	SET_DRAW_INSTRUCTION_SCALE( startScale.x, startScale.y, endScale.x, endScale.y );
 	SET_DRAW_INSTRUCTION_COLOR( startColor, endColor );
-	DRAW_INSTRUCTION_END;
-}
-
-int img_Draw_sv_r( int imgID, uint32_t camFlags, Vector2 startPos, Vector2 endPos, Vector2 startScale, Vector2 endScale,
-	float startRotRad, float endRotRad, int8_t depth )
-{
-	DRAW_INSTRUCTION_START;
-	SET_DRAW_INSTRUCTION_SCALE( startScale.x, startScale.y, endScale.x, endScale.y );
-	SET_DRAW_INSTRUCTION_ROT( startRotRad, endRotRad );
-	DRAW_INSTRUCTION_END;
-}
-
-int img_Draw_c_r( int imgID, uint32_t camFlags, Vector2 startPos, Vector2 endPos, Color startColor, Color endColor,
-	float startRotRad, float endRotRad, int8_t depth )
-{
-	DRAW_INSTRUCTION_START;
-	SET_DRAW_INSTRUCTION_COLOR( startColor, endColor );
-	SET_DRAW_INSTRUCTION_ROT( startRotRad, endRotRad );
-	DRAW_INSTRUCTION_END;
-}
-
-int img_Draw_s_c_r( int imgID, uint32_t camFlags, Vector2 startPos, Vector2 endPos, float startScale, float endScale,
-	Color startColor, Color endColor, float startRotRad, float endRotRad, int8_t depth )
-{
-	DRAW_INSTRUCTION_START;
-	SET_DRAW_INSTRUCTION_SCALE( startScale, startScale, endScale, endScale );
-	SET_DRAW_INSTRUCTION_COLOR( startColor, endColor );
-	SET_DRAW_INSTRUCTION_ROT( startRotRad, endRotRad );
-	DRAW_INSTRUCTION_END;
-}
-
-int img_Draw_sv_c_r( int imgID, uint32_t camFlags, Vector2 startPos, Vector2 endPos, Vector2 startScale, Vector2 endScale,
-	Color startColor, Color endColor, float startRotRad, float endRotRad, int8_t depth )
-{
-	DRAW_INSTRUCTION_START;
-	SET_DRAW_INSTRUCTION_SCALE( startScale.x, startScale.y, endScale.x, endScale.y );
-	SET_DRAW_INSTRUCTION_COLOR( startColor, endColor );
-	SET_DRAW_INSTRUCTION_ROT( startRotRad, endRotRad );
-	DRAW_INSTRUCTION_END;
-}
-
-int img_Draw_sv_c_r_v( int imgID, uint32_t camFlags, Vector2 startPos, Vector2 endPos, Vector2 startScale, Vector2 endScale,
-	Color startColor, Color endColor, float startRotRad, float endRotRad, float startFloatVal0, float endFloatVal0, int8_t depth )
-{
-	DRAW_INSTRUCTION_START;
-	SET_DRAW_INSTRUCTION_SCALE( startScale.x, startScale.y, endScale.x, endScale.y );
-	SET_DRAW_INSTRUCTION_COLOR( startColor, endColor );
-	SET_DRAW_INSTRUCTION_ROT( startRotRad, endRotRad );
-	SET_DRAW_INSTRUCTION_FLOAT_VAL( startFloatVal0, endFloatVal0 );
 	DRAW_INSTRUCTION_END;
 }
 
@@ -1030,15 +1096,18 @@ void img_Render( float normTimeElapsed )
 			verts[i].col = col;
 		}
 
-		int transparent = ( renderBuffer[idx].flags & IMGFLAG_HAS_TRANSPARENCY ) != 0;
+		TriType type = ( renderBuffer[idx].flags & IMGFLAG_HAS_TRANSPARENCY ) ? TT_TRANSPARENT : TT_SOLID;
+		if( renderBuffer[idx].isStencil ) {
+			type = TT_STENCIL;
+		}
 
 		triRenderer_Add( verts[indices[0]], verts[indices[1]], verts[indices[2]],
 			renderBuffer[idx].shaderType, renderBuffer[idx].textureObj, floatVal0,
-			renderBuffer[idx].scissorID, renderBuffer[idx].camFlags, renderBuffer[idx].depth,
-			transparent );
+			renderBuffer[idx].stencilID, renderBuffer[idx].camFlags, renderBuffer[idx].depth,
+			type );
 		triRenderer_Add( verts[indices[3]], verts[indices[4]], verts[indices[5]],
 			renderBuffer[idx].shaderType, renderBuffer[idx].textureObj, floatVal0,
-			renderBuffer[idx].scissorID, renderBuffer[idx].camFlags, renderBuffer[idx].depth,
-			transparent );
+			renderBuffer[idx].stencilID, renderBuffer[idx].camFlags, renderBuffer[idx].depth,
+			type );
 	}
 }

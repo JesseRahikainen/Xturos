@@ -695,7 +695,10 @@ void txt_DisplayString( const char* utf8Str, Vector2 pos, Color clr, HorizTextAl
 		} else {
 			Glyph* glyph = getCodepointGlyph( fontID, codepoint );
 			if( glyph != NULL ) {
-				img_Draw_s_c( glyph->imageID, camFlags, currPos, currPos, scale, scale, clr, clr, depth );
+				int drawID = img_CreateDraw( glyph->imageID, camFlags, currPos, currPos, depth );
+				img_SetDrawScale( drawID, scale, scale );
+				img_SetDrawColor( drawID, clr, clr );
+				//img_Draw_s_c( glyph->imageID, camFlags, currPos, currPos, scale, scale, clr, clr, depth );
 				//img_Draw_c( glyph->imageID, camFlags, currPos, currPos, clr, clr, depth );
 				currPos.x += glyph->advance * scale;
 			}
@@ -860,7 +863,10 @@ bool txt_DisplayTextArea( const uint8_t* utf8Str, Vector2 upperLeft, Vector2 siz
 			Glyph* glyph = getCodepointGlyph( fontID, sbStringCodepointBuffer[i] );
 			if( glyph != NULL ) {
 				//img_Draw_c( glyph->imageID, camFlags, renderPos, renderPos, clr, clr, depth );
-				img_Draw_s_c( glyph->imageID, camFlags, renderPos, renderPos, scale, scale, clr, clr, depth );
+				//img_Draw_s_c( glyph->imageID, camFlags, renderPos, renderPos, scale, scale, clr, clr, depth );
+				int drawID = img_CreateDraw( glyph->imageID, camFlags, renderPos, renderPos, depth );
+				img_SetDrawScale( drawID, scale, scale );
+				img_SetDrawColor( drawID, clr, clr );
 				renderPos.x += ( glyph->advance * scale );
 			}
 		}

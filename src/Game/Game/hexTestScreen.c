@@ -160,7 +160,7 @@ static void hexTestScreen_Draw( void )
 		pos.x = (float)( (int)pos.x );
 		pos.y = (float)( (int)pos.y );
 
-		img_Draw( hexMap[i], 1, pos, pos, 0 );
+		img_CreateDraw( hexMap[i], 1, pos, pos, 0 );
 	}
 
 	Vector2 mousePos;
@@ -177,7 +177,7 @@ static void hexTestScreen_Draw( void )
 				if( hex_CoordInRect( sbList[i], GRID_WIDTH, GRID_HEIGHT ) ) {
 					Vector2 pos = hex_Pointy_GridToPosition( POINTY_SIZE, sbList[i] );
 					vec2_Add( &pos, &basePos, &pos );
-					img_Draw( hexHiliteImg, 1, pos, pos, 1 );
+					img_CreateDraw( hexHiliteImg, 1, pos, pos, 1 );
 				}
 			}
 
@@ -191,7 +191,7 @@ static void hexTestScreen_Draw( void )
 		if( hex_CoordInRect( sbLine[i], GRID_WIDTH, GRID_HEIGHT ) ) {
 			Vector2 pos = hex_Pointy_GridToPosition( POINTY_SIZE, sbLine[i] );
 			vec2_Add( &pos, &basePos, &pos );
-			img_Draw( hexHiliteImg, 1, pos, pos, 1 );
+			img_CreateDraw( hexHiliteImg, 1, pos, pos, 1 );
 		}
 	}
 	sb_Release( sbLine );

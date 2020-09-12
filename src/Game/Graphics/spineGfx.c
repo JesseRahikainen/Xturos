@@ -458,8 +458,9 @@ static void drawCharacter( SpineInstance* spine )
 
 				texture = (Texture*)((spAtlasRegion*)regionAttachment->rendererObject)->page->rendererObject;
 
-				triRenderer_Add( verts[0], verts[1], verts[2], ST_DEFAULT, texture->textureID, 0.0f, 0, camFlags, depth, texture->flags & TF_IS_TRANSPARENT );
-				triRenderer_Add( verts[0], verts[2], verts[3], ST_DEFAULT, texture->textureID, 0.0f, 0, camFlags, depth, texture->flags & TF_IS_TRANSPARENT );
+				TriType type = ( texture->flags & TF_IS_TRANSPARENT ) ? TT_TRANSPARENT : TT_SOLID;
+				triRenderer_Add( verts[0], verts[1], verts[2], ST_DEFAULT, texture->textureID, 0.0f, -1, camFlags, depth, type );
+				triRenderer_Add( verts[0], verts[2], verts[3], ST_DEFAULT, texture->textureID, 0.0f, -1, camFlags, depth, type );
 			} break;
 		/*case SP_ATTACHMENT_BOUNDING_BOX: {
 				// if we're debugging 
@@ -501,7 +502,8 @@ static void drawCharacter( SpineInstance* spine )
 					}
 
 					//debugRenderer_Triangle( camFlags, verts[0], verts[1], verts[2], CLR_GREEN );
-					triRenderer_AddVertices( verts, ST_DEFAULT, texture->textureID, 0.0f, 0, camFlags, depth, texture->flags & TF_IS_TRANSPARENT );
+					TriType type = ( texture->flags & TF_IS_TRANSPARENT ) ? TT_TRANSPARENT : TT_SOLID;
+					triRenderer_AddVertices( verts, ST_DEFAULT, texture->textureID, 0.0f, -1, camFlags, depth, type );
 				}
 			} break;
 		default:

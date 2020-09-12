@@ -86,7 +86,9 @@ void hashMap_Init( HashMap* hashMap, uint32_t estimatedSize, HashFunc hashFunc )
 		hashMap->keys[i].probeLength = UINT8_MAX;
 	}
 
-	hashMap->probeLimit = (size_t)log2( (double)hashMap->capacity );
+	// android doesn't support log2, so we just do ln( c ) / ln( 2 )
+	//hashMap->probeLimit = (size_t)log2( (double)hashMap->capacity );
+	hashMap->probeLimit = (size_t)( SDL_log( (double)hashMap->capacity ) * 1.4426950408889634 );
 }
 
 static void resize( HashMap* hashMap, uint32_t newSize )

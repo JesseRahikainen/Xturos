@@ -188,7 +188,7 @@ static void testJobQueueScreen_Process( void )
 
 static void testJobQueueScreen_Draw( void )
 {
-	img_Draw( testImg, 1, vec2( 400.0f, 400.0f ), vec2( 400.0f, 400.0f ), 0 );
+	img_CreateDraw( testImg, 1, vec2( 400.0f, 400.0f ), vec2( 400.0f, 400.0f ), 0 );
 
 //#error the string is being displayed all garbled
 	//const char* testString = "Testing some string stuff.\nSeeing if it works.";

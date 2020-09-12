@@ -17,6 +17,12 @@ typedef enum {
 	NUM_SHADERS
 } ShaderType;
 
+typedef enum {
+	TT_SOLID,
+	TT_TRANSPARENT,
+	TT_STENCIL,
+} TriType;
+
 typedef struct {
 	Vector2 pos;
 	Vector2 uv;
@@ -41,9 +47,9 @@ We'll assume the array has three vertices in it.
  Return a value < 0 if there's a problem.
 */
 int triRenderer_AddVertices( TriVert* verts, ShaderType shader, GLuint texture, float floatVal0,
-	int clippingID, uint32_t camFlags, int8_t depth, int transparent );
+	int clippingID, uint32_t camFlags, int8_t depth, TriType type );
 int triRenderer_Add( TriVert vert0, TriVert vert1, TriVert vert2, ShaderType shader, GLuint texture, float floatVal0,
-	int clippingID, uint32_t camFlags, int8_t depth, int transparent );
+	int clippingID, uint32_t camFlags, int8_t depth, TriType type );
 
 /*
 Clears out all the triangles currently stored.

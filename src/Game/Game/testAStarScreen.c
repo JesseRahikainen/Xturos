@@ -90,7 +90,9 @@ static void drawMap( void )
 	int mouseIdx = mapPosToIdx( mousePos );
 	if( mouseIdx >= 0 ) {
 		Vector2 pos = mapIdxToPos( mouseIdx );
-		img_Draw_c( hiliteImg, 1, pos, pos, CLR_WHITE, CLR_WHITE, 10 );
+		//img_Draw_c( hiliteImg, 1, pos, pos, CLR_WHITE, CLR_WHITE, 10 );
+		int drawID = img_CreateDraw( hiliteImg, 1, pos, pos, 10 );
+		img_SetDrawColor( drawID, CLR_WHITE, CLR_WHITE );
 	}
 
 	for( int i = 0; i < ARRAY_SIZE( map ); ++i ) {
@@ -109,22 +111,30 @@ static void drawMap( void )
 			break;
 		}
 
-		img_Draw_c( tileImg, 1, pos, pos, clr, clr, 0 );
+		//img_Draw_c( tileImg, 1, pos, pos, clr, clr, 0 );
+		int drawID = img_CreateDraw( tileImg, 1, pos, pos, 0 );
+		img_SetDrawColor( drawID, clr, clr );
 	}
 
 	if( startIdx >= 0 ) {
 		Vector2 pos = mapIdxToPos( startIdx );
-		img_Draw_c( tileMarkerImg, 1, pos, pos, CLR_GREEN, CLR_GREEN, 5 );
+		//img_Draw_c( tileMarkerImg, 1, pos, pos, CLR_GREEN, CLR_GREEN, 5 );
+		int drawID = img_CreateDraw( tileMarkerImg, 1, pos, pos, 5 );
+		img_SetDrawColor( drawID, CLR_GREEN, CLR_GREEN );
 	}
 
 	if( exitIdx >= 0 ) {
 		Vector2 pos = mapIdxToPos( exitIdx );
-		img_Draw_c( tileMarkerImg, 1, pos, pos, CLR_RED, CLR_RED, 5 );
+		//img_Draw_c( tileMarkerImg, 1, pos, pos, CLR_RED, CLR_RED, 5 );
+		int drawID = img_CreateDraw( tileMarkerImg, 1, pos, pos, 5 );
+		img_SetDrawColor( drawID, CLR_RED, CLR_RED );
 	}
 
 	for( size_t i = 0; i < sb_Count( sbPath ); ++i ) {
 		Vector2 pos = mapIdxToPos( sbPath[i] );
-		img_Draw_c( pathMarkerImg, 1, pos, pos, CLR_BLUE, CLR_BLUE, 3 );
+		//img_Draw_c( pathMarkerImg, 1, pos, pos, CLR_BLUE, CLR_BLUE, 3 );
+		int drawID = img_CreateDraw( pathMarkerImg, 1, pos, pos, 3 );
+		img_SetDrawColor( drawID, CLR_BLUE, CLR_BLUE );
 	}
 }
 

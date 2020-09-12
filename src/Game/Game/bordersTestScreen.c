@@ -411,11 +411,11 @@ static void bordersTestScreen_Draw( void )
 		for( int x = 0; x < MAP_WIDTH; ++x ) {
 			int i = MAP_COORD_TO_IDX( x, y );
 			Vector2 pos = vec2( x * SPRITE_WIDTH, y * SPRITE_HEIGHT );
-			img_Draw( spriteMap[i], 1, pos, pos, 0 );
+			img_CreateDraw( spriteMap[i], 1, pos, pos, 0 );
 		}
 	}
 
-	img_Draw( highlightImg, 1, highlightPos, highlightPos, 1 );
+	img_CreateDraw( highlightImg, 1, highlightPos, highlightPos, 1 );
 }
 
 static void bordersTestScreen_PhysicsTick( float dt )

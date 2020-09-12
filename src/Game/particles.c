@@ -66,8 +66,14 @@ void draw( void )
 	for( int i = 0; i <= lastParticle; ++i ) {
 		/*img_Draw_s( particles[i].image, particles[i].camFlags, particles[i].currRenderPos, particles[i].futureRenderPos,
 			particles[i].currScale, particles[i].futureScale, particles[i].layer ); //*/
-		img_Draw_s_r( particles[i].image, particles[i].camFlags, particles[i].currRenderPos, particles[i].futureRenderPos,
-			particles[i].currScale, particles[i].futureScale, particles[i].rotRad, particles[i].rotRad, particles[i].depth );
+		/*img_Draw_s_r( particles[i].image, particles[i].camFlags, particles[i].currRenderPos, particles[i].futureRenderPos,
+			particles[i].currScale, particles[i].futureScale, particles[i].rotRad, particles[i].rotRad, particles[i].depth );//*/
+
+		int drawID = img_CreateDraw( particles[i].image, particles[i].camFlags,
+			particles[i].currRenderPos, particles[i].futureRenderPos, particles[i].depth );
+		img_SetDrawScale( drawID, particles[i].currScale, particles[i].futureScale );
+		img_SetDrawRotation( drawID, particles[i].rotRad, particles[i].rotRad );
+
 		particles[i].currRenderPos = particles[i].futureRenderPos;
 		particles[i].currColor = particles[i].futureColor;
 		particles[i].currScale = particles[i].futureScale;

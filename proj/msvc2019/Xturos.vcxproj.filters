@@ -186,9 +186,6 @@
     <ClInclude Include="..\..\src\Game\Input\input.h">
       <Filter>Header Files\Input</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\Game\Graphics\scissor.h">
-      <Filter>Header Files\Graphics</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\Game\IMGUI\nuklearHeader.h">
       <Filter>Header Files\IMGUI</Filter>
     </ClInclude>
@@ -282,6 +279,9 @@
     <ClInclude Include="..\..\src\Game\world.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\Game\Utils\sequence.h">
+      <Filter>Header Files\System</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\Game\Game\gameScreen.c">
@@ -374,9 +374,6 @@
     <ClCompile Include="..\..\src\Game\Input\input.c">
       <Filter>Source Files\Input</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\Game\Graphics\scissor.c">
-      <Filter>Source Files\Graphics</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\Game\IMGUI\nuklearWrapper.c">
       <Filter>Source Files\IMGUI</Filter>
     </ClCompile>
@@ -466,6 +463,9 @@
     </ClCompile>
     <ClCompile Include="..\..\src\Game\world.c">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Game\Utils\sequence.c">
+      <Filter>Source Files\Utils</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

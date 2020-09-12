@@ -5,7 +5,6 @@
 
 #include "../Graphics/graphics.h"
 #include "../Graphics/triRendering.h"
-#include "../Graphics/scissor.h"
 #include "../System/memory.h"
 #include "../Math/matrix4.h"
 #include "../Input/input.h"

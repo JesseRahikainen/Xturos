@@ -45,14 +45,14 @@
     <LinkIncremental>true</LinkIncremental>
     <TargetName>$(ProjectName)-dbg</TargetName>
     <OutDir>$(SolutionDir)\..\..\bin\win32\</OutDir>
-    <IncludePath>F:\Data\Libraries\stb-master;F:\Data\Libraries\SDL2-2.0.9_src\include;F:\Data\Libraries\spine-runtimes-master\spine-c\include;F:\Data\Libraries\nuklear-master;$(IncludePath)</IncludePath>
-    <LibraryPath>F:\Data\Libraries\spine-runtimes-master\spine-c\lib;F:\Data\Libraries\SDL2-2.0.9_src\VisualC\Win32\Debug;$(LibraryPath)</LibraryPath>
+    <IncludePath>F:\Data\Libraries\stb-master;F:\Data\Libraries\SDL2-2.0.12\include;F:\Data\Libraries\spine-runtimes-master\spine-c\include;F:\Data\Libraries\nuklear-master;$(IncludePath)</IncludePath>
+    <LibraryPath>F:\Data\Libraries\spine-runtimes-master\spine-c\lib;F:\Data\Libraries\SDL2-2.0.12\lib\x86;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
     <OutDir>$(SolutionDir)\..\..\bin\win32\</OutDir>
-    <IncludePath>F:\Data\Libraries\stb-master;F:\Data\Libraries\SDL2-2.0.9_src\include;F:\Data\Libraries\spine-runtimes-master\spine-c\include;F:\Data\Libraries\nuklear-master;$(IncludePath)</IncludePath>
-    <LibraryPath>F:\Data\Libraries\spine-runtimes-master\spine-c\lib;F:\Data\Libraries\SDL2-2.0.9_src\VisualC\Win32\Release;$(LibraryPath)</LibraryPath>
+    <IncludePath>F:\Data\Libraries\stb-master;F:\Data\Libraries\SDL2-2.0.12\include;F:\Data\Libraries\spine-runtimes-master\spine-c\include;F:\Data\Libraries\nuklear-master;$(IncludePath)</IncludePath>
+    <LibraryPath>F:\Data\Libraries\spine-runtimes-master\spine-c\lib;F:\Data\Libraries\SDL2-2.0.12\lib\x86;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -117,7 +117,6 @@
     <ClInclude Include="..\..\src\Game\Graphics\glPlatform.h" />
     <ClInclude Include="..\..\src\Game\Graphics\graphics.h" />
     <ClInclude Include="..\..\src\Game\Graphics\images.h" />
-    <ClInclude Include="..\..\src\Game\Graphics\scissor.h" />
     <ClInclude Include="..\..\src\Game\Graphics\shaderManager.h" />
     <ClInclude Include="..\..\src\Game\Graphics\spineGfx.h" />
     <ClInclude Include="..\..\src\Game\Graphics\sprites.h" />
@@ -159,6 +158,7 @@
     <ClInclude Include="..\..\src\Game\Utils\helpers.h" />
     <ClInclude Include="..\..\src\Game\Utils\hexGrid.h" />
     <ClInclude Include="..\..\src\Game\Utils\idSet.h" />
+    <ClInclude Include="..\..\src\Game\Utils\sequence.h" />
     <ClInclude Include="..\..\src\Game\Utils\stretchyBuffer.h" />
     <ClInclude Include="..\..\src\Game\world.h" />
   </ItemGroup>
@@ -183,7 +183,6 @@
     <ClCompile Include="..\..\src\Game\Graphics\glPlatform.c" />
     <ClCompile Include="..\..\src\Game\Graphics\graphics.c" />
     <ClCompile Include="..\..\src\Game\Graphics\images.c" />
-    <ClCompile Include="..\..\src\Game\Graphics\scissor.c" />
     <ClCompile Include="..\..\src\Game\Graphics\shaderManager.c" />
     <ClCompile Include="..\..\src\Game\Graphics\spineGfx.c" />
     <ClCompile Include="..\..\src\Game\Graphics\sprites.c" />
@@ -226,6 +225,7 @@
     <ClCompile Include="..\..\src\Game\Utils\helpers.c" />
     <ClCompile Include="..\..\src\Game\Utils\hexGrid.c" />
     <ClCompile Include="..\..\src\Game\Utils\idSet.c" />
+    <ClCompile Include="..\..\src\Game\Utils\sequence.c" />
     <ClCompile Include="..\..\src\Game\world.c" />
   </ItemGroup>
   <ItemGroup>

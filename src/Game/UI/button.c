@@ -197,8 +197,12 @@ void btn_Draw( void )
 			if( buttons[i].imgID >= 0 ) {
 				Vector2 scale;
 				vec2_Lerp( &( buttons[i].normalImgScale ), &( buttons[i].clickedImgScale ), t, &scale );
-				img_Draw_sv_c( buttons[i].imgID, buttons[i].camFlags, buttons[i].position, buttons[i].position, buttons[i].prevScale,
-					scale, buttons[i].borderColor, buttons[i].borderColor, buttons[i].depth );
+
+				int drawID = img_CreateDraw( buttons[i].imgID, buttons[i].camFlags, buttons[i].position, buttons[i].position, buttons[i].depth );
+				img_SetDrawScaleV( drawID, buttons[i].prevScale, scale );
+				img_SetDrawColor( drawID, buttons[i].borderColor, buttons[i].borderColor );
+				/*img_Draw_sv_c( buttons[i].imgID, buttons[i].camFlags, buttons[i].position, buttons[i].position, buttons[i].prevScale,
+					scale, buttons[i].borderColor, buttons[i].borderColor, buttons[i].depth );//*/
 				buttons[i].prevScale = scale;
 			}
 			
