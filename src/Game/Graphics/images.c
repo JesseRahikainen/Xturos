@@ -793,7 +793,7 @@ void img_SetDrawColor( int drawID, Color start, Color end )
 	renderBuffer[drawID].end.color = end;
 
 	if( ( ( start.a > 0.0f ) && ( start.a < 1.0f ) ) ||
-		( ( start.a > 0.0f ) && ( end.a < 1.0f ) ) ) {
+		( ( end.a > 0.0f ) && ( end.a < 1.0f ) ) ) {
 		renderBuffer[drawID].flags |= IMGFLAG_HAS_TRANSPARENCY;
 	}
 }
