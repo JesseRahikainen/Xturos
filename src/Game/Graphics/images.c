@@ -790,7 +790,7 @@ void img_SetDrawColor( int drawID, Color start, Color end )
 	}
 
 	renderBuffer[drawID].start.color = start;
-	renderBuffer[drawID].end.color = start;
+	renderBuffer[drawID].end.color = end;
 
 	if( ( ( start.a > 0.0f ) && ( start.a < 1.0f ) ) ||
 		( ( start.a > 0.0f ) && ( end.a < 1.0f ) ) ) {
@@ -806,7 +806,7 @@ void img_SetDrawRotation( int drawID, float start, float end )
 	}
 
 	renderBuffer[drawID].start.rotation = start;
-	renderBuffer[drawID].end.rotation = start;
+	renderBuffer[drawID].end.rotation = end;
 }
 
 void img_SetDrawFloatVal0( int drawID, float start, float end )
@@ -817,7 +817,7 @@ void img_SetDrawFloatVal0( int drawID, float start, float end )
 	}
 
 	renderBuffer[drawID].start.floatVal0 = start;
-	renderBuffer[drawID].end.floatVal0 = start;
+	renderBuffer[drawID].end.floatVal0 = end;
 }
 
 void img_SetDrawStencil( int drawID, bool isStencil, int stencilID )
