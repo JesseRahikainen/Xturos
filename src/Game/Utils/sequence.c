@@ -19,6 +19,12 @@ void sequence_Init( Sequence* seq, void* data, size_t numSteps, ... )
 	} va_end( list );
 }
 
+void sequence_Reset( Sequence* seq )
+{
+	seq->timeLeft = -1.0f;
+	seq->currStep = 0;
+}
+
 void sequence_CleanUp( Sequence* seq )
 {
 	sb_Release( seq->sbSteps );

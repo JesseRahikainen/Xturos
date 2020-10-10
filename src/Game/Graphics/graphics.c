@@ -142,6 +142,7 @@ int gfx_Init( SDL_Window* window, int desiredRenderWidth, int desiredRenderHeigh
 	if( generateFBO( &mainRenderFBO, &( mainRenderRBOs[0] ) ) < 0 ) {
 		return -1;
 	}
+	llog( LOG_DEBUG, "Successfully generated FBO." );
 
 	int windowWidth, windowHeight;
 	SDL_GetWindowSize( window, &windowWidth, &windowHeight );

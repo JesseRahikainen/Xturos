@@ -29,7 +29,7 @@ static int systemID = -1;
 
 static void render( ECPS* ecps, const Entity* entity )
 {
-	gp_GeneralRender( ecps, entity, posCompID, spriteCompID, scaleCompID, clrCompID, rotCompID, floatVal0CompID );
+	gp_GeneralRender( ecps, entity, posCompID, spriteCompID, scaleCompID, clrCompID, rotCompID, floatVal0CompID, INVALID_COMPONENT_ID );
 }
 
 static void draw( void )

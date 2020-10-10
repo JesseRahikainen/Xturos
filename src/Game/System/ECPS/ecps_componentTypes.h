@@ -7,8 +7,8 @@
 #include "ecps_componentBitFlags.h"
 #include "ecps_dataTypes.h"
 
-uint32_t sharedComponent_Enabled;
-uint32_t sharedComponent_ID;
+extern uint32_t sharedComponent_Enabled;
+extern uint32_t sharedComponent_ID;
 
 ComponentID ecps_ct_AddType( ComponentTypeCollection* ctc, const char* name, size_t size, size_t align, CleanUpComponent cleanUp, VerifyComponent verify );
 void ecps_ct_Init( ComponentTypeCollection* ctc );

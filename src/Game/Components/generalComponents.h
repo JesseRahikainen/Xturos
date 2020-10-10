@@ -87,6 +87,12 @@ typedef struct {
 } GCTextData;
 extern ComponentID gcTextCompID;
 
+typedef struct {
+	bool isStencil;
+	int stencilID;
+} GCStencilData;
+extern ComponentID gcStencilCompID;
+
 void gc_Register( ECPS* ecps );
 
 #endif // inclusion guard

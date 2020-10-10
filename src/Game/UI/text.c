@@ -1439,3 +1439,10 @@ int txt_GetBaseSize( int fontID )
 	assert( fontID >= 0 );
 	return fonts[fontID].baseSize;
 }
+
+int txt_GetCharacterImage( int fontID, int c )
+{
+	assert( fontID >= 0 );
+	Glyph* glyph = getCodepointGlyph( fontID, c );
+	return glyph->imageID;
+}

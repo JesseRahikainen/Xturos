@@ -197,6 +197,7 @@ int initEverything( void )
 	int greenSize;
 	int blueSize;
 	int depthSize;
+	int stencilSize;
 
 	void* oglCFGFile;
 #if defined( __EMSCRIPTEN__ )
@@ -215,6 +216,7 @@ int initEverything( void )
 	cfg_GetInt( oglCFGFile, "GREEN_SIZE", 8, &greenSize );
 	cfg_GetInt( oglCFGFile, "BLUE_SIZE", 8, &blueSize );
 	cfg_GetInt( oglCFGFile, "DEPTH_SIZE", 16, &depthSize );
+	cfg_GetInt( oglCFGFile, "STENCIL_SIZE", 8, &stencilSize );
 	cfg_CloseFile( oglCFGFile );
 
 	// todo: commenting these out breaks the font rendering, something wrong with the texture that's created
@@ -232,6 +234,7 @@ int initEverything( void )
     SDL_GL_SetAttribute( SDL_GL_GREEN_SIZE, greenSize );
     SDL_GL_SetAttribute( SDL_GL_BLUE_SIZE, blueSize );
     SDL_GL_SetAttribute( SDL_GL_DEPTH_SIZE, depthSize );
+	SDL_GL_SetAttribute( SDL_GL_STENCIL_SIZE, stencilSize );
     SDL_GL_SetAttribute( SDL_GL_DOUBLEBUFFER, 1 );
 //#endif
 

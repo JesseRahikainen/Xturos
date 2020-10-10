@@ -15,6 +15,8 @@ typedef struct {
 
 void sequence_Init( Sequence* seq, void* data, size_t numSteps, ... );
 
+void sequence_Reset( Sequence* seq );
+
 void sequence_CleanUp( Sequence* seq );
 
 // returns if the sequence has run it's course

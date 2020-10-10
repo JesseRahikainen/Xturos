@@ -20,7 +20,7 @@
 // ***** Render Process
 
 // assume we're using the general components, just need to know what component ids to use then
-void gp_GeneralRender( ECPS* ecps, const Entity* entity, ComponentID posCompID, ComponentID sprCompID, ComponentID scaleCompID, ComponentID clrCompID, ComponentID rotCompID, ComponentID floatVal0CompID )
+void gp_GeneralRender( ECPS* ecps, const Entity* entity, ComponentID posCompID, ComponentID sprCompID, ComponentID scaleCompID, ComponentID clrCompID, ComponentID rotCompID, ComponentID floatVal0CompID, ComponentID stencilCompID )
 {
 	GCPosData* pos = NULL;
 	GCSpriteData* sd = NULL;
@@ -28,6 +28,7 @@ void gp_GeneralRender( ECPS* ecps, const Entity* entity, ComponentID posCompID, 
 	GCColorData* color = NULL;
 	GCRotData* rot = NULL;
 	GCFloatVal0Data* floatVal0 = NULL;
+	GCStencilData* stencil = NULL;
 
 	ecps_GetComponentFromEntity( entity, posCompID, &pos );
 	ecps_GetComponentFromEntity( entity, sprCompID, &sd );
@@ -35,57 +36,36 @@ void gp_GeneralRender( ECPS* ecps, const Entity* entity, ComponentID posCompID, 
 	int drawID = img_CreateDraw( sd->img, sd->camFlags, pos->currPos, pos->futurePos, sd->depth );
 	pos->currPos = pos->futurePos;
 
-	//Vector2 currPos = pos->currPos;
-	//Vector2 futurePos = pos->futurePos;
-
-	//Vector2 currScale = VEC2_ONE;
-	//Vector2 futureScale = VEC2_ONE;
 	if( ecps_GetComponentFromEntity( entity, scaleCompID, &scale ) ) {
-		//currScale = scale->currScale;
-		//futureScale = scale->futureScale;
 		img_SetDrawScaleV( drawID, scale->currScale, scale->futureScale );
 		scale->currScale = scale->futureScale;
 	}
 
-	//Color currClr = CLR_WHITE;
-	//Color futureClr = CLR_WHITE;
 	if( ecps_GetComponentFromEntity( entity, clrCompID, &color ) ) {
-		//currClr = color->currClr;
-		//futureClr = color->futureClr;
 		img_SetDrawColor( drawID, color->currClr, color->futureClr );
 		color->currClr = color->futureClr;
 	}
 
-	//float currRot = 0.0f;
-	//float futureRot = 0.0f;
 	if( ecps_GetComponentFromEntity( entity, rotCompID, &rot ) ) {
-		//currRot = rot->currRot;
-		//futureRot = rot->futureRot;
 		img_SetDrawRotation( drawID, rot->currRot, rot->futureRot );
 		rot->currRot = rot->futureRot;
 	}
 
-	//float currVal0 = 0.0f;
-	//float futureVal0 = 0.0f;
 	if( ecps_GetComponentFromEntity( entity, floatVal0CompID, &floatVal0 ) ) {
-		//currVal0 = floatVal0->currValue;
-		//futureVal0 = floatVal0->futureValue;
 		img_SetDrawFloatVal0( drawID, floatVal0->currValue, floatVal0->futureValue );
 		floatVal0->currValue = floatVal0->futureValue;
-
-		//llog( LOG_DEBUG, "val0: %f -> %f", currVal0, futureVal0 );
 	}
 
-	//img_Draw_sv_c_r_v( sd->img, sd->camFlags, currPos, futurePos, currScale, futureScale, currClr, futureClr, currRot, futureRot, currVal0, futureVal0, sd->depth );
-
-	//pos->currPos = pos->futurePos;
+	if( ecps_GetComponentFromEntity( entity, stencilCompID, &stencil ) ) {
+		img_SetDrawStencil( drawID, stencil->isStencil, stencil->stencilID );
+	}
 }
 
 
 Process gpRenderProc;
 static void render( ECPS* ecps, const Entity* entity )
 {
-	gp_GeneralRender( ecps, entity, gcPosCompID, gcSpriteCompID, gcScaleCompID, gcClrCompID, gcRotCompID, gcFloatVal0CompID );
+	gp_GeneralRender( ecps, entity, gcPosCompID, gcSpriteCompID, gcScaleCompID, gcClrCompID, gcRotCompID, gcFloatVal0CompID, gcStencilCompID );
 }
 
 // ***** Render 3x3 Process

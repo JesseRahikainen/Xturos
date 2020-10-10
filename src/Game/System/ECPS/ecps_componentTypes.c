@@ -10,6 +10,9 @@
 
 #include "../../Utils/helpers.h"
 
+uint32_t sharedComponent_Enabled = INVALID_COMPONENT_ID;
+uint32_t sharedComponent_ID = INVALID_COMPONENT_ID;
+
 // TODO: Why is this here when we're doing the same things in entityComponentProcessSystem.c?
 ComponentID ecps_ct_AddType( ComponentTypeCollection* ctc, const char* name, size_t size, size_t align, CleanUpComponent cleanUp, VerifyComponent verify )
 {

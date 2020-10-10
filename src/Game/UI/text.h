@@ -51,6 +51,8 @@ bool txt_DisplayTextArea( const uint8_t* utf8Str, Vector2 upperLeft, Vector2 siz
 	HorizTextAlignment hAlign, VertTextAlignment vAlign, int fontID, size_t storeCharPos, Vector2* outCharPos,
 	int camFlags, int8_t depth, float desiredPixelSize );
 
+int txt_GetCharacterImage( int fontID, int c );
+
 
 // Creates a font that's rendered out as a signed distance field. Will also attempt to save a version of this font that
 //  can be loaded later much quicker.
