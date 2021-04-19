@@ -1,5 +1,6 @@
 #include "permutations.h"
 
+#include "../System/memory.h"
 
 static void swap( int* values, int n0, int n1 )
 {
@@ -22,7 +23,7 @@ static void reverseRightOf( int n, int* values, int rightOf )
 // non-recursive heap's algorithm
 void heapsAlgorithm( int* values, int n, void ( *output )( int* v, int c ) )
 {
-	int* c = malloc( sizeof( int ) * n );
+	int* c = mem_Allocate( sizeof( int ) * n );
 
 	for( int i = 0; i < n; ++i ) {
 		c[i] = 0;
@@ -48,7 +49,7 @@ void heapsAlgorithm( int* values, int n, void ( *output )( int* v, int c ) )
 		}
 	}
 
-	free( c );
+	mem_Release( c );
 }
 
 // https://quickperm.org/soda_submit.php
