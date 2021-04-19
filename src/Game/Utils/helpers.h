@@ -16,5 +16,6 @@
 #endif
 
 void logMousePos( void );
+char* getSavePath( char* fileName );
 
 #endif /* inclusion guard */

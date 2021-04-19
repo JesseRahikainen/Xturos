@@ -246,8 +246,12 @@ static void pointerResponseFinalize_TouchScreen( ECPS* ecps )
 		focusedPointerResponseID = currChosenPointerResponseID;
 
 		if( ecps_GetEntityAndComponentByID( ecps, currChosenPointerResponseID, gcPointerResponseCompID, &entity, &prd ) ) {
-			if( prd->overResponse != NULL ) prd->overResponse( &entity );
-			if( prd->pressResponse != NULL ) prd->pressResponse( &entity );
+			if( prd->overResponse != NULL ) {
+				prd->overResponse( &entity );
+			}
+			if( prd->pressResponse != NULL ) {
+				prd->pressResponse( &entity );
+			}
 		}
 	}
 
@@ -257,14 +261,18 @@ static void pointerResponseFinalize_TouchScreen( ECPS* ecps )
 			pointerResponseState = PRS_CLICKED_NOT_OVER;
 
 			if( ecps_GetEntityAndComponentByID( ecps, focusedPointerResponseID, gcPointerResponseCompID, &entity, &prd ) ) {
-				if( prd->leaveResponse != NULL ) prd->leaveResponse( &entity );
+				if( prd->leaveResponse != NULL ) {
+					prd->leaveResponse( &entity );
+				}
 			}
 		} else if( pointerResponseMouseReleased ) {
 			// finger released over, call release
 			pointerResponseState = PRS_IDLE;
 
 			if( ecps_GetEntityAndComponentByID( ecps, focusedPointerResponseID, gcPointerResponseCompID, &entity, &prd ) ) {
-				if( prd->releaseResponse != NULL ) prd->releaseResponse( &entity );
+				if( prd->releaseResponse != NULL ) {
+					prd->releaseResponse( &entity );
+				}
 			}
 		}
 	}
@@ -281,7 +289,9 @@ static void pointerResponseFinalize_TouchScreen( ECPS* ecps )
 			pointerResponseState = PRS_CLICKED_OVER;
 
 			if( ecps_GetEntityAndComponentByID( ecps, currChosenPointerResponseID, gcPointerResponseCompID, &entity, &prd ) ) {
-				if( prd->overResponse != NULL ) prd->overResponse( &entity );
+				if( prd->overResponse != NULL ) {
+					prd->overResponse( &entity );
+				}
 			}
 		}
 	}
@@ -324,7 +334,9 @@ static void pointerResponseFinalize_Mouse( ECPS* ecps )
 		pointerResponseState = PRS_OVER;
 
 		if( ecps_GetEntityAndComponentByID( ecps, currChosenPointerResponseID, gcPointerResponseCompID, &entity, &prd ) ) {
-			if( prd->overResponse != NULL ) prd->overResponse( &entity );
+			if( prd->overResponse != NULL ) {
+				prd->overResponse( &entity );
+			}
 		}
 	}
 
@@ -333,7 +345,9 @@ static void pointerResponseFinalize_Mouse( ECPS* ecps )
 			pointerResponseState = PRS_IDLE;
 
 			if( ecps_GetEntityAndComponentByID( ecps, prevChosenPointerResponseID, gcPointerResponseCompID, &entity, &prd ) ) {
-				if( prd->leaveResponse != NULL ) prd->leaveResponse( &entity );
+				if( prd->leaveResponse != NULL ) {
+					prd->leaveResponse( &entity );
+				}
 			}
 		} else if( pointerResponseMousePressed ) {
 			// if the mouse button was pressed, then transition to clicked over state and call the clicked resonse
@@ -341,7 +355,9 @@ static void pointerResponseFinalize_Mouse( ECPS* ecps )
 			pointerResponseState = PRS_CLICKED_OVER;
 
 			if( ecps_GetEntityAndComponentByID( ecps, focusedPointerResponseID, gcPointerResponseCompID, &entity, &prd ) ) {
-				if( prd->pressResponse != NULL ) prd->pressResponse( &entity );
+				if( prd->pressResponse != NULL ) {
+					prd->pressResponse( &entity );
+				}
 			}
 		}
 	}
@@ -352,14 +368,18 @@ static void pointerResponseFinalize_Mouse( ECPS* ecps )
 			pointerResponseState = PRS_CLICKED_NOT_OVER;
 
 			if( ecps_GetEntityAndComponentByID( ecps, focusedPointerResponseID, gcPointerResponseCompID, &entity, &prd ) ) {
-				if( prd->leaveResponse != NULL ) prd->leaveResponse( &entity );
+				if( prd->leaveResponse != NULL ) {
+					prd->leaveResponse( &entity );
+				}
 			}
 		} else if( pointerResponseMouseReleased ) {
 			// mouse released over, call release
 			pointerResponseState = PRS_OVER;
 
 			if( ecps_GetEntityAndComponentByID( ecps, focusedPointerResponseID, gcPointerResponseCompID, &entity, &prd ) ) {
-				if( prd->releaseResponse != NULL ) prd->releaseResponse( &entity );
+				if( prd->releaseResponse != NULL ) {
+					prd->releaseResponse( &entity );
+				}
 			}
 		}
 	}
@@ -375,7 +395,9 @@ static void pointerResponseFinalize_Mouse( ECPS* ecps )
 			pointerResponseState = PRS_CLICKED_OVER;
 			
 			if( ecps_GetEntityAndComponentByID( ecps, currChosenPointerResponseID, gcPointerResponseCompID, &entity, &prd ) ) {
-				if( prd->overResponse != NULL ) prd->overResponse( &entity );
+				if( prd->overResponse != NULL ) {
+					prd->overResponse( &entity );
+				}
 			}
 		}
 	}

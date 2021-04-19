@@ -21,6 +21,9 @@ void snd_SetMasterVolume( float volume );
 float snd_GetVolume( unsigned int group );
 void snd_SetVolume( float volume, unsigned int group );
 
+float snd_dBToVolume( float dB );
+float snd_VolumeTodB( float volume );
+
 //***** Loaded all at once
 int snd_LoadSample( const char* fileName, Uint8 desiredChannels, bool loops );
 void snd_ThreadedLoadSample( const char* fileName, Uint8 desiredChannels, bool loops, int* outID );
@@ -40,7 +43,8 @@ void snd_UnloadSample( int sampleID );
 
 //***** Streaming
 int snd_LoadStreaming( const char* fileName, bool loops, unsigned int group );
-void snd_PlayStreaming( int streamID, float volume, float pan ); // todo: fade in?
+void snd_ChangeStreamLoopPoint( int streamID, unsigned int loopPoint ); // if the stream loops, where it will start again
+void snd_PlayStreaming( int streamID, float volume, float pan, unsigned int startSample ); // todo: fade in?
 void snd_StopStreaming( int streamID );
 void snd_StopStreamingAllBut( int streamID );
 bool snd_IsStreamPlaying( int streamID );

@@ -9,6 +9,7 @@ typedef int32_t fixed32;
 
 fixed32 f32_FromFloat( float f );
 float f32_FromFixedPoint( fixed32 fp );
+fixed32 f32_FromParts( int16_t whole, uint16_t fraction );
 
 fixed32 f32_Add( fixed32 lhs, fixed32 rhs );
 fixed32 f32_SaturatedAdd( fixed32 lhs, fixed32 rhs );

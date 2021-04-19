@@ -131,7 +131,6 @@
     <ClInclude Include="..\..\src\Game\Math\matrix4.h" />
     <ClInclude Include="..\..\src\Game\Math\vector2.h" />
     <ClInclude Include="..\..\src\Game\Math\vector3.h" />
-    <ClInclude Include="..\..\src\Game\music.h" />
     <ClInclude Include="..\..\src\Game\Others\gl_core.h" />
     <ClInclude Include="..\..\src\Game\particles.h" />
     <ClInclude Include="..\..\src\Game\Processes\generalProcesses.h" />
@@ -158,6 +157,7 @@
     <ClInclude Include="..\..\src\Game\Utils\helpers.h" />
     <ClInclude Include="..\..\src\Game\Utils\hexGrid.h" />
     <ClInclude Include="..\..\src\Game\Utils\idSet.h" />
+    <ClInclude Include="..\..\src\Game\Utils\permutations.h" />
     <ClInclude Include="..\..\src\Game\Utils\sequence.h" />
     <ClInclude Include="..\..\src\Game\Utils\stretchyBuffer.h" />
     <ClInclude Include="..\..\src\Game\world.h" />
@@ -225,6 +225,7 @@
     <ClCompile Include="..\..\src\Game\Utils\helpers.c" />
     <ClCompile Include="..\..\src\Game\Utils\hexGrid.c" />
     <ClCompile Include="..\..\src\Game\Utils\idSet.c" />
+    <ClCompile Include="..\..\src\Game\Utils\permutations.c" />
     <ClCompile Include="..\..\src\Game\Utils\sequence.c" />
     <ClCompile Include="..\..\src\Game\world.c" />
   </ItemGroup>

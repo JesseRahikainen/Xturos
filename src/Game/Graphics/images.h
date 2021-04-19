@@ -59,6 +59,9 @@ void img_ForceTransparency( int idx, bool transparent );
 // Gets the size of the image, putting it into the out Vector2. Returns a negative number if there's an issue.
 int img_GetSize( int idx, Vector2* out );
 
+// Gets a scale to use for the image to get a desired size.
+int img_GetDesiredScale( int idx, Vector2 desiredSize, Vector2* outScale );
+
 // Gets the texture id for the image, used if you need to render it directly instead of going through this.
 //  Returns whether out was successfully set or not.
 int img_GetTextureID( int idx, GLuint* out );

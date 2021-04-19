@@ -36,6 +36,12 @@ Binds a function response when a key is released.
 int input_BindOnKeyRelease( SDL_Keycode code, KeyResponse response );
 
 /*
+Binds function response when a key is pressed and released.
+ Returns < 0 if there was a problem binding the key.
+*/
+int input_BindOnKey( SDL_Keycode code, KeyResponse onPressResponse, KeyResponse onReleaseResponse );
+
+/*
 Gets the code associated with response function. Puts them into the keyCodes array (which should be no larger than maxKeyCodes).
  The rest of the array is filled with SDLK_UNKNOWN.
 */

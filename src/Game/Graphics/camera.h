@@ -48,6 +48,9 @@ void cam_FinalizeStates( float timeToEnd );
 // Update all the cameras, call this before rendering stuff.
 void cam_Update( float dt );
 
+// Gets the camera view matrix for the specified camera.
+int cam_GetViewMatrix( int camera, Matrix4* out );
+
 // Gets the view projection matrix for the specified camera.
 //  Returns <0 if there's a problem.
 int cam_GetVPMatrix( int camera, Matrix4* out );

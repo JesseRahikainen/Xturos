@@ -62,6 +62,7 @@ int spr_Init( void )
 void spr_CleanUp( void )
 {
 	sys_UnRegister( systemID );
+	systemID = -1;
 
 	ecps_DestroyAllEntities( &spriteECPS );
 	ecps_CleanUp( &spriteECPS );

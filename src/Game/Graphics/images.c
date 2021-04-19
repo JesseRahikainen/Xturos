@@ -602,6 +602,22 @@ int img_GetSize( int idx, Vector2* out )
 	return 0;
 }
 
+// Gets a scale to use for the image to get a desired size.
+int img_GetDesiredScale( int idx, Vector2 desiredSize, Vector2* outScale )
+{
+	assert( outScale != NULL );
+	if( ( idx < 0 ) || ( !( images[idx].flags & IMGFLAG_IN_USE ) ) || ( idx >= MAX_IMAGES ) ) {
+		return -1;
+	}
+
+	(*outScale) = images[idx].size;
+
+	outScale->x = desiredSize.x / outScale->x;
+	outScale->y = desiredSize.y / outScale->y;
+
+	return 0;
+}
+
 /*
 Gets the texture id for the image, used if you need to render it directly instead of going through this.
  Returns whether out was successfully set or not.

@@ -15,6 +15,7 @@ ComponentID gcCleanUpFlagCompID = INVALID_COMPONENT_ID;
 ComponentID gcTextCompID = INVALID_COMPONENT_ID;
 ComponentID gcFloatVal0CompID = INVALID_COMPONENT_ID;
 ComponentID gcStencilCompID = INVALID_COMPONENT_ID;
+ComponentID gcWatchCompID = INVALID_COMPONENT_ID;
 
 void gc_Register( ECPS* ecps )
 {
@@ -31,4 +32,5 @@ void gc_Register( ECPS* ecps )
 	gcTextCompID = ecps_AddComponentType( ecps, "GC_TXT", sizeof( GCTextData ), ALIGN_OF( GCTextData ), NULL, NULL );
 	gcFloatVal0CompID = ecps_AddComponentType( ecps, "GC_VAL0", sizeof( GCFloatVal0Data ), ALIGN_OF( GCFloatVal0Data ), NULL, NULL );
 	gcStencilCompID = ecps_AddComponentType( ecps, "GC_STENCIL", sizeof( GCStencilData ), ALIGN_OF( GCStencilData ), NULL, NULL );
+	gcWatchCompID = ecps_AddComponentType( ecps, "GC_WATCH", 0, 0, NULL, NULL );
 }

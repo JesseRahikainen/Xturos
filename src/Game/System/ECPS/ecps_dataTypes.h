@@ -10,8 +10,8 @@
 typedef uint32_t ComponentID;
 #define INVALID_COMPONENT_ID UINT32_MAX
 
-typedef int (*VerifyComponent)( EntityID entityID );
-typedef void (*CleanUpComponent)( void* data );
+typedef int ( *VerifyComponent )( EntityID entityID );
+typedef void ( *CleanUpComponent )( void* data );
 
 typedef struct {
 	char name[32];

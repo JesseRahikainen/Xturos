@@ -757,7 +757,7 @@ static int immediateAddComponentToEntity( ECPS* ecps, Entity* entity, ComponentI
 	return 0;
 }
 
-static void pushAddComponentCommand( ECPS* ecps, Entity* entity, ComponentID componentID, void* data )
+static void pushAddComponentCommand( ECPS* ecps, const Entity* entity, ComponentID componentID, void* data )
 {
 	AddComponentCommand cmd;
 	cmd.cmd = CMD_ADD_COMPONENT;
@@ -810,6 +810,21 @@ int ecps_AddComponentToEntity( ECPS* ecps, Entity* entity, ComponentID component
 	} else {
 		return immediateAddComponentToEntity( ecps, entity, componentID, data );
 	}
+}
+
+// add a component to an entity, does not immediately change the entity, intended to be used while a process is running, will fail otherwise
+int ecps_AddComponentToEntityMidProcess( ECPS* ecps, const Entity* entity, ComponentID componentID, void* data )
+{
+	assert( ecps != NULL );
+	assert( entity != NULL );
+
+	if( ecps->isRunningProcess ) {
+		pushAddComponentCommand( ecps, entity, componentID, data );
+		return 0;
+	}
+
+	llog( LOG_ERROR, "Callilng ecps_RemoveComponentFromEntityMidProcess( ) while no processes are running. Component not removed." );
+	return 1;
 }
 
 // acts as ecps_AddComponentToEntity( ), but uses an entityID instead of an Entity structure

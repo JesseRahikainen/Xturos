@@ -51,6 +51,7 @@ typedef struct {
 	float volume;
 	float pan;
 	bool loops;
+	unsigned int loopPoint;
 	unsigned int group;
 
 	Uint8 channels;
@@ -129,8 +130,6 @@ void mixerCallback( void* userdata, Uint8* streamData, int len )
 		Sound* snd = &( playingSounds[i] );
 		Sample* sample = &( samples[snd->sample] );
 		
-		// for right now lets assume the pitch will stay the same, when we get it working it'll just involve
-		//  changing the speed at which we move through the array
 		bool soundDone = false;
 		float volume = snd->volume * sbSoundGroups[snd->group].volume * masterVolume;
 		for( int s = 0; ( s < numSamples ) && !soundDone; ++s ) {
@@ -188,7 +187,7 @@ void mixerCallback( void* userdata, Uint8* streamData, int len )
 			// reached the end of the file, are we looping?
 			if( read != request ) {
 				if( stream->loops ) {
-					stb_vorbis_seek_start( stream->access );
+					stb_vorbis_seek_frame( stream->access, stream->loopPoint );
 				} else {
 					stream->readDone = true;
 					SDL_AudioStreamFlush( stream->sdlStream );
@@ -549,6 +548,16 @@ void snd_SetVolume( float volume, unsigned int group )
 	} SDL_UnlockAudioDevice( devID );
 }
 
+float snd_dBToVolume( float dB )
+{
+	return powf( 10.0f, 0.05f * dB );
+}
+
+float snd_VolumeTodB( float volume )
+{
+	return 20.0f * log10f( volume );
+}
+
 // Returns an id that can be used to change the volume and pitch
 //  loops - if the sound will loop back to the start once it's over
 //  volume - how loud the sound will be, in the range [0,1], 0 being off, 1 being loudest
@@ -672,6 +681,7 @@ int snd_LoadStreaming( const char* fileName, bool loops, unsigned int group )
 
 	streamingSounds[newIdx].playing = false;
 	streamingSounds[newIdx].loops = loops;
+	streamingSounds[newIdx].loopPoint = 0;
 	streamingSounds[newIdx].group = group;
 
 	streamingSounds[newIdx].channels = (Uint8)( streamingSounds[newIdx].access->channels );
@@ -682,7 +692,17 @@ int snd_LoadStreaming( const char* fileName, bool loops, unsigned int group )
 	return newIdx;
 }
 
-void snd_PlayStreaming( int streamID, float volume, float pan ) // todo: fade in?
+// if the stream loops, where it will start again
+void snd_ChangeStreamLoopPoint( int streamID, unsigned int loopPoint )
+{
+	if( ( streamID < 0 ) || ( streamID >= MAX_STREAMING_SOUNDS ) ) {
+		return;
+	}
+
+	streamingSounds[streamID].loopPoint = loopPoint;
+}
+
+void snd_PlayStreaming( int streamID, float volume, float pan, unsigned int startSample ) // todo: fade in?
 {
 	if( ( streamID < 0 ) || ( streamID >= MAX_STREAMING_SOUNDS ) ) {
 		return;
@@ -710,7 +730,8 @@ void snd_PlayStreaming( int streamID, float volume, float pan ) // todo: fade in
 			streamingSounds[streamID].volume = volume;
 			streamingSounds[streamID].pan = pan;
 
-			stb_vorbis_seek_start( streamingSounds[streamID].access );
+			//stb_vorbis_seek_start( streamingSounds[streamID].access );
+			stb_vorbis_seek_frame( streamingSounds[streamID].access, startSample );
 
 			streamingSounds[streamID].readDone = false;
 		}

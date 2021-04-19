@@ -182,6 +182,11 @@ float sign( float val )
 	return ( ( val >= 0.0f ) ? 1.0f : -1.0f );
 }
 
+int signi( int val )
+{
+	return ( ( val >= 0 ) ? 1 : -1 );
+}
+
 Vector3* vec2ToVec3( const Vector2* vec2, float z, Vector3* out )
 {
 	assert( vec2 != NULL );

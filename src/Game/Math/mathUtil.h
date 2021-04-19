@@ -37,6 +37,7 @@ float clamp( float min, float max, float val );
 float randFloat( float min, float max );
 float randFloatVar( float mid, float var );
 float sign( float val );
+int signi( int val );
 Vector3* vec2ToVec3( const Vector2* vec2, float z, Vector3* out );
 float jerkLerp( float t );
 float remap( float origMin, float origMax, float val, float newMin, float newMax );

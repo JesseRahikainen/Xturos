@@ -25,7 +25,7 @@ void ToggleStream( int id )
 	if( snd_IsStreamPlaying( testStrm ) ) {
 		snd_StopStreaming( testStrm );
 	} else {
-		snd_PlayStreaming( testStrm, 1.0f, 0.0f );
+		snd_PlayStreaming( testStrm, 1.0f, 0.0f, 0 );
 	}
 }
 

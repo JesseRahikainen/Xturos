@@ -190,7 +190,6 @@ int initEverything( void )
 	atexit( cleanUp );
 
 	// set up opengl
-	//  try opening and parsing the config file
 	int majorVersion;
 	int minorVersion;
 	int redSize;
@@ -199,34 +198,33 @@ int initEverything( void )
 	int depthSize;
 	int stencilSize;
 
-	void* oglCFGFile;
 #if defined( __EMSCRIPTEN__ )
-	// NOTE: If you run into an errors with opening this file check to see if you're using FireFox, if
-	//  you are then switch to a different browser for testing.
-	oglCFGFile = cfg_OpenFile( "webgl.cfg" );
+	majorVersion = 2;
+	minorVersion = 0;
+	redSize = 8;
+	greenSize = 8;
+	blueSize = 8;
+	depthSize = 16;
+	stencilSize = 8;
 #elif defined( __ANDROID__ )
-	oglCFGFile = cfg_OpenFile( "androidgl.cfg" );
+	majorVersion = 3;
+	minorVersion = 0;
+	redSize = 8;
+	greenSize = 8;
+	blueSize = 8;
+	depthSize = 16;
+	stencilSize = 8;
 #else
-	oglCFGFile = cfg_OpenFile( "opengl.cfg" );
+	majorVersion = 3;
+	minorVersion = 3;
+	redSize = 8;
+	greenSize = 8;
+	blueSize = 8;
+	depthSize = 16;
+	stencilSize = 8;
 #endif
 
-	cfg_GetInt( oglCFGFile, "MAJOR", 3, &majorVersion );
-	cfg_GetInt( oglCFGFile, "MINOR", 3, &minorVersion );
-	cfg_GetInt( oglCFGFile, "RED_SIZE", 8, &redSize );
-	cfg_GetInt( oglCFGFile, "GREEN_SIZE", 8, &greenSize );
-	cfg_GetInt( oglCFGFile, "BLUE_SIZE", 8, &blueSize );
-	cfg_GetInt( oglCFGFile, "DEPTH_SIZE", 16, &depthSize );
-	cfg_GetInt( oglCFGFile, "STENCIL_SIZE", 8, &stencilSize );
-	cfg_CloseFile( oglCFGFile );
-
-	// todo: commenting these out breaks the font rendering, something wrong with the texture that's created
-	//  note: without these it uses the values loaded in from the .cfg file, which is 3.3
-//#if defined( __ANDROID__ ) //|| defined( __IOS__ )
-	// setup using OpenGLES
-//#else
 	// setup using OpenGL
-	//majorVersion = 2;
-	//minorVersion = 0;
 	SDL_GL_SetAttribute( SDL_GL_CONTEXT_PROFILE_MASK, PROFILE );
 	SDL_GL_SetAttribute( SDL_GL_CONTEXT_MAJOR_VERSION, majorVersion );
 	SDL_GL_SetAttribute( SDL_GL_CONTEXT_MINOR_VERSION, minorVersion );
@@ -234,9 +232,8 @@ int initEverything( void )
     SDL_GL_SetAttribute( SDL_GL_GREEN_SIZE, greenSize );
     SDL_GL_SetAttribute( SDL_GL_BLUE_SIZE, blueSize );
     SDL_GL_SetAttribute( SDL_GL_DEPTH_SIZE, depthSize );
-	SDL_GL_SetAttribute( SDL_GL_STENCIL_SIZE, stencilSize );
     SDL_GL_SetAttribute( SDL_GL_DOUBLEBUFFER, 1 );
-//#endif
+	SDL_GL_SetAttribute( SDL_GL_STENCIL_SIZE, stencilSize );
 
 	llog( LOG_INFO, "Desired GL version: %i.%i", majorVersion, minorVersion );
 

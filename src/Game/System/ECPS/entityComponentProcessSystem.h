@@ -51,6 +51,9 @@ bool ecps_GetEntityByID( ECPS* ecps, EntityID entityID, Entity* outEntity );
 //  returns whether the addition was a success or not
 int ecps_AddComponentToEntity( ECPS* ecps, Entity* entity, ComponentID componentID, void* data );
 
+// add a component to an entity, does not immediately change the entity, intended to be used while a process is running, will fail otherwise
+int ecps_AddComponentToEntityMidProcess( ECPS* ecps, const Entity* entity, ComponentID componentID, void* data );
+
 // acts as ecps_AddComponentToEntity( ), but uses an EntityID instead of an Entity structure
 int ecps_AddComponentToEntityByID( ECPS* ecps, EntityID entityID, ComponentID componentID, void* data );
 

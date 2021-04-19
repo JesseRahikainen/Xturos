@@ -18,6 +18,7 @@ bld/
 bin/win32
 [Oo]bj/
 proj/android/bin/
+tools/
 
 # Roslyn cache directories
 *.ide/

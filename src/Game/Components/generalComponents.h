@@ -93,6 +93,9 @@ typedef struct {
 } GCStencilData;
 extern ComponentID gcStencilCompID;
 
+// just a flag you can add to an entity that you can test for later
+extern ComponentID gcWatchCompID;
+
 void gc_Register( ECPS* ecps );
 
 #endif // inclusion guard

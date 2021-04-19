@@ -200,6 +200,28 @@ void cam_Update( float dt )
 	currentTime += dt;
 }
 
+// Gets the camera view matrix for the specified camera.
+int cam_GetViewMatrix( int camera, Matrix4* out )
+{
+	Vector2 pos;
+	Vector2 invPos;
+	Matrix4 transTf, scaleTf;
+	Matrix4 view;
+	float t = clamp( 0.0f, 1.0f, ( currentTime / endTime ) );
+	vec2_Lerp( &( cameras[camera].start.pos ), &( cameras[camera].end.pos ), t, &pos );
+	vec2_Scale( &pos, -1.0f, &invPos ); // object movement is inverted from camera movement
+	mat4_CreateTranslation( invPos.x, invPos.y, 0.0f, &transTf );
+
+	float scale = lerp( cameras[camera].start.scale, cameras[camera].end.scale, t );
+	mat4_CreateScale( scale, scale, 1.0f, &scaleTf );
+
+	mat4_Multiply( &transTf, &scaleTf, &view );
+
+	memcpy( out, &(view), sizeof( Matrix4 ) );
+
+	return 0;
+}
+
 // Gets the view projection matrix for the specified camera.
 //  Returns <0 if there's a problem.
 int cam_GetVPMatrix( int camera, Matrix4* out )

@@ -32,6 +32,13 @@ float f32_FromFixedPoint( fixed32 fp )
 	return val;
 }
 
+fixed32 f32_FromParts( int16_t whole, uint16_t fraction )
+{
+	fixed32 val;
+	val = ( (int32_t)whole << Q ) | ( (int32_t)fraction );
+	return val;
+}
+
 fixed32 f32_Add( fixed32 lhs, fixed32 rhs )
 {
 	return lhs + rhs;

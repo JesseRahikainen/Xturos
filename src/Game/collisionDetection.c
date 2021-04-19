@@ -443,7 +443,6 @@ int LineSegmentvHalfSpace( Collider* primary, Collider* fixed, Vector2* outSepar
 bool collision_LineSegmentCollision( Vector2* l0p0, Vector2* l0p1, Vector2* l1p0, Vector2* l1p1, Vector2* outCollPos, float* outT )
 {
 	// https://stackoverflow.com/questions/563198/how-do-you-detect-where-two-line-segments-intersect
-//#error need to redo this, isn't finding every collision it should
 	assert( l0p0 != NULL );
 	assert( l0p1 != NULL );
 	assert( l1p0 != NULL );
@@ -513,30 +512,7 @@ bool collision_LineSegmentCollision( Vector2* l0p0, Vector2* l0p1, Vector2* l1p0
 		// otherwise they are not parallel and do not intersect
 	}
 
-	return false; //*/
-
-	/*float a1 = signed2DTriArea( l0p0, l0p1, l1p1 );
-	float a2 = signed2DTriArea( l0p0, l0p1, l1p0 );
-
-	// if the signs of a1 and a2 match there is no chance of collision
-	//  except if they're collinear, which this doesn't detect
-	if( a1 * a2 >= 0.0f ) {
-		llog( LOG_DEBUG, "fail at a1 * a2" );
-		return false;
-	}
-
-	float a3 = signed2DTriArea( l1p0, l1p1, l0p0 );
-	float a4 = a3 + a2 - a1;
-	if( a3 * a4 >= 0.0f ) {
-		llog( LOG_DEBUG, "fail at a3 * a4" );
-		return false;
-	}
-
-	float t = a3 / ( a3 - a4 );
-	vec2_Lerp( l0p0, l0p1, t, outCollPos );
-	(*outT) = t;
-
-	return true;//*/
+	return false;
 }
 
 // this will not currently detect collinear collisions between line segments
