@@ -26,7 +26,7 @@ float snd_VolumeTodB( float volume );
 
 //***** Loaded all at once
 int snd_LoadSample( const char* fileName, Uint8 desiredChannels, bool loops );
-void snd_ThreadedLoadSample( const char* fileName, Uint8 desiredChannels, bool loops, int* outID );
+void snd_ThreadedLoadSample( const char* fileName, Uint8 desiredChannels, bool loops, int* outID, void (*onLoadDone)( int ) );
 
 // Returns an id that can be used to change the volume and pitch
 //  volume - how loud the sound will be, in the range [0,1], 0 being off, 1 being loudest
@@ -43,6 +43,7 @@ void snd_UnloadSample( int sampleID );
 
 //***** Streaming
 int snd_LoadStreaming( const char* fileName, bool loops, unsigned int group );
+void snd_ThreadedLoadStreaming( const char* fileName, bool loops, unsigned int group, int* outID, void (*onLoadDone)( int ) );
 void snd_ChangeStreamLoopPoint( int streamID, unsigned int loopPoint ); // if the stream loops, where it will start again
 void snd_PlayStreaming( int streamID, float volume, float pan, unsigned int startSample ); // todo: fade in?
 void snd_StopStreaming( int streamID );

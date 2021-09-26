@@ -4,12 +4,12 @@
 
 #include "images.h"
 #include "color.h"
-#include "../System/systems.h"
-#include "../System/platformLog.h"
-#include "../System/ECPS/entityComponentProcessSystem.h"
-#include "../Processes/generalProcesses.h"
-#include "../Components/generalComponents.h"
-#include "../Utils/helpers.h"
+#include "System/systems.h"
+#include "System/platformLog.h"
+#include "System/ECPS/entityComponentProcessSystem.h"
+#include "Processes/generalProcesses.h"
+#include "Components/generalComponents.h"
+#include "Utils/helpers.h"
 
 // Possibly improve this by putting all the storage into a separate thing, so we can have multiple sets of sprites we could draw
 //  at different times without having to create and destroy them constantly, if we start needing something like that
@@ -22,6 +22,7 @@ static ComponentID rotCompID = INVALID_COMPONENT_ID;
 static ComponentID scaleCompID = INVALID_COMPONENT_ID;
 static ComponentID spriteCompID = INVALID_COMPONENT_ID;
 static ComponentID floatVal0CompID = INVALID_COMPONENT_ID;
+static ComponentID stencilCompID = INVALID_COMPONENT_ID;
 
 static Process renderProc;
 
@@ -29,7 +30,7 @@ static int systemID = -1;
 
 static void render( ECPS* ecps, const Entity* entity )
 {
-	gp_GeneralRender( ecps, entity, posCompID, spriteCompID, scaleCompID, clrCompID, rotCompID, floatVal0CompID, INVALID_COMPONENT_ID );
+	gp_GeneralRender( ecps, entity, posCompID, spriteCompID, scaleCompID, clrCompID, rotCompID, floatVal0CompID, stencilCompID );
 }
 
 static void draw( void )
@@ -46,6 +47,7 @@ int spr_Init( void )
 		clrCompID = ecps_AddComponentType( &spriteECPS, "CLR", sizeof( GCColorData ), ALIGN_OF( GCColorData ), NULL, NULL );
 		rotCompID = ecps_AddComponentType( &spriteECPS, "ROT", sizeof( GCRotData ), ALIGN_OF( GCRotData ), NULL, NULL );
 		floatVal0CompID = ecps_AddComponentType( &spriteECPS, "VAL0", sizeof( GCFloatVal0Data ), ALIGN_OF( GCFloatVal0Data ), NULL, NULL );
+		stencilCompID = ecps_AddComponentType( &spriteECPS, "STNCL", sizeof( GCStencilData ), ALIGN_OF( GCStencilData ), NULL, NULL );
 
 		ecps_CreateProcess( &spriteECPS, "DRAW", NULL, render, NULL, &renderProc, 2, posCompID, spriteCompID );
 	} ecps_FinishInitialization( &spriteECPS );

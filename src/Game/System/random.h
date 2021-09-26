@@ -29,6 +29,7 @@ float rand_GetToleranceFloat( RandomGroup* rg, float base, float tol );
 int32_t rand_GetToleranceS32( RandomGroup* rg, int32_t base, int32_t tol );
 float rand_GetRangeFloat( RandomGroup* rg, float min, float max );
 int32_t rand_GetRangeS32( RandomGroup* rg, int32_t min, int32_t max );
+size_t rand_GetArrayEntry( RandomGroup* rg, size_t arraySize );
 
 bool rand_Choice( RandomGroup* rg );
 

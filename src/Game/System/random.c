@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <math.h>
 
-#include "../Math/mathUtil.h"
+#include "Math/mathUtil.h"
 
 static RandomGroup defaultRG;
 
@@ -131,6 +131,11 @@ int32_t rand_GetRangeS32( RandomGroup* rg, int32_t min, int32_t max )
 		return min;
 	}
 	return min + ( (int32_t)getBalancedRandom( rg, range ) );
+}
+
+size_t rand_GetArrayEntry( RandomGroup* rg, size_t arraySize )
+{
+	return (size_t)getBalancedRandom( rg, (uint64_t)arraySize );
 }
 
 bool rand_Choice( RandomGroup* rg )

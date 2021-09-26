@@ -15,6 +15,11 @@
 #define ALIGN_OF( t ) ( (char*)( &( (struct { char c; t _h; }*)0 )->_h ) - (char*)0 )
 #endif
 
+// allow warning messages on MSVC
+#define STRINGIZE_HELPER(x) #x
+#define STRINGIZE(x) STRINGIZE_HELPER(x)
+#define WARNING(desc) message(__FILE__ "(" STRINGIZE(__LINE__) ") : Warning: " #desc)
+
 void logMousePos( void );
 char* getSavePath( char* fileName );
 

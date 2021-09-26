@@ -30,7 +30,7 @@ static void delayedLoadTest( void* data )
 {
 	// to test the delay
 	SDL_Delay( 1000 );
-	img_ThreadedLoad( "Images/tile.png", ST_DEFAULT, &testImg );
+	img_ThreadedLoad( "Images/tile.png", ST_DEFAULT, &testImg, NULL );
 }
 
 static void delayedFontLoadTest( void* data )
@@ -42,7 +42,7 @@ static void delayedFontLoadTest( void* data )
 static void delayedSoundLoadTest( void* data )
 {
 	SDL_Delay( 1500 );
-	snd_ThreadedLoadSample( "Sounds/test.ogg", 1, false, &testSound );
+	snd_ThreadedLoadSample( "Sounds/test.ogg", 1, false, &testSound, NULL );
 }
 
 #include <stdio.h>

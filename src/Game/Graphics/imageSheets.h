@@ -18,4 +18,6 @@ Cleans up all the images created from img_LoadSpriteSheet( ). The pointer passed
 */
 void img_UnloadSpriteSheet( int* imgArray );
 
+void img_ThreadedLoadSpriteSheet( const char* fileName, ShaderType shaderType, void ( *onLoadDone )( int ) );
+
 #endif /* inclusion guard */

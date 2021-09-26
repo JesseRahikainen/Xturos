@@ -1,7 +1,7 @@
 #include <math.h>
 #include <assert.h>
 #include <stddef.h>
-#include "../System/platformLog.h"
+#include "System/platformLog.h"
 #include "vector3.h"
 
 // component-wise operations

@@ -3,8 +3,8 @@
 
 #include <stdint.h>
 #include <spine/spine.h>
-#include "../Math/vector2.h"
-#include "../Graphics/color.h"
+#include "Math/vector2.h"
+#include "Graphics/color.h"
 
 // general system functions
 void spine_Init( void );

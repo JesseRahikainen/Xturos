@@ -1,7 +1,7 @@
 #include "input.h"
 #include <float.h>
 #include <assert.h>
-#include "../System/platformLog.h"
+#include "System/platformLog.h"
 
 /***** Key Binding *****/
 

@@ -2,7 +2,7 @@
 #define GENERAL_PROCESSES_H
 
 #include <SDL_events.h>
-#include "../System/ECPS/ecps_dataTypes.h"
+#include "System/ECPS/ecps_dataTypes.h"
 
 // general processes shared between games
 extern Process gpRenderProc;
@@ -10,6 +10,9 @@ extern Process gp3x3RenderProc;
 extern Process gpTextRenderProc;
 extern Process gpPointerResponseProc;
 extern Process gpCleanUpProc;
+extern Process gpUpdateMountedPosProc;
+extern Process gpClampMountedPosProc;
+extern Process gpDebugDrawPointerReponsesProc;
 
 void gp_RegisterProcesses( ECPS* ecps );
 

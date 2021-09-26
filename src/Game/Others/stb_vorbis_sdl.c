@@ -543,7 +543,7 @@ enum STBVorbisError
 #endif
 #endif
 
-#include "../System/memory.h"
+#include "System/memory.h"
 #ifndef STB_VORBIS_NO_CRT
 #include <stdlib.h>
 #include <string.h>

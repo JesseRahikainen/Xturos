@@ -2,7 +2,7 @@
 #define ENGINE_GRAPHICS_H
 
 #include <SDL.h>
-#include "../Math/vector2.h"
+#include "Math/vector2.h"
 #include "color.h"
 
 // t is in the range [0,1], where 0 is the start of the current draw cycle and 1 is the end
@@ -16,6 +16,9 @@ Initial setup for the rendering instruction buffer.
 */
 int gfx_Init( SDL_Window* window, int renderWidth, int renderHeight );
 
+// Shuts down and cleans up
+void gfx_ShutDown( void );
+
 /*
 Resizes everything for the specified window size. Used to calculate render area.
 */
@@ -25,6 +28,8 @@ void gfx_SetWindowSize( int windowWidth, int windowHeight );
 Just gets the size.
 */
 void gfx_GetRenderSize( int* renderWidthOut, int* renderHeightOut );
+
+void gfx_GetWindowSize( int* outWidth, int* outHeight );
 
 /*
 Sets render area clearing color.
@@ -53,5 +58,9 @@ void gfx_RemoveDrawTrisFunc( GfxDrawTrisFunc oldFunc );
 
 void gfx_AddClearCommand( GfxClearFunc newFunc ); 
 void gfx_RemoveClearCommand( GfxClearFunc oldFunc ); 
+
+void gfx_calculateRenderSize( int desiredRenderWidth, int desiredRenderHeight, int* outRenderWidth, int* outRenderHeight );
+void gfx_MakeRenderCalls( float dt, float t );
+
 
 #endif

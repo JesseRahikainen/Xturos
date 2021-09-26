@@ -1,6 +1,10 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="DebugRelease|Win32">
+      <Configuration>DebugRelease</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
     <ProjectConfiguration Include="Debug|Win32">
       <Configuration>Debug</Configuration>
       <Platform>Win32</Platform>
@@ -31,6 +35,13 @@
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DebugRelease|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v142</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
   </ImportGroup>
@@ -40,19 +51,31 @@
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='DebugRelease|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
     <TargetName>$(ProjectName)-dbg</TargetName>
     <OutDir>$(SolutionDir)\..\..\bin\win32\</OutDir>
-    <IncludePath>F:\Data\Libraries\stb-master;F:\Data\Libraries\SDL2-2.0.12\include;F:\Data\Libraries\spine-runtimes-master\spine-c\include;F:\Data\Libraries\nuklear-master;$(IncludePath)</IncludePath>
-    <LibraryPath>F:\Data\Libraries\spine-runtimes-master\spine-c\lib;F:\Data\Libraries\SDL2-2.0.12\lib\x86;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(ProjectDir)..\..\src\Game;F:\Data\Libraries\stb-master;F:\Data\Libraries\SDL2-2.0.14\include;F:\Data\Libraries\spine-runtimes-master\spine-c\include;F:\Data\Libraries\nuklear-master;$(IncludePath)</IncludePath>
+    <LibraryPath>F:\Data\Libraries\spine-runtimes-master\spine-c\lib;F:\Data\Libraries\SDL2-2.0.14\lib\x86;$(LibraryPath)</LibraryPath>
+    <IntDir>Game\$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
     <OutDir>$(SolutionDir)\..\..\bin\win32\</OutDir>
-    <IncludePath>F:\Data\Libraries\stb-master;F:\Data\Libraries\SDL2-2.0.12\include;F:\Data\Libraries\spine-runtimes-master\spine-c\include;F:\Data\Libraries\nuklear-master;$(IncludePath)</IncludePath>
-    <LibraryPath>F:\Data\Libraries\spine-runtimes-master\spine-c\lib;F:\Data\Libraries\SDL2-2.0.12\lib\x86;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(ProjectDir)..\..\src\Game;F:\Data\Libraries\stb-master;F:\Data\Libraries\SDL2-2.0.14\include;F:\Data\Libraries\spine-runtimes-master\spine-c\include;F:\Data\Libraries\nuklear-master;</IncludePath>
+    <LibraryPath>F:\Data\Libraries\spine-runtimes-master\spine-c\lib;F:\Data\Libraries\SDL2-2.0.14\lib\x86;$(LibraryPath)</LibraryPath>
+    <IntDir>Game\$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DebugRelease|Win32'">
+    <LinkIncremental>false</LinkIncremental>
+    <OutDir>$(SolutionDir)\..\..\bin\win32\</OutDir>
+    <IncludePath>$(ProjectDir)..\..\src\Game;F:\Data\Libraries\stb-master;F:\Data\Libraries\SDL2-2.0.14\include;F:\Data\Libraries\spine-runtimes-master\spine-c\include;F:\Data\Libraries\nuklear-master;</IncludePath>
+    <LibraryPath>F:\Data\Libraries\spine-runtimes-master\spine-c\lib;F:\Data\Libraries\SDL2-2.0.14\lib\x86;$(LibraryPath)</LibraryPath>
+    <IntDir>Game\$(Configuration)\</IntDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -96,6 +119,27 @@
       <AdditionalDependencies>spine-c.lib;SDL2.lib;SDL2main.lib;opengl32.lib;legacy_stdio_definitions.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='DebugRelease|Win32'">
+    <ClCompile>
+      <WarningLevel>Level4</WarningLevel>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;GLEW_STATIC;_LIB;THREAD_SUPPORT;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <TreatWarningAsError>true</TreatWarningAsError>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <DisableSpecificWarnings>4100;4189;4201;4996;4127;4756;6385;6386;26451;6255;6385;26451;4456;4457</DisableSpecificWarnings>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <AdditionalDependencies>spine-c.lib;SDL2.lib;SDL2main.lib;opengl32.lib;legacy_stdio_definitions.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\Game\collisionDetection.h" />
     <ClInclude Include="..\..\src\Game\Components\generalComponents.h" />
@@ -113,18 +157,25 @@
     <ClInclude Include="..\..\src\Game\Graphics\debugRendering.h" />
     <ClInclude Include="..\..\src\Game\Graphics\geomTrail.h" />
     <ClInclude Include="..\..\src\Game\Graphics\gfxUtil.h" />
-    <ClInclude Include="..\..\src\Game\Graphics\glDebugging.h" />
-    <ClInclude Include="..\..\src\Game\Graphics\glPlatform.h" />
     <ClInclude Include="..\..\src\Game\Graphics\graphics.h" />
     <ClInclude Include="..\..\src\Game\Graphics\images.h" />
-    <ClInclude Include="..\..\src\Game\Graphics\shaderManager.h" />
+    <ClInclude Include="..\..\src\Game\Graphics\Platform\debugRenderingPlatform.h" />
+    <ClInclude Include="..\..\src\Game\Graphics\Platform\graphicsPlatform.h" />
+    <ClInclude Include="..\..\src\Game\Graphics\Platform\OpenGL\glDebugging.h" />
+    <ClInclude Include="..\..\src\Game\Graphics\Platform\OpenGL\glPlatform.h" />
+    <ClInclude Include="..\..\src\Game\Graphics\Platform\OpenGL\glShaderManager.h" />
+    <ClInclude Include="..\..\src\Game\Graphics\Platform\OpenGL\graphicsDataTypes_OpenGL.h" />
+    <ClInclude Include="..\..\src\Game\Graphics\Platform\triRenderingPlatform.h" />
     <ClInclude Include="..\..\src\Game\Graphics\spineGfx.h" />
     <ClInclude Include="..\..\src\Game\Graphics\sprites.h" />
     <ClInclude Include="..\..\src\Game\Graphics\imageSheets.h" />
     <ClInclude Include="..\..\src\Game\Graphics\triRendering.h" />
+    <ClInclude Include="..\..\src\Game\Graphics\triRendering_DataTypes.h" />
     <ClInclude Include="..\..\src\Game\IMGUI\nuklearHeader.h" />
     <ClInclude Include="..\..\src\Game\IMGUI\nuklearWrapper.h" />
+    <ClInclude Include="..\..\src\Game\IMGUI\Platform\OpenGL\nuklearWrapper_OpenGL.h" />
     <ClInclude Include="..\..\src\Game\Input\input.h" />
+    <ClInclude Include="..\..\src\Game\Math\dualNumbers.h" />
     <ClInclude Include="..\..\src\Game\Math\fixedPoint.h" />
     <ClInclude Include="..\..\src\Game\Math\mathUtil.h" />
     <ClInclude Include="..\..\src\Game\Math\matrix3.h" />
@@ -144,7 +195,9 @@
     <ClInclude Include="..\..\src\Game\System\jobQueue.h" />
     <ClInclude Include="..\..\src\Game\System\jobRingQueue.h" />
     <ClInclude Include="..\..\src\Game\System\memory.h" />
+    <ClInclude Include="..\..\src\Game\System\messageBroadcast.h" />
     <ClInclude Include="..\..\src\Game\System\platformLog.h" />
+    <ClInclude Include="..\..\src\Game\System\platformSpecific.h" />
     <ClInclude Include="..\..\src\Game\System\random.h" />
     <ClInclude Include="..\..\src\Game\System\systems.h" />
     <ClInclude Include="..\..\src\Game\tween.h" />
@@ -179,18 +232,22 @@
     <ClCompile Include="..\..\src\Game\Graphics\debugRendering.c" />
     <ClCompile Include="..\..\src\Game\Graphics\geomTrail.c" />
     <ClCompile Include="..\..\src\Game\Graphics\gfxUtil.c" />
-    <ClCompile Include="..\..\src\Game\Graphics\glDebugging.c" />
-    <ClCompile Include="..\..\src\Game\Graphics\glPlatform.c" />
     <ClCompile Include="..\..\src\Game\Graphics\graphics.c" />
     <ClCompile Include="..\..\src\Game\Graphics\images.c" />
-    <ClCompile Include="..\..\src\Game\Graphics\shaderManager.c" />
+    <ClCompile Include="..\..\src\Game\Graphics\Platform\OpenGL\debugRenderPlatform_OpenGL.c" />
+    <ClCompile Include="..\..\src\Game\Graphics\Platform\OpenGL\glDebugging.c" />
+    <ClCompile Include="..\..\src\Game\Graphics\Platform\OpenGL\glPlatform.c" />
+    <ClCompile Include="..\..\src\Game\Graphics\Platform\OpenGL\glShaderManager.c" />
+    <ClCompile Include="..\..\src\Game\Graphics\Platform\OpenGL\graphicsPlatform_OpenGL.c" />
+    <ClCompile Include="..\..\src\Game\Graphics\Platform\OpenGL\triRenderingPlatform_OpenGL.c" />
     <ClCompile Include="..\..\src\Game\Graphics\spineGfx.c" />
     <ClCompile Include="..\..\src\Game\Graphics\sprites.c" />
     <ClCompile Include="..\..\src\Game\Graphics\imageSheets.c" />
     <ClCompile Include="..\..\src\Game\Graphics\triRendering.c" />
-    <ClCompile Include="..\..\src\Game\IMGUI\nuklearWrapper.c" />
+    <ClCompile Include="..\..\src\Game\IMGUI\Platform\OpenGL\nuklearWrapper_OpenGL.c" />
     <ClCompile Include="..\..\src\Game\Input\input.c" />
     <ClCompile Include="..\..\src\Game\main.c" />
+    <ClCompile Include="..\..\src\Game\Math\dualNumbers.c" />
     <ClCompile Include="..\..\src\Game\Math\fixedPoint.c" />
     <ClCompile Include="..\..\src\Game\Math\mathUtil.c" />
     <ClCompile Include="..\..\src\Game\Math\matrix3.c" />
@@ -201,6 +258,7 @@
     <ClCompile Include="..\..\src\Game\Others\stb_vorbis_sdl.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugRelease|Win32'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="..\..\src\Game\particles.c" />
     <ClCompile Include="..\..\src\Game\Processes\generalProcesses.c" />
@@ -212,7 +270,9 @@
     <ClCompile Include="..\..\src\Game\System\jobQueue.c" />
     <ClCompile Include="..\..\src\Game\System\jobRingQueue.c" />
     <ClCompile Include="..\..\src\Game\System\memory.c" />
+    <ClCompile Include="..\..\src\Game\System\messageBroadcast.c" />
     <ClCompile Include="..\..\src\Game\System\platformLog.c" />
+    <ClCompile Include="..\..\src\Game\System\platformSpecific.c" />
     <ClCompile Include="..\..\src\Game\System\random.c" />
     <ClCompile Include="..\..\src\Game\System\systems.c" />
     <ClCompile Include="..\..\src\Game\tween.c" />
@@ -236,6 +296,4 @@
     <Text Include="..\..\todo.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
-  <ImportGroup Label="ExtensionTargets">
-  </ImportGroup>
 </Project>

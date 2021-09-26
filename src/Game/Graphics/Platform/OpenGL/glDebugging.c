@@ -1,6 +1,6 @@
 #include "glDebugging.h"
 
-#include "../System/platformLog.h"
+#include "System/platformLog.h"
 
 // some error check dumping, returns < 0 if there was an error
 int checkAndLogErrors( const char* extraInfo )

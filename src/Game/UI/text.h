@@ -3,8 +3,8 @@
 
 #include <stdbool.h>
 
-#include "../Graphics/color.h"
-#include "../Math/vector2.h"
+#include "Graphics/color.h"
+#include "Math/vector2.h"
 
 typedef enum {
 	HORIZ_ALIGN_LEFT,

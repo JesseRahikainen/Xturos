@@ -305,3 +305,64 @@ bool isPointOnPolygon( Vector2* pos, Vector2* polygon, size_t numPoints, float l
 
 	return false;
 }
+
+void fitRatioInsideSpace( float ratio, Vector2* fitterSize, Vector2* outSize )
+{
+	assert( fitterSize != NULL );
+	assert( outSize != NULL );
+
+	float fitterRatio = fitterSize->w / fitterSize->h;
+
+	if( fitterRatio <= ratio ) {
+		// fitter will be taller than fitted
+		outSize->w = fitterSize->w;
+		outSize->h = fitterSize->w / ratio;
+	} else {
+		// fitter will be wider than fitted
+		outSize->h = fitterSize->h;
+		outSize->w = fitterSize->h * ratio;
+	}
+}
+
+void fitRatioInsideRect( float ratio, Vector2* fitterMins, Vector2* fitterMaxes, Vector2* outMins, Vector2* outMaxes )
+{
+	assert( fitterMins != NULL );
+	assert( fitterMaxes != NULL );
+	assert( outMins != NULL );
+	assert( outMaxes != NULL );
+
+	// first find ratio of fitter area
+	Vector2 fitterSize;
+	vec2_Subtract( fitterMaxes, fitterMins, &fitterSize );
+	float fitterRatio = fitterSize.w / fitterSize.h;
+
+	if( fitterRatio <= ratio ) {
+		// fitter will be taller than fitted, centered along y-axis and matching x-axis
+		float centerY = ( fitterMins->y + fitterMaxes->y ) / 2.0f;
+		outMins->x = fitterMins->x;
+		outMaxes->x = fitterMaxes->x;
+		float width = outMaxes->x - outMins->x;
+		float halfHeight = ( width / ratio ) / 2.0f;
+		outMins->y = centerY - halfHeight;
+		outMaxes->y = centerY + halfHeight;
+	} else {
+		// fitter will be wider than fitted, centered along x-axis and matching y-axis
+		float centerX = ( fitterMins->x + fitterMaxes->x ) / 2.0f;
+		outMins->y = fitterMins->y;
+		outMaxes->y = fitterMaxes->y;
+		float height = outMaxes->y - outMins->y;
+		float halfWidth = ( height * ratio ) / 2.0f;
+		outMins->x = centerX - halfWidth;
+		outMaxes->x = centerX + halfWidth;
+	}
+}
+
+/*void envelopRect( float ratio, Vector2* fitterMins, Vector2* fitterMaxes, Vector2* outMins, Vector2* outMaxes )
+{
+	assert( fitterMins != NULL );
+	assert( fitterMaxes != NULL );
+	assert( outMins != NULL );
+	assert( outMaxes != NULL );
+
+	// TODO: Finish this, generates a rectangle of the passed in ratio that goes around the fitter rectangle
+}//*/

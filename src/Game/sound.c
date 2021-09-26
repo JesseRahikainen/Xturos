@@ -85,8 +85,6 @@ static IDSet playingIDSet; // we want to be able to change the currently playing
 
 static StreamingSound streamingSounds[MAX_STREAMING_SOUNDS];
 
-static void* soundCfgFile;
-
 typedef struct {
 	float volume;
 } SoundGroup;
@@ -119,9 +117,10 @@ void mixerCallback( void* userdata, Uint8* streamData, int len )
 	for( int s = 0; s < numSamples; ++s ) {
 		int streamIdx = ( s * WORKING_CHANNELS );
 		testTimePassed += 1.0f / WORKING_RATE;
+		while( testTimePassed >= 1000.0f ) testTimePassed -= 1000.0f;
 		float v = sinf( testTimePassed * soundFreq * M_TWO_PI_F );
-		workingBuffer[streamIdx] = v * 0.1f;
-		workingBuffer[streamIdx+1] = v * 0.1f;
+		workingBuffer[streamIdx] = v * 0.2f;
+		workingBuffer[streamIdx+1] = v * 0.2f;
 	}
 #else
 	// advance each playing sound
@@ -164,6 +163,7 @@ void mixerCallback( void* userdata, Uint8* streamData, int len )
 		}
 	}
 
+#if 1
 	for( int i = 0; i < MAX_STREAMING_SOUNDS; ++i ) {
 		if( !streamingSounds[i].playing ) continue;
 
@@ -226,6 +226,7 @@ void mixerCallback( void* userdata, Uint8* streamData, int len )
 			}
 		}
 	}
+#endif
 #endif
 
 	memcpy( streamData, workingBuffer, len );
@@ -308,6 +309,7 @@ typedef struct {
 	bool loops;
 	int* outID;
 	SDL_AudioCVT loadConverter;
+	void ( *onLoadDone )( int );
 } ThreadedSoundLoadData;
 
 static void cleanUpThreadedSoundLoadData( ThreadedSoundLoadData* data )
@@ -351,6 +353,23 @@ static void bindSampleJob( void* data )
 	(*(loadData->outID)) = newIdx;
 
 clean_up:
+
+	if( loadData->onLoadDone != NULL ) loadData->onLoadDone( *( loadData->outID ) );
+
+	cleanUpThreadedSoundLoadData( loadData );
+}
+
+static void loadSampleFailedJob( void* data )
+{
+	if( data == NULL ) {
+		llog( LOG_ERROR, "NULL data passed into loadSampleFailedJob!" );
+		return;
+	}
+
+	ThreadedSoundLoadData* loadData = (ThreadedSoundLoadData*)data;
+
+	if( loadData->onLoadDone != NULL ) loadData->onLoadDone( -1 );
+
 	cleanUpThreadedSoundLoadData( loadData );
 }
 
@@ -400,10 +419,10 @@ static void loadSampleJob( void* data )
 	return;
 
 error:
-	cleanUpThreadedSoundLoadData( loadData );
+	jq_AddMainThreadJob( loadSampleFailedJob, (void*)loadData );
 }
 
-void snd_ThreadedLoadSample( const char* fileName, Uint8 desiredChannels, bool loops, int* outID )
+void snd_ThreadedLoadSample( const char* fileName, Uint8 desiredChannels, bool loops, int* outID, void (*onLoadDone)( int ) )
 {
 	assert( ( desiredChannels >= 1 ) && ( desiredChannels <= 2 ) );
 	assert( outID != NULL );
@@ -413,6 +432,7 @@ void snd_ThreadedLoadSample( const char* fileName, Uint8 desiredChannels, bool l
 	ThreadedSoundLoadData* loadData = mem_Allocate( sizeof( ThreadedSoundLoadData ) );
 	if( loadData == NULL ) {
 		llog( LOG_ERROR, "Unable to allocated data struct for threaded loading of sound sample" );
+		if( onLoadDone != NULL ) onLoadDone( -1 );
 		return;
 	}
 
@@ -421,6 +441,7 @@ void snd_ThreadedLoadSample( const char* fileName, Uint8 desiredChannels, bool l
 	loadData->loops = loops;
 	loadData->outID = outID;
 	loadData->loadConverter.buf = NULL;
+	loadData->onLoadDone = onLoadDone;
 
 	jq_AddJob( loadSampleJob, (void*)loadData );
 }
@@ -452,8 +473,14 @@ int snd_Init( unsigned int numGroups )
 		return -1;
 	}
 
+	SDL_AudioSpec delivered;
 	// sending 0 will cause SDL to convert everything automatically
-	devID = SDL_OpenAudioDevice( NULL, 0, &desired, NULL, 0 );
+	devID = SDL_OpenAudioDevice( NULL, 0, &desired, &delivered, 0 );
+
+	/*llog( LOG_DEBUG, "Audio: freq - %i  %i", desired.freq, delivered.freq );
+	llog( LOG_DEBUG, "Audio: format - %i  %i", desired.format, delivered.format );
+	llog( LOG_DEBUG, "Audio: channels - %i  %i", desired.channels, delivered.channels );
+	llog( LOG_DEBUG, "Audio: samples - %i  %i", desired.samples, delivered.samples );//*/
 
 	if( devID == 0 ) {
 		llog( LOG_CRITICAL, "Failed to open audio device: %s", SDL_GetError( ) );
@@ -479,14 +506,7 @@ int snd_Init( unsigned int numGroups )
 	}
 
 	// load the master volume
-	soundCfgFile = cfg_OpenFile( "snd.cfg" );
-	if( soundCfgFile != NULL ) {
-		int vol;
-		cfg_GetInt( soundCfgFile, "vol", 100, &vol );
-		masterVolume = (float)vol / 100.0f;
-	} else {
-		masterVolume = 1.0f;
-	}
+	masterVolume = 1.0f;
 
 	return 0;
 }
@@ -523,12 +543,6 @@ void snd_SetMasterVolume( float volume )
 	SDL_LockAudioDevice( devID ); {
 		masterVolume = volume;
 	} SDL_UnlockAudioDevice( devID );
-
-	// just save this out every single time
-	if( soundCfgFile != NULL ) {
-		cfg_SetInt( soundCfgFile, "vol", (int)volume );
-		cfg_SaveFile( soundCfgFile );
-	}
 }
 
 float snd_GetVolume( unsigned int group )
@@ -692,6 +706,123 @@ int snd_LoadStreaming( const char* fileName, bool loops, unsigned int group )
 	return newIdx;
 }
 
+typedef struct {
+	const char* fileName;
+	bool loops;
+	unsigned int group;
+	stb_vorbis* access;
+	int* outID;
+	void (*onLoadDone)( int );
+} ThreadedLoadStreamingData;
+
+static void cleanupThreadedLoadStreamingData( ThreadedLoadStreamingData* data )
+{
+	mem_Release( data );
+}
+
+static void bindStreamingJob( void* data )
+{
+	if( data == NULL ) {
+		llog( LOG_ERROR, "NULL data passed into bindStreamingJob!" );
+		return;
+	}
+
+	ThreadedLoadStreamingData* loadData = (ThreadedLoadStreamingData*)data;
+
+	( *( loadData->outID ) ) = -1;
+
+	// find spot to bind to
+	int newIdx = -1;
+	for( int i = 0; i < MAX_STREAMING_SOUNDS; ++i ) {
+		if( streamingSounds[i].access == NULL ) {
+			newIdx = i;
+			break;
+		}
+	}
+
+	if( newIdx < 0 ) {
+		llog( LOG_ERROR, "Unable to find empty slot for streaming sound %s", loadData->fileName );
+		goto clean_up;
+	}
+
+	streamingSounds[newIdx].access = loadData->access;
+	streamingSounds[newIdx].playing = false;
+	streamingSounds[newIdx].loops = loadData->loops;
+	streamingSounds[newIdx].loopPoint = 0;
+	streamingSounds[newIdx].group = loadData->group;
+
+	streamingSounds[newIdx].channels = (Uint8)( streamingSounds[newIdx].access->channels );
+	if( streamingSounds[newIdx].channels > 2 ) {
+		streamingSounds[newIdx].channels = 2;
+	}
+
+	*( loadData->outID ) = newIdx;
+
+clean_up:
+	if( loadData->onLoadDone != NULL ) loadData->onLoadDone( *( loadData->outID ) );
+	mem_Release( data );
+}
+
+static void streamingLoadFailedJob( void* data )
+{
+	if( data == NULL ) {
+		llog( LOG_ERROR, "NULL data passed into streamingLoadFailedJob!" );
+		return;
+	}
+
+	ThreadedLoadStreamingData* loadData = (ThreadedLoadStreamingData*)data;
+	if( loadData->onLoadDone != NULL ) loadData->onLoadDone( -1 );
+
+	mem_Release( data );
+}
+
+static void loadStreamingJob( void* data )
+{
+	if( data == NULL ) {
+		llog( LOG_ERROR, "NULL data passed into loadStreamingJob!" );
+		return;
+	}
+
+	ThreadedLoadStreamingData* loadData = (ThreadedLoadStreamingData*)data;
+	
+	int error;
+	loadData->access = stb_vorbis_open_filename( loadData->fileName, &error, NULL );
+	if( loadData->access == NULL ) {
+		llog( LOG_ERROR, "Unable to acquire a handle to streaming sound %s", loadData->fileName );
+		goto error;
+	}
+
+	jq_AddMainThreadJob( bindStreamingJob, data );
+	return;
+
+error:
+	jq_AddMainThreadJob( streamingLoadFailedJob, data );
+}
+
+void snd_ThreadedLoadStreaming( const char* fileName, bool loops, unsigned int group, int* outID, void (*onLoadDone)( int ) )
+{
+	assert( group >= 0 );
+	assert( group < sb_Count( sbSoundGroups ) );
+
+	(*outID) = -1;
+
+	ThreadedLoadStreamingData* loadData = mem_Allocate( sizeof( ThreadedLoadStreamingData ) );
+	if( loadData == NULL ) {
+		llog( LOG_ERROR, "Unable to allocate data struct for threaded loading of music" );
+		if( onLoadDone != NULL ) onLoadDone( -1 );
+		return;
+	}
+
+	loadData->fileName = fileName;
+	loadData->loops = loops;
+	loadData->group = group;
+	loadData->access = NULL;
+	loadData->onLoadDone = onLoadDone;
+	loadData->outID = outID;
+
+	jq_AddJob( loadStreamingJob, (void*)loadData );
+}
+
 // if the stream loops, where it will start again
 void snd_ChangeStreamLoopPoint( int streamID, unsigned int loopPoint )
 {
@@ -759,8 +890,8 @@ void snd_StopStreamingAllBut( int streamID )
 			if( i == streamID ) continue;
 			if( ( streamingSounds[i].access != NULL ) && streamingSounds[i].playing ) {
 				streamingSounds[i].playing = false;
-				SDL_FreeAudioStream( streamingSounds[streamID].sdlStream );
-				streamingSounds[streamID].sdlStream = NULL;
+				SDL_FreeAudioStream( streamingSounds[i].sdlStream );
+				streamingSounds[i].sdlStream = NULL;
 			}
 		}
 	} SDL_UnlockAudioDevice( devID );

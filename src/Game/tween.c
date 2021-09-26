@@ -45,13 +45,16 @@ void resetAndReverseTween( Tween* tween )
 }
 
 /* Processes the tween, advancing the amount elapsed. */
-void processTween( Tween* tween, float delta )
+bool processTween( Tween* tween, float delta )
 {
 	float t;
 	assert( tween );
 
+	bool isDone = false;
+
 	tween->elapsed += delta;
 	if( tween->elapsed > tween->duration ) {
+		isDone = true;
 		tween->elapsed = tween->duration;
 		tween->active = 0;
 	}
@@ -61,6 +64,8 @@ void processTween( Tween* tween, float delta )
 		t = tween->ease( t );
 	}
 	tween->current = lerp( tween->start, tween->end, t );
+
+	return isDone;
 }
 
 /* Some general tween functions. */

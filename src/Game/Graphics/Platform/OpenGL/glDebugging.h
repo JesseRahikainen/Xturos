@@ -1,7 +1,7 @@
 #ifndef GL_DEBUGGING_H
 #define GL_DEBUGGING_H
 
-#include "../Graphics/glPlatform.h"
+#include "Graphics/Platform/OpenGL/glPlatform.h"
 
 #define STRINGIFY(x) #x
 #define TOSTRING(x) STRINGIFY(x)

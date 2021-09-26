@@ -3,7 +3,7 @@
 
 #include <SDL_events.h>
 
-#include "../Math/vector2.h"
+#include "Math/vector2.h"
 
 /***** Key Binding *****/
 typedef void (*KeyResponse)(void);

@@ -8,7 +8,7 @@
 #include <stdint.h>
 #include <string.h>
 
-#include "../System/memory.h"
+#include "System/memory.h"
 
 #include <stb_rect_pack.h>
 
@@ -23,26 +23,26 @@
 #include <stb_truetype.h>
 
 
-#define STB_IMAGE_WRITE_IMPLEMENTATION
-#define STBI_WRITE_NO_STDIO
-#define STBIW_MALLOC(sz)        mem_Allocate(sz)
-#define STBIW_REALLOC(p,newsz)  mem_Resize(p,newsz)
-#define STBIW_FREE(p)           mem_Release(p)
+//#define STB_IMAGE_WRITE_IMPLEMENTATION
+//#define STBI_WRITE_NO_STDIO
+//#define STBIW_MALLOC(sz)        mem_Allocate(sz)
+//#define STBIW_REALLOC(p,newsz)  mem_Resize(p,newsz)
+//#define STBIW_FREE(p)           mem_Release(p)
 
-#pragma warning( push )
-#pragma warning( disable : 4204 )
+//#pragma warning( push )
+//#pragma warning( disable : 4204 )
 #include <stb_image_write.h>
-#pragma warning( pop )
+//#pragma warning( pop )
 
-#include "../Utils/stretchyBuffer.h"
-#include "../Graphics/images.h"
-#include "../Math/mathUtil.h"
+#include "Utils/stretchyBuffer.h"
+#include "Graphics/images.h"
+#include "Math/mathUtil.h"
 
-#include "../System/platformLog.h"
+#include "System/platformLog.h"
 
-#include "../System/jobQueue.h"
+#include "System/jobQueue.h"
 
-#include "../Graphics/gfxUtil.h"
+#include "Graphics/gfxUtil.h"
 
 typedef struct {
 	int32_t codepoint;

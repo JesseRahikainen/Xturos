@@ -3,12 +3,12 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "../../Utils/stretchyBuffer.h"
+#include "Utils/stretchyBuffer.h"
 
 #include "ecps_values.h"
 #include "ecps_componentBitFlags.h"
 
-#include "../../Utils/helpers.h"
+#include "Utils/helpers.h"
 
 // TODO: Why is this here when we're doing the same things in entityComponentProcessSystem.c?
 ComponentID ecps_ct_AddType( ComponentTypeCollection* ctc, const char* name, size_t size, size_t align, CleanUpComponent cleanUp, VerifyComponent verify )

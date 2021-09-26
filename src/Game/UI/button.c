@@ -7,15 +7,15 @@
 #include <string.h>
 #include <stdbool.h>
 
-#include "../Graphics/images.h"
-#include "../Math/vector3.h"
-#include "../Graphics/camera.h"
+#include "Graphics/images.h"
+#include "Math/vector3.h"
+#include "Graphics/camera.h"
 #include "text.h"
-#include "../Input/input.h"
-#include "../System/systems.h"
-#include "../System/platformLog.h"
-#include "../Graphics/debugRendering.h"
-#include "../tween.h"
+#include "Input/input.h"
+#include "System/systems.h"
+#include "System/platformLog.h"
+#include "Graphics/debugRendering.h"
+#include "tween.h"
 
 #define ANIM_START_LENGTH ( 0.75f / 2.0f )
 #define ANIM_LENGTH 0.75f

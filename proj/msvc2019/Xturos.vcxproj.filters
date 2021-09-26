@@ -88,15 +88,24 @@
     <Filter Include="Source Files\Components">
       <UniqueIdentifier>{506d8916-5270-4d8f-be61-9f5a185da4a8}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Graphics\Platform">
+      <UniqueIdentifier>{7e7fab48-5b2e-48db-95c5-ffa3917f298b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Graphics\Platform">
+      <UniqueIdentifier>{16b15676-0cce-4133-9fe2-b26106d109c4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\IMGUI\Platform">
+      <UniqueIdentifier>{2f1023db-2359-4305-8190-7ac607f2fb5e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\IMGUI\Platform">
+      <UniqueIdentifier>{9e6af113-3652-438c-b9bf-6fc9ab1f9f7a}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\Game\Game\gameScreen.h">
       <Filter>Header Files\Game</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Game\Graphics\graphics.h">
-      <Filter>Header Files\Graphics</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Game\Graphics\shaderManager.h">
       <Filter>Header Files\Graphics</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Game\Math\mathUtil.h">
@@ -147,9 +156,6 @@
     <ClInclude Include="..\..\src\Game\Graphics\debugRendering.h">
       <Filter>Header Files\Graphics</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\Game\Graphics\glDebugging.h">
-      <Filter>Header Files\Graphics</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\Game\Graphics\spineGfx.h">
       <Filter>Header Files\Graphics</Filter>
     </ClInclude>
@@ -191,9 +197,6 @@
     </ClInclude>
     <ClInclude Include="..\..\src\Game\Others\gl_core.h">
       <Filter>Header Files\Others</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Game\Graphics\glPlatform.h">
-      <Filter>Header Files\Graphics</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Game\System\platformLog.h">
       <Filter>Header Files\System</Filter>
@@ -282,15 +285,48 @@
     <ClInclude Include="..\..\src\Game\Utils\permutations.h">
       <Filter>Header Files\Utils</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\Game\Math\dualNumbers.h">
+      <Filter>Header Files\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Game\Graphics\Platform\debugRenderingPlatform.h">
+      <Filter>Header Files\Graphics\Platform</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Game\Graphics\Platform\OpenGL\glDebugging.h">
+      <Filter>Header Files\Graphics\Platform</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Game\Graphics\Platform\OpenGL\glPlatform.h">
+      <Filter>Header Files\Graphics\Platform</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Game\Graphics\Platform\OpenGL\glShaderManager.h">
+      <Filter>Header Files\Graphics\Platform</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Game\Graphics\Platform\OpenGL\graphicsDataTypes_OpenGL.h">
+      <Filter>Header Files\Graphics\Platform</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Game\Graphics\Platform\graphicsPlatform.h">
+      <Filter>Header Files\Graphics\Platform</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Game\Graphics\Platform\triRenderingPlatform.h">
+      <Filter>Header Files\Graphics\Platform</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Game\Graphics\triRendering_DataTypes.h">
+      <Filter>Header Files\Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Game\IMGUI\Platform\OpenGL\nuklearWrapper_OpenGL.h">
+      <Filter>Header Files\IMGUI\Platform</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Game\System\messageBroadcast.h">
+      <Filter>Header Files\System</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Game\System\platformSpecific.h">
+      <Filter>Header Files\System</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\Game\Game\gameScreen.c">
       <Filter>Source Files\Game</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\Game\Graphics\graphics.c">
-      <Filter>Source Files\Graphics</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\Game\Graphics\shaderManager.c">
       <Filter>Source Files\Graphics</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\Game\Math\mathUtil.c">
@@ -344,9 +380,6 @@
     <ClCompile Include="..\..\src\Game\Graphics\debugRendering.c">
       <Filter>Source Files\Graphics</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\Game\Graphics\glDebugging.c">
-      <Filter>Source Files\Graphics</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\Game\Graphics\spineGfx.c">
       <Filter>Source Files\Graphics</Filter>
     </ClCompile>
@@ -374,14 +407,8 @@
     <ClCompile Include="..\..\src\Game\Input\input.c">
       <Filter>Source Files\Input</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\Game\IMGUI\nuklearWrapper.c">
-      <Filter>Source Files\IMGUI</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\Game\Others\gl_core.c">
       <Filter>Source Files\Others</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\Game\Graphics\glPlatform.c">
-      <Filter>Source Files\Graphics</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\Game\System\platformLog.c">
       <Filter>Source Files\System</Filter>
@@ -470,6 +497,36 @@
     <ClCompile Include="..\..\src\Game\Utils\permutations.c">
       <Filter>Source Files\Utils</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\Game\Math\dualNumbers.c">
+      <Filter>Source Files\Math</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Game\Graphics\Platform\OpenGL\debugRenderPlatform_OpenGL.c">
+      <Filter>Source Files\Graphics\Platform</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Game\Graphics\Platform\OpenGL\glDebugging.c">
+      <Filter>Source Files\Graphics\Platform</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Game\Graphics\Platform\OpenGL\glPlatform.c">
+      <Filter>Source Files\Graphics\Platform</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Game\Graphics\Platform\OpenGL\glShaderManager.c">
+      <Filter>Source Files\Graphics\Platform</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Game\Graphics\Platform\OpenGL\graphicsPlatform_OpenGL.c">
+      <Filter>Source Files\Graphics\Platform</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Game\Graphics\Platform\OpenGL\triRenderingPlatform_OpenGL.c">
+      <Filter>Source Files\Graphics\Platform</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Game\IMGUI\Platform\OpenGL\nuklearWrapper_OpenGL.c">
+      <Filter>Source Files\IMGUI\Platform</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Game\System\messageBroadcast.c">
+      <Filter>Source Files\System</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Game\System\platformSpecific.c">
+      <Filter>Source Files\System</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Text Include="..\..\readme.txt">
@@ -481,6 +538,8 @@
     <Text Include="..\..\screen_template.txt">
       <Filter>_Text</Filter>
     </Text>
-    <Text Include="..\..\state_template.txt" />
+    <Text Include="..\..\state_template.txt">
+      <Filter>_Text</Filter>
+    </Text>
   </ItemGroup>
 </Project>

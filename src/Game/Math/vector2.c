@@ -3,7 +3,7 @@
 #include <assert.h>
 #include <math.h>
 #include <string.h>
-#include "../System/platformLog.h"
+#include "System/platformLog.h"
 
 Vector2 vec2( float x, float y )
 {

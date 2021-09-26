@@ -1,6 +1,6 @@
 #include "glPlatform.h"
 
-#include "../System/platformLog.h"
+#include "System/platformLog.h"
 
 int glInit( void )
 {

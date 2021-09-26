@@ -5,7 +5,7 @@
 
 // gets sbt_image.h to use our custom memory allocation
 #include <stdlib.h>
-#include "../System/memory.h"
+#include "System/memory.h"
 #define free(ptr) mem_Release(ptr)
 #define realloc(ptr,size) mem_Resize(ptr,size)
 #define malloc(size) mem_Allocate(size)
@@ -18,9 +18,22 @@
 #define STB_RECT_PACK_IMPLEMENTATION
 #include <stb_rect_pack.h>
 
-#include "glDebugging.h"
 
-#include "../System/platformLog.h"
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+//#define STBI_WRITE_NO_STDIO
+#define STBIW_MALLOC(sz)        mem_Allocate(sz)
+#define STBIW_REALLOC(p,newsz)  mem_Resize(p,newsz)
+#define STBIW_FREE(p)           mem_Release(p)
+
+#pragma warning( push )
+#pragma warning( disable : 4204 )
+#include <stb_image_write.h>
+#pragma warning( pop )
+
+#include "Graphics/graphics.h"
+#include "Graphics/Platform/graphicsPlatform.h"
+
+#include "System/platformLog.h"
 
 // Clean up anything that was created in a loaded image.
 void gfxUtil_ReleaseLoadedImage( LoadedImage* image )
@@ -28,47 +41,6 @@ void gfxUtil_ReleaseLoadedImage( LoadedImage* image )
 	assert( image != NULL );
 
 	stbi_image_free( image->data );
-}
-
-// Converts the LoadedImage into a texture, putting everything in outTexture. All LoadedImages are assumed to be in RGBA format.
-//  Returns >= 0 if everything went fine, < 0 if something went wrong.
-int gfxUtil_CreateTextureFromLoadedImage( GLenum texFormat, LoadedImage* image, Texture* outTexture )
-{
-	//GLenum texFormat = GL_RGBA;
-
-	GL( glGenTextures( 1, &( outTexture->textureID ) ) );
-
-	if( outTexture->textureID == 0 ) {
-		llog( LOG_INFO, "Unable to create texture object." );
-		return -1;
-	}
-
-	GL( glBindTexture( GL_TEXTURE_2D, outTexture->textureID ) );
-
-	// assuming these will look good for now, we shouldn't be too much resizing, but if we do we can go over these again
-	GL( glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR ) );
-	GL( glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR ) );
-	// TODO: Make this configurable? Possible somehow tied into the material?
-	//GL( glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST ) );
-	//GL( glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST ) );
-
-	GL( glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE ) );
-	GL( glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE ) );
-
-	GL( glTexImage2D( GL_TEXTURE_2D, 0, texFormat, image->width, image->height, 0, texFormat, GL_UNSIGNED_BYTE, image->data ) );
-
-	outTexture->width = image->width;
-	outTexture->height = image->height;
-	outTexture->flags = 0;
-
-	// check to see if there are any translucent pixels in the image
-	for( int i = 3; ( i < ( image->width * image->height ) ) && !( outTexture->flags & TF_IS_TRANSPARENT ); i += 4 ) {
-		if( ( image->data[i] > 0x00 ) && ( image->data[i] < 0xFF ) ) {
-			outTexture->flags |= TF_IS_TRANSPARENT;
-		}
-	}
-
-	return 0;
 }
 
 // Loads the data from fileName into outLoadedImage, used as an intermediary between loading and creating a texture.
@@ -163,7 +135,7 @@ int gfxUtil_LoadTexture( const char* fileName, Texture* outTexture )
 		goto clean_up;
 	}
 
-	if( gfxUtil_CreateTextureFromLoadedImage( GL_RGBA, &image, outTexture ) < 0 ) {
+	if( gfxPlatform_CreateTextureFromLoadedImage( GL_RGBA, &image, outTexture ) < 0 ) {
 		returnCode = -1;
 		goto clean_up;
 	}
@@ -172,52 +144,6 @@ clean_up:
 	//SDL_FreeSurface( loadSurface );
 	stbi_image_free( image.data );
 	return returnCode;
-}
-
-// Turns an SDL_Surface into a texture. Takes in a pointer to a Texture structure that it puts all the generated data into.
-//  Returns >= 0 on success, < 0 on failure.
-int gfxUtil_CreateTextureFromSurface( SDL_Surface* surface, Texture* outTexture )
-{
-	// convert the pixels into a texture
-	GLenum texFormat;
-
-	if( surface->format->BytesPerPixel == 4 ) {
-		texFormat = GL_RGBA;
-	} else if( surface->format->BytesPerPixel == 3 ) {
-		texFormat = GL_RGB;
-	} else {
-		llog( LOG_INFO, "Unable to handle format!" );
-		return -1;
-	}
-
-	// TODO: Get this working with createTextureFromLoadedImage( ), just need to make an SDL_Surface into a LoadedImage
-	glGenTextures( 1, &( outTexture->textureID ) );
-
-	if( outTexture->textureID == 0 ) {
-		llog( LOG_INFO, "Unable to create texture object." );
-		return -1;
-	}
-
-	glBindTexture( GL_TEXTURE_2D, outTexture->textureID );
-
-	// assuming these will look good for now, we shouldn't be too much resizing, but if we do we can go over these again
-	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
-	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
-
-	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
-	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
-
-	glTexImage2D( GL_TEXTURE_2D, 0, texFormat, surface->w, surface->h, 0, texFormat, GL_UNSIGNED_BYTE, surface->pixels );
-
-	outTexture->width = surface->w;
-	outTexture->height = surface->h;
-	outTexture->flags = 0;
-	// the reason this isn't using the createTextureFromLoadedImage is this primarily
-	if( gfxUtil_SurfaceIsTranslucent( surface ) ) {
-		outTexture->flags |= TF_IS_TRANSPARENT;
-	}
-
-	return 0;
 }
 
 // Turns an RGBA bitmap into a texture.  Takes in a pointer to a Texture structure that it puts all the generated data into.
@@ -241,7 +167,7 @@ int gfxUtil_CreateTextureFromRGBABitmap( uint8_t* data, int width, int height, T
 		goto clean_up;
 	}
 
-	if( gfxUtil_CreateTextureFromLoadedImage( GL_RGBA, &image, outTexture ) < 0 ) {
+	if( gfxPlatform_CreateTextureFromLoadedImage( GL_RGBA, &image, outTexture ) < 0 ) {
 		returnCode = -1;
 		goto clean_up;
 	}
@@ -277,21 +203,13 @@ int gfxUtil_CreateTextureFromAlphaBitmap( uint8_t* data, int width, int height, 
 #else
 	texFormat = GL_RED;
 #endif
-	if( gfxUtil_CreateTextureFromLoadedImage( texFormat, &image, outTexture ) < 0 ) {
+	if( gfxPlatform_CreateTextureFromLoadedImage( texFormat, &image, outTexture ) < 0 ) {
 		returnCode = -1;
 		goto clean_up;
 	}
 
 clean_up:
 	return returnCode;
-}
-
-// Unloads the passed in texture. After doing this the texture will be invalid and should not be used anymore.
-void gfxUtil_UnloadTexture( Texture* texture )
-{
-	glDeleteTextures( 1, &( texture->textureID ) );
-	texture->textureID = 0;
-	texture->flags = 0;
 }
 
 // Returns whether the SDL_Surface has any pixels that have a transparency that aren't completely clear or solid.
@@ -328,4 +246,17 @@ int gfxUtil_SurfaceIsTranslucent( SDL_Surface* surface )
 	}
 
 	return 0;
+}
+
+void gfxUtil_TakeScreenShot( const char* outputPath )
+{
+	int width = 0;
+	int height = 0;
+	gfx_GetWindowSize( &width, &height );
+
+	// need to make sure you release the memory allocated for the pixels
+	uint8_t* pixels = gfxPlatform_GetScreenShotPixels( width, height );
+	stbi_write_png( outputPath, width, height, 3, pixels, width * 3 );
+
+	mem_Release( pixels );
 }

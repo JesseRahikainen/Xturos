@@ -3,17 +3,17 @@
 #include <SDL_assert.h>
 #include <math.h>
 
-#include "../Graphics/images.h"
-#include "../Input/input.h"
-#include "../Utils/stretchyBuffer.h"
-#include "../Graphics/camera.h"
-#include "../Math/vector2.h"
-#include "../Math/vector3.h"
-#include "../Math/matrix4.h"
-#include "../System/platformLog.h"
-#include "../UI/text.h"
+#include "Graphics/images.h"
+#include "Input/input.h"
+#include "Utils/stretchyBuffer.h"
+#include "Graphics/camera.h"
+#include "Math/vector2.h"
+#include "Math/vector3.h"
+#include "Math/matrix4.h"
+#include "System/platformLog.h"
+#include "UI/text.h"
 
-#include "../Components/GeneralComponents.h"
+#include "Components/GeneralComponents.h"
 
 // move all of these into separate files?
 
@@ -77,7 +77,7 @@ static void render3x3( ECPS* ecps, const Entity* entity )
 	GC3x3SpriteData* sd = NULL;
 	GCScaleData* scale = NULL;
 	GCColorData* color = NULL;
-	GCRotData* rot = NULL;
+	GCFloatVal0Data* floatVal = NULL;
 
 	ecps_GetComponentFromEntity( entity, gcPosCompID, &pos );
 	ecps_GetComponentFromEntity( entity, gc3x3SpriteCompID, &sd );
@@ -102,7 +102,14 @@ static void render3x3( ECPS* ecps, const Entity* entity )
 		color->currClr = futureClr;
 	}
 
-	img_Draw3x3v_c( sd->imgs, sd->camFlags, currPos, futurePos, currScale, futureScale, currClr, futureClr, sd->depth );
+	float currVal0 = 0.0f;
+	float futureVal0 = 0.0f;
+	if( ecps_GetComponentFromEntity( entity, gcFloatVal0CompID, &floatVal ) ) {
+		currVal0 = floatVal->currValue;
+		futureVal0 = floatVal->futureValue;
+	}
+
+	img_Draw3x3v_c_f( sd->imgs, sd->camFlags, currPos, futurePos, currScale, futureScale, currClr, futureClr, currVal0, futureVal0, sd->depth );
 
 	pos->currPos = pos->futurePos;
 }
@@ -429,6 +436,62 @@ static void cleanUp( ECPS* ecps, Entity* entity )
 	ecps_DestroyEntity( ecps, entity );
 }
 
+// ***** Mounted Position Update
+//  this should be run after everything that updates the position, but before anything that uses the position
+Process gpUpdateMountedPosProc;
+static void updateMounted( ECPS* ecps, const Entity* entity )
+{
+	GCMountedPosOffset* offset = NULL;
+	GCPosData* pos = NULL;
+
+	ecps_GetComponentFromEntity( entity, gcMountedPosOffsetCompID, &offset );
+	ecps_GetComponentFromEntity( entity, gcPosCompID, &pos );
+
+	GCPosData* parentPos = NULL;
+	if( !ecps_GetComponentFromEntityByID( ecps, offset->parentID, gcPosCompID, &parentPos ) ) {
+		return;
+	}
+
+	vec2_Add( &( parentPos->futurePos ), &( offset->offset ), &( pos->futurePos ) );
+}
+
+// ***** Mounted Position Update
+Process gpClampMountedPosProc;
+static void mountedClamp( ECPS* ecps, const Entity* entity )
+{
+	GCMountedPosOffset* offset = NULL;
+	GCPosData* pos = NULL;
+
+	ecps_GetComponentFromEntity( entity, gcMountedPosOffsetCompID, &offset );
+	ecps_GetComponentFromEntity( entity, gcPosCompID, &pos );
+
+	GCPosData* parentPos = NULL;
+	if( !ecps_GetComponentFromEntityByID( ecps, offset->parentID, gcPosCompID, &parentPos ) ) {
+		return;
+	}
+
+	vec2_Add( &( parentPos->futurePos ), &( offset->offset ), &( pos->futurePos ) );
+	vec2_Add( &( parentPos->currPos ), &( offset->offset ), &( pos->currPos ) );
+}
+
+// ***** Draw PointerResponses for debugging
+Process gpDebugDrawPointerReponsesProc;
+#include "Graphics/debugRendering.h"
+static void drawPointerResponse( ECPS* ecps, const Entity* entity )
+{
+	GCPointerResponseData* pointer = NULL;
+	GCPosData* pos = NULL;
+
+	ecps_GetComponentFromEntity( entity, gcPointerResponseCompID, &pointer );
+	ecps_GetComponentFromEntity( entity, gcPosCompID, &pos );
+
+	Vector2 topLeft;
+	Vector2 fullSize;
+	vec2_Subtract( &pos->currPos, &pointer->collisionHalfDim, &topLeft );
+	vec2_Scale( &pointer->collisionHalfDim, 2.0f, &fullSize );
+	debugRenderer_AABB( pointer->camFlags, topLeft, fullSize, CLR_BLUE );
+}
+
 // ***** Register the processes
 void gp_RegisterProcesses( ECPS* ecps )
 {
@@ -448,9 +511,22 @@ void gp_RegisterProcesses( ECPS* ecps )
 
 	SDL_assert( gcPosCompID != INVALID_COMPONENT_ID );
 	SDL_assert( gcPointerResponseCompID != INVALID_COMPONENT_ID );
-#if defined( __ANDROID__ )
+/*#if defined( __ANDROID__ )
 	ecps_CreateProcess( ecps, "CLICK", pointerResponseGetMouse, pointerResponseDetectState, pointerResponseFinalize_TouchScreen, &gpPointerResponseProc, 2, gcPosCompID, gcPointerResponseCompID );
 #else
 	ecps_CreateProcess( ecps, "CLICK", pointerResponseGetMouse, pointerResponseDetectState, pointerResponseFinalize_Mouse, &gpPointerResponseProc, 2, gcPosCompID, gcPointerResponseCompID );
-#endif
+#endif//*/
+	ecps_CreateProcess( ecps, "CLICK", pointerResponseGetMouse, pointerResponseDetectState, pointerResponseFinalize_TouchScreen, &gpPointerResponseProc, 2, gcPosCompID, gcPointerResponseCompID );
+
+	SDL_assert( gcPosCompID != INVALID_COMPONENT_ID );
+	SDL_assert( gcMountedPosOffsetCompID != INVALID_COMPONENT_ID );
+	ecps_CreateProcess( ecps, "MOUNTED_UPDATE", NULL, updateMounted, NULL, &gpUpdateMountedPosProc, 2, gcPosCompID, gcMountedPosOffsetCompID );
+
+	SDL_assert( gcPosCompID != INVALID_COMPONENT_ID );
+	SDL_assert( gcMountedPosOffsetCompID != INVALID_COMPONENT_ID );
+	ecps_CreateProcess( ecps, "MOUNTED_CLAMP", NULL, mountedClamp, NULL, &gpClampMountedPosProc, 2, gcPosCompID, gcMountedPosOffsetCompID );
+
+	SDL_assert( gcPosCompID != INVALID_COMPONENT_ID );
+	SDL_assert( gcPointerResponseCompID != INVALID_COMPONENT_ID );
+	ecps_CreateProcess( ecps, "CLK_DBG", NULL, drawPointerResponse, NULL, &gpDebugDrawPointerReponsesProc, 2, gcPosCompID, gcPointerResponseCompID );
 }

@@ -3,10 +3,10 @@
 #include <SDL_log.h>
 #include <string.h>
 
-#include "../Utils/stretchyBuffer.h"
+#include "Utils/stretchyBuffer.h"
 #include "helpers.h"
 
-#include "../System/platformLog.h"
+#include "System/platformLog.h"
 
 // TODO: make this better overall, this is just a quick hack to test some stuff
 
@@ -51,7 +51,7 @@ void* cfg_OpenFile( const char* fileName )
 	char buffer[READ_BUFFER_SIZE];
 	size_t numRead;
 	char* fileText = NULL;
-	llog( LOG_INFO, "Stream size: %i", (int)SDL_RWsize( rwopsFile ) );
+	//llog( LOG_INFO, "Stream size: %i", (int)SDL_RWsize( rwopsFile ) );
 	while( ( numRead = SDL_RWread( rwopsFile, (void*)buffer, sizeof( char ), sizeof( buffer ) ) ) != 0 ) {
 		char* c = sb_Add( fileText, (int)numRead );
 		for( size_t i = 0; i < numRead; ++i ) {
@@ -80,7 +80,7 @@ void* cfg_OpenFile( const char* fileName )
 		} else {
 			attr.value = SDL_atoi( token );
 			sb_Push( newFile->sbAttributes, attr );
-			llog( LOG_INFO, "New attribute: %s  %i", attr.fileName, attr.value );
+			//llog( LOG_INFO, "New attribute: %s  %i", attr.fileName, attr.value );
 			gettingAttrName = 1;
 		}
 
@@ -172,26 +172,21 @@ int AttributeIndex( CFGFile* fileData, const char* attrName )
 	return idx;
 }
 
-// Accessors. Pass them a valid config file pointer, the name of the attribute you want, the default value for the
-//  attribute if it can't find it, and a spot to put the value if it does. Returns 0 if it finds the value, a
-//  negative number if it doesn't.
-int cfg_GetInt( void* cfgFile, const char* attrName, int defaultVal, int* retVal )
+// Accessors. Pass them a valid config file pointer, the name of the attribute you want, and the default value for the
+//  attribute if it can't find it.
+int cfg_GetInt( void* cfgFile, const char* attrName, int defaultVal )
 {
 	assert( cfgFile != NULL );
 
 	CFGFile* data = (CFGFile*)cfgFile;
 
 	int result = defaultVal;
-	int ret = -1;
 
 	int idx = AttributeIndex( data, attrName );
 	if( idx >= 0 ) {
 		result = data->sbAttributes[idx].value;
-		ret = 0;
 	}
-	(*retVal) = result;
-
-	return ret;
+	return result;
 }
 
 // If the attribute already exists it sets the associated value, if it doesn't exist it is added.

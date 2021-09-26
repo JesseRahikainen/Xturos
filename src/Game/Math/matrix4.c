@@ -2,7 +2,7 @@
 #include <math.h>
 #include <assert.h>
 #include "matrix4.h"
-#include "../System/platformLog.h"
+#include "System/platformLog.h"
 
 Matrix4* mat4_Multiply( const Matrix4* m, const Matrix4* n, Matrix4* out )
 {

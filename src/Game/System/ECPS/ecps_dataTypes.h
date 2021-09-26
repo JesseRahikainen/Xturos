@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#include "../../Utils/idSet.h"
+#include "Utils/idSet.h"
 #include "ecps_values.h"
 
 typedef uint32_t ComponentID;

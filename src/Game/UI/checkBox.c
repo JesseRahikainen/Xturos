@@ -3,14 +3,14 @@
 #include <string.h>
 #include <math.h>
 
-#include "../Graphics/images.h"
+#include "Graphics/images.h"
 #include "text.h"
-#include "../Math/vector3.h"
-#include "../Math/matrix4.h"
-#include "../Graphics/camera.h"
-#include "../Input/input.h"
-#include "../System/platformLog.h"
-#include "../System/systems.h"
+#include "Math/vector3.h"
+#include "Math/matrix4.h"
+#include "Graphics/camera.h"
+#include "Input/input.h"
+#include "System/platformLog.h"
+#include "System/systems.h"
 
 #define MAX_CHECK_BOXES 32
 #define TEXT_LEN 32

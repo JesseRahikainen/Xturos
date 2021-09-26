@@ -3,7 +3,7 @@
 
 #include <stdbool.h>
 #include "color.h"
-#include "../Math/vector2.h"
+#include "Math/vector2.h"
 
 typedef float(*GeomTrailWidthFunc)( float t );
 typedef void(*GeomTrailColorFunc)( float t, Color* outColor );

@@ -26,7 +26,7 @@ void gsm_ProcessEvents( GameStateMachine* fsm, SDL_Event* e )
 {
 	assert( fsm );
 
-	if( ( fsm->currentState != NULL ) && ( fsm->currentState->process != NULL ) ) {
+	if( ( fsm->currentState != NULL ) && ( fsm->currentState->processEvents != NULL ) ) {
 		fsm->currentState->processEvents( e );
 	}
 }

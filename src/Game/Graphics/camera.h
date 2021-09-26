@@ -5,8 +5,8 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#include "../Math/vector2.h"
-#include "../Math/matrix4.h"
+#include "Math/vector2.h"
+#include "Math/matrix4.h"
 
 // Initialize all the cameras, set them to the identity.
 void cam_Init( void );

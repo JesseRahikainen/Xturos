@@ -1,7 +1,7 @@
 #ifndef SHADER_MANAGER_H
 #define SHADER_MANAGER_H
 
-#include "glPlatform.h"
+#include "Graphics/Platform/OpenGL/glPlatform.h"
 
 /*
 TODO:

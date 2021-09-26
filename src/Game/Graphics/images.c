@@ -1,21 +1,20 @@
 #include "images.h"
 
-#include "../Graphics/glPlatform.h"
-#include "glPlatform.h"
 #include <assert.h>
 #include <math.h>
 #include <stdlib.h>
 
-#include "../Math/matrix4.h"
+#include "Math/matrix4.h"
 #include "gfxUtil.h"
-#include "../System/platformLog.h"
-#include "../Math/mathUtil.h"
+#include "Graphics/Platform/graphicsPlatform.h"
+#include "System/platformLog.h"
+#include "Math/mathUtil.h"
 
-#include "../System/jobQueue.h"
-#include "../System/jobRingQueue.h"
-#include "../System/memory.h"
+#include "System/jobQueue.h"
+#include "System/jobRingQueue.h"
+#include "System/memory.h"
 
-#include "../Utils/hashMap.h"
+#include "Utils/hashMap.h"
 
 /* Image loading types and variables */
 #define MAX_IMAGES 512
@@ -26,7 +25,7 @@ enum {
 };
 
 typedef struct {
-	GLuint textureObj;
+	PlatformTexture textureObj;
 	Vector2 uvMin;
 	Vector2 uvMax;
 	Vector2 size;
@@ -51,7 +50,7 @@ typedef struct {
 } DrawInstructionState;
 
 typedef struct {
-	GLuint textureObj;
+	PlatformTexture textureObj;
 	int imageObj;
 	Vector2 uvs[4];
 	DrawInstructionState start;
@@ -138,7 +137,7 @@ int img_Load( const char* fileName, ShaderType shaderType )
 		return -1;
 	}
 
-	images[newIdx].textureObj = texture.textureID;
+	images[newIdx].textureObj = texture.texture;
 	images[newIdx].size.v[0] = (float)texture.width;
 	images[newIdx].size.v[1] = (float)texture.height;
 	images[newIdx].offset = VEC2_ZERO;
@@ -168,12 +167,12 @@ int img_CreateFromLoadedImage( LoadedImage* loadedImg, ShaderType shaderType, co
 	}
 
 	Texture texture;
-	if( gfxUtil_CreateTextureFromLoadedImage( GL_RGBA, loadedImg, &texture ) < 0 ) {
+	if( gfxPlatform_CreateTextureFromLoadedImage( GL_RGBA, loadedImg, &texture ) < 0 ) {
 		llog( LOG_INFO, "Unable to create image!" );
 		return -1;
 	}
 
-	images[newIdx].textureObj = texture.textureID;
+	images[newIdx].textureObj = texture.texture;
 	images[newIdx].size.v[0] = (float)texture.width;
 	images[newIdx].size.v[1] = (float)texture.height;
 	images[newIdx].offset = VEC2_ZERO;
@@ -204,7 +203,7 @@ int img_CreateFromTexture( Texture* texture, ShaderType shaderType, const char* 
 		return -1;
 	}
 
-	images[newIdx].textureObj = texture->textureID;
+	images[newIdx].textureObj = texture->texture;
 	images[newIdx].size.v[0] = (float)texture->width;
 	images[newIdx].size.v[1] = (float)texture->height;
 	images[newIdx].offset = VEC2_ZERO;
@@ -230,6 +229,7 @@ typedef struct {
 	ShaderType shaderType;
 	int* outIdx;
 	LoadedImage loadedImage;
+	void ( *onLoadDone )( int );
 } ThreadedLoadImageData;
 
 static void bindImageJob( void* data )
@@ -256,12 +256,14 @@ static void bindImageJob( void* data )
 	}
 
 	Texture texture;
-	if( gfxUtil_CreateTextureFromLoadedImage( GL_RGBA, &( loadData->loadedImage ), &texture ) < 0 ) {
+	if( gfxPlatform_CreateTextureFromLoadedImage( GL_RGBA, &( loadData->loadedImage ), &texture ) < 0 ) {
 		llog( LOG_INFO, "Unable to bind image %s!", loadData->fileName );
 		goto clean_up;
 	}
 
-	images[newIdx].textureObj = texture.textureID;
+	//llog( LOG_INFO, "Done loading %s", loadData->fileName );
+
+	images[newIdx].textureObj = texture.texture;
 	images[newIdx].size.v[0] = (float)texture.width;
 	images[newIdx].size.v[1] = (float)texture.height;
 	images[newIdx].offset = VEC2_ZERO;
@@ -276,9 +278,10 @@ static void bindImageJob( void* data )
 	}
 	(*(loadData->outIdx)) = newIdx;
 
-	llog( LOG_INFO, "Setting outIdx to %i", newIdx );
+	//llog( LOG_INFO, "Setting outIdx to %i", newIdx );
 
 clean_up:
+	if( loadData->onLoadDone != NULL ) loadData->onLoadDone( *(loadData->outIdx) );
 	gfxUtil_ReleaseLoadedImage( &( loadData->loadedImage ) );
 	mem_Release( loadData->fileName );
 	mem_Release( loadData );
@@ -303,7 +306,7 @@ static void loadImageJob( void* data )
 Loads the image in a seperate thread. Puts the resulting image index into outIdx.
  Returns -1 if there was an issue, 0 otherwise.
 */
-void img_ThreadedLoad( const char* fileName, ShaderType shaderType, int* outIdx )
+void img_ThreadedLoad( const char* fileName, ShaderType shaderType, int* outIdx, void (*onLoadDone)( int ) )
 {
 	assert( fileName != NULL );
 
@@ -316,6 +319,7 @@ void img_ThreadedLoad( const char* fileName, ShaderType shaderType, int* outIdx 
 	ThreadedLoadImageData* data = mem_Allocate( sizeof( ThreadedLoadImageData ) );
 	if( data == NULL ) {
 		llog( LOG_WARN, "Unable to create data for threaded image load for file %s", fileName );
+		if( onLoadDone != NULL ) onLoadDone( -1 );
 		return;
 	}
 
@@ -324,16 +328,19 @@ void img_ThreadedLoad( const char* fileName, ShaderType shaderType, int* outIdx 
 	if( data->fileName == NULL ) {
 		llog( LOG_WARN, "Unable to create file name storage for threaded image lead for fle %s", fileName );
 		mem_Release( data );
+		if( onLoadDone != NULL ) onLoadDone( -1 );
 		return;
 	}
-	SDL_strlcpy( data->fileName, fileName, fileNameLen );
+	SDL_strlcpy( data->fileName, fileName, fileNameLen + 1 );
 
 	data->shaderType = shaderType;
 	data->outIdx = outIdx;
 	data->loadedImage.data = NULL;
+	data->onLoadDone = onLoadDone;
 
 	if( !jq_AddJob( loadImageJob, data ) ) {
 		mem_Release( data );
+		if( onLoadDone != NULL ) onLoadDone( -1 );
 	}
 }
 
@@ -353,7 +360,7 @@ int img_Create( SDL_Surface* surface, ShaderType shaderType, const char* id )
 	}
 
 	Texture texture;
-	if( gfxUtil_CreateTextureFromSurface( surface, &texture ) < 0 ) {
+	if( gfxPlatform_CreateTextureFromSurface( surface, &texture ) ) {
 		llog( LOG_INFO, "Unable to convert surface to texture! SDL Error: %s", SDL_GetError( ) );
 		return -1;
 	} else {
@@ -408,13 +415,14 @@ void img_Clean( int idx )
 	//  TODO: See if this needs to be sped up
 	int deleteTexture = 1;
 	for( int i = 0; ( i < MAX_IMAGES ) && deleteTexture; ++i ) {
-		if( ( images[i].flags & IMGFLAG_IN_USE ) && ( images[i].textureObj == images[idx].textureObj ) ) {
+		if( ( images[i].flags & IMGFLAG_IN_USE ) && ( gfxPlatform_ComparePlatformTextures( images[i].textureObj, images[idx].textureObj ) == 0 ) ) {
 			deleteTexture = 0;
 		}
 	}
 
 	if( deleteTexture ) {
-		glDeleteTextures( 1, &( images[idx].textureObj ) );
+		gfxPlatform_DeletePlatformTexture( images[idx].textureObj );
+		
 	}
 	images[idx].size = VEC2_ZERO;
 	images[idx].flags = 0;
@@ -458,7 +466,7 @@ int split( Texture* texture, int packageID, ShaderType shaderType, int count, Ve
 			return -1;
 		}
 
-		images[newIdx].textureObj = texture->textureID;
+		images[newIdx].textureObj = texture->texture;
 		vec2_Subtract( &( maxes[i] ), &( mins[i] ), &( images[newIdx].size ) );
 		images[newIdx].offset = VEC2_ZERO;
 		images[newIdx].packageID = packageID;
@@ -474,10 +482,23 @@ int split( Texture* texture, int packageID, ShaderType shaderType, int count, Ve
 			hashMap_Set( &imgIDMap, imgIDs[i], newIdx );
 		}
 
-		retIDs[i] = newIdx;
+		if( retIDs != NULL ) {
+			retIDs[i] = newIdx;
+		}
 	}
 
 	return 0;
+}
+
+int img_SplitTexture( Texture* texture, int count, ShaderType shaderType, Vector2* mins, Vector2* maxes, char** imgIDs, int* retIDs )
+{
+	int currentPackageID = findUnusedPackage( );
+
+	if( split( texture, currentPackageID, shaderType, count, mins, maxes, imgIDs, retIDs ) < 0 ) {
+		return -1;
+	}
+
+	return currentPackageID;
 }
 
 /*
@@ -570,7 +591,24 @@ void img_SetOffset( int idx, Vector2 offset )
 	images[idx].offset = offset;
 }
 
-#include "../Utils/helpers.h"
+// Sets an offset based on a vector with the ranges [0,1], default is <0.5, 0.5>, 0 is left and top, 1 is right and bottom
+//  padding is for if you want some changes based on pixels and not a ratio
+void img_SetRatioOffset( int idx, Vector2 offsetRatio, Vector2 padding )
+{
+	if( ( idx < 0 ) || ( !( images[idx].flags & IMGFLAG_IN_USE ) ) || ( idx >= MAX_IMAGES ) ) {
+		return;
+	}
+
+	offsetRatio.x = ( 1.0f - offsetRatio.x ) - 0.5f;
+	offsetRatio.y = ( 1.0f - offsetRatio.y ) - 0.5f;
+	Vector2 size = images[idx].size;
+	Vector2 offset;
+	vec2_HadamardProd( &size, &offsetRatio, &offset );
+	vec2_Add( &offset, &padding, &offset );
+	images[idx].offset = offset;
+}
+
+#include "Utils/helpers.h"
 void img_ForceTransparency( int idx, bool transparent )
 {
 	assert( idx < MAX_IMAGES );
@@ -622,7 +660,7 @@ int img_GetDesiredScale( int idx, Vector2 desiredSize, Vector2* outScale )
 Gets the texture id for the image, used if you need to render it directly instead of going through this.
  Returns whether out was successfully set or not.
 */
-int img_GetTextureID( int idx, GLuint* out )
+int img_GetTextureID( int idx, PlatformTexture* out )
 {
 	assert( out != NULL );
 
@@ -874,54 +912,11 @@ void img_SetDrawSize( int drawID, Vector2 start, Vector2 end )
 /*
 Adds to the list of images to draw.
 */
-#define DRAW_INSTRUCTION_START \
-	DrawInstruction* ri = GetNextRenderInstruction( imgID, camFlags, startPos, endPos, depth ); \
-	if( ri == NULL ) { return -1; }
-
-#define DRAW_INSTRUCTION_END \
-	return 0;
-
-#define SET_DRAW_INSTRUCTION_SCALE( startX, startY, endX, endY ) \
-	ri->start.scaledSize.x *= startX; \
-	ri->start.scaledSize.y *= startY; \
-	ri->end.scaledSize.x *= endX; \
-	ri->end.scaledSize.y *= endY; \
-	ri->start.offset.x *= startX; \
-	ri->start.offset.y *= startY; \
-	ri->end.offset.x *= endX; \
-	ri->end.offset.y *= endY;
-
-#define SET_DRAW_INSTRUCTION_COLOR( startColor, endColor ) \
-	ri->start.color = startColor; \
-	ri->end.color = endColor; \
-	if( ( ( startColor.a > 0 ) && ( startColor.a < 1.0f ) ) || \
-		( ( endColor.a > 0 ) && ( endColor.a < 1.0f ) )) { \
-		ri->flags |= IMGFLAG_HAS_TRANSPARENCY; }
-
-/*
-#define SET_DRAW_INSTRUCTION_ROT( startRotRad, endRotRad ) \
-	ri->start.rotation = startRotRad; \
-	ri->end.rotation = endRotRad;
-
-#define SET_DRAW_INSTRUCTION_FLOAT_VAL( startVal, endVal ) \
-	ri->start.floatVal0 = startVal; \
-	ri->end.floatVal0 = endVal;
-//*/
-
-int img_Draw_sv_c( int imgID, uint32_t camFlags, Vector2 startPos, Vector2 endPos, Vector2 startScale, Vector2 endScale,
-	Color startColor, Color endColor, int8_t depth )
-{
-	DRAW_INSTRUCTION_START;
-	SET_DRAW_INSTRUCTION_SCALE( startScale.x, startScale.y, endScale.x, endScale.y );
-	SET_DRAW_INSTRUCTION_COLOR( startColor, endColor );
-	DRAW_INSTRUCTION_END;
-}
-
 int img_Draw3x3( int imgUL, int imgUC, int imgUR, int imgML, int imgMC, int imgMR, int imgDL, int imgDC, int imgDR,
 	uint32_t camFlags, Vector2 startPos, Vector2 endPos, Vector2 startSize, Vector2 endSize, int8_t depth )
 {
-	return img_Draw3x3_c( imgUL, imgUC, imgUR, imgML, imgMC, imgMR, imgDL, imgDC, imgDR,
-		camFlags, startPos, endPos, startSize, endSize, CLR_WHITE, CLR_WHITE, depth );
+	return img_Draw3x3_c_f( imgUL, imgUC, imgUR, imgML, imgMC, imgMR, imgDL, imgDC, imgDR,
+		camFlags, startPos, endPos, startSize, endSize, CLR_WHITE, CLR_WHITE, 0.0f, 0.0f, depth );
 }
 
 int img_Draw3x3v( int* imgs, uint32_t camFlags, Vector2 startPos, Vector2 endPos, Vector2 startSize, Vector2 endSize, int8_t depth )
@@ -930,9 +925,9 @@ int img_Draw3x3v( int* imgs, uint32_t camFlags, Vector2 startPos, Vector2 endPos
 		camFlags, startPos, endPos, startSize, endSize, depth );
 }
 
-int img_Draw3x3_c( int imgUL, int imgUC, int imgUR, int imgML, int imgMC, int imgMR, int imgDL, int imgDC, int imgDR,
+int img_Draw3x3_c_f( int imgUL, int imgUC, int imgUR, int imgML, int imgMC, int imgMR, int imgDL, int imgDC, int imgDR,
 	uint32_t camFlags, Vector2 startPos, Vector2 endPos, Vector2 startSize, Vector2 endSize,
-	Color startColor, Color endColor, int8_t depth )
+	Color startColor, Color endColor, float startVal0, float endVal0, int8_t depth )
 {
 	// assuming that the dimensions of each column and row are the same
 	// also assumes the width and height to draw greater than the sum of the widths and heights, if it isn't we just
@@ -990,7 +985,13 @@ int img_Draw3x3_c( int imgUL, int imgUC, int imgUR, int imgML, int imgMC, int im
 	posEnd.x = ( endX ); posEnd.y = ( endY ); \
 	scaleStart.w = ( startW ); scaleStart.h = ( startH ); \
 	scaleEnd.w = ( endW ); scaleEnd.h = ( endH ); \
-	if( img_Draw_sv_c( img, camFlags, posStart, posEnd, scaleStart, scaleEnd, startColor, endColor, depth ) < 0 ) return -1;
+	{ \
+		int id = img_CreateDraw( img, camFlags, posStart, posEnd, depth ); \
+		if( id < 0 ) return -1; \
+		img_SetDrawColor( id, startColor, endColor ); \
+		img_SetDrawFloatVal0( id, startVal0, endVal0 ); \
+		img_SetDrawScaleV( id, scaleStart, scaleEnd ); \
+	}
 
 	// upper-left
 	DRAW_SECTION( imgUL, leftPosStart, topPosStart, leftPosEnd, topPosEnd, 1.0f, 1.0f, 1.0f, 1.0f );
@@ -1027,8 +1028,15 @@ int img_Draw3x3_c( int imgUL, int imgUC, int imgUR, int imgML, int imgMC, int im
 int img_Draw3x3v_c( int* imgs, uint32_t camFlags, Vector2 startPos, Vector2 endPos,
 	Vector2 startSize, Vector2 endSize, Color startColor, Color endColor, int8_t depth )
 {
-	return img_Draw3x3_c( imgs[0], imgs[1], imgs[2], imgs[3], imgs[4], imgs[5], imgs[6], imgs[7], imgs[8],
-		camFlags, startPos, endPos, startSize, endSize, startColor, endColor, depth );
+	return img_Draw3x3_c_f( imgs[0], imgs[1], imgs[2], imgs[3], imgs[4], imgs[5], imgs[6], imgs[7], imgs[8],
+		camFlags, startPos, endPos, startSize, endSize, startColor, endColor, 0.0f, 0.0f, depth );
+}
+
+int img_Draw3x3v_c_f( int* imgs, uint32_t camFlags, Vector2 startPos, Vector2 endPos,
+	Vector2 startSize, Vector2 endSize, Color startColor, Color endColor, float startVal0, float endVal0, int8_t depth )
+{
+	return img_Draw3x3_c_f( imgs[0], imgs[1], imgs[2], imgs[3], imgs[4], imgs[5], imgs[6], imgs[7], imgs[8],
+		camFlags, startPos, endPos, startSize, endSize, startColor, endColor, startVal0, endVal0, depth );
 }
 
 #undef DRAW_INSTRUCTION_QUEUE_START

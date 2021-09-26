@@ -108,6 +108,7 @@ Handles the platform specific OpenGL stuff.
 	"in mediump vec2 vTex;\n" \
 	"in mediump vec4 vCol;\n" \
 	"uniform sampler2D textureUnit0;\n" \
+	"uniform mediump float floatVal0;\n" \
 	"out mediump vec4 outCol;\n" \
 	"void main( void )\n" \
 	"{\n" \
@@ -115,11 +116,40 @@ Handles the platform specific OpenGL stuff.
 	"	mediump float dist = outCol.a;\n" \
 	"	const mediump float edgeDist = 0.5f;\n" \
 	"	mediump float edgeWidth = 0.7f * fwidth( dist );\n" \
+	"   //outCol.r = 1.0f - floatVal0; // just for testing the floatVal0 uniform\n" \
 	"	outCol.a = smoothstep( edgeDist - edgeWidth, edgeDist + edgeWidth, dist );\n" \
+	"   if( outCol.a <= 0.0f ) {\n" \
+	"	   mediump float t = abs( dist / 0.5f ) * 2.0f;\n" \
+	"	   outCol.a = floatVal0 * pow( t, floatVal0 * 5.0f ) * 0.2f;\n" \
+	"   }\n" \
+	"}\n"
+
+// draws the image using the SDF method, but defines a certain range as an outline, that will be
+//  a secondary color
+#define OUTLINED_IMAGE_SDF_FRAG_SHADER \
+	"#version 300 es\n" \
+	"in mediump vec2 vTex;\n" \
+	"in mediump vec4 vCol; // base color\n" \
+	"uniform sampler2D textureUnit0;\n" \
+	"uniform mediump float floatVal0; // used for outline range\n" \
+	"out mediump vec4 outCol;\n" \
+	"void main( void )\n" \
+	"{\n" \
+	"   outCol = texture(textureUnit0, vTex);\n" \
+	"	outCol.a *= vCol.a;\n" \
+	"	mediump float dist = outCol.a;\n" \
+	"	const mediump float edgeDist = 0.5f;\n" \
+	"	mediump float edgeWidth = 0.7f * fwidth( dist );\n" \
+	"   //outCol.r = 1.0f - floatVal0; // just for testing the floatVal0 uniform\n" \
+	"	outCol.a = smoothstep( edgeDist - edgeWidth, edgeDist + edgeWidth, dist );\n" \
+	"	mediump float outlineEdge = edgeDist + floatVal0;\n" \
+	"	mediump float outline = smoothstep( outlineEdge - edgeWidth, outlineEdge + edgeWidth, dist );\n" \
+    "   const mediump vec3 white = vec3( 1.0f, 1.0f, 1.0f );\n" \
+    "   outCol.rgb = mix( white, vCol.rgb, outline );\n" \
 	"}\n"
 
 #elif defined( WIN32 )
-#include "../Others/gl_core.h"
+#include "Others/gl_core.h"
 #include <SDL_opengl.h>
 
 #define PROFILE SDL_GL_CONTEXT_PROFILE_CORE
@@ -207,6 +237,29 @@ Handles the platform specific OpenGL stuff.
 	"	   float t = abs( dist / 0.5f ) * 2.0f;\n" \
 	"	   outCol.a = floatVal0 * pow( t, floatVal0 * 5.0f ) * 0.2f;\n" \
 	"   }\n" \
+	"}\n"
+
+// draws the image using the SDF method, but defines a certain range as an outline, the outline
+//  will be assumed to be white
+#define OUTLINED_IMAGE_SDF_FRAG_SHADER \
+	"#version 330\n" \
+	"in vec2 vTex;\n" \
+	"in vec4 vCol; // base color\n" \
+	"uniform sampler2D textureUnit0;\n" \
+	"uniform float floatVal0; // used for outline range\n" \
+	"out vec4 outCol;\n" \
+	"void main( void )\n" \
+	"{\n" \
+	"   outCol = texture2D(textureUnit0, vTex);\n" \
+	"	outCol.a *= vCol.a;\n" \
+	"	float dist = outCol.a;\n" \
+	"	float edgeDist = 0.5f;\n" \
+	"	float edgeWidth = 0.7f * fwidth( dist );\n" \
+	"   //outCol.r = 1.0f - floatVal0; // just for testing the floatVal0 uniform\n" \
+	"	outCol.a = smoothstep( edgeDist - edgeWidth, edgeDist + edgeWidth, dist );\n" \
+	"	float outlineEdge = edgeDist + floatVal0;\n" \
+	"	float outline = smoothstep( outlineEdge - edgeWidth, outlineEdge + edgeWidth, dist );\n" \
+    "   outCol.rgb = mix( vec3( 1.0f, 1.0f, 1.0f ), vCol.rgb, outline );\n" \
 	"}\n"
 
 #define DEBUG_VERT_SHADER \

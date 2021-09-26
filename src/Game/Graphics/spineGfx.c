@@ -6,9 +6,10 @@
 #include "triRendering.h"
 #include "debugRendering.h"
 #include "gfxUtil.h"
-#include "../Utils/helpers.h"
-#include "../System/memory.h"
-#include "../System/platformLog.h"
+#include "Graphics/Platform/graphicsPlatform.h"
+#include "Utils/helpers.h"
+#include "System/memory.h"
+#include "System/platformLog.h"
 
 // templates
 typedef struct {
@@ -64,7 +65,7 @@ void _spAtlasPage_createTexture( spAtlasPage* self, const char* path )
 
 void _spAtlasPage_disposeTexture( spAtlasPage* self )
 {
-	gfxUtil_UnloadTexture( (Texture*)self->rendererObject );
+	gfxPlatform_UnloadTexture( self->rendererObject );
 	mem_Release( self->rendererObject );
 }
 
@@ -420,7 +421,6 @@ void spine_UpdateInstances( float dt )
 static void drawCharacter( SpineInstance* spine )
 {
 	// just draw bone positions to start with
-	//GLuint texture;
 	Color col;
 	int camFlags = spine->cameraFlags;
 	char depth = spine->depth;
@@ -459,8 +459,8 @@ static void drawCharacter( SpineInstance* spine )
 				texture = (Texture*)((spAtlasRegion*)regionAttachment->rendererObject)->page->rendererObject;
 
 				TriType type = ( texture->flags & TF_IS_TRANSPARENT ) ? TT_TRANSPARENT : TT_SOLID;
-				triRenderer_Add( verts[0], verts[1], verts[2], ST_DEFAULT, texture->textureID, 0.0f, -1, camFlags, depth, type );
-				triRenderer_Add( verts[0], verts[2], verts[3], ST_DEFAULT, texture->textureID, 0.0f, -1, camFlags, depth, type );
+				triRenderer_Add( verts[0], verts[1], verts[2], ST_DEFAULT, texture->texture, 0.0f, -1, camFlags, depth, type );
+				triRenderer_Add( verts[0], verts[2], verts[3], ST_DEFAULT, texture->texture, 0.0f, -1, camFlags, depth, type );
 			} break;
 		/*case SP_ATTACHMENT_BOUNDING_BOX: {
 				// if we're debugging 
@@ -503,7 +503,7 @@ static void drawCharacter( SpineInstance* spine )
 
 					//debugRenderer_Triangle( camFlags, verts[0], verts[1], verts[2], CLR_GREEN );
 					TriType type = ( texture->flags & TF_IS_TRANSPARENT ) ? TT_TRANSPARENT : TT_SOLID;
-					triRenderer_AddVertices( verts, ST_DEFAULT, texture->textureID, 0.0f, -1, camFlags, depth, type );
+					triRenderer_AddVertices( verts, ST_DEFAULT, texture->texture, 0.0f, -1, camFlags, depth, type );
 				}
 			} break;
 		default:

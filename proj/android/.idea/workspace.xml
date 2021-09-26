@@ -1,21 +1,126 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
+  <component name="AndroidLayouts">
+    <shared>
+      <config />
+    </shared>
+  </component>
   <component name="AndroidLogFilters">
     <option name="TOOL_WINDOW_LOG_LEVEL" value="verbose" />
     <option name="TOOL_WINDOW_CONFIGURED_FILTER" value="Show only selected application" />
   </component>
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="NONE" />
+  </component>
   <component name="ChangeListManager">
-    <list default="true" id="df42c7bd-f362-4693-bcc0-26eb1b48b5de" name="Default Changelist" comment="" />
-    <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
+    <list default="true" id="df42c7bd-f362-4693-bcc0-26eb1b48b5de" name="Default Changelist" comment="">
+      <change afterPath="$PROJECT_DIR$/.idea/compiler.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/jarRepositories.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/../../.gitignore" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/gradle.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/gradle.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/modules.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/modules.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/runConfigurations.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/build.gradle" beforeDir="false" afterPath="$PROJECT_DIR$/app/build.gradle" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/jni/Application.mk" beforeDir="false" afterPath="$PROJECT_DIR$/app/jni/Application.mk" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/AndroidManifest.xml" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/AndroidManifest.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/unpronounceablegames/spacesnake/SpaceSnakeActivity.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/org/libsdl/app/HIDDevice.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/org/libsdl/app/HIDDevice.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/org/libsdl/app/HIDDeviceBLESteamController.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/org/libsdl/app/HIDDeviceBLESteamController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/org/libsdl/app/HIDDeviceManager.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/org/libsdl/app/HIDDeviceManager.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/org/libsdl/app/HIDDeviceUSB.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/org/libsdl/app/HIDDeviceUSB.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/org/libsdl/app/SDL.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/org/libsdl/app/SDL.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/org/libsdl/app/SDLActivity.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/org/libsdl/app/SDLActivity.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/org/libsdl/app/SDLAudioManager.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/org/libsdl/app/SDLAudioManager.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/org/libsdl/app/SDLControllerManager.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/org/libsdl/app/SDLControllerManager.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/res/values/strings.xml" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/res/values/strings.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/res/values/styles.xml" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/res/values/styles.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/build.gradle" beforeDir="false" afterPath="$PROJECT_DIR$/build.gradle" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/gradle.properties" beforeDir="false" afterPath="$PROJECT_DIR$/gradle.properties" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/gradle/wrapper/gradle-wrapper.properties" beforeDir="false" afterPath="$PROJECT_DIR$/gradle/wrapper/gradle-wrapper.properties" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/setup.bat" beforeDir="false" afterPath="$PROJECT_DIR$/setup.bat" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../msvc2019/SDFImageGenerator.vcxproj" beforeDir="false" afterPath="$PROJECT_DIR$/../msvc2019/SDFImageGenerator.vcxproj" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../msvc2019/SpriteSheetGenerator.vcxproj" beforeDir="false" afterPath="$PROJECT_DIR$/../msvc2019/SpriteSheetGenerator.vcxproj" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../msvc2019/Xturos.sln" beforeDir="false" afterPath="$PROJECT_DIR$/../msvc2019/Xturos.sln" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../msvc2019/Xturos.vcxproj" beforeDir="false" afterPath="$PROJECT_DIR$/../msvc2019/Xturos.vcxproj" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../msvc2019/Xturos.vcxproj.filters" beforeDir="false" afterPath="$PROJECT_DIR$/../msvc2019/Xturos.vcxproj.filters" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../readme.txt" beforeDir="false" afterPath="$PROJECT_DIR$/../../readme.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../screen_template.txt" beforeDir="false" afterPath="$PROJECT_DIR$/../../screen_template.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../src/Game/Components/generalComponents.c" beforeDir="false" afterPath="$PROJECT_DIR$/../../src/Game/Components/generalComponents.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../src/Game/Components/generalComponents.h" beforeDir="false" afterPath="$PROJECT_DIR$/../../src/Game/Components/generalComponents.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../src/Game/Game/testJobQueueScreen.c" beforeDir="false" afterPath="$PROJECT_DIR$/../../src/Game/Game/testJobQueueScreen.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../src/Game/Graphics/camera.h" beforeDir="false" afterPath="$PROJECT_DIR$/../../src/Game/Graphics/camera.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../src/Game/Graphics/color.c" beforeDir="false" afterPath="$PROJECT_DIR$/../../src/Game/Graphics/color.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../src/Game/Graphics/debugRendering.c" beforeDir="false" afterPath="$PROJECT_DIR$/../../src/Game/Graphics/debugRendering.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../src/Game/Graphics/debugRendering.h" beforeDir="false" afterPath="$PROJECT_DIR$/../../src/Game/Graphics/debugRendering.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../src/Game/Graphics/geomTrail.c" beforeDir="false" afterPath="$PROJECT_DIR$/../../src/Game/Graphics/geomTrail.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../src/Game/Graphics/geomTrail.h" beforeDir="false" afterPath="$PROJECT_DIR$/../../src/Game/Graphics/geomTrail.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../src/Game/Graphics/gfxUtil.c" beforeDir="false" afterPath="$PROJECT_DIR$/../../src/Game/Graphics/gfxUtil.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../src/Game/Graphics/gfxUtil.h" beforeDir="false" afterPath="$PROJECT_DIR$/../../src/Game/Graphics/gfxUtil.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../src/Game/Graphics/glDebugging.c" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../src/Game/Graphics/glDebugging.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../src/Game/Graphics/glPlatform.c" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../src/Game/Graphics/glPlatform.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../src/Game/Graphics/graphics.c" beforeDir="false" afterPath="$PROJECT_DIR$/../../src/Game/Graphics/graphics.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../src/Game/Graphics/graphics.h" beforeDir="false" afterPath="$PROJECT_DIR$/../../src/Game/Graphics/graphics.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../src/Game/Graphics/imageSheets.c" beforeDir="false" afterPath="$PROJECT_DIR$/../../src/Game/Graphics/imageSheets.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../src/Game/Graphics/imageSheets.h" beforeDir="false" afterPath="$PROJECT_DIR$/../../src/Game/Graphics/imageSheets.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../src/Game/Graphics/images.c" beforeDir="false" afterPath="$PROJECT_DIR$/../../src/Game/Graphics/images.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../src/Game/Graphics/images.h" beforeDir="false" afterPath="$PROJECT_DIR$/../../src/Game/Graphics/images.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../src/Game/Graphics/shaderManager.c" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../src/Game/Graphics/shaderManager.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../src/Game/Graphics/spineGfx.c" beforeDir="false" afterPath="$PROJECT_DIR$/../../src/Game/Graphics/spineGfx.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../src/Game/Graphics/spineGfx.h" beforeDir="false" afterPath="$PROJECT_DIR$/../../src/Game/Graphics/spineGfx.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../src/Game/Graphics/sprites.c" beforeDir="false" afterPath="$PROJECT_DIR$/../../src/Game/Graphics/sprites.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../src/Game/Graphics/sprites.h" beforeDir="false" afterPath="$PROJECT_DIR$/../../src/Game/Graphics/sprites.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../src/Game/Graphics/triRendering.c" beforeDir="false" afterPath="$PROJECT_DIR$/../../src/Game/Graphics/triRendering.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../src/Game/Graphics/triRendering.h" beforeDir="false" afterPath="$PROJECT_DIR$/../../src/Game/Graphics/triRendering.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../src/Game/IMGUI/nuklearWrapper.h" beforeDir="false" afterPath="$PROJECT_DIR$/../../src/Game/IMGUI/nuklearWrapper.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../src/Game/Input/input.c" beforeDir="false" afterPath="$PROJECT_DIR$/../../src/Game/Input/input.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../src/Game/Input/input.h" beforeDir="false" afterPath="$PROJECT_DIR$/../../src/Game/Input/input.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../src/Game/Math/mathUtil.c" beforeDir="false" afterPath="$PROJECT_DIR$/../../src/Game/Math/mathUtil.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../src/Game/Math/mathUtil.h" beforeDir="false" afterPath="$PROJECT_DIR$/../../src/Game/Math/mathUtil.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../src/Game/Math/matrix4.c" beforeDir="false" afterPath="$PROJECT_DIR$/../../src/Game/Math/matrix4.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../src/Game/Math/vector2.c" beforeDir="false" afterPath="$PROJECT_DIR$/../../src/Game/Math/vector2.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../src/Game/Math/vector3.c" beforeDir="false" afterPath="$PROJECT_DIR$/../../src/Game/Math/vector3.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../src/Game/Others/stb_vorbis_sdl.c" beforeDir="false" afterPath="$PROJECT_DIR$/../../src/Game/Others/stb_vorbis_sdl.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../src/Game/Processes/generalProcesses.c" beforeDir="false" afterPath="$PROJECT_DIR$/../../src/Game/Processes/generalProcesses.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../src/Game/Processes/generalProcesses.h" beforeDir="false" afterPath="$PROJECT_DIR$/../../src/Game/Processes/generalProcesses.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../src/Game/System/ECPS/ecps_componentTypes.c" beforeDir="false" afterPath="$PROJECT_DIR$/../../src/Game/System/ECPS/ecps_componentTypes.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../src/Game/System/ECPS/ecps_dataTypes.h" beforeDir="false" afterPath="$PROJECT_DIR$/../../src/Game/System/ECPS/ecps_dataTypes.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../src/Game/System/ECPS/entityComponentProcessSystem.c" beforeDir="false" afterPath="$PROJECT_DIR$/../../src/Game/System/ECPS/entityComponentProcessSystem.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../src/Game/System/jobQueue.c" beforeDir="false" afterPath="$PROJECT_DIR$/../../src/Game/System/jobQueue.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../src/Game/System/platformLog.c" beforeDir="false" afterPath="$PROJECT_DIR$/../../src/Game/System/platformLog.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../src/Game/System/random.c" beforeDir="false" afterPath="$PROJECT_DIR$/../../src/Game/System/random.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../src/Game/System/random.h" beforeDir="false" afterPath="$PROJECT_DIR$/../../src/Game/System/random.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../src/Game/UI/button.c" beforeDir="false" afterPath="$PROJECT_DIR$/../../src/Game/UI/button.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../src/Game/UI/button.h" beforeDir="false" afterPath="$PROJECT_DIR$/../../src/Game/UI/button.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../src/Game/UI/checkBox.c" beforeDir="false" afterPath="$PROJECT_DIR$/../../src/Game/UI/checkBox.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../src/Game/UI/checkBox.h" beforeDir="false" afterPath="$PROJECT_DIR$/../../src/Game/UI/checkBox.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../src/Game/UI/text.c" beforeDir="false" afterPath="$PROJECT_DIR$/../../src/Game/UI/text.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../src/Game/UI/text.h" beforeDir="false" afterPath="$PROJECT_DIR$/../../src/Game/UI/text.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../src/Game/Utils/aStar.c" beforeDir="false" afterPath="$PROJECT_DIR$/../../src/Game/Utils/aStar.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../src/Game/Utils/cfgFile.c" beforeDir="false" afterPath="$PROJECT_DIR$/../../src/Game/Utils/cfgFile.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../src/Game/Utils/cfgFile.h" beforeDir="false" afterPath="$PROJECT_DIR$/../../src/Game/Utils/cfgFile.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../src/Game/Utils/hashMap.c" beforeDir="false" afterPath="$PROJECT_DIR$/../../src/Game/Utils/hashMap.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../src/Game/Utils/helpers.c" beforeDir="false" afterPath="$PROJECT_DIR$/../../src/Game/Utils/helpers.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../src/Game/Utils/helpers.h" beforeDir="false" afterPath="$PROJECT_DIR$/../../src/Game/Utils/helpers.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../src/Game/Utils/stretchyBuffer.h" beforeDir="false" afterPath="$PROJECT_DIR$/../../src/Game/Utils/stretchyBuffer.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../src/Game/gameState.c" beforeDir="false" afterPath="$PROJECT_DIR$/../../src/Game/gameState.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../src/Game/main.c" beforeDir="false" afterPath="$PROJECT_DIR$/../../src/Game/main.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../src/Game/sound.c" beforeDir="false" afterPath="$PROJECT_DIR$/../../src/Game/sound.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../src/Game/sound.h" beforeDir="false" afterPath="$PROJECT_DIR$/../../src/Game/sound.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../src/Game/tween.c" beforeDir="false" afterPath="$PROJECT_DIR$/../../src/Game/tween.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../src/Game/tween.h" beforeDir="false" afterPath="$PROJECT_DIR$/../../src/Game/tween.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../state_template.txt" beforeDir="false" afterPath="$PROJECT_DIR$/../../state_template.txt" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
-  <component name="DefaultGradleProjectSettings">
-    <option name="isMigrated" value="true" />
-  </component>
-  <component name="ExecutionTargetManager" SELECTED_TARGET="Copy_of_Nexus_7_API_23_2" />
+  <component name="ExecutionTargetManager" SELECTED_TARGET="device_and_snapshot_combo_box_target[ZY2232KVGB]" />
   <component name="ExternalProjectsData">
     <projectState path="$PROJECT_DIR$">
       <ProjectState />
@@ -27,77 +132,6 @@
         <projects_view />
       </state>
     </system>
-  </component>
-  <component name="FileEditorManager">
-    <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/app/src/main/java/com/unpronounceablegames/spacesnake/SpaceSnakeActivity.java">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="102">
-              <caret line="6" selection-start-line="6" selection-end-line="6" />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/app/build.gradle">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="238">
-              <caret line="14" column="9" selection-start-line="14" selection-start-column="9" selection-end-line="14" selection-end-column="9" />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/app/jni/src/src/System/memory.c">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="6222">
-              <caret line="366" selection-start-line="366" selection-end-line="366" />
-              <folding>
-                <element signature="e#5108#5181#0" expanded="true" />
-                <element signature="e#5712#5825#0" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/app/jni/src/src/Graphics/images.c">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="8415">
-              <caret line="495" column="86" selection-start-line="495" selection-start-column="80" selection-end-line="495" selection-end-column="86" />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/app/jni/src/src/Graphics/imageSheets.c">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="2040">
-              <caret line="120" column="18" selection-start-line="120" selection-start-column="18" selection-end-line="120" selection-end-column="18" />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/app/jni/src/src/Game/titleScreen.c">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="332">
-              <caret line="146" column="32" lean-forward="true" selection-start-line="146" selection-start-column="32" selection-end-line="146" selection-end-column="32" />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/app/jni/src/src/Utils/hashMap.c">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="2635">
-              <caret line="155" selection-start-line="155" selection-end-line="155" />
-            </state>
-          </provider>
-        </entry>
-      </file>
-    </leaf>
   </component>
   <component name="FileTemplateManagerImpl">
     <option name="RECENT_TEMPLATES">
@@ -131,6 +165,9 @@
     <option name="REMEMBER_PASSWORDS" value="true" />
     <option name="BUILD_TARGET_KEY" value="apk" />
   </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/../.." />
+  </component>
   <component name="IdeDocumentHistory">
     <option name="CHANGED_PATHS">
       <list>
@@ -151,6 +188,8 @@
     <option name="width" value="1937" />
     <option name="height" value="1092" />
   </component>
+  <component name="ProjectId" id="1yh6xqncYsyR42jzHy1JNEgaI1s" />
+  <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
   <component name="ProjectView">
     <navigator currentView="ProjectPane" proportions="" version="1">
       <foldersAlwaysOnTop value="true" />
@@ -255,13 +294,19 @@
       </pane>
     </panes>
   </component>
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
   <component name="PropertiesComponent">
+    <property name="ASKED_ADD_EXTERNAL_FILES" value="true" />
     <property name="DeviceAndSnapshotComboBoxAction.selectedDevice" value="Copy_of_Nexus_7_API_23_2" />
     <property name="DeviceAndSnapshotComboBoxAction.selectionTime" value="2020-01-24T23:04:43.726Z" />
     <property name="ExportApk.ApkPath" value="F:\Data\Projects\C_Cpp\Games\SpaceSnake\proj\android\app" />
     <property name="ExportApk.BuildVariants" value="release" />
     <property name="ExportApk.SignV1" value="true" />
     <property name="ExportApk.SignV2" value="true" />
+    <property name="SHARE_PROJECT_CONFIGURATION_FILES" value="true" />
     <property name="last_opened_file_path" value="$PROJECT_DIR$" />
     <property name="not.eligible.for.single.variant.sync" value="true" />
     <property name="project.structure.last.edited" value="Modules" />
@@ -270,43 +315,7 @@
     <property name="settings.editor.selected.configurable" value="android.sdk-updates" />
     <property name="settings.editor.splitter.proportion" value="0.2" />
   </component>
-  <component name="RunDashboard">
-    <option name="ruleStates">
-      <list>
-        <RuleState>
-          <option name="name" value="ConfigurationTypeDashboardGroupingRule" />
-        </RuleState>
-        <RuleState>
-          <option name="name" value="StatusDashboardGroupingRule" />
-        </RuleState>
-      </list>
-    </option>
-  </component>
   <component name="RunManager">
-    <configuration default="true" type="JUnit" factoryName="JUnit">
-      <extension name="coverage" enabled="false" merge="false" sample_coverage="true" runner="idea" />
-      <module name="" />
-      <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="false" />
-      <option name="ALTERNATIVE_JRE_PATH" />
-      <option name="PACKAGE_NAME" />
-      <option name="MAIN_CLASS_NAME" />
-      <option name="METHOD_NAME" />
-      <option name="TEST_OBJECT" value="class" />
-      <option name="VM_PARAMETERS" value="-ea" />
-      <option name="PARAMETERS" />
-      <option name="WORKING_DIRECTORY" value="$MODULE_DIR$" />
-      <option name="ENV_VARIABLES" />
-      <option name="PASS_PARENT_ENVS" value="true" />
-      <option name="TEST_SEARCH_SCOPE">
-        <value defaultName="singleModule" />
-      </option>
-      <envs />
-      <patterns />
-      <method />
-    </configuration>
-    <configuration name="&lt;template&gt;" type="#org.jetbrains.idea.devkit.run.PluginConfigurationType" default="true" selected="false">
-      <option name="VM_PARAMETERS" value="-Xmx512m -Xms256m -XX:MaxPermSize=250m -ea" />
-    </configuration>
     <configuration default="true" type="AndroidJUnit" factoryName="Android JUnit">
       <option name="TEST_OBJECT" value="class" />
       <option name="WORKING_DIRECTORY" value="$MODULE_DIR$" />
@@ -314,13 +323,24 @@
         <option name="Android.Gradle.BeforeRunTask" enabled="true" />
       </method>
     </configuration>
+    <configuration default="true" type="Applet">
+      <option name="POLICY_FILE" value="$APPLICATION_HOME_DIR$/bin/appletviewer.policy" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="&lt;template&gt;" type="#org.jetbrains.idea.devkit.run.PluginConfigurationType" default="true" selected="false">
+      <option name="VM_PARAMETERS" value="-Xmx512m -Xms256m -XX:MaxPermSize=250m -ea" />
+    </configuration>
     <configuration name="app" type="AndroidRunConfigurationType" factoryName="Android App" activateToolWindowBeforeRun="false">
-      <module name="app" />
+      <module name="android.app" />
       <option name="DEPLOY" value="true" />
       <option name="DEPLOY_APK_FROM_BUNDLE" value="false" />
       <option name="DEPLOY_AS_INSTANT" value="false" />
       <option name="ARTIFACT_NAME" value="" />
       <option name="PM_INSTALL_OPTIONS" value="" />
+      <option name="ALL_USERS" value="false" />
+      <option name="ALWAYS_INSTALL_WITH_PM" value="false" />
       <option name="DYNAMIC_FEATURES_DISABLED_LIST" value="" />
       <option name="ACTIVITY_EXTRA_FLAGS" value="" />
       <option name="MODE" value="default_activity" />
@@ -329,8 +349,6 @@
       <option name="SKIP_NOOP_APK_INSTALLATIONS" value="true" />
       <option name="FORCE_STOP_RUNNING_APP" value="true" />
       <option name="TARGET_SELECTION_MODE" value="DEVICE_AND_SNAPSHOT_COMBO_BOX" />
-      <option name="USE_LAST_SELECTED_DEVICE" value="false" />
-      <option name="PREFERRED_AVD" value="" />
       <option name="SELECTED_CLOUD_MATRIX_CONFIGURATION_ID" value="-1" />
       <option name="SELECTED_CLOUD_MATRIX_PROJECT_ID" value="" />
       <option name="DEBUGGER_TYPE" value="Auto" />
@@ -358,23 +376,29 @@
       </Native>
       <Profilers>
         <option name="ADVANCED_PROFILING_ENABLED" value="true" />
+        <option name="STARTUP_PROFILING_ENABLED" value="false" />
         <option name="STARTUP_CPU_PROFILING_ENABLED" value="false" />
         <option name="STARTUP_CPU_PROFILING_CONFIGURATION_NAME" value="Sample Java Methods" />
+        <option name="STARTUP_NATIVE_MEMORY_PROFILING_ENABLED" value="false" />
+        <option name="NATIVE_MEMORY_SAMPLE_RATE_BYTES" value="2048" />
       </Profilers>
       <option name="DEEP_LINK" value="" />
       <option name="ACTIVITY_CLASS" value="" />
+      <option name="SEARCH_ACTIVITY_IN_GLOBAL_SCOPE" value="false" />
+      <option name="SKIP_ACTIVITY_VALIDATION" value="false" />
       <method v="2">
         <option name="Android.Gradle.BeforeRunTask" enabled="true" />
       </method>
     </configuration>
-    <configuration default="true" type="Applet">
-      <option name="POLICY_FILE" value="$APPLICATION_HOME_DIR$/bin/appletviewer.policy" />
+    <configuration default="true" type="Application" factoryName="Application">
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
       <method v="2">
         <option name="Make" enabled="true" />
       </method>
     </configuration>
-    <configuration default="true" type="Application" factoryName="Application">
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+    <configuration default="true" type="JUnit" factoryName="JUnit">
+      <option name="TEST_OBJECT" value="class" />
+      <option name="WORKING_DIRECTORY" value="$MODULE_DIR$" />
       <method v="2">
         <option name="Make" enabled="true" />
       </method>
@@ -389,6 +413,7 @@
       </method>
     </configuration>
   </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
   <component name="SvnConfiguration">
     <configuration />
   </component>

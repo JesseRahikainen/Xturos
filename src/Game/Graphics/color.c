@@ -1,6 +1,6 @@
 #include "color.h"
 #include <assert.h>
-#include "../Math/mathUtil.h"
+#include "Math/mathUtil.h"
 
 Color clr( float r, float g, float b, float a )
 {

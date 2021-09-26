@@ -1,11 +1,17 @@
 #include "helpers.h"
 
-#include <SDL_filesystem.h>
+#if defined( WIN32 )
+#include <Windows.h>
+#include <shellapi.h>
+#elif defined( __ANDROID__ )
+#endif
 
-#include "../Math/vector2.h"
-#include "../Input/input.h"
-#include "../System/platformLog.h"
-#include "../System/memory.h"
+#include <SDL.h>
+
+#include "Math/vector2.h"
+#include "Input/input.h"
+#include "System/platformLog.h"
+#include "System/memory.h"
 
 void logMousePos( void )
 {

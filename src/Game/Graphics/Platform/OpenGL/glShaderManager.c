@@ -2,14 +2,14 @@
 #include <string.h>
 #include <stdio.h>
 #include <SDL.h>
-#include "../Graphics/glPlatform.h"
+#include "Graphics/Platform/OpenGL/glPlatform.h"
 
-#include "shaderManager.h"
+#include "glShaderManager.h"
 
-#include "glDebugging.h"
-#include "../Utils/helpers.h"
-#include "../System/memory.h"
-#include "../System/platformLog.h"
+#include "Graphics/Platform/OpenGL/glDebugging.h"
+#include "Utils/helpers.h"
+#include "System/memory.h"
+#include "System/platformLog.h"
 
 // Loaded shader.
 struct Shader

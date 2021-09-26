@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <SDL.h>
-#include "../Math/vector2.h"
+#include "Math/vector2.h"
 #include "color.h"
 #include "triRendering.h"
 #include "gfxUtil.h"
@@ -15,7 +15,8 @@ int img_Init( void );
 
 //************ Threaded functions
 // Loads the image in a seperate thread. Puts the resulting image index into outIdx.
-void img_ThreadedLoad( const char* fileName, ShaderType shaderType, int* outIdx );
+//  Also calls the onLoadDone callback with the id for the image, passes in -1 if it fails for any reason
+void img_ThreadedLoad( const char* fileName, ShaderType shaderType, int* outIdx, void (*onLoadDone)( int ) );
 
 //************ End threaded functions
 
@@ -36,6 +37,10 @@ int img_Create( SDL_Surface* surface, ShaderType shaderType, const char* id );
 // Cleans up an image at the specified index, trying to render with it after this won't work.
 void img_Clean( int idx );
 
+// Takes in an already loaded texture and some rectangles. I'ts assume the length of mins, maxes and retIDs equals count.
+//  Returns the package ID used to clean up later, returns -1 if there's a problem.
+int img_SplitTexture( Texture* texture, int count, ShaderType shaderType, Vector2* mins, Vector2* maxes, char** imgIDs, int* retIDs );
+
 // Takes in a file name and some rectangles. It's assumed the length of mins, maxes, and retIDs equals count.
 //  Returns package ID used to clean up later, returns -1 if there's a problem.
 int img_SplitImageFile( char* fileName, int count, ShaderType shaderType, Vector2* mins, Vector2* maxes, char** imgIDs, int* retIDs );
@@ -54,6 +59,9 @@ void img_CleanPackage( int packageID );
 // Sets an offset to render the image from. The default is the center of the image.
 void img_SetOffset( int idx, Vector2 offset );
 
+// Sets an offset based on a vector with elements in the ranges [0,1], default is <0.5, 0.5>.
+void img_SetRatioOffset( int idx, Vector2 offsetRatio, Vector2 padding );
+
 void img_ForceTransparency( int idx, bool transparent );
 
 // Gets the size of the image, putting it into the out Vector2. Returns a negative number if there's an issue.
@@ -64,7 +72,7 @@ int img_GetDesiredScale( int idx, Vector2 desiredSize, Vector2* outScale );
 
 // Gets the texture id for the image, used if you need to render it directly instead of going through this.
 //  Returns whether out was successfully set or not.
-int img_GetTextureID( int idx, GLuint* out );
+int img_GetTextureID( int idx, PlatformTexture* out );
 
 // Retrieves a loaded image by it's id, for images loaded from files this will be the local path, for sprite sheet images 
 int img_GetExistingByID( const char* id );
@@ -86,11 +94,13 @@ int img_Draw3x3( int imgUL, int imgUC, int imgUR, int imgML, int imgMC, int imgM
 	uint32_t camFlags, Vector2 startPos, Vector2 endPos, Vector2 startSize, Vector2 endSize, int8_t depth );
 int img_Draw3x3v( int* imgs, uint32_t camFlags, Vector2 startPos, Vector2 endPos, Vector2 startSize, Vector2 endSize, int8_t depth );
 
-int img_Draw3x3_c( int imgUL, int imgUC, int imgUR, int imgML, int imgMC, int imgMR, int imgDL, int imgDC, int imgDR,
+int img_Draw3x3_c_f( int imgUL, int imgUC, int imgUR, int imgML, int imgMC, int imgMR, int imgDL, int imgDC, int imgDR,
 	uint32_t camFlags, Vector2 startPos, Vector2 endPos, Vector2 startSize, Vector2 endSize,
-	Color startColor, Color endColor, int8_t depth );
+	Color startColor, Color endColor, float startVal0, float endVal0, int8_t depth );
 int img_Draw3x3v_c( int* imgs, uint32_t camFlags, Vector2 startPos, Vector2 endPos,
 	Vector2 startSize, Vector2 endSize, Color startColor, Color endColor, int8_t depth );
+int img_Draw3x3v_c_f( int* imgs, uint32_t camFlags, Vector2 startPos, Vector2 endPos,
+	Vector2 startSize, Vector2 endSize, Color startColor, Color endColor, float startVal0, float endVal0, int8_t depth );
 
 // Clears the image draw list.
 void img_ClearDrawInstructions( void );

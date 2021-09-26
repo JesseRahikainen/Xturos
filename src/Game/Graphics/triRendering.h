@@ -3,10 +3,14 @@
 
 #include <stdint.h>
 
-#include "../Graphics/glPlatform.h"
-#include "glPlatform.h"
+#if defined( WIN32 ) || defined( __ANDROID__ ) || defined( __EMSCRIPTEN__ )
+	#include "Graphics/Platform/OpenGL/glPlatform.h"
+	#include "Graphics/Platform/OpenGL/graphicsDataTypes_OpenGL.h"
+#else
+	#warning "NOTHING IMPLEMENTED FOR THIS GRAPHICS PLATFORM!"
+#endif
 
-#include "../Math/vector2.h"
+#include "Math/vector2.h"
 #include "color.h"
 
 typedef enum {
@@ -14,6 +18,7 @@ typedef enum {
 	ST_ALPHA_ONLY,
 	ST_SIMPLE_SDF,
 	ST_IMAGE_SDF,
+	ST_OUTLINED_IMAGE_SDF,
 	NUM_SHADERS
 } ShaderType;
 
@@ -46,9 +51,9 @@ int triRenderer_Init( int renderAreaWidth, int renderAreaHeight );
 We'll assume the array has three vertices in it.
  Return a value < 0 if there's a problem.
 */
-int triRenderer_AddVertices( TriVert* verts, ShaderType shader, GLuint texture, float floatVal0,
+int triRenderer_AddVertices( TriVert* verts, ShaderType shader, PlatformTexture texture, float floatVal0,
 	int clippingID, uint32_t camFlags, int8_t depth, TriType type );
-int triRenderer_Add( TriVert vert0, TriVert vert1, TriVert vert2, ShaderType shader, GLuint texture, float floatVal0,
+int triRenderer_Add( TriVert vert0, TriVert vert1, TriVert vert2, ShaderType shader, PlatformTexture texture, float floatVal0,
 	int clippingID, uint32_t camFlags, int8_t depth, TriType type );
 
 /*

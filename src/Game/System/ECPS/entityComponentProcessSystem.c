@@ -5,13 +5,13 @@
 #include <string.h>
 #include <assert.h>
 
-#include "../../Utils/stretchyBuffer.h"
+#include "Utils/stretchyBuffer.h"
 
-#include "../../Utils/idSet.h"
+#include "Utils/idSet.h"
 #include "ecps_componentTypes.h"
 #include "ecps_values.h"
 
-#include "../platformLog.h"
+#include "System/platformLog.h"
 
 static const EntityDirectoryEntry EMPTY_EDE = { -1, 0 };
 static const size_t ID_SET_SIZE = UINT16_MAX;
@@ -393,10 +393,10 @@ void ecps_RunProcess( ECPS* ecps, Process* process )
 		// will need to iterate through all entities that have the components the process is looking for
 		size_t numCompArrays = sb_Count( ecps->componentData.sbComponentArrays );
 		for( size_t cai = 0; cai < numCompArrays; ++cai ) {
-			PackagedComponentArray* pca = &( ecps->componentData.sbComponentArrays[cai] );
 			ComponentBitFlags* cbf = &( ecps->componentData.sbBitFlags[cai] );
 			if( ecps_cbf_CompareContains( &( process->bitFlags ), cbf ) ) {
 				// component data array matches, iterate through entities
+				PackagedComponentArray* pca = &( ecps->componentData.sbComponentArrays[cai] );
 				size_t dataIdx = 0;
 				size_t dataArraySize = sb_Count( pca->sbData );
 				while( dataIdx < dataArraySize ) {
@@ -670,6 +670,11 @@ bool ecps_GetEntityByID( ECPS* ecps, EntityID entityID, Entity* outEntity )
 
 static int immediateAddComponentToEntity( ECPS* ecps, Entity* entity, ComponentID componentID, void* data )
 {
+	if( !idSet_IsIDValid( &( ecps->idSet ), entity->id ) ) {
+		// make sure the entity still exists
+		return -1;
+	}
+
 	ComponentBitFlags oldBitFlags;
 	ComponentBitFlags newBitFlags;
 
@@ -823,7 +828,7 @@ int ecps_AddComponentToEntityMidProcess( ECPS* ecps, const Entity* entity, Compo
 		return 0;
 	}
 
-	llog( LOG_ERROR, "Callilng ecps_RemoveComponentFromEntityMidProcess( ) while no processes are running. Component not removed." );
+	llog( LOG_ERROR, "Callilng ecps_AddComponentToEntityMidProcess( ) while no processes are running. Component not added." );
 	return 1;
 }
 
@@ -843,6 +848,11 @@ int ecps_AddComponentToEntityByID( ECPS* ecps, EntityID entityID, ComponentID co
 
 static int immediateRemoveComponentFromEntity( ECPS* ecps, Entity* entity, ComponentID componentID )
 {
+	if( !idSet_IsIDValid( &( ecps->idSet ), entity->id ) ) {
+		// make sure the entity still exists
+		return -1;
+	}
+
 	ComponentBitFlags oldBitFlags;
 	ComponentBitFlags newBitFlags;
 
@@ -1078,6 +1088,10 @@ static void runCleanUpOnEntityComponents( ECPS* ecps, EntityID entityID )
 static void immediateDestroyEntity( ECPS* ecps, EntityID entityID )
 {
 	// run component clean up
+	if( !idSet_IsIDValid( &( ecps->idSet ), entityID ) ) {
+		// make sure the entity still exists
+		return;
+	}
 	//  we have to loop through each component the entity contains, and if it has a clean up run it on the data
 	runCleanUpOnEntityComponents( ecps, entityID );
 

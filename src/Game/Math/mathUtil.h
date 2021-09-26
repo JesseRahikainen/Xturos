@@ -62,4 +62,10 @@ float sqrdDistToSegment( Vector2* pos, Vector2* lineA, Vector2* lineB );
 // returns if pos is within lineWidth distance from all the points polygon
 bool isPointOnPolygon( Vector2* pos, Vector2* polygon, size_t numPoints, float lineWidth );
 
+// given a ratio, finds the size of the rectangle that will fit inside another rectangles size
+void fitRatioInsideSpace( float ratio, Vector2* fitterSize, Vector2* outSize );
+
+// given a ratio, finds the coordinates that will create a rectangle that fits inside another rectangle
+void fitRatioInsideRect( float ratio, Vector2* fitterMins, Vector2* fitterMaxes, Vector2* outMins, Vector2* outMaxes );
+
 #endif // inclusion guard

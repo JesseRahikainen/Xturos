@@ -8,8 +8,8 @@ Don't manage resources used, expect them to be loaded somewhere else.
 #ifndef ENGINE_BUTTON_H
 #define ENGINE_BUTTON_H
 
-#include "../Math/vector2.h"
-#include "../Graphics/color.h"
+#include "Math/vector2.h"
+#include "Graphics/color.h"
 #include <SDL_events.h>
 
 typedef void (*ButtonResponse)(int);

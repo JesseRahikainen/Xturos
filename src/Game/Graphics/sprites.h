@@ -10,10 +10,10 @@ A simple wrapper that allows us to more quickly create entities in an ecps that 
 #define SPRITES_H
 
 #include <stdint.h>
-#include "../Math/vector2.h"
+#include "Math/vector2.h"
 #include "color.h"
 
-#include "../System/ECPS/ecps_dataTypes.h"
+#include "System/ECPS/ecps_dataTypes.h"
 
 // returns -1 is there was a problem
 int spr_Init( void );

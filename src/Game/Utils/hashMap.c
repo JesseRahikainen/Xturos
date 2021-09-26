@@ -8,10 +8,10 @@
 
 #include <SDL_stdinc.h>
 
-#include "../Math/mathUtil.h"
-#include "../System/memory.h"
-#include "../System/platformLog.h"
-#include "../Utils/helpers.h"
+#include "Math/mathUtil.h"
+#include "System/memory.h"
+#include "System/platformLog.h"
+#include "Utils/helpers.h"
 
 static uint32_t hashFunc_DJB2( const char* str )
 {

@@ -4,8 +4,8 @@
 #include <SDL.h>
 #include <assert.h>
 
-#include "../System/platformLog.h"
-#include "../Utils/stretchyBuffer.h"
+#include "System/platformLog.h"
+#include "Utils/stretchyBuffer.h"
 
 // TODO?: Give the option to create multiple job queues
 

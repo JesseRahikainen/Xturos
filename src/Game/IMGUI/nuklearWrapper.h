@@ -9,27 +9,22 @@ This is just an adaptation of the nuklear_sdl_gl3 example.
 
 #include <stdbool.h>
 #include <SDL_events.h>
-#include "../Graphics/glDebugging.h"
-#include "../Graphics/glPlatform.h"
 
-#include "../Graphics/shaderManager.h"
+#if defined( WIN32 ) || defined( __ANDROID__ ) || defined( __EMSCRIPTEN__ )
+	#include "IMGUI/Platform/OpenGL/nuklearWrapper_OpenGL.h"
+#else
+	#warning "NOTHING IMPLEMENTED FOR THIS GRAPHICS PLATFORM!"
+#endif
 
 #include "nuklearHeader.h"
 
 typedef struct {
+	NuklearWrapper_Platform platform;
+
 	SDL_Window* win;
 
 	struct nk_buffer cmds;
 	struct nk_draw_null_texture nullTx;
-
-	// just use the default shader
-	GLuint vbo;
-	GLuint vao;
-	GLuint ebo;
-
-	ShaderProgram prog;
-
-	GLuint fontTx;
 
 	int renderWidth;
 	int renderHeight;

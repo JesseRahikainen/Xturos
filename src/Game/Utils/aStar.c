@@ -4,13 +4,13 @@
 #include <float.h>
 #include <math.h>
 
-#include "../System/memory.h"
+#include "System/memory.h"
 #include "stretchyBuffer.h"
 
 // used if they don't give us a move or heuristic cost function
 static float defaultCost( void* graph, int fromNode, int toNode )
 {
-	return 0.0f;
+	return 1.0f;
 }
 
 // creates a search state we can send to process and extract, we should call aStar_CleanUpSearchState

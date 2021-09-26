@@ -3,9 +3,9 @@
 
 #include <stdint.h>
 
-#include "../System/ECPS/entityComponentProcessSystem.h"
-#include "../Math/vector2.h"
-#include "../Graphics/color.h"
+#include "System/ECPS/entityComponentProcessSystem.h"
+#include "Math/vector2.h"
+#include "Graphics/color.h"
 
 // general use components that are shared between games
 typedef struct {
@@ -44,6 +44,12 @@ typedef struct {
 	uint32_t camFlags;
 } GCSpriteData;
 extern ComponentID gcSpriteCompID;
+
+typedef struct {
+	bool isStencil;
+	int stencilID;
+} GCStencilData;
+extern ComponentID gcStencilCompID;
 
 typedef struct {
 	int imgs[9]; // tl, tc, tr, ml, mc, mr, bl, bc, br
@@ -87,14 +93,20 @@ typedef struct {
 } GCTextData;
 extern ComponentID gcTextCompID;
 
-typedef struct {
-	bool isStencil;
-	int stencilID;
-} GCStencilData;
-extern ComponentID gcStencilCompID;
-
 // just a flag you can add to an entity that you can test for later
 extern ComponentID gcWatchCompID;
+
+// for entities that are attached to another entity
+typedef struct {
+	EntityID parentID;
+	Vector2 offset;
+} GCMountedPosOffset;
+extern ComponentID gcMountedPosOffsetCompID;
+
+// attaches the child entity to the parent entity, use the existing positions to calculate the offset
+void gc_MountEntity( ECPS* ecps, EntityID parentID, EntityID childID );
+
+void gc_WatchEntity( ECPS* ecps, EntityID id );
 
 void gc_Register( ECPS* ecps );
 

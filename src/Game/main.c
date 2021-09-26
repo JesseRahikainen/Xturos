@@ -43,9 +43,10 @@
 #include "System/random.h"
 
 #include "Graphics/debugRendering.h"
-#include "Graphics/glPlatform.h"
+#include "Graphics/Platform/OpenGL/glPlatform.h"
 
 #include "System/jobQueue.h"
+#include "Utils/helpers.h"
 
 // 540 x 960
 
@@ -82,11 +83,11 @@ int getWindowRefreshRate( SDL_Window* w )
 		return DEFAULT_REFRESH_RATE;
 	}
 
-	llog( LOG_DEBUG, "w: %i  h: %i  r: %i", mode.w, mode.h, mode.refresh_rate );
+	//llog( LOG_DEBUG, "w: %i  h: %i  r: %i", mode.w, mode.h, mode.refresh_rate );
 
-	int ww, wh;
-	SDL_GetWindowSize( w, &ww, &wh );
-	llog( LOG_DEBUG, "ww: %i  wh: %i", ww, wh );
+	//int ww, wh;
+	//SDL_GetWindowSize( w, &ww, &wh );
+	//llog( LOG_DEBUG, "ww: %i  wh: %i", ww, wh );
 
 	return mode.refresh_rate;
 }
@@ -94,6 +95,8 @@ int getWindowRefreshRate( SDL_Window* w )
 void cleanUp( void )
 {
 	jq_ShutDown( );
+
+	gfx_ShutDown( );
 
 	SDL_DestroyWindow( window );
 	window = NULL;
@@ -258,12 +261,16 @@ int initEverything( void )
 	int worldHeight = DESIRED_WORLD_HEIGHT;
 	int worldWidth = (int)( worldHeight * (float)windowWidth / (float)windowHeight );
 
+	//llog( LOG_INFO, "World size: %i x %i", worldWidth, worldHeight );
 	world_SetSize( worldWidth, worldHeight );
 
-	llog( LOG_INFO, "Window size: %i x %i    Render size: %i x %i", windowWidth, windowHeight, renderWidth, renderHeight );
+	//llog( LOG_INFO, "Window size: %i x %i    Render size: %i x %i", windowWidth, windowHeight, renderWidth, renderHeight );
 
 	window = SDL_CreateWindow( windowName, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
 		windowWidth, windowHeight, windowFlags );
+	int finalWidth, finalHeight;
+	SDL_GetWindowSize( window, &finalWidth, &finalHeight );
+	//llog( LOG_INFO, "Final window size: %i x %i", finalWidth, finalHeight );
 
 	if( window == NULL ) {
 		llog( LOG_ERROR, "%s", SDL_GetError( ) );
@@ -305,6 +312,7 @@ int initEverything( void )
 
 	rand_Seed( NULL, (uint32_t)time( NULL ) );
 
+	jq_Initialize( 2 );
 	return 0;
 }
 
@@ -342,9 +350,28 @@ void processEvents( int windowsEventsOnly )
 			running = false;
 		}
 
-		if( windowsEventsOnly ) { 
+		if( windowsEventsOnly ) {
 			continue;
 		}
+
+		/*if( e.type == SDL_KEYDOWN ) {
+			if( e.key.keysym.sym == SDLK_PRINTSCREEN ) {
+				
+				time_t t = time( NULL );
+				struct tm tm = *localtime( &t );
+
+				// YYYYMMDDHHmmSS.png
+#define FORMAT "%.4i%.2i%.2i%.2i%.2i%.2i.png"
+				int size = snprintf( NULL, 0, FORMAT, tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour + 1, tm.tm_min + 1, tm.tm_sec );
+				char* fileName = mem_Allocate( size + 1 );
+				snprintf( fileName, size + 1, FORMAT, tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour + 1, tm.tm_min + 1, tm.tm_sec );
+#undef FORMAT
+				char* savePath = getSavePath( fileName );
+				gfxUtil_TakeScreenShot( savePath );
+				mem_Release( fileName );
+				mem_Release( savePath );
+			}
+		}//*/
 
 		sys_ProcessEvents( &e );
 		input_ProcessEvents( &e );
@@ -431,6 +458,8 @@ void mainLoop( void* v )
 	cam_Update( dt );
 	gfx_Render( dt );
 	float renderTimerSec = gt_StopTimer( renderTimer );
+
+	//llog( LOG_DEBUG, "FPS: %f", ( 1.0f / dt ) );
 
 	Uint64 flipTimer = gt_StartTimer( );
 	SDL_GL_SwapWindow( window );

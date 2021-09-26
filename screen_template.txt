@@ -2,7 +2,7 @@
 #ifndef <TEMP>_SCREEN_H
 #define <TEMP>_SCREEN_H
 
-#include "../gameState.h"
+#include "gameState.h"
 
 GameState <temp>ScreenState;
 
@@ -12,12 +12,12 @@ GameState <temp>ScreenState;
 
 #include "<temp>Screen.h"
 
-#include "../Graphics/graphics.h"
-#include "../Graphics/images.h"
-#include "../Graphics/spineGfx.h"
-#include "../Graphics/camera.h"
-#include "../Graphics/debugRendering.h"
-#include "../Graphics/imageSheets.h"
+#include "Graphics/graphics.h"
+#include "Graphics/images.h"
+#include "Graphics/spineGfx.h"
+#include "Graphics/camera.h"
+#include "Graphics/debugRendering.h"
+#include "Graphics/imageSheets.h"
 
 static int <temp>Screen_Enter( void )
 {

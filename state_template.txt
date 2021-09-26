@@ -2,7 +2,7 @@
 #ifndef <TEMP>_STATE_H
 #define <TEMP>_STATE_H
 
-#include "../gameState.h"
+#include "gameState.h"
 
 GameState <temp>State;
 
@@ -12,14 +12,14 @@ GameState <temp>State;
 
 #include "<temp>State.h"
 
-#include "../Graphics/debugRendering.h"
+#include "Graphics/debugRendering.h"
 #include "values.h"
-#include "../System/ECPS/entityComponentProcessSystem.h"
-#include "../Components/generalComponents.h"
+#include "System/ECPS/entityComponentProcessSystem.h"
+#include "Components/generalComponents.h"
 #include "gameComponents.h"
 #include "gameProcesses.h"
-#include "../System/platformLog.h"
-#include "../Processes/generalProcesses.h"
+#include "System/platformLog.h"
+#include "Processes/generalProcesses.h"
 
 static int <temp>State_Enter( void )
 {

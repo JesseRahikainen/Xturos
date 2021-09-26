@@ -5,6 +5,8 @@ Simple handling of lerping between two values.
 #ifndef ENGINE_TWEEN_H
 #define ENGINE_TWEEN_H
 
+#include <stdbool.h>
+
 typedef float (*EaseFunc)(float);
 
 typedef struct {
@@ -29,8 +31,8 @@ void resetTween( Tween* tween );
 /* Resets everything in the tween but swaps the start end end values. */
 void resetAndReverseTween( Tween* tween );
 
-/* Processes the tween, advancing the amount elapsed. */
-void processTween( Tween* tween, float delta );
+/* Processes the tween, advancing the amount elapsed. Returns if the tween is done. */
+bool processTween( Tween* tween, float delta );
 
 /* Some general tween functions. */
 float easeInSin( float t );
