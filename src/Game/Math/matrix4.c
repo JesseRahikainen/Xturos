@@ -194,7 +194,7 @@ Matrix4* mat4_CreateOrthographicProjection( float left, float right, float top, 
 	out->m[12] = -( right + left ) / rml;
 	out->m[13] = -( top + bottom ) / tmb;
 	out->m[14] = -( far + near ) / fmn;
-
+    
 	return out;
 }
 

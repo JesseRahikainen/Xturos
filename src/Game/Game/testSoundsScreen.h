@@ -1,8 +1,8 @@
 #ifndef TEST_SOUNDS_H
 #define TEST_SOUNDS_H
 
-#include "../gameState.h"
+#include "gameState.h"
 
-GameState testSoundsScreenState;
+extern GameState testSoundsScreenState;
 
 #endif // inclusion guard

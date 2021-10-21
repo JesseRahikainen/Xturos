@@ -66,15 +66,16 @@ typedef struct {
 static DrawInstruction renderBuffer[MAX_RENDER_INSTRUCTIONS];
 static int lastDrawInstruction;
 
+// TODO: the default textureObj doesn't work well with the cross platform stuff right now, figure out how to do this
 static const DrawInstruction DEFAULT_DRAW_INSTRUCTION = {
-	0, -1,
+    { 0 }, -1,
 	{ { 0.0f, 0.0f }, { 0.0f, 1.0f }, { 1.0f, 0.0f }, { 1.0f, 1.0f } },
 	{ { 0.0f, 0.0f }, { 1.0f, 1.0f }, { 1.0f, 1.0f, 1.0f, 1.0f }, 0.0f, { 0.0f, 0.0f } },
 	{ { 0.0f, 0.0f }, { 1.0f, 1.0f }, { 1.0f, 1.0f, 1.0f, 1.0f }, 0.0f, { 0.0f, 0.0f } },
 	0, 0, 0
 };
 
-static GLint maxTextureSize;
+static int maxTextureSize;
 
 static HashMap imgIDMap;
 
@@ -84,7 +85,7 @@ Initializes images.
 */
 int img_Init( void )
 {
-	glGetIntegerv( GL_MAX_TEXTURE_SIZE, &maxTextureSize );
+    maxTextureSize = gfxPlatform_GetMaxTextureSize( );
 	memset( images, 0, sizeof(images) );
 	hashMap_Init( &imgIDMap, 64, NULL );
 	return 0;
@@ -167,7 +168,7 @@ int img_CreateFromLoadedImage( LoadedImage* loadedImg, ShaderType shaderType, co
 	}
 
 	Texture texture;
-	if( gfxPlatform_CreateTextureFromLoadedImage( GL_RGBA, loadedImg, &texture ) < 0 ) {
+	if( gfxPlatform_CreateTextureFromLoadedImage( TF_RGBA, loadedImg, &texture ) < 0 ) {
 		llog( LOG_INFO, "Unable to create image!" );
 		return -1;
 	}
@@ -256,7 +257,7 @@ static void bindImageJob( void* data )
 	}
 
 	Texture texture;
-	if( gfxPlatform_CreateTextureFromLoadedImage( GL_RGBA, &( loadData->loadedImage ), &texture ) < 0 ) {
+	if( gfxPlatform_CreateTextureFromLoadedImage( TF_RGBA, &( loadData->loadedImage ), &texture ) < 0 ) {
 		llog( LOG_INFO, "Unable to bind image %s!", loadData->fileName );
 		goto clean_up;
 	}
@@ -750,6 +751,7 @@ int img_CreateDraw( int imgID, uint32_t camFlags, Vector2 startPos, Vector2 endP
 	// the image hasn't been loaded yet, so don't render anything
 	if( imgID < 0 ) {
 		// TODO: Use a temporary image.
+        llog( LOG_VERBOSE, "Attempting to draw unloaded image" );
 		return -1;
 	}
 
@@ -1090,7 +1092,7 @@ Draw all the images.
 void img_Render( float normTimeElapsed )
 {
 	Vector2 unitSqVertPos[] = { { -0.5f, -0.5f }, { -0.5f, 0.5f }, { 0.5f, -0.5f }, { 0.5f, 0.5f } };
-	GLuint indices[] = {
+	unsigned int indices[] = {
 		0, 1, 2,
 		1, 2, 3,
 	};

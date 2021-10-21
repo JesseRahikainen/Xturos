@@ -13,7 +13,7 @@
 #include "System/platformLog.h"
 #include "UI/text.h"
 
-#include "Components/GeneralComponents.h"
+#include "Components/generalComponents.h"
 
 // move all of these into separate files?
 
@@ -492,6 +492,131 @@ static void drawPointerResponse( ECPS* ecps, const Entity* entity )
 	debugRenderer_AABB( pointer->camFlags, topLeft, fullSize, CLR_BLUE );
 }
 
+// ***** General tweening helper methods
+#include "System/gameTime.h"
+static bool runVec2Tween( GCVec2TweenData* tween, Vector2* out )
+{
+	tween->timePassed += PHYSICS_DT;
+	float t = tween->timePassed / tween->duration;
+	t = MIN( 1.0f, t );
+
+	float adjT = inverseLerp( tween->preDelay, tween->postDelay, t );
+	if( tween->easing ) {
+		adjT = tween->easing( adjT );
+	}
+	vec2_Lerp( &( tween->startState ), &( tween->endState ), adjT, out );
+
+	return ( tween->timePassed >= tween->duration );
+}
+
+static bool runFloatTween( GCFloatTweenData* tween, float* out )
+{
+	tween->timePassed += PHYSICS_DT;
+	float t = tween->timePassed / tween->duration;
+	t = MIN( 1.0f, t );
+
+	float adjT = inverseLerp( tween->preDelay, tween->postDelay, t );
+	if( tween->easing ) {
+		adjT = tween->easing( adjT );
+	}
+	(*out) = lerp( tween->startState, tween->endState, adjT );
+
+	return ( tween->timePassed >= tween->duration );
+}
+
+// ***** Position tweening
+Process gpPosTweenProc;
+static void posTweenUpdate( ECPS* ecps, const Entity* entity )
+{
+	GCPosData* pos = NULL;
+	GCVec2TweenData* posTween = NULL;
+
+	ecps_GetComponentFromEntity( entity, gcPosCompID, &pos );
+	ecps_GetComponentFromEntity( entity, gcPosTweenCompID, &posTween );
+
+	if( runVec2Tween( posTween, &( pos->futurePos ) ) ) {
+		// done, remove
+		ecps_RemoveComponentFromEntityMidProcess( ecps, entity, gcPosTweenCompID );
+	}
+}
+
+void gp_AddPosTween( ECPS* ecps, EntityID entity, float duration, Vector2 startPos, Vector2 endPos, float preDelay, float postDelay, EaseFunc ease )
+{
+	GCVec2TweenData tween;
+	tween.duration = duration;
+	tween.timePassed = 0.0f;
+	tween.startState = startPos;
+	tween.endState = endPos;
+	tween.preDelay = preDelay;
+	tween.postDelay = postDelay;
+	tween.easing = ease;
+	ecps_AddComponentToEntityByID( ecps, entity, gcPosTweenCompID, &tween );
+}
+
+// ***** Scale tweening
+Process gpScaleTweenProc;
+static void scaleTweenUpdate( ECPS* ecps, const Entity* entity )
+{
+	GCScaleData* scale = NULL;
+	GCVec2TweenData* scaleTween = NULL;
+
+	ecps_GetComponentFromEntity( entity, gcScaleCompID, &scale );
+	ecps_GetComponentFromEntity( entity, gcScaleTweenCompID, &scaleTween );
+
+	if( runVec2Tween( scaleTween, &( scale->futureScale ) ) ) {
+		// done, remove
+		ecps_RemoveComponentFromEntityMidProcess( ecps, entity, gcScaleTweenCompID );
+	}
+}
+
+void gp_AddScaleTween( ECPS* ecps, EntityID entity, float duration, Vector2 startScale, Vector2 endScale, float preDelay, float postDelay, EaseFunc ease )
+{
+	GCVec2TweenData tween;
+	tween.duration = duration;
+	tween.timePassed = 0.0f;
+	tween.startState = startScale;
+	tween.endState = endScale;
+	tween.preDelay = preDelay;
+	tween.postDelay = postDelay;
+	tween.easing = ease;
+	ecps_AddComponentToEntityByID( ecps, entity, gcScaleTweenCompID, &tween );
+}
+
+// ***** Alpha tweening
+Process gpAlphaTweenProc;
+static void alphaTweenUpdate( ECPS* ecps, const Entity* entity )
+{
+	GCColorData* clr = NULL;
+	GCFloatTweenData* alphaTween = NULL;
+
+	ecps_GetComponentFromEntity( entity, gcClrCompID, &clr );
+	ecps_GetComponentFromEntity( entity, gcAlphaTweenCompID, &alphaTween );
+
+	if( runFloatTween( alphaTween, &( clr->futureClr.a ) ) ) {
+		// done, remove
+		ecps_RemoveComponentFromEntityMidProcess( ecps, entity, gcAlphaTweenCompID );
+	}
+}
+
+void gp_AddAlphaTween( ECPS* ecps, EntityID entity, float duration, float startAlpha, float endAlpha, float preDelay, float postDelay, EaseFunc ease )
+{
+	GCFloatTweenData tween;
+	tween.duration = duration;
+	tween.timePassed = 0.0f;
+	tween.startState = startAlpha;
+	tween.endState = endAlpha;
+	tween.preDelay = preDelay;
+	tween.postDelay = postDelay;
+	tween.easing = ease;
+	ecps_AddComponentToEntityByID( ecps, entity, gcAlphaTweenCompID, &tween );
+
+	// set the base color
+	GCColorData* clrData = NULL;
+	if( ecps_GetComponentFromEntityByID( ecps, entity, gcClrCompID, &clrData ) ) {
+		clrData->currClr.a = clrData->futureClr.a = startAlpha;
+	}
+}
+
 // ***** Register the processes
 void gp_RegisterProcesses( ECPS* ecps )
 {
@@ -529,4 +654,16 @@ void gp_RegisterProcesses( ECPS* ecps )
 	SDL_assert( gcPosCompID != INVALID_COMPONENT_ID );
 	SDL_assert( gcPointerResponseCompID != INVALID_COMPONENT_ID );
 	ecps_CreateProcess( ecps, "CLK_DBG", NULL, drawPointerResponse, NULL, &gpDebugDrawPointerReponsesProc, 2, gcPosCompID, gcPointerResponseCompID );
+
+	SDL_assert( gcPosCompID != INVALID_COMPONENT_ID );
+	SDL_assert( gcPosTweenCompID != INVALID_COMPONENT_ID );
+	ecps_CreateProcess( ecps, "POS_TWEEN", NULL, posTweenUpdate, NULL, &gpPosTweenProc, 2, gcPosCompID, gcPosTweenCompID );
+
+	SDL_assert( gcScaleCompID != INVALID_COMPONENT_ID );
+	SDL_assert( gcScaleTweenCompID != INVALID_COMPONENT_ID );
+	ecps_CreateProcess( ecps, "SCALE_TWEEN", NULL, scaleTweenUpdate, NULL, &gpScaleTweenProc, 2, gcScaleCompID, gcScaleTweenCompID );
+
+	SDL_assert( gcClrCompID != INVALID_COMPONENT_ID );
+	SDL_assert( gcAlphaTweenCompID != INVALID_COMPONENT_ID );
+	ecps_CreateProcess( ecps, "ALPHA_TWEEN", NULL, alphaTweenUpdate, NULL, &gpAlphaTweenProc, 2, gcClrCompID, gcAlphaTweenCompID );
 }

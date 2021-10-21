@@ -11,7 +11,7 @@
 // TODO: make this better overall, this is just a quick hack to test some stuff
 
 #define READ_BUFFER_SIZE 512
-#define FILE_PATH_LEN 128
+#define FILE_PATH_LEN 256
 
 typedef struct {
 	char fileName[64];

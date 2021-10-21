@@ -52,11 +52,11 @@
 
 static void* sb__GrowData( void* p, int increment, size_t itemSize, const char* fileName, const int fileLine )
 {
-	int currSize = p ? sb__Total( p ) : 0;
-	int currBased = currSize + ( currSize / 2 ); // 1.5 * current
-	int min = currSize + increment;
-	int newCount = ( min > currBased ) ? min : currBased;
-	int* np = mem_Resize_Data( p ? (void*)( sb__Raw(p) ) : NULL, ( newCount * itemSize ) + ( sizeof( int) * 2 ), fileName, fileLine );
+	size_t currSize = p ? sb__Total( p ) : 0;
+	size_t currBased = currSize + ( currSize / 2 ); // 1.5 * current
+	size_t min = currSize + increment;
+	size_t newCount = ( min > currBased ) ? min : currBased;
+	size_t* np = mem_Resize_Data( p ? (void*)( sb__Raw(p) ) : NULL, ( newCount * itemSize ) + ( sizeof( size_t ) * 2 ), fileName, fileLine );
 	//int* np = mem_Resize( p ? (void*)( sb__Raw(p) ) : NULL, ( newCount * itemSize ) + ( sizeof( int) * 2 ) );
 	if( np != NULL ) {
 		if( p == NULL ) {

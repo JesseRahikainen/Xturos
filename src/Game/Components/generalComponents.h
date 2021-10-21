@@ -6,6 +6,7 @@
 #include "System/ECPS/entityComponentProcessSystem.h"
 #include "Math/vector2.h"
 #include "Graphics/color.h"
+#include "tween.h"
 
 // general use components that are shared between games
 typedef struct {
@@ -102,6 +103,30 @@ typedef struct {
 	Vector2 offset;
 } GCMountedPosOffset;
 extern ComponentID gcMountedPosOffsetCompID;
+
+// for tweening values
+typedef struct {
+	float duration;
+	float timePassed;
+	float preDelay;
+	float postDelay;
+	float startState;
+	float endState;
+	EaseFunc easing;
+} GCFloatTweenData;
+extern ComponentID gcAlphaTweenCompID;
+
+typedef struct {
+	float duration;
+	float timePassed;
+	float preDelay;
+	float postDelay;
+	Vector2 startState;
+	Vector2 endState;
+	EaseFunc easing;
+} GCVec2TweenData;
+extern ComponentID gcPosTweenCompID;
+extern ComponentID gcScaleTweenCompID;
 
 // attaches the child entity to the parent entity, use the existing positions to calculate the offset
 void gc_MountEntity( ECPS* ecps, EntityID parentID, EntityID childID );

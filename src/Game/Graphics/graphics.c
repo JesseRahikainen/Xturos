@@ -1,5 +1,6 @@
 #include "graphics.h"
 
+#include <SDL_syswm.h>
 #include <stdlib.h>
 #include <assert.h>
 #include <math.h>
@@ -79,6 +80,7 @@ int gfx_Init( SDL_Window* window, int desiredRenderWidth, int desiredRenderHeigh
 	int windowWidth, windowHeight;
 	SDL_GetWindowSize( window, &windowWidth, &windowHeight );
 	llog( LOG_DEBUG, "Window size render: %i x %i", windowWidth, windowHeight );
+    llog( LOG_DEBUG, "Desired size render: %i x %i", desiredRenderWidth, desiredRenderHeight );
 	gfx_SetWindowSize( windowWidth, windowHeight );
 
 	// initialize everything else
@@ -95,12 +97,29 @@ int gfx_Init( SDL_Window* window, int desiredRenderWidth, int desiredRenderHeigh
 	spine_Init( );
 	llog( LOG_INFO, "Spine initialized." );
 
-	if( triRenderer_Init( desiredRenderWidth, desiredRenderHeight ) < 0 ) {
+	if( triRenderer_Init( ) < 0 ) {
 		return -1;
 	}
 	llog( LOG_INFO, "Triangle renderer initialized." );
-
+    
 	gameClearColor = CLR_MAGENTA;
+    
+#if defined( __IPHONEOS__ )
+    SDL_SysWMinfo info;
+    SDL_VERSION( &info.version );
+    if( !SDL_GetWindowWMInfo( window, &info ) ) {
+        llog( LOG_INFO, "Unable to retrieve window information: %s", SDL_GetError( ) );
+        return -1;
+    }
+    
+    if( info.subsystem != SDL_SYSWM_UIKIT ) {
+        llog( LOG_INFO, "Invalid subsystem type." );
+        return -1;
+    }
+    
+    //defaultFBO = info.info.uikit.framebuffer;
+    //defaultColorRBO = info.info.uikit.colorbuffer;
+#endif
 
 	return 0;
 }
@@ -112,7 +131,7 @@ void gfx_ShutDown( void )
 
 void gfx_SetWindowSize( int windowWidth, int windowHeight )
 {
-	llog( LOG_INFO, "Setting window size: %i x %i", windowWidth, windowHeight );
+	//llog( LOG_INFO, "Setting window size: %i x %i", windowWidth, windowHeight );
 	int centerX = windowWidth / 2;
 	int centerY = windowHeight / 2;
 
@@ -137,6 +156,18 @@ void gfx_SetWindowSize( int windowWidth, int windowHeight )
 		windowRenderY0 = 0;
 		windowRenderY1 = windowHeight;
 	}
+}
+
+void gfx_RenderResize( SDL_Window* window, int newRenderWidth, int newRenderHeight )
+{
+	int finalWidth, finalHeight;
+	gfx_calculateRenderSize( newRenderWidth, newRenderHeight, &finalWidth, &finalHeight );
+
+	int windowWidth, windowHeight;
+	SDL_GetWindowSize( window, &windowWidth, &windowHeight );
+	gfx_SetWindowSize( windowWidth, windowHeight ); // adjusts the windowRenderDN values
+
+	gfxPlatform_RenderResize( finalWidth, finalHeight );
 }
 
 void gfx_GetWindowSize( int* outWidth, int* outHeight )
@@ -267,4 +298,9 @@ void gfx_RemoveClearCommand( GfxClearFunc oldFunc )
 			--i;
 		}
 	}
+}
+
+void gfx_Swap( SDL_Window* window )
+{
+    gfxPlatform_Swap( window );
 }

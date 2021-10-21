@@ -31,6 +31,8 @@ void gfx_GetRenderSize( int* renderWidthOut, int* renderHeightOut );
 
 void gfx_GetWindowSize( int* outWidth, int* outHeight );
 
+void gfx_RenderResize( SDL_Window* window, int newRenderWidth, int newRenderHeight );
+
 /*
 Sets render area clearing color.
 */
@@ -62,5 +64,7 @@ void gfx_RemoveClearCommand( GfxClearFunc oldFunc );
 void gfx_calculateRenderSize( int desiredRenderWidth, int desiredRenderHeight, int* outRenderWidth, int* outRenderHeight );
 void gfx_MakeRenderCalls( float dt, float t );
 
+// swap the buffers
+void gfx_Swap( SDL_Window* window );
 
 #endif

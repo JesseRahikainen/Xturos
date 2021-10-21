@@ -1,14 +1,14 @@
 #include "gameScreen.h"
 
-#include "../Graphics/graphics.h"
-#include "../Graphics/images.h"
-#include "../Graphics/spineGfx.h"
-#include "../Graphics/camera.h"
-#include "../Graphics/debugRendering.h"
-#include "../Graphics/imageSheets.h"
-#include "../UI/text.h"
-#include "../sound.h"
-#include "../UI/button.h"
+#include "Graphics/graphics.h"
+#include "Graphics/images.h"
+#include "Graphics/spineGfx.h"
+#include "Graphics/camera.h"
+#include "Graphics/debugRendering.h"
+#include "Graphics/imageSheets.h"
+#include "UI/text.h"
+#include "sound.h"
+#include "UI/button.h"
 
 int testSnd = -1;
 int testStrm = -1;

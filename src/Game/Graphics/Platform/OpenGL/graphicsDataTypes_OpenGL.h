@@ -1,3 +1,4 @@
+#ifdef OPENGL_GFX
 #ifndef GRAPHICS_DATA_TYPES
 #define GRAPHICS_DATA_TYPES
 
@@ -16,3 +17,4 @@ typedef struct {
 } PlatformTriangleList;
 
 #endif
+#endif // OPENGL_GFX

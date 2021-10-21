@@ -9,7 +9,7 @@
 
 bool triPlatform_LoadShaders( void );
 
-bool triPlatform_InitTriList( TriangleList* triList );
+bool triPlatform_InitTriList( TriangleList* triList, TriType listType );
 
 void triPlatform_RenderStart( TriangleList* solidTriangles, TriangleList* transparentTriangles, TriangleList* stencilTriangles );
 void triPlatform_RenderForCamera( int cam, TriangleList* solidTriangles, TriangleList* transparentTriangles, TriangleList* stencilTriangles );

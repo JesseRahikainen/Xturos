@@ -1,22 +1,22 @@
 #include "testJobQueueScreen.h"
 
-#include "../Graphics/graphics.h"
-#include "../Graphics/images.h"
-#include "../Graphics/spineGfx.h"
-#include "../Graphics/camera.h"
-#include "../Graphics/debugRendering.h"
-#include "../Graphics/imageSheets.h"
-#include "../UI/text.h"
-#include "../Utils/helpers.h"
-#include "../Input/input.h"
+#include "Graphics/graphics.h"
+#include "Graphics/images.h"
+#include "Graphics/spineGfx.h"
+#include "Graphics/camera.h"
+#include "Graphics/debugRendering.h"
+#include "Graphics/imageSheets.h"
+#include "UI/text.h"
+#include "Utils/helpers.h"
+#include "Input/input.h"
 
-#include "../System/platformLog.h"
+#include "System/platformLog.h"
 
-#include "../UI/button.h"
+#include "UI/button.h"
 
-#include "../System/jobQueue.h"
+#include "System/jobQueue.h"
 
-#include "../sound.h"
+#include "sound.h"
 
 static int font;
 static int whiteImg;

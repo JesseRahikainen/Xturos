@@ -44,6 +44,7 @@
 
 #include "Graphics/debugRendering.h"
 #include "Graphics/Platform/OpenGL/glPlatform.h"
+#include "Graphics/gfxUtil.h"
 
 #include "System/jobQueue.h"
 #include "Utils/helpers.h"
@@ -67,11 +68,27 @@
 
 static bool running;
 static bool focused;
+static bool paused;
+static bool forceDraw;
 static Uint64 lastTicks;
 static Uint64 physicsTickAcc;
 static SDL_Window* window;
 static SDL_RWops* logFile;
 static const char* windowName = "Xturos";
+
+typedef struct {
+	uint32_t width;
+	uint32_t height;
+} AvailableResolution;
+
+static AvailableResolution resolutions[] = {
+	{ 540, 960 },
+	{ 1242, 2688 },
+	{ 1242, 2208 },
+	{ 2048, 2732 },
+	{ 300, 1000 },
+};
+
 int getWindowRefreshRate( SDL_Window* w )
 {
 	SDL_DisplayMode mode;
@@ -95,23 +112,17 @@ int getWindowRefreshRate( SDL_Window* w )
 void cleanUp( void )
 {
 	jq_ShutDown( );
-
 	gfx_ShutDown( );
-
-	SDL_DestroyWindow( window );
-	window = NULL;
-
 	snd_CleanUp( );
-
-	SDL_Quit( );
-
 	if( logFile != NULL ) {
 		SDL_RWclose( logFile );
 	}
-
 	mem_CleanUp( );
+    
+    SDL_DestroyWindow( window );
+    window = NULL;
 
-	atexit( NULL );
+    SDL_Quit( );
 }
 
 // TODO: Move to logPlatform
@@ -125,6 +136,8 @@ void logOutput( void* userData, int category, SDL_LogPriority priority, const ch
 	SDL_RWwrite( logFile, "\n", 1, 1 );
 #elif defined( __EMSCRIPTEN__ )
 	SDL_RWwrite( logFile, "\n", 1, 1 );
+#elif defined( __IPHONEOS__ )
+    SDL_RWwrite( logFile, "\n", 1, 1 );
 #else
 	#warning "NO END OF LINE DEFINED FOR THIS PLATFORM!"
 #endif
@@ -183,6 +196,10 @@ int initEverything( void )
 	// memory first, won't be used everywhere at first so lets keep the initial allocation low, 64 MB
 	mem_Init( 64 * 1024 * 1024 );
 
+#if defined( __IPHONEOS__ )
+    SDL_SetHint( SDL_HINT_IOS_HIDE_HOME_INDICATOR, "2" );
+#endif
+    
 	// then SDL
 	SDL_SetMainReady( );
 	if( SDL_Init( SDL_INIT_TIMER | SDL_INIT_AUDIO | SDL_INIT_VIDEO | SDL_INIT_EVENTS ) != 0 ) {
@@ -190,8 +207,12 @@ int initEverything( void )
 		return -1;
 	}
 	llog( LOG_INFO, "SDL successfully initialized." );
+    
+#if !defined( __IPHONEOS__ )
 	atexit( cleanUp );
+#endif
 
+#if defined( OPENGL_GFX )
 	// set up opengl
 	int majorVersion;
 	int minorVersion;
@@ -201,7 +222,7 @@ int initEverything( void )
 	int depthSize;
 	int stencilSize;
 
-#if defined( __EMSCRIPTEN__ )
+ #if defined( __EMSCRIPTEN__ )
 	majorVersion = 2;
 	minorVersion = 0;
 	redSize = 8;
@@ -209,7 +230,7 @@ int initEverything( void )
 	blueSize = 8;
 	depthSize = 16;
 	stencilSize = 8;
-#elif defined( __ANDROID__ )
+ #elif defined( __ANDROID__ ) || defined( __IPHONEOS__ )
 	majorVersion = 3;
 	minorVersion = 0;
 	redSize = 8;
@@ -217,7 +238,7 @@ int initEverything( void )
 	blueSize = 8;
 	depthSize = 16;
 	stencilSize = 8;
-#else
+ #else
 	majorVersion = 3;
 	minorVersion = 3;
 	redSize = 8;
@@ -225,7 +246,7 @@ int initEverything( void )
 	blueSize = 8;
 	depthSize = 16;
 	stencilSize = 8;
-#endif
+ #endif
 
 	// setup using OpenGL
 	SDL_GL_SetAttribute( SDL_GL_CONTEXT_PROFILE_MASK, PROFILE );
@@ -240,19 +261,30 @@ int initEverything( void )
 
 	llog( LOG_INFO, "Desired GL version: %i.%i", majorVersion, minorVersion );
 
-#if defined( __ANDROID__ )
+ #if defined( __ANDROID__ ) || defined( __IPHONEOS__ )
 	Uint32 windowFlags = SDL_WINDOW_SHOWN | SDL_WINDOW_OPENGL | SDL_WINDOW_FULLSCREEN;
 	SDL_DisplayMode mode;
 	SDL_GetDesktopDisplayMode( 0, &mode );
 	int windowWidth = mode.w;
 	int windowHeight = mode.h;
-#else
+ #else
 	int windowHeight = DESIRED_WINDOW_HEIGHT;
 	int windowWidth = DESIRED_WINDOW_WIDTH;
 
 	Uint32 windowFlags = SDL_WINDOW_SHOWN | SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE;
-#endif
+ #endif
 
+#elif defined( METAL_GFX )
+    
+    Uint32 windowFlags = SDL_WINDOW_SHOWN | SDL_WINDOW_FULLSCREEN | SDL_WINDOW_METAL;
+
+    SDL_DisplayMode mode;
+    SDL_GetDesktopDisplayMode( 0, &mode );
+    
+    int windowWidth = mode.w;
+    int windowHeight = mode.h;
+    
+#endif
 	//int renderHeight = DESIRED_RENDER_HEIGHT;
 	//int renderWidth = (int)( renderHeight * (float)windowWidth / (float)windowHeight );
 	int renderHeight = windowHeight;
@@ -316,6 +348,54 @@ int initEverything( void )
 	return 0;
 }
 
+int handleIOSEvents( void* userData, SDL_Event* event )
+{
+    switch( event->type ) {
+    case SDL_APP_TERMINATING:
+        /* Terminate the app.
+           Shut everything down before returning from this function.
+        */
+        // we never seem to actually enter here
+        cleanUp( );
+        return 0;
+    case SDL_APP_LOWMEMORY:
+        /* You will get this when your app is paused and iOS wants more memory.
+           Release as much memory as possible.
+        */
+        return 0;
+    case SDL_APP_WILLENTERBACKGROUND:
+        /* Prepare your app to go into the background.  Stop loops, etc.
+           This gets called when the user hits the home button, or gets a call.
+        */
+        // handled by the window lose focus event
+        //focused = false;
+        //snd_SetFocus( false );
+        return 0;
+    case SDL_APP_DIDENTERBACKGROUND:
+        /* This will get called if the user accepted whatever sent your app to the background.
+           If the user got a phone call and canceled it, you'll instead get an SDL_APP_DIDENTERFOREGROUND event and restart your loops.
+           When you get this, you have 5 seconds to save all your state or the app will be terminated.
+           Your app is NOT active at this point.
+        */
+        return 0;
+    case SDL_APP_WILLENTERFOREGROUND:
+        /* This call happens when your app is coming back to the foreground.
+           Restore all your state here.
+        */
+        return 0;
+    case SDL_APP_DIDENTERFOREGROUND:
+        /* Restart your loops here.
+           Your app is interactive and getting CPU again.
+        */
+        // handled by by the window gain focus event
+        //focused = true;
+        //snd_SetFocus( true );
+        return 0;
+    }
+    
+    return 1;
+}
+
 /* input processing */
 void processEvents( int windowsEventsOnly )
 {
@@ -325,10 +405,33 @@ void processEvents( int windowsEventsOnly )
 	while( SDL_PollEvent( &e ) != 0 ) {
 		if( e.type == SDL_WINDOWEVENT ) {
 			switch( e.window.event ) {
-			case SDL_WINDOWEVENT_RESIZED:
+			case SDL_WINDOWEVENT_SIZE_CHANGED:
+#ifdef RENDER_RESIZE
+				// TODO: Make this based on a config file instead of a define
+				// resize the rendering based on the size of the new window
+				gfx_RenderResize( window, e.window.data1, e.window.data2 );
+
+				// adjust world size so everything base don that scales correctly
+				int worldHeight = DESIRED_WORLD_HEIGHT;
+				int worldWidth = (int)( worldHeight * (float)e.window.data1 / (float)e.window.data2 );
+				world_SetSize( worldWidth, worldHeight );
+				recalculateSafeArea( );
+
+				// adjust the cameras to work with the new render aspect ratio
+				setCameraMatrices( worldWidth, worldHeight );
+
+				// need to signal to everything else that stuff had changed and stuff may need to be relayed out
+				mb_BroadcastMessage( RESIZE_UI_ELEMENTS, NULL );
+
+				// force a draw so everything updates correctly
+				if( paused ) {
+					forceDraw = true;
+				}
+#endif
 				// data1 == width, data2 == height
 				gfx_SetWindowSize( e.window.data1, e.window.data2 );
 				input_UpdateMouseWindow( e.window.data1, e.window.data2 );
+
 				break;
 
 			// will want to handle these messages for pausing and unpausing the game when they lose focus
@@ -354,9 +457,12 @@ void processEvents( int windowsEventsOnly )
 			continue;
 		}
 
-		/*if( e.type == SDL_KEYDOWN ) {
+		// special keys used only on the pc version, primarily for taking screenshots of scenes at different resolutions
+#if defined( WIN32 )
+		if( e.type == SDL_KEYDOWN ) {
 			if( e.key.keysym.sym == SDLK_PRINTSCREEN ) {
-				
+				// take a screen shot
+
 				time_t t = time( NULL );
 				struct tm tm = *localtime( &t );
 
@@ -368,10 +474,49 @@ void processEvents( int windowsEventsOnly )
 #undef FORMAT
 				char* savePath = getSavePath( fileName );
 				gfxUtil_TakeScreenShot( savePath );
+				llog( LOG_DEBUG, "Screenshot taken %s", savePath );
 				mem_Release( fileName );
 				mem_Release( savePath );
 			}
-		}//*/
+
+			if( e.key.keysym.sym == SDLK_PAUSE ) {
+				// pause the game
+				paused = !paused;
+			}
+
+			// have the F# keys change the size of the window based on some predetermined values
+			int pressedFKey = -1;
+			if( e.key.keysym.sym == SDLK_F1 ) pressedFKey = 0;
+			if( e.key.keysym.sym == SDLK_F2 ) pressedFKey = 1;
+			if( e.key.keysym.sym == SDLK_F3 ) pressedFKey = 2;
+			if( e.key.keysym.sym == SDLK_F4 ) pressedFKey = 3;
+			if( e.key.keysym.sym == SDLK_F5 ) pressedFKey = 4;
+			if( e.key.keysym.sym == SDLK_F6 ) pressedFKey = 5;
+			if( e.key.keysym.sym == SDLK_F7 ) pressedFKey = 6;
+			if( e.key.keysym.sym == SDLK_F8 ) pressedFKey = 7;
+			if( e.key.keysym.sym == SDLK_F9 ) pressedFKey = 8;
+			if( e.key.keysym.sym == SDLK_F10 ) pressedFKey = 9;
+			if( e.key.keysym.sym == SDLK_F11 ) pressedFKey = 10;
+			if( e.key.keysym.sym == SDLK_F12 ) pressedFKey = 11;
+			if( e.key.keysym.sym == SDLK_F13 ) pressedFKey = 12;
+			if( e.key.keysym.sym == SDLK_F14 ) pressedFKey = 13;
+			if( e.key.keysym.sym == SDLK_F15 ) pressedFKey = 14;
+			if( e.key.keysym.sym == SDLK_F16 ) pressedFKey = 15;
+			if( e.key.keysym.sym == SDLK_F17 ) pressedFKey = 16;
+			if( e.key.keysym.sym == SDLK_F18 ) pressedFKey = 17;
+			if( e.key.keysym.sym == SDLK_F19 ) pressedFKey = 18;
+			if( e.key.keysym.sym == SDLK_F20 ) pressedFKey = 19;
+			if( e.key.keysym.sym == SDLK_F21 ) pressedFKey = 20;
+			if( e.key.keysym.sym == SDLK_F22 ) pressedFKey = 21;
+			if( e.key.keysym.sym == SDLK_F23 ) pressedFKey = 22;
+			if( e.key.keysym.sym == SDLK_F24 ) pressedFKey = 23;
+
+			if( ( pressedFKey != -1 ) && ( pressedFKey < ARRAY_SIZE( resolutions ) ) ) {
+				// switch resolution
+				SDL_SetWindowSize( window, resolutions[pressedFKey].width, resolutions[pressedFKey].height );
+			}
+		}
+#endif
 
 		sys_ProcessEvents( &e );
 		input_ProcessEvents( &e );
@@ -385,6 +530,7 @@ void processEvents( int windowsEventsOnly )
 	nk_input_end( &( inGameIMGUI.ctx ) );
 }
 
+static int skipEvents = 3;
 // needed to be able to work in javascript
 void mainLoop( void* v )
 {
@@ -394,7 +540,7 @@ void mainLoop( void* v )
 	float renderDelta;
 
 	Uint64 mainTimer = gt_StartTimer( );
-
+    
 #if defined( __EMSCRIPTEN__ )
 	if( !running ) {
 		emscripten_cancel_main_loop( );
@@ -411,19 +557,27 @@ void mainLoop( void* v )
 		return;
 	}
 
+	if( paused ) {
+		tickDelta = 0;
+	}
+
 	physicsTickAcc += tickDelta;
 
 	// process input
-	processEvents( 0 );
-
+	if( skipEvents <= 0 ) {
+		processEvents( 0 );
+	} else {
+		--skipEvents;
+	}
+    
 	// handle per frame update
-	sys_Process( );
-	gsm_Process( &globalFSM );
+    sys_Process( );
+    gsm_Process( &globalFSM );
 	float procTimerSec = gt_StopTimer( procTimer );
 
 	Uint64 physicsTimer = gt_StartTimer( );
 	// process movement, collision, and other things that require a delta time
-	numPhysicsProcesses = 0;
+    numPhysicsProcesses = 0;
 	while( physicsTickAcc > PHYSICS_TICK ) {
 		sys_PhysicsTick( PHYSICS_DT );
 		gsm_PhysicsTick( &globalFSM, PHYSICS_DT );
@@ -432,9 +586,16 @@ void mainLoop( void* v )
 	}
 	float physicsTimerSec = gt_StopTimer( physicsTimer );
 
+	// TODO: Figure out all the bugs that will happen because of this
+	//  as of right now it's only used for taking screenshots of the same
+	//  scene at different resolutions, not meant for actual in play use
+	if( forceDraw && numPhysicsProcesses == 0 ) {
+		numPhysicsProcesses = 1;
+	}
+
 	Uint64 drawTimer = gt_StartTimer( );
 	// drawing
-	if( numPhysicsProcesses > 0 ) {
+    if( numPhysicsProcesses > 0 ) {
 		// set the new draw positions
 		renderDelta = PHYSICS_DT * (float)numPhysicsProcesses;
 		gfx_ClearDrawCommands( renderDelta );
@@ -457,13 +618,15 @@ void mainLoop( void* v )
 	gt_SetRenderTimeDelta( dt );
 	cam_Update( dt );
 	gfx_Render( dt );
+    
 	float renderTimerSec = gt_StopTimer( renderTimer );
-
 	//llog( LOG_DEBUG, "FPS: %f", ( 1.0f / dt ) );
 
 	Uint64 flipTimer = gt_StartTimer( );
-	SDL_GL_SwapWindow( window );
-	float flipTimerSec = gt_StopTimer( flipTimer );
+    
+    gfx_Swap( window );
+    
+	//float flipTimerSec = gt_StopTimer( flipTimer );
 
 /*	if( dt >= 0.02f ) {
 		llog( LOG_INFO, "!!! dt: %f", dt );
@@ -473,7 +636,7 @@ void mainLoop( void* v )
 
 	float mainTimerSec = gt_StopTimer( mainTimer );
 
-	int priority = ( mainTimerSec >= 0.15f ) ? LOG_WARN : LOG_INFO;
+	//int priority = ( mainTimerSec >= 0.15f ) ? LOG_WARN : LOG_INFO;
 	//llog( priority, "%smain: %.4f - proc: %.4f  phys: %.4f  draw: %.4f  jobs: %.4f  rndr: %.4f  flip: %.4f", ( mainTimerSec >= 0.02f ) ? "!!! " : "", mainTimerSec, procTimerSec, physicsTimerSec, drawTimerSec, mainJobsTimerSec, renderTimerSec, flipTimerSec );
 	//llog( priority, "%smain: %.4f", ( mainTimerSec >= 0.02f ) ? "!!! " : "", mainTimerSec );
 }
@@ -492,14 +655,16 @@ int main( int argc, char** argv )
 	if( initEverything( ) < 0 ) {
 		return 1;
 	}
-
+    
 	srand( (unsigned int)time( NULL ) );
 
 	//***** main loop *****
 	running = true;
+	paused = false;
+	forceDraw = false;
 	lastTicks = SDL_GetPerformanceCounter( );
 	physicsTickAcc = 0;
-#if defined( __ANDROID__ )
+#if defined( __ANDROID__ ) || defined( __IPHONEOS__ )
 	focused = true;
 #endif
 
@@ -514,6 +679,11 @@ int main( int argc, char** argv )
 
 #if defined( __EMSCRIPTEN__ )
 	emscripten_set_main_loop_arg( mainLoop, NULL, -1, 1 );
+#elif defined( __IPHONEOS__ )
+    SDL_SetEventFilter( handleIOSEvents, NULL );
+    if( SDL_iPhoneSetAnimationCallback( window, 1, mainLoop, NULL ) < 0 ) {
+        llog( LOG_ERROR, "Unable to set callback: %s", SDL_GetError( ) );
+    }
 #else
 	while( running ) {
 		mainLoop( NULL );

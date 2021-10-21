@@ -1,4 +1,4 @@
-#include "GeneralComponents.h"
+#include "generalComponents.h"
 
 #include <SDL_assert.h>
 #include "Utils/helpers.h"
@@ -19,6 +19,9 @@ ComponentID gcTextCompID = INVALID_COMPONENT_ID;
 ComponentID gcFloatVal0CompID = INVALID_COMPONENT_ID;
 ComponentID gcWatchCompID = INVALID_COMPONENT_ID;
 ComponentID gcMountedPosOffsetCompID = INVALID_COMPONENT_ID;
+ComponentID gcAlphaTweenCompID = INVALID_COMPONENT_ID;
+ComponentID gcPosTweenCompID = INVALID_COMPONENT_ID;
+ComponentID gcScaleTweenCompID = INVALID_COMPONENT_ID;
 
 // attaches the child entity to the parent entity, use the existing positions to calculate the offset
 void gc_MountEntity( ECPS* ecps, EntityID parentID, EntityID childID )
@@ -78,4 +81,8 @@ void gc_Register( ECPS* ecps )
 	gcWatchCompID = ecps_AddComponentType( ecps, "GC_WATCH", 0, 0, NULL, NULL );
 	gcMountedPosOffsetCompID = ecps_AddComponentType( ecps, "GC_MNTPOS", sizeof( GCMountedPosOffset ), ALIGN_OF( GCMountedPosOffset ), NULL, NULL );
 	gcStencilCompID = ecps_AddComponentType( ecps, "GC_STENCIL", sizeof( GCStencilData ), ALIGN_OF( GCStencilData ), NULL, NULL );
+
+	gcPosTweenCompID = ecps_AddComponentType( ecps, "P_TWN", sizeof( GCVec2TweenData ), ALIGN_OF( GCVec2TweenData ), NULL, NULL );
+	gcScaleTweenCompID = ecps_AddComponentType( ecps, "S_TWN", sizeof( GCVec2TweenData ), ALIGN_OF( GCVec2TweenData ), NULL, NULL );
+	gcAlphaTweenCompID = ecps_AddComponentType( ecps, "A_TWN", sizeof( GCFloatTweenData ), ALIGN_OF( GCFloatTweenData ), NULL, NULL );
 }

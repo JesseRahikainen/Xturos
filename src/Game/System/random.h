@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include <stddef.h>
 
 // Sending in NULL as the RandomGroup to any of these functions will use a default RandomGroup.
 

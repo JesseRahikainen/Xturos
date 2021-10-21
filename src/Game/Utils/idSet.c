@@ -32,7 +32,7 @@ int idSet_Init( IDSet* set, size_t maxSize )
 	assert( maxSize <= (size_t)UINT16_MAX );
 
 	sb_Add( set->sbIDData, maxSize );
-	idSet_Clear( set );
+    idSet_Clear( set );
 
 	set->currMaxCount = 0;
 

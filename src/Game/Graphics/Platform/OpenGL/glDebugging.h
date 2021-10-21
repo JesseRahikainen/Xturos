@@ -1,3 +1,4 @@
+#ifdef OPENGL_GFX
 #ifndef GL_DEBUGGING_H
 #define GL_DEBUGGING_H
 
@@ -6,7 +7,7 @@
 #define STRINGIFY(x) #x
 #define TOSTRING(x) STRINGIFY(x)
 
-//#define DEBUG_GL
+#define DEBUG_GL
 
 // all the different combinations D: Description, R: GL function return, C: Check error return
 #ifdef DEBUG_GL
@@ -33,3 +34,4 @@ int checkAndLogErrors( const char* extraInfo );
 int checkAndLogFrameBufferCompleteness( GLenum target, const char* extraInfo );
 
 #endif /* inclusion guard */
+#endif // OPENGL_GFX

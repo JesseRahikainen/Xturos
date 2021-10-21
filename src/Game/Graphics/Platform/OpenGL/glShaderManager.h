@@ -1,3 +1,4 @@
+#ifdef OPENGL_GFX
 #ifndef SHADER_MANAGER_H
 #define SHADER_MANAGER_H
 
@@ -67,3 +68,4 @@ void shaders_Destroy( ShaderProgram* shaderPrograms, size_t numShaderPrograms );
 void shaders_ListUniforms( GLuint shaderID );
 
 #endif
+#endif // OPENGL_GFX

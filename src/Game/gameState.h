@@ -19,7 +19,7 @@ typedef struct {
 	GameState* currentState;
 } GameStateMachine;
 
-GameStateMachine globalFSM;
+extern GameStateMachine globalFSM;
 
 void gsm_EnterState( GameStateMachine* fsm, GameState* newState );
 void gsm_ProcessEvents( GameStateMachine* fsm, SDL_Event* e );

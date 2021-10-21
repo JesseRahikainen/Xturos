@@ -1,3 +1,5 @@
+#ifdef OPENGL_GFX
+
 #include "Graphics/Platform/triRenderingPlatform.h"
 
 #include "Graphics/Platform/OpenGL/glShaderManager.h"
@@ -84,7 +86,7 @@ bool triPlatform_LoadShaders( void )
 	return true;
 }
 
-bool triPlatform_InitTriList( TriangleList* triList )
+bool triPlatform_InitTriList( TriangleList* triList, TriType listType )
 {
 	if( ( triList->triangles = mem_Allocate( sizeof( Triangle ) * triList->triCount ) ) == NULL ) {
 		llog( LOG_ERROR, "Unable to allocate triangles array." );
@@ -217,7 +219,17 @@ static void drawTriangles( uint32_t currCamera, TriangleList* triList, void( *on
 		GL( glUniform1f( shaderPrograms[lastBoundShader].uniformLocs[UNIFORM_FLOAT_0], floatVal0 ) );
 		GL( glBindTexture( GL_TEXTURE_2D, texture ) );
 		GL( glBufferSubData( GL_ELEMENT_ARRAY_BUFFER, 0, sizeof( GLuint ) * ( triList->lastIndexBufferIndex + 1 ), triList->platformTriList.indices ) );
-		GL( glDrawElements( GL_TRIANGLES, triList->lastIndexBufferIndex + 1, GL_UNSIGNED_INT, NULL ) );
+        
+        
+        //GLint sizeVert, sizeIdx;
+        //GL( glGetBufferParameteriv( GL_ARRAY_BUFFER, GL_BUFFER_SIZE, &sizeVert ) );
+        //GL( glGetBufferParameteriv( GL_ELEMENT_ARRAY_BUFFER, GL_BUFFER_SIZE, &sizeIdx ) );
+        //llog( LOG_DEBUG, "vs: %i  is: %i", (int)sizeof( triList->triangles[0] ), (int)sizeof( triList->platformTriList.indices[0] ) );
+        //llog( LOG_DEBUG, "v: %i  i: %i", sizeVert, sizeIdx );
+        //llog( LOG_DEBUG, "idxCnt: %i", triList->lastIndexBufferIndex + 1 );
+        
+        
+		GL( glDrawElements( GL_TRIANGLES, triList->lastIndexBufferIndex + 1, GL_UNSIGNED_INT, 0 ) );
 	} while( triIdx <= triList->lastTriIndex );
 }
 
@@ -254,6 +266,7 @@ void triPlatform_RenderForCamera( int cam, TriangleList* solidTriangles, Triangl
 	GL( glDisable( GL_BLEND ) );
 	drawTriangles( cam, solidTriangles, onStencilSwitch_Standard );
 
+    //llog( LOG_DEBUG, "draw transparent" );
 	GL( glEnable( GL_BLEND ) );
 	GL( glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA ) );
 	drawTriangles( cam, transparentTriangles, onStencilSwitch_Standard );
@@ -264,3 +277,4 @@ void triPlatform_RenderEnd( void )
 	GL( glBindVertexArray( 0 ) );
 	GL( glUseProgram( 0 ) );
 }
+#endif

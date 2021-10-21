@@ -6,8 +6,10 @@
 #include "Math/vector2.h"
 #include <SDL_surface.h>
 
-#if defined( WIN32 ) || defined( __ANDROID__ ) || defined( __EMSCRIPTEN__ )
+#if defined( OPENGL_GFX )
 	#include "Graphics/Platform/OpenGL/graphicsDataTypes_OpenGL.h"
+#elif defined( METAL_GFX )
+    #include "Graphics/Platform/Metal/graphicsDataTypes_Metal.h"
 #else
 	#warning "NO DATA TYPES FOR THIS GRAPHICS PLATFORM!"
 #endif

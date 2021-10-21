@@ -2,21 +2,21 @@
 
 #include <math.h>
 
-#include "../Utils/aStar.h"
+#include "Utils/aStar.h"
 
-#include "../Graphics/graphics.h"
-#include "../Graphics/images.h"
-#include "../Graphics/spineGfx.h"
-#include "../Graphics/camera.h"
-#include "../Graphics/debugRendering.h"
-#include "../Graphics/imageSheets.h"
-#include "../UI/text.h"
-#include "../Utils/helpers.h"
-#include "../Input/input.h"
+#include "Graphics/graphics.h"
+#include "Graphics/images.h"
+#include "Graphics/spineGfx.h"
+#include "Graphics/camera.h"
+#include "Graphics/debugRendering.h"
+#include "Graphics/imageSheets.h"
+#include "UI/text.h"
+#include "Utils/helpers.h"
+#include "Input/input.h"
 
-#include "../Utils/stretchyBuffer.h"
+#include "Utils/stretchyBuffer.h"
 
-#include "../System/random.h"
+#include "System/random.h"
 
 static int tileImg;
 static int tileMarkerImg;

@@ -1,3 +1,4 @@
+#ifdef OPENGL_GFX
 #ifndef GL_PLATFORM
 #define GL_PLATFORM
 
@@ -6,14 +7,19 @@
 /*
 Handles the platform specific OpenGL stuff.
 */
-#if defined( __ANDROID__ ) || defined( __EMSCRIPTEN__ )
+#if defined( __ANDROID__ ) || defined( __EMSCRIPTEN__ ) || defined( __IPHONEOS__ )
 
-#include <GLES3/gl3.h>
-#if defined( __EMSCRIPTEN__ )
-	#include <GLES2/gl2ext.h>
-#else
-	#include <GLES3/gl3ext.h>
-#endif
+  #if defined( __ANDROID__ ) || defined( __EMPSCRIPTEN__ )
+    #include <GLES3/gl3.h>
+    #if defined( __EMSCRIPTEN__ )
+	  #include <GLES2/gl2ext.h>
+    #else
+	  #include <GLES3/gl3ext.h>
+    #endif
+  #else // ios
+    #include <OpenGLES/ES3/gl.h>
+    #include <OpenGLES/ES3/glext.h>
+  #endif
 
 #define PROFILE SDL_GL_CONTEXT_PROFILE_ES
 
@@ -287,3 +293,4 @@ Handles the platform specific OpenGL stuff.
 int glInit( void );
 
 #endif // inclusion guard
+#endif // OPENGL_GFX

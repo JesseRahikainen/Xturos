@@ -1,3 +1,4 @@
+#ifdef OPENGL_GFX
 #define _CRT_SECURE_NO_DEPRECATE
 #include <string.h>
 #include <stdio.h>
@@ -319,3 +320,4 @@ void shaders_ListUniforms( GLuint shaderID )
 
 	mem_Release( uniformName );
 }
+#endif // OPENGL_GFX

@@ -1,3 +1,4 @@
+#ifdef OPENGL_GFX
 #include "glPlatform.h"
 
 #include "System/platformLog.h"
@@ -20,8 +21,11 @@ int glInit( void )
 	return 0;
 #elif defined( __EMSCRIPTEN__ )
 	return 0;
+#elif defined( __IPHONEOS__ )
+    return 0;
 #else
 	llog( LOG_ERROR, "OpenGL not setup for this platform." );
 	return -1;
 #endif
 }
+#endif // OPENGL_GFX

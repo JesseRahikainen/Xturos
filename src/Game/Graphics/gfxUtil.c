@@ -135,7 +135,8 @@ int gfxUtil_LoadTexture( const char* fileName, Texture* outTexture )
 		goto clean_up;
 	}
 
-	if( gfxPlatform_CreateTextureFromLoadedImage( GL_RGBA, &image, outTexture ) < 0 ) {
+    // GL_RGBA
+	if( gfxPlatform_CreateTextureFromLoadedImage( TF_RGBA, &image, outTexture ) < 0 ) {
 		returnCode = -1;
 		goto clean_up;
 	}
@@ -167,7 +168,7 @@ int gfxUtil_CreateTextureFromRGBABitmap( uint8_t* data, int width, int height, T
 		goto clean_up;
 	}
 
-	if( gfxPlatform_CreateTextureFromLoadedImage( GL_RGBA, &image, outTexture ) < 0 ) {
+	if( gfxPlatform_CreateTextureFromLoadedImage( TF_RGBA, &image, outTexture ) < 0 ) {
 		returnCode = -1;
 		goto clean_up;
 	}
@@ -197,13 +198,13 @@ int gfxUtil_CreateTextureFromAlphaBitmap( uint8_t* data, int width, int height, 
 		goto clean_up;
 	}
 
-	GLenum texFormat;
-#if defined( __ANDROID__ ) || defined( __EMSCRIPTEN__ )
-	texFormat = GL_ALPHA;
+	TextureFormat texFormat;
+#if defined( __IPHONEOS__ ) || defined( __ANDROID__ ) || defined( __EMSCRIPTEN__ )
+	texFormat = TF_ALPHA;
 #else
-	texFormat = GL_RED;
+	texFormat = TF_RED;
 #endif
-	if( gfxPlatform_CreateTextureFromLoadedImage( texFormat, &image, outTexture ) < 0 ) {
+	if( gfxPlatform_CreateTextureFromLoadedImage( texFormat, &image, outTexture ) ) {
 		returnCode = -1;
 		goto clean_up;
 	}

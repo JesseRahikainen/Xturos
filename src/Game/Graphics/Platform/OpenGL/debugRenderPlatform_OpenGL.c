@@ -1,3 +1,5 @@
+#ifdef OPENGL_GFX
+
 #include "Graphics/Platform/debugRenderingPlatform.h"
 
 #include "Graphics/Platform/OpenGL/glPlatform.h"
@@ -125,3 +127,5 @@ void debugRendererPlatform_Render( DebugVertex* debugBuffer, int lastDebugVert )
 		GL( glUseProgram( 0 ) );
 	}
 }
+
+#endif

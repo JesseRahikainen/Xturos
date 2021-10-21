@@ -48,9 +48,9 @@ int triRenderer_LoadShaders( void )
 	return 0;
 }
 
-static int initTriList( TriangleList* triList )
+static int initTriList( TriangleList* triList, TriType listType )
 {
-	if( !triPlatform_InitTriList( triList ) ) {
+	if( !triPlatform_InitTriList( triList, listType ) ) {
 		return -1;
 	}
 
@@ -64,7 +64,7 @@ static int initTriList( TriangleList* triList )
 Initializes all the stuff needed for rendering the triangles.
  Returns a value < 0 if there's a problem.
 */
-int triRenderer_Init( int renderAreaWidth, int renderAreaHeight )
+int triRenderer_Init( )
 {
 	if( triRenderer_LoadShaders( ) < 0 ) {
 		return -1;
@@ -80,9 +80,9 @@ int triRenderer_Init( int renderAreaWidth, int renderAreaHeight )
 	stencilTriangles.vertCount = MAX_STENCIL_TRIS * 3;
 
 	llog( LOG_INFO, "Creating triangle lists." );
-	if( ( initTriList( &solidTriangles ) < 0 ) ||
-		( initTriList( &transparentTriangles ) < 0 ) ||
-		( initTriList( &stencilTriangles ) < 0 ) ) {
+	if( ( initTriList( &solidTriangles, TT_SOLID ) < 0 ) ||
+		( initTriList( &transparentTriangles, TT_TRANSPARENT ) < 0 ) ||
+		( initTriList( &stencilTriangles, TT_STENCIL ) < 0 ) ) {
 		return -1;
 	}
 
@@ -176,8 +176,10 @@ static int addTriangle( TriangleList* triList, TriVert vert0, TriVert vert1, Tri
 		return -1;
 	}
 
+    //float baseZ = (float)depth - (float)INT8_MIN;
+    //float z = baseZ + ( Z_ORDER_OFFSET * ( solidTriangles.lastTriIndex + transparentTriangles.lastTriIndex + 2 ) );
 	float z = (float)depth + ( Z_ORDER_OFFSET * ( solidTriangles.lastTriIndex + transparentTriangles.lastTriIndex + 2 ) );
-
+    
 	int idx = triList->lastTriIndex + 1;
 	triList->lastTriIndex = idx;
 	triList->triangles[idx].camFlags = camFlags;

@@ -3,9 +3,11 @@
 
 #include <stdint.h>
 
-#if defined( WIN32 ) || defined( __ANDROID__ ) || defined( __EMSCRIPTEN__ )
+#if defined( OPENGL_GFX )
 	#include "Graphics/Platform/OpenGL/glPlatform.h"
 	#include "Graphics/Platform/OpenGL/graphicsDataTypes_OpenGL.h"
+#elif defined( METAL_GFX )
+    #include "Graphics/Platform/Metal/graphicsDataTypes_Metal.h"
 #else
 	#warning "NOTHING IMPLEMENTED FOR THIS GRAPHICS PLATFORM!"
 #endif
@@ -45,7 +47,7 @@ int triRenderer_LoadShaders( void );
 Initializes all the stuff needed for rendering the triangles.
  Returns a value < 0 if there's a problem.
 */
-int triRenderer_Init( int renderAreaWidth, int renderAreaHeight );
+int triRenderer_Init( );
 
 /*
 We'll assume the array has three vertices in it.
@@ -64,6 +66,6 @@ void triRenderer_Clear( void );
 /*
 Draws out all the triangles.
 */
-void triRenderer_Render( );
+void triRenderer_Render( void );
 
 #endif /* inclusion guard */

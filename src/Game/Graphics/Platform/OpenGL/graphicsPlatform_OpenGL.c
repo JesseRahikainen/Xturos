@@ -1,3 +1,8 @@
+#ifdef OPENGL_GFX
+
+#include <SDL_syswm.h>
+#include <SDL_video.h>
+
 #include "Graphics/Platform/graphicsPlatform.h"
 
 #include <stb_image.h>
@@ -25,6 +30,18 @@ static enum {
 
 static GLuint mainRenderFBO = 0;
 static GLuint mainRenderRBOs[RBO_COUNT] = { 0, 0 };
+
+static GLuint defaultFBO = 0;
+static GLuint defaultColorRBO = 0;
+
+static void destroyFBO( GLuint* fboOut, GLuint* rbosOut )
+{
+	GL( glDeleteFramebuffers( 1, fboOut ) );
+	( *fboOut ) = 0;
+
+	GL( glDeleteRenderbuffers( RBO_COUNT, rbosOut ) );
+	memset( rbosOut, 0, sizeof( rbosOut[0] ) * RBO_COUNT );
+}
 
 static int generateFBO( int renderWidth, int renderHeight, GLuint* fboOut, GLuint* rbosOut )
 {
@@ -73,8 +90,11 @@ bool gfxPlatform_Init( SDL_Window* window, int desiredRenderWidth, int desiredRe
 
 	// use v-sync, avoid tearing
 	if( SDL_GL_SetSwapInterval( 1 ) < 0 ) {
-		llog( LOG_INFO, "%s", SDL_GetError( ) );
-		return -1;
+		llog( LOG_INFO, "Unable to set vertical retrace swap: %s", SDL_GetError( ) );
+		
+        if( SDL_GL_SetSwapInterval( -1 ) < 0 ) {
+            llog( LOG_INFO, "Unable to set adaptive swap: %s", SDL_GetError( ) );
+        }
 	}
 
 	// set packing and unpacking to 1 byte alignment, works better with our font textures
@@ -90,6 +110,24 @@ bool gfxPlatform_Init( SDL_Window* window, int desiredRenderWidth, int desiredRe
 	if( generateFBO( finalWidth, finalHeight, &mainRenderFBO, &( mainRenderRBOs[0] ) ) < 0 ) {
 		return false;
 	}
+    
+#ifdef __IPHONEOS__
+    // iOS needs the default framebuffer and colorbuffer
+    SDL_SysWMinfo info;
+    SDL_VERSION( &info.version );
+    if( !SDL_GetWindowWMInfo( window, &info ) ) {
+        llog( LOG_ERROR, "Unable to retrive window information: %s", SDL_GetError( ) );
+        return -1;
+    }
+    
+    if( info.subsystem != SDL_SYSWM_UIKIT ) {
+        llog( LOG_ERROR, "Invalid subsystem type." );
+        return -1;
+    }
+    
+    defaultFBO = info.info.uikit.framebuffer;
+    defaultColorRBO = info.info.uikit.colorbuffer;
+#endif
 
 	return true;
 }
@@ -110,13 +148,13 @@ void gfxPlatform_DynamicSizeRender( float dt, float t, int renderWidth, int rend
 	// draw the game stuff
 	GLenum mainRenderBuffers = GL_COLOR_ATTACHMENT0;
 	GL( glBindFramebuffer( GL_DRAW_FRAMEBUFFER, mainRenderFBO ) );
-	GL( glDrawBuffers( 1, &mainRenderBuffers ) );
-	// clear the screen and draw everything to a frame buffer
-	GL( glClearColor( clearColor.r, clearColor.g, clearColor.b, clearColor.a ) );
-	GL( glColorMask( GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE ) );
-	GL( glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT ) );
+        GL( glDrawBuffers( 1, &mainRenderBuffers ) );
+        // clear the screen and draw everything to a frame buffer
+        GL( glClearColor( clearColor.r, clearColor.g, clearColor.b, clearColor.a ) );
+        GL( glColorMask( GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE ) );
+        GL( glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT ) );
 		gfx_MakeRenderCalls( dt, t );
-	GL( glBindFramebuffer( GL_DRAW_FRAMEBUFFER, 0 ) );
+	GL( glBindFramebuffer( GL_DRAW_FRAMEBUFFER, defaultFBO ) );
 
 	// now render the main frame buffer to the screen, scaling based on the size of the window
 	GL( glBindFramebuffer( GL_READ_FRAMEBUFFER, mainRenderFBO ) );
@@ -125,8 +163,15 @@ void gfxPlatform_DynamicSizeRender( float dt, float t, int renderWidth, int rend
 			windowRenderX0, windowRenderY0, windowRenderX1, windowRenderY1,
 			GL_COLOR_BUFFER_BIT,
 			GL_LINEAR ) );
-	GL( glBindFramebuffer( GL_READ_FRAMEBUFFER, 0 ) );
+	GL( glBindFramebuffer( GL_READ_FRAMEBUFFER, defaultFBO ) );
 
+    
+    // iOS: need to make sure the framebuffer and colorbuffer objects in the SysWMInfo are correctly bound
+    //  framebuffer should already be bound with the defaultFBO command above
+#ifdef __IPHONEOS__
+    GL( glBindRenderbuffer( GL_RENDERBUFFER, defaultColorRBO ) );
+#endif
+    
 	// editor and debugging ui stuff
 	//nk_xu_render( &editorIMGUI );
 }
@@ -134,11 +179,17 @@ void gfxPlatform_DynamicSizeRender( float dt, float t, int renderWidth, int rend
 void gfxPlatform_StaticSizeRender( float dt, float t, Color clearColor )
 {
 	// clear the screen
-	glClearColor( clearColor.r, clearColor.g, clearColor.b, clearColor.a );
-	glColorMask( GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE );
-	glClear( GL_COLOR_BUFFER_BIT );
+	GL( glClearColor( clearColor.r, clearColor.g, clearColor.b, clearColor.a ) );
+	GL( glColorMask( GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE ) );
+	GL( glClear( GL_COLOR_BUFFER_BIT ) );
 
 	gfx_MakeRenderCalls( dt, t );
+}
+
+void gfxPlatform_RenderResize( int newDesiredRenderWidth, int newDesiredRenderHeight )
+{
+	destroyFBO( &mainRenderFBO, &( mainRenderRBOs[0] ) );
+	generateFBO( newDesiredRenderWidth, newDesiredRenderHeight, &mainRenderFBO, &( mainRenderRBOs[0] ) );
 }
 
 void gfxPlatform_CleanUp( void )
@@ -152,8 +203,27 @@ void gfxPlatform_ShutDown( void )
 	SDL_GL_DeleteContext( glContext );
 }
 
-bool gfxPlatform_CreateTextureFromLoadedImage( GLenum texFormat, LoadedImage* image, Texture* outTexture )
+bool gfxPlatform_CreateTextureFromLoadedImage( TextureFormat texFormat, LoadedImage* image, Texture* outTexture )
 {
+    GLenum glTexFormat = GL_RGBA;
+    switch( texFormat ) {
+        case TF_RED:
+            glTexFormat = GL_RED;
+            break;
+        case TF_GREEN:
+            glTexFormat = GL_GREEN;
+            break;
+        case TF_BLUE:
+            glTexFormat = GL_BLUE;
+            break;
+        case TF_ALPHA:
+            glTexFormat = GL_ALPHA;
+            break;
+        case TF_RGBA:
+            glTexFormat = GL_RGBA;
+			break;
+    }
+    
 	GL( glGenTextures( 1, &( outTexture->texture.id ) ) );
 
 	if( outTexture->texture.id == 0 ) {
@@ -173,7 +243,7 @@ bool gfxPlatform_CreateTextureFromLoadedImage( GLenum texFormat, LoadedImage* im
 	GL( glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE ) );
 	GL( glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE ) );
 
-	GL( glTexImage2D( GL_TEXTURE_2D, 0, texFormat, image->width, image->height, 0, texFormat, GL_UNSIGNED_BYTE, image->data ) );
+	GL( glTexImage2D( GL_TEXTURE_2D, 0, glTexFormat, image->width, image->height, 0, glTexFormat, GL_UNSIGNED_BYTE, image->data ) );
 
 	outTexture->width = image->width;
 	outTexture->height = image->height;
@@ -255,6 +325,11 @@ void gfxPlatform_DeletePlatformTexture( PlatformTexture texture )
 	glDeleteTextures( 1, &( texture.id ) );
 }
 
+void gfxPlatform_Swap( SDL_Window* window )
+{
+    SDL_GL_SwapWindow( window );
+}
+
 uint8_t* gfxPlatform_GetScreenShotPixels( int width, int height )
 {
 	uint8_t* pixels = mem_Allocate( sizeof( uint8_t ) * width * height * 3 );
@@ -276,3 +351,11 @@ uint8_t* gfxPlatform_GetScreenShotPixels( int width, int height )
 
 	return pixels;
 }
+
+int gfxPlatform_GetMaxTextureSize( void )
+{
+    GLint maxTextureSize;
+    glGetIntegerv( GL_MAX_TEXTURE_SIZE, &maxTextureSize );
+    return (int)maxTextureSize;
+}
+#endif

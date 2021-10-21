@@ -233,10 +233,10 @@ static void bindSpriteSheetJob( void* data )
 
 	ThreadedSpriteSheetLoadData* loadData = (ThreadedSpriteSheetLoadData*)data;
 
-	llog( LOG_DEBUG, "Done loading %s", loadData->fileName );
+	//llog( LOG_DEBUG, "Done loading %s", loadData->fileName );
 
 	Texture texture;
-	if( gfxPlatform_CreateTextureFromLoadedImage( GL_RGBA, &( loadData->loadedImage ), &texture ) < 0 ) {
+	if( gfxPlatform_CreateTextureFromLoadedImage( TF_RGBA, &( loadData->loadedImage ), &texture ) < 0 ) {
 		llog( LOG_DEBUG, "Unable to create texture for %s", loadData->fileName );
 		goto clean_up;
 	}

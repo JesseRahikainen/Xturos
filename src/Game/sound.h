@@ -4,13 +4,13 @@
 #include <stdbool.h>
 #include <SDL_types.h>
 
-#include "Utils\idSet.h"
+#include "Utils/idSet.h"
 
 // Sets up the SDL mixer. Returns 0 on success.
 int snd_Init( unsigned int numGroups );
 
 // Shuts down SDL mixer.
-void snd_CleanUp( );
+void snd_CleanUp( void );
 
 void snd_SetFocus( bool hasFocus );
 

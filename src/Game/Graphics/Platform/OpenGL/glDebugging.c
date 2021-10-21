@@ -1,3 +1,4 @@
+#ifdef OPENGL_GFX
 #include "glDebugging.h"
 
 #include "System/platformLog.h"
@@ -5,14 +6,14 @@
 // some error check dumping, returns < 0 if there was an error
 int checkAndLogErrors( const char* extraInfo )
 {
-#ifdef _DEBUG
+#ifdef DEBUG_GL
 	char* errorMsg;
 #endif
 	int ret = 0;
 	GLenum error = glGetError( );
 
 	while( error != GL_NO_ERROR ) {
-#ifdef _DEBUG
+#ifdef DEBUG_GL
 		switch( error ) {
 		case GL_INVALID_ENUM:
 			errorMsg = "Invalid enumeration";
@@ -50,7 +51,7 @@ int checkAndLogErrors( const char* extraInfo )
 // checks to see if the frame buffer is complete, returns < 0 if there was an error
 int checkAndLogFrameBufferCompleteness( GLenum target, const char* extraInfo )
 {
-#ifdef _DEBUG
+#ifdef DEBUG_GL
 	char* errorMsg;
 #endif
 	GLenum status; 
@@ -66,7 +67,7 @@ int checkAndLogFrameBufferCompleteness( GLenum target, const char* extraInfo )
 		return 0;
 	}
 
-#ifdef _DEBUG
+#ifdef DEBUG_GL
 	switch( status ) {
 	case GL_FRAMEBUFFER_UNDEFINED:
 		// GL_FRAMEBUFFER_UNDEFINED is returned if target is the default framebuffer, but the default framebuffer does not exist.
@@ -80,6 +81,7 @@ int checkAndLogFrameBufferCompleteness( GLenum target, const char* extraInfo )
 		// GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT is returned if the framebuffer does not have at least one image attached to it.
 		errorMsg = "Framebuffer Incomplete Missing Attachment";
 		break;
+#ifndef __IPHONEOS__
 	case GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER:
 		// GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER is returned if the value of GL_FRAMEBUFFER_ATTACHMENT_OBJECT_TYPE
 		//  is GL_NONE for any color attachment point(s) named by GL_DRAW_BUFFERi.        
@@ -91,6 +93,12 @@ int checkAndLogFrameBufferCompleteness( GLenum target, const char* extraInfo )
 		//  by GL_READ_BUFFER.
 		errorMsg = "Framebuffer Incomplete Read Buffer";
 		break;
+    case GL_FRAMEBUFFER_INCOMPLETE_LAYER_TARGETS:
+        // GL_FRAMEBUFFER_INCOMPLETE_LAYER_TARGETS is returned if any framebuffer attachment is layered, and any populated attachment is not layered,
+        //  or if all populated color attachments are not from textures of the same target.
+        errorMsg = "Framebuffer Incomplete Layer Targets";
+        break;
+#endif
 	case GL_FRAMEBUFFER_UNSUPPORTED:
 		// GL_FRAMEBUFFER_UNSUPPORTED is returned if the combination of internal formats of the attached images violates
 		//  an implementation-dependent set of restrictions.
@@ -102,11 +110,6 @@ int checkAndLogFrameBufferCompleteness( GLenum target, const char* extraInfo )
 		//  images are a mix of renderbuffers and textures, the value of GL_RENDERBUFFER_SAMPLES does not match the value of
 		//  GL_TEXTURE_SAMPLES.
 		errorMsg = "Framebuffer Incomplete Multisample";
-		break;
-	case GL_FRAMEBUFFER_INCOMPLETE_LAYER_TARGETS:
-		// GL_FRAMEBUFFER_INCOMPLETE_LAYER_TARGETS is returned if any framebuffer attachment is layered, and any populated attachment is not layered,
-		//  or if all populated color attachments are not from textures of the same target.
-		errorMsg = "Framebuffer Incomplete Layer Targets";
 		break;
 	default:
 		errorMsg = "Unknown Error Type";
@@ -121,3 +124,4 @@ int checkAndLogFrameBufferCompleteness( GLenum target, const char* extraInfo )
 #endif
 	return -1;
 }
+#endif // OPENGL_GFX

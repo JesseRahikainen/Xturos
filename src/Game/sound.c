@@ -8,19 +8,22 @@
 #include <stdlib.h>
 #include <math.h>
 
-#include "Others\stb_vorbis_sdl.c"
-#include "System\platformLog.h"
-#include "Math\mathUtil.h"
-#include "System\memory.h"
-#include "Utils\stretchyBuffer.h"
-#include "Utils\helpers.h"
-#include "Utils\cfgFile.h"
-#include "System\jobQueue.h"
+#include "Others/stb_vorbis_sdl.c"
+#include "System/platformLog.h"
+#include "Math/mathUtil.h"
+#include "System/memory.h"
+#include "Utils/stretchyBuffer.h"
+#include "Utils/helpers.h"
+#include "Utils/cfgFile.h"
+#include "System/jobQueue.h"
 
 #define MAX_SAMPLES 256
 #define MAX_PLAYING_SOUNDS 32
 #define MAX_STREAMING_SOUNDS 8
 #define STREAMING_BUFFER_SAMPLES 4096
+
+// TODO: Get a good way to be able to run the game without any audio processing.
+//  it can cause issues occasionally so it's nice to be able to turn it off quickly
 
 // TODO: Get pitch shifting working with stereo sounds.
 typedef struct {
@@ -547,6 +550,8 @@ void snd_SetMasterVolume( float volume )
 
 float snd_GetVolume( unsigned int group )
 {
+    if( devID == 0 ) return 0.0f;
+    
 	assert( group < sb_Count( sbSoundGroups ) );
 
 	return sbSoundGroups[group].volume;
@@ -554,6 +559,8 @@ float snd_GetVolume( unsigned int group )
 
 void snd_SetVolume( float volume, unsigned int group )
 {
+    if( devID == 0 ) return;
+    
 	assert( group < sb_Count( sbSoundGroups ) );
 	assert( ( volume >= 0.0f ) && ( volume <= 1.0f ) );
 
@@ -580,6 +587,10 @@ float snd_VolumeTodB( float volume )
 // TODO: Some sort of event system so we can get when a sound has finished playing?
 EntityID snd_Play( int sampleID, float volume, float pitch, float pan, unsigned int group )
 {
+    if( devID == 0 ) {
+        return INVALID_ENTITY_ID;
+    }
+    
 	if( sampleID < 0 ) {
 		return INVALID_ENTITY_ID;
 	}
@@ -801,6 +812,13 @@ error:
 
 void snd_ThreadedLoadStreaming( const char* fileName, bool loops, unsigned int group, int* outID, void (*onLoadDone)( int ) )
 {
+    if( devID == 0 ) {
+        if( onLoadDone != NULL ) {
+            onLoadDone( 0 );
+        }
+        return;
+    }
+    
 	assert( group >= 0 );
 	assert( group < sb_Count( sbSoundGroups ) );
 
@@ -835,6 +853,10 @@ void snd_ChangeStreamLoopPoint( int streamID, unsigned int loopPoint )
 
 void snd_PlayStreaming( int streamID, float volume, float pan, unsigned int startSample ) // todo: fade in?
 {
+    if( devID == 0 ) {
+        return;
+    }
+    
 	if( ( streamID < 0 ) || ( streamID >= MAX_STREAMING_SOUNDS ) ) {
 		return;
 	}
@@ -871,6 +893,10 @@ void snd_PlayStreaming( int streamID, float volume, float pan, unsigned int star
 
 void snd_StopStreaming( int streamID )
 {
+    if( devID == 0 ) {
+        return;
+    }
+    
 	if( ( streamID < 0 ) || ( streamID >= MAX_STREAMING_SOUNDS ) ) {
 		return;
 	}
@@ -885,6 +911,10 @@ void snd_StopStreaming( int streamID )
 
 void snd_StopStreamingAllBut( int streamID )
 {
+    if( devID == 0 ) {
+        return;
+    }
+    
 	SDL_LockAudioDevice( devID ); {
 		for( int i = 0; i < MAX_STREAMING_SOUNDS; ++i ) {
 			if( i == streamID ) continue;
@@ -899,12 +929,20 @@ void snd_StopStreamingAllBut( int streamID )
 
 bool snd_IsStreamPlaying( int streamID )
 {
+    if( devID == 0 ) {
+        return false;
+    }
+    
 	assert( ( streamID >= 0 ) && ( streamID < MAX_STREAMING_SOUNDS ) );
 	return streamingSounds[streamID].playing;
 }
 
 void snd_ChangeStreamVolume( int streamID, float volume )
 {
+    if( devID == 0 ) {
+        return;
+    }
+    
 	assert( ( streamID >= 0 ) && ( streamID < MAX_STREAMING_SOUNDS ) );
 	SDL_LockAudioDevice( devID ); {
 		streamingSounds[streamID].volume = volume;
@@ -913,6 +951,10 @@ void snd_ChangeStreamVolume( int streamID, float volume )
 
 void snd_ChangeStreamPan( int streamID, float pan )
 {
+    if( devID == 0 ) {
+        return;
+    }
+    
 	assert( ( streamID >= 0 ) && ( streamID < MAX_STREAMING_SOUNDS ) );
 	SDL_LockAudioDevice( devID ); {
 		streamingSounds[streamID].pan = pan;
@@ -921,6 +963,10 @@ void snd_ChangeStreamPan( int streamID, float pan )
 
 void snd_UnloadStream( int streamID )
 {
+    if( devID == 0 ) {
+        return;
+    }
+    
 	assert( ( streamID >= 0 ) && ( streamID < MAX_STREAMING_SOUNDS ) );
 	SDL_LockAudioDevice( devID ); {
 		streamingSounds[streamID].playing = false;
