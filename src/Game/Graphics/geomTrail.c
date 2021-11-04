@@ -7,8 +7,8 @@
 #include "Graphics/images.h"
 #include "Graphics/graphics.h"
 #include "System/platformLog.h"
-#include "Game/values.h"
 #include "Graphics/Platform/graphicsPlatform.h"
+#include "Utils/helpers.h"
 
 typedef struct {
 	Vector2 pos;
