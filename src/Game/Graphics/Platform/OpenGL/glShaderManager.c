@@ -266,6 +266,7 @@ size_t shaders_Load( const ShaderDefinition* shaderDefs, size_t numShaderDefs,
 			GLR( shaderPrograms[i].uniformLocs[UNIFORM_TF_MAT], glGetUniformLocation( shaderPrograms[i].programID, UNIFORM_TF_MAT_NAME ) );
 			GLR( shaderPrograms[i].uniformLocs[UNIFORM_TEXTURE], glGetUniformLocation( shaderPrograms[i].programID, UNIFORM_TEXTURE_NAME ) );
 			GLR( shaderPrograms[i].uniformLocs[UNIFORM_FLOAT_0], glGetUniformLocation( shaderPrograms[i].programID, UNIFORM_FLOAT_0_NAME ) );
+			GLR( shaderPrograms[i].uniformLocs[UNIFORM_EXTRA_TEXTURE], glGetUniformLocation( shaderPrograms[i].programID, UNIFORM_EXTRA_TEXTURE_NAME ) );
 		}
 	}
 

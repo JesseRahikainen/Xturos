@@ -145,6 +145,10 @@ void gfxPlatform_DynamicSizeRender( float dt, float t, int renderWidth, int rend
 {
 	GL( glViewport( 0, 0, renderWidth, renderHeight ) );
 
+#if !defined( __ANDROID__ ) && !defined( __IPHONEOS__ )
+	GL( glEnable( GL_MULTISAMPLE ) );
+#endif
+
 	// draw the game stuff
 	GLenum mainRenderBuffers = GL_COLOR_ATTACHMENT0;
 	GL( glBindFramebuffer( GL_DRAW_FRAMEBUFFER, mainRenderFBO ) );
@@ -174,6 +178,10 @@ void gfxPlatform_DynamicSizeRender( float dt, float t, int renderWidth, int rend
     
 	// editor and debugging ui stuff
 	//nk_xu_render( &editorIMGUI );
+
+#if !defined( __ANDROID__ ) && !defined( __IPHONEOS__ )
+	GL( glDisable( GL_MULTISAMPLE ) );
+#endif
 }
 
 void gfxPlatform_StaticSizeRender( float dt, float t, Color clearColor )
@@ -357,5 +365,12 @@ int gfxPlatform_GetMaxTextureSize( void )
     GLint maxTextureSize;
     glGetIntegerv( GL_MAX_TEXTURE_SIZE, &maxTextureSize );
     return (int)maxTextureSize;
+}
+
+PlatformTexture gfxPlatform_GetDefaultPlatformTexture( void )
+{
+	PlatformTexture pt;
+	pt.id = 0;
+	return pt;
 }
 #endif

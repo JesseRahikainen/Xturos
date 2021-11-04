@@ -21,6 +21,7 @@ typedef enum {
 	ST_SIMPLE_SDF,
 	ST_IMAGE_SDF,
 	ST_OUTLINED_IMAGE_SDF,
+	ST_ALPHA_MAPPED_SDF,
 	NUM_SHADERS
 } ShaderType;
 
@@ -53,10 +54,10 @@ int triRenderer_Init( );
 We'll assume the array has three vertices in it.
  Return a value < 0 if there's a problem.
 */
-int triRenderer_AddVertices( TriVert* verts, ShaderType shader, PlatformTexture texture, float floatVal0,
-	int clippingID, uint32_t camFlags, int8_t depth, TriType type );
-int triRenderer_Add( TriVert vert0, TriVert vert1, TriVert vert2, ShaderType shader, PlatformTexture texture, float floatVal0,
-	int clippingID, uint32_t camFlags, int8_t depth, TriType type );
+int triRenderer_AddVertices( TriVert* verts, ShaderType shader, PlatformTexture texture, PlatformTexture extraTexture,
+	float floatVal0, int clippingID, uint32_t camFlags, int8_t depth, TriType type );
+int triRenderer_Add( TriVert vert0, TriVert vert1, TriVert vert2, ShaderType shader, PlatformTexture texture, PlatformTexture extraTexture,
+	float floatVal0, int clippingID, uint32_t camFlags, int8_t depth, TriType type );
 
 /*
 Clears out all the triangles currently stored.

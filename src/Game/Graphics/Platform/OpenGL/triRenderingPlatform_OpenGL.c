@@ -20,7 +20,7 @@ bool triPlatform_LoadShaders( void )
 	}
 
 	llog( LOG_INFO, "Loading triangle renderer shaders." );
-	ShaderDefinition shaderDefs[6];
+	ShaderDefinition shaderDefs[7];
 	ShaderProgramDefinition progDefs[NUM_SHADERS];
 
 	llog( LOG_INFO, "  Destroying shaders." );
@@ -55,6 +55,11 @@ bool triPlatform_LoadShaders( void )
 	shaderDefs[5].type = GL_FRAGMENT_SHADER;
 	shaderDefs[5].shaderText = OUTLINED_IMAGE_SDF_FRAG_SHADER;
 
+	// alpha map sdf rendering
+	shaderDefs[6].fileName = NULL;
+	shaderDefs[6].type = GL_FRAGMENT_SHADER;
+	shaderDefs[6].shaderText = ALPHA_MAPPED_SDF_FRAG_SHADE;
+
 
 	progDefs[0].fragmentShader = 1;
 	progDefs[0].vertexShader = 0;
@@ -75,6 +80,10 @@ bool triPlatform_LoadShaders( void )
 	progDefs[4].fragmentShader = 5;
 	progDefs[4].vertexShader = 0;
 	progDefs[4].geometryShader = -1;
+
+	progDefs[5].fragmentShader = 6;
+	progDefs[5].vertexShader = 0;
+	progDefs[5].geometryShader = -1;
 
 	llog( LOG_INFO, "  Loading shaders." );
 	if( shaders_Load( &( shaderDefs[0] ), sizeof( shaderDefs ) / sizeof( ShaderDefinition ),
@@ -164,6 +173,7 @@ static void drawTriangles( uint32_t currCamera, TriangleList* triList, void( *on
 	// create the index buffers to access the vertex buffer
 	//  TODO: Test to see if having the index buffer or the vertex buffer in order is faster
 	GLuint lastBoundTexture = 0;
+	GLuint lastBoundExtraTexture = 0;
 	int triIdx = 0;
 	ShaderType lastBoundShader = NUM_SHADERS;
 	Matrix4 vpMat;
@@ -175,6 +185,7 @@ static void drawTriangles( uint32_t currCamera, TriangleList* triList, void( *on
 
 	do {
 		GLuint texture = triList->triangles[triIdx].texture.id;
+		GLuint extraTexture = triList->triangles[triIdx].extraTexture.id;
 		float floatVal0 = triList->triangles[triIdx].floatVal0;
 		triList->lastIndexBufferIndex = -1;
 
@@ -188,6 +199,7 @@ static void drawTriangles( uint32_t currCamera, TriangleList* triList, void( *on
 			GL( glUseProgram( shaderPrograms[lastBoundShader].programID ) );
 			GL( glUniformMatrix4fv( shaderPrograms[lastBoundShader].uniformLocs[UNIFORM_TF_MAT], 1, GL_FALSE, &( vpMat.m[0] ) ) ); // set view projection matrix
 			GL( glUniform1i( shaderPrograms[lastBoundShader].uniformLocs[UNIFORM_TEXTURE], 0 ) ); // use texture 0
+			GL( glUniform1i( shaderPrograms[lastBoundShader].uniformLocs[UNIFORM_EXTRA_TEXTURE], 1 ) ); // use texture 1
 		}
 
 		if( ( triIdx <= triList->lastTriIndex ) && ( triList->triangles[triIdx].stencilGroup != lastSetClippingArea ) ) {
@@ -200,6 +212,7 @@ static void drawTriangles( uint32_t currCamera, TriangleList* triList, void( *on
 		// gather the list of all the triangles to be drawn
 		while( ( triIdx <= triList->lastTriIndex ) &&
 			( triList->triangles[triIdx].texture.id == texture ) &&
+			( triList->triangles[triIdx].extraTexture.id == extraTexture ) &&
 			( triList->triangles[triIdx].shaderType == lastBoundShader ) &&
 			( triList->triangles[triIdx].stencilGroup == lastSetClippingArea ) &&
 			FLT_EQ( triList->triangles[triIdx].floatVal0, floatVal0 ) ) {
@@ -217,7 +230,10 @@ static void drawTriangles( uint32_t currCamera, TriangleList* triList, void( *on
 			continue;
 		}
 		GL( glUniform1f( shaderPrograms[lastBoundShader].uniformLocs[UNIFORM_FLOAT_0], floatVal0 ) );
+		GL( glActiveTexture( GL_TEXTURE0 + 0 ) );
 		GL( glBindTexture( GL_TEXTURE_2D, texture ) );
+		GL( glActiveTexture( GL_TEXTURE0 + 1 ) );
+		GL( glBindTexture( GL_TEXTURE_2D, extraTexture ) );
 		GL( glBufferSubData( GL_ELEMENT_ARRAY_BUFFER, 0, sizeof( GLuint ) * ( triList->lastIndexBufferIndex + 1 ), triList->platformTriList.indices ) );
         
         

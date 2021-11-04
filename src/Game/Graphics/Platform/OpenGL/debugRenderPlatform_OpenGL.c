@@ -92,7 +92,7 @@ void debugRendererPlatform_Render( DebugVertex* debugBuffer, int lastDebugVert )
 		GL( glDisable( GL_DEPTH_TEST ) );
 		GL( glDepthMask( GL_FALSE ) );
 		GL( glDisable( GL_BLEND ) );
-		GL( glDisable( GL_STENCIL ) );
+		GL( glDisable( GL_STENCIL_TEST ) );
 
 		GL( glUseProgram( debugShaderProgram.programID ) );
 		GL( glBindVertexArray( debugVAO ) );

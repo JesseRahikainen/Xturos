@@ -154,6 +154,24 @@ Handles the platform specific OpenGL stuff.
     "   outCol.rgb = mix( white, vCol.rgb, outline );\n" \
 	"}\n"
 
+
+#define ALPHA_MAPPED_SDF_FRAG_SHADE \
+	"#version 300 es\n" \
+	"in mediump vec2 vTex;\n" \
+	"in mediump vec4 vCol;\n" \
+	"uniform sampler2D textureUnit0; // image color\n" \
+	"uniform sampler2D textureUnit1; // image sdf alpha mask\n" \
+	"uniform mediump float floatVal0; // used for glow strength\n" \
+	"out mediump vec4 outCol;\n" \
+	"void main( void )\n" \
+	"{\n" \
+	"   outCol = texture(textureUnit0, vTex) * vCol;\n" \
+    "   float dist = texture(textureUnit1, vTex).a;\n " \
+	"	const mediump float edgeDist = 0.5f;\n" \
+	"	mediump float edgeWidth = 0.7f * fwidth( dist );\n" \
+	"	outCol.a = smoothstep( edgeDist - edgeWidth, edgeDist + edgeWidth, dist );\n" \
+	"}\n"
+
 #elif defined( WIN32 )
 #include "Others/gl_core.h"
 #include <SDL_opengl.h>
@@ -266,6 +284,23 @@ Handles the platform specific OpenGL stuff.
 	"	float outlineEdge = edgeDist + floatVal0;\n" \
 	"	float outline = smoothstep( outlineEdge - edgeWidth, outlineEdge + edgeWidth, dist );\n" \
     "   outCol.rgb = mix( vec3( 1.0f, 1.0f, 1.0f ), vCol.rgb, outline );\n" \
+	"}\n"
+
+#define ALPHA_MAPPED_SDF_FRAG_SHADE \
+	"#version 330\n" \
+	"in vec2 vTex;\n" \
+	"in vec4 vCol;\n" \
+	"uniform sampler2D textureUnit0; // image color\n" \
+	"uniform sampler2D textureUnit1; // image sdf alpha mask\n" \
+	"uniform float floatVal0; // used for glow strength\n" \
+	"out vec4 outCol;\n" \
+	"void main( void )\n" \
+	"{\n" \
+	"   outCol = texture2D(textureUnit0, vTex) * vCol;\n" \
+    "   float dist = texture2D(textureUnit1, vTex).a;\n " \
+	"	float edgeDist = 0.5f;\n" \
+	"	float edgeWidth = 0.7f * fwidth( dist );\n" \
+	"	outCol.a = smoothstep( edgeDist - edgeWidth, edgeDist + edgeWidth, dist );\n" \
 	"}\n"
 
 #define DEBUG_VERT_SHADER \

@@ -521,6 +521,13 @@ uint8_t* gfxPlatform_GetScreenShotPixels( int width, int height )
     return NULL;
 }
 
+PlatformTexture gfxPlatform_GetDefaultPlatformTexture( void )
+{
+    PlatformTexture pt;
+    pt.mtlTexture = 0;
+    return pt;
+}
+
 //**********************************************************************
 // triRendering
 
@@ -566,8 +573,6 @@ static bool scissorsValid[8];
 
 static void createTriPipeline( id<MTLFunction> vertFunc, id<MTLFunction> fragFunc, MTLVertexDescriptor* vertDesc, ShaderType st )
 { @autoreleasepool {
-    
-    
     
     MTLRenderPipelineDescriptor* transparentPLDesc = [MTLRenderPipelineDescriptor new];
     transparentPLDesc.vertexFunction = vertFunc;
@@ -667,6 +672,7 @@ bool triPlatform_LoadShaders( void )
     id<MTLFunction> simpleSDFFragFunc = [rendererData.library newFunctionWithName:@"fragment_simpleSDF"];
     id<MTLFunction> imageSDFFragFunc = [rendererData.library newFunctionWithName:@"fragment_imageSDF"];
     id<MTLFunction> outlinedImageSDFFragFunc = [rendererData.library newFunctionWithName:@"fragment_outlinedImageSDF"];
+    id<MTLFunction> imageSDFAlphaMapFragFunc = [rendererData.library newFunctionWithName:@"fragment_SDFAlphaMap"];
     
     // create all the necessary pipelines
     createTriPipeline( vertFunc, defaultFragFunc, vertDesc, ST_DEFAULT );
@@ -674,6 +680,7 @@ bool triPlatform_LoadShaders( void )
     createTriPipeline( vertFunc, simpleSDFFragFunc, vertDesc, ST_SIMPLE_SDF );
     createTriPipeline( vertFunc, imageSDFFragFunc, vertDesc, ST_IMAGE_SDF );
     createTriPipeline( vertFunc, outlinedImageSDFFragFunc, vertDesc, ST_OUTLINED_IMAGE_SDF );
+    createTriPipeline( vertFunc, imageSDFAlphaMapFragFunc, vertDesc, ST_ALPHA_MAPPED_SDF );
     
     // used when ignoring the stencil buffer, will have to dynamically create the one to use
     //  when using it (or create them as needed, otherwise there's a lot)
@@ -926,6 +933,7 @@ static void drawTriangles( int cam, TriangleList* triList, id<MTLBuffer> triBuff
     
     do {
         id<MTLTexture> texture = (__bridge id<MTLTexture>)triList->triangles[triIdx].texture.mtlTexture;
+        id<MTLTexture> extraTexture = (__bridge id<MTLTexture>)triList->triangles[triIdx].extraTexture.mtlTexture;
         float floatVal0 = triList->triangles[triIdx].floatVal0;
         triList->lastIndexBufferIndex = -1;
         
@@ -952,6 +960,7 @@ static void drawTriangles( int cam, TriangleList* triList, id<MTLBuffer> triBuff
         
         while( ( triIdx <= triList->lastTriIndex ) &&
               ( triList->triangles[triIdx].texture.mtlTexture == texture ) &&
+              ( triList->triangles[triIdx].extraTexture.mtlTexture == extraTexture ) &&
               ( triList->triangles[triIdx].shaderType == lastBoundShader ) &&
               ( triList->triangles[triIdx].stencilGroup == lastSetStencil ) &&
               FLT_EQ( triList->triangles[triIdx].floatVal0, floatVal0 ) ) {
@@ -987,6 +996,7 @@ static void drawTriangles( int cam, TriangleList* triList, id<MTLBuffer> triBuff
         [commandEncoder setFragmentBytes:&uniforms length:sizeof(Uniforms) atIndex:0]; // small, don't bother with buffer
         [commandEncoder setFragmentSamplerState:rendererData.sampler atIndex:0];
         [commandEncoder setFragmentTexture:texture atIndex:0];
+        [commandEncoder setFragmentTexture:extraTexture atIndex:1];
         [commandEncoder setDepthStencilState:stencilState];
         [commandEncoder setStencilReferenceValue:0xFF];
         //llog( LOG_DEBUG, "Using rect: %u, %u, %u, %u", scissorRect.x, scissorRect.y, scissorRect.width, scissorRect.height );

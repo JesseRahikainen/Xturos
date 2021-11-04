@@ -2,6 +2,8 @@
 
 #include <stdlib.h>
 #include <math.h>
+#include <assert.h>
+#include <SDL.h>
 
 #include "Math/mathUtil.h"
 
@@ -136,6 +138,20 @@ int32_t rand_GetRangeS32( RandomGroup* rg, int32_t min, int32_t max )
 size_t rand_GetArrayEntry( RandomGroup* rg, size_t arraySize )
 {
 	return (size_t)getBalancedRandom( rg, (uint64_t)arraySize );
+}
+
+Vector2* rand_PointInUnitCircle( RandomGroup* rg, Vector2* out )
+{
+	assert( out != NULL );
+
+	// todo: test this versus rejection sampling to see which is faster
+	float d = sqrtf( rand_GetNormalizedFloat( rg ) );
+	float r = rand_GetRangeFloat( rg, 0.0f, M_TWO_PI_F );
+
+	out->x = d * SDL_cosf( r );
+	out->y = d * SDL_sinf( r );
+
+	return out;
 }
 
 bool rand_Choice( RandomGroup* rg )

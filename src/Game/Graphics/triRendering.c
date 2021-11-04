@@ -153,7 +153,7 @@ static bool testTriangle( Vector2* p0, Vector2* p1, Vector2* p2 )
 }
 
 static int addTriangle( TriangleList* triList, TriVert vert0, TriVert vert1, TriVert vert2,
-	ShaderType shader, PlatformTexture texture, float floatVal0, int clippingID, uint32_t camFlags, int8_t depth )
+	ShaderType shader, PlatformTexture texture, PlatformTexture extraTexture, float floatVal0, int clippingID, uint32_t camFlags, int8_t depth )
 {
 	// test to see if the triangle can be culled
 	bool anyInside = false;
@@ -188,6 +188,7 @@ static int addTriangle( TriangleList* triList, TriVert vert0, TriVert vert1, Tri
 	triList->triangles[idx].shaderType = shader;
 	triList->triangles[idx].stencilGroup = clippingID;
 	triList->triangles[idx].floatVal0 = floatVal0;
+	triList->triangles[idx].extraTexture = extraTexture;
 	int baseIdx = idx * 3;
 
 #define ADD_VERT( v, offset ) \
@@ -209,22 +210,22 @@ static int addTriangle( TriangleList* triList, TriVert vert0, TriVert vert1, Tri
 We'll assume the array has three vertices in it.
  Return a value < 0 if there's a problem.
 */
-int triRenderer_AddVertices( TriVert* verts, ShaderType shader, PlatformTexture texture, float floatVal0,
-	int clippingID, uint32_t camFlags, int8_t depth, TriType type )
+int triRenderer_AddVertices( TriVert* verts, ShaderType shader, PlatformTexture texture, PlatformTexture extraTexture,
+	float floatVal0, int clippingID, uint32_t camFlags, int8_t depth, TriType type )
 {
-	return triRenderer_Add( verts[0], verts[1], verts[2], shader, texture, floatVal0, clippingID, camFlags, depth, type );
+	return triRenderer_Add( verts[0], verts[1], verts[2], shader, texture, extraTexture, floatVal0, clippingID, camFlags, depth, type );
 }
 
-int triRenderer_Add( TriVert vert0, TriVert vert1, TriVert vert2, ShaderType shader, PlatformTexture texture, float floatVal0,
-	int clippingID, uint32_t camFlags, int8_t depth, TriType type )
+int triRenderer_Add( TriVert vert0, TriVert vert1, TriVert vert2, ShaderType shader, PlatformTexture texture, PlatformTexture extraTexture,
+	float floatVal0, int clippingID, uint32_t camFlags, int8_t depth, TriType type )
 {
 	switch( type ) {
 	case TT_SOLID:
-		return addTriangle( &solidTriangles, vert0, vert1, vert2, shader, texture, floatVal0, clippingID, camFlags, depth );
+		return addTriangle( &solidTriangles, vert0, vert1, vert2, shader, texture, extraTexture, floatVal0, clippingID, camFlags, depth );
 	case TT_TRANSPARENT:
-		return addTriangle( &transparentTriangles, vert0, vert1, vert2, shader, texture, floatVal0, clippingID, camFlags, depth );
+		return addTriangle( &transparentTriangles, vert0, vert1, vert2, shader, texture, extraTexture, floatVal0, clippingID, camFlags, depth );
 	case TT_STENCIL:
-		return addTriangle( &stencilTriangles, vert0, vert1, vert2, shader, texture, floatVal0, clippingID, camFlags, depth );
+		return addTriangle( &stencilTriangles, vert0, vert1, vert2, shader, texture, extraTexture, floatVal0, clippingID, camFlags, depth );
 	}
 	return 0;
 }

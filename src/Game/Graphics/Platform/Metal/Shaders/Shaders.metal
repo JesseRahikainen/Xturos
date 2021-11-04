@@ -136,6 +136,20 @@ fragment float4 fragment_outlinedImageSDF( TCVertex vert [[stage_in]],
     return out;
 }
 
+fragment float4 fragment_SDFAlphaMap( TCVertex vert [[stage_in]],
+                                     constant Uniforms &uniforms [[buffer(0)]],
+                                     texture2d<float> image [[texture(0)]],
+                                     texture2d<float> sdfImage [[texture(1)]],
+                                     sampler imgSmp [[sampler(0)]] )
+{
+    float4 color = image.sample( imgSmp, vert.uv );
+    float dist = sdfImage.sample( imgSmp, vert.uv ).a;
+    float edgeDist = 0.5f;
+    float edgeWidth = 0.7f * fwidth( dist );
+    color.a = smoothstep( edgeDist - edgeWidth, edgeDist + edgeWidth, dist );
+    return color;
+}
+
 // ***************************
 //  Debug shaders
 vertex CVertex vertex_debug( InDebugVertex vert [[stage_in]],

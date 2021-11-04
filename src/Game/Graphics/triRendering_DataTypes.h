@@ -27,6 +27,7 @@ typedef struct {
 
 	PlatformTexture texture;
 	float floatVal0;
+	PlatformTexture extraTexture;
 
 	ShaderType shaderType;
 

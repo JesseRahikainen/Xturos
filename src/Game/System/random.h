@@ -5,6 +5,8 @@
 #include <stdbool.h>
 #include <stddef.h>
 
+#include "Math/vector2.h"
+
 // Sending in NULL as the RandomGroup to any of these functions will use a default RandomGroup.
 
 typedef struct {
@@ -31,6 +33,7 @@ int32_t rand_GetToleranceS32( RandomGroup* rg, int32_t base, int32_t tol );
 float rand_GetRangeFloat( RandomGroup* rg, float min, float max );
 int32_t rand_GetRangeS32( RandomGroup* rg, int32_t min, int32_t max );
 size_t rand_GetArrayEntry( RandomGroup* rg, size_t arraySize );
+Vector2* rand_PointInUnitCircle( RandomGroup* rg, Vector2* out );
 
 bool rand_Choice( RandomGroup* rg );
 

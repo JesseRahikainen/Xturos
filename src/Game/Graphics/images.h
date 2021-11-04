@@ -77,6 +77,9 @@ int img_GetTextureID( int idx, PlatformTexture* out );
 // Retrieves a loaded image by it's id, for images loaded from files this will be the local path, for sprite sheet images 
 int img_GetExistingByID( const char* id );
 
+// Sets the image at colorIdx to use use alphaIdx as a signed distance field alpha map
+int img_SetSDFAlphaMap( int colorIdx, int alphaIdx );
+
 // returns a draw id that is passed to the img_Set* functions to set the various values used for the draw
 //  NOTE: Calling the scales more than once will apply the scales, not set the scale to the passed in value
 int img_CreateDraw( int imgID, uint32_t camFlags, Vector2 startPos, Vector2 endPos, int8_t depth );

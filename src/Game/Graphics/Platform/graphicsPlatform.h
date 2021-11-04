@@ -48,4 +48,6 @@ int gfxPlatform_GetMaxTextureSize( void );
 
 uint8_t* gfxPlatform_GetScreenShotPixels( int width, int height );
 
+PlatformTexture gfxPlatform_GetDefaultPlatformTexture( void );
+
 #endif // inclusion guard

@@ -33,6 +33,15 @@ int cam_SetState( int camera, Vector2 pos, float scale );
 //  Returns <0 if there's a problem.
 int cam_SetNextState( int camera, Vector2 pos, float scale );
 
+// Set the offset for the camera that will be used to modify the position at the end of the next frame.
+// Should only be called after the scale has been set.
+//  Returns <0 if there's a problem
+int cam_SetNextOffset( int camera, Vector2 offset );
+
+// Set just the position of the cameras next frame.
+//  Returns <0 if there's a problem
+int cam_SetNextPos( int camera, Vector2 pos );
+
 // Takes the current state and adds a value to it to set the next state;
 //  Returns <0 if there's a problem.
 int cam_MoveNextState( int camera, Vector2 delta, float scaleDelta );

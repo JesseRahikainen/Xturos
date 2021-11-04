@@ -48,9 +48,12 @@ typedef struct {
 #define UNIFORM_FLOAT_0 2
 #define UNIFORM_FLOAT_0_NAME "floatVal0"
 
+#define UNIFORM_EXTRA_TEXTURE 3
+#define UNIFORM_EXTRA_TEXTURE_NAME "textureUnit1"
+
 typedef struct {
 	GLuint programID;
-	GLint uniformLocs[3];
+	GLint uniformLocs[4];
 } ShaderProgram;
 
 /* You create an array of ShaderDefinitions and ShaderProgramDefinitions that determine what is loaded.

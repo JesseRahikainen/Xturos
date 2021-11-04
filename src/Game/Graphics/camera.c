@@ -2,10 +2,12 @@
 
 #include <string.h>
 #include <assert.h>
+#include "System/platformLog.h"
 
 typedef struct {
 	Vector2 pos;
 	float scale;
+	Vector2 posOffset;
 } CameraState;
 
 typedef struct {
@@ -40,6 +42,20 @@ static void createZeroedProjectionMatrix( int width, int height, Matrix4* outMat
 	float halfWidth = width / 2.0f;
 	float halfHeight = height / 2.0f;
 	mat4_CreateOrthographicProjection( -halfWidth, halfWidth, -halfHeight, halfHeight, -1000.0f, 1000.0f, outMat );
+}
+
+static Vector2 getCameraPosNext( int camera )
+{
+	Vector2 pos;
+	vec2_Add( &( cameras[camera].end.pos ), &( cameras[camera].end.posOffset ), &pos );
+	return pos;
+}
+
+static Vector2 getCameraPosCurr( int camera )
+{
+	Vector2 pos;
+	vec2_Add( &( cameras[camera].start.pos ), &( cameras[camera].start.posOffset ), &pos );
+	return pos;
 }
 
 // Initialize all the cameras, set them to the identity.
@@ -114,8 +130,10 @@ int cam_SetState( int camera, Vector2 pos, float scale )
 
 	cameras[camera].start.pos = pos;
 	cameras[camera].start.scale = scale;
+	cameras[camera].start.posOffset = VEC2_ZERO;
 	cameras[camera].end.pos = pos;
 	cameras[camera].end.scale = scale;
+	cameras[camera].end.posOffset = VEC2_ZERO;
 	return 0;
 }
 
@@ -128,6 +146,26 @@ int cam_SetNextState( int camera, Vector2 pos, float scale )
 	vec2_Scale( &pos, scale, &(cameras[camera].end.pos ) );
 	//cameras[camera].end.pos = pos;
 	cameras[camera].end.scale = scale;
+	return 0;
+}
+
+// Set the offset for the camera that will be used to modify the position at the end of the next frame.
+// // Should only be called after the scale has been set.
+//  Returns <0 if there's a problem
+int cam_SetNextOffset( int camera, Vector2 offset )
+{
+	assert( camera < NUM_CAMERAS );
+	vec2_Scale( &offset, cameras[camera].end.scale, &( cameras[camera].end.posOffset ) );
+	return 0;
+}
+
+// Set just the position of the cameras next frame.
+//  Returns <0 if there's a problem
+int cam_SetNextPos( int camera, Vector2 pos )
+{
+	assert( camera < NUM_CAMERAS );
+
+	vec2_Scale( &pos, cameras[camera].end.scale, &( cameras[camera].end.pos ) );
 	return 0;
 }
 
@@ -183,6 +221,7 @@ void cam_FinalizeStates( float timeToEnd )
 		cameras[i].start = cameras[i].end;
 		cameras[i].isVPMatValid = false;
 		cameras[i].isInvViewMatValid = false;
+		cameras[i].end.posOffset = VEC2_ZERO;
 	}
 
 	currentTime = 0.0f;
@@ -204,11 +243,14 @@ void cam_Update( float dt )
 int cam_GetViewMatrix( int camera, Matrix4* out )
 {
 	Vector2 pos;
+	Vector2 startPos = getCameraPosCurr( camera );
+	Vector2 endPos = getCameraPosNext( camera );
 	Vector2 invPos;
 	Matrix4 transTf, scaleTf;
 	Matrix4 view;
+
 	float t = clamp( 0.0f, 1.0f, ( currentTime / endTime ) );
-	vec2_Lerp( &( cameras[camera].start.pos ), &( cameras[camera].end.pos ), t, &pos );
+	vec2_Lerp( &startPos, &endPos, t, &pos );
 	vec2_Scale( &pos, -1.0f, &invPos ); // object movement is inverted from camera movement
 	mat4_CreateTranslation( invPos.x, invPos.y, 0.0f, &transTf );
 
@@ -231,11 +273,14 @@ int cam_GetVPMatrix( int camera, Matrix4* out )
 
 	if( !cameras[camera].isVPMatValid ) {
 		Vector2 pos;
+		Vector2 startPos = getCameraPosCurr( camera );
+		Vector2 endPos = getCameraPosNext( camera );
 		Vector2 invPos;
 		Matrix4 transTf, scaleTf;
 		Matrix4 view;
+
 		float t = clamp( 0.0f, 1.0f, ( currentTime / endTime ) );
-		vec2_Lerp( &( cameras[camera].start.pos ), &( cameras[camera].end.pos ), t, &pos );
+		vec2_Lerp( &startPos, &endPos, t, &pos );
 		vec2_Scale( &pos, -1.0f, &invPos ); // object movement is inverted from camera movement
 		mat4_CreateTranslation( invPos.x, invPos.y, 0.0f, &transTf );
 
@@ -265,9 +310,11 @@ int cam_GetInverseViewMatrix( int camera, Matrix4* out )
 	if( !cameras[camera].isInvViewMatValid ) {
 		Matrix4 transTf, scaleTf;
 
+		Vector2 startPos = getCameraPosCurr( camera );
+		Vector2 endPos = getCameraPosNext( camera );
 		Vector2 pos;
 		float t = clamp( 0.0f, 1.0f, ( currentTime / endTime ) );
-		vec2_Lerp( &( cameras[camera].start.pos ), &( cameras[camera].end.pos ), t, &pos );
+		vec2_Lerp( &startPos, &endPos, t, &pos );
 		mat4_CreateTranslation( pos.x, pos.y, 0.0f, &transTf );
 
 		float scale = 1.0f / lerp( cameras[camera].start.scale, cameras[camera].end.scale, t );

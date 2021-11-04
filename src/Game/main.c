@@ -87,6 +87,8 @@ static AvailableResolution resolutions[] = {
 	{ 1242, 2208 },
 	{ 2048, 2732 },
 	{ 300, 1000 },
+	{ 2160, 3840 },
+	{ 1080, 1920 },
 };
 
 int getWindowRefreshRate( SDL_Window* w )
@@ -194,7 +196,11 @@ int initEverything( void )
 
 	llog( LOG_INFO, "Initializing memory." );
 	// memory first, won't be used everywhere at first so lets keep the initial allocation low, 64 MB
+#if defined( WIN32 )
+	mem_Init( 256 * 1024 * 1024 );
+#else
 	mem_Init( 64 * 1024 * 1024 );
+#endif
 
 #if defined( __IPHONEOS__ )
     SDL_SetHint( SDL_HINT_IOS_HIDE_HOME_INDICATOR, "2" );
@@ -258,6 +264,10 @@ int initEverything( void )
     SDL_GL_SetAttribute( SDL_GL_DEPTH_SIZE, depthSize );
     SDL_GL_SetAttribute( SDL_GL_DOUBLEBUFFER, 1 );
 	SDL_GL_SetAttribute( SDL_GL_STENCIL_SIZE, stencilSize );
+#if !defined( __ANDROID__ ) && !defined( __IPHONEOS__ )
+	SDL_GL_SetAttribute( SDL_GL_MULTISAMPLEBUFFERS, 1 );
+	SDL_GL_SetAttribute( SDL_GL_MULTISAMPLESAMPLES, 4 );
+#endif
 
 	llog( LOG_INFO, "Desired GL version: %i.%i", majorVersion, minorVersion );
 

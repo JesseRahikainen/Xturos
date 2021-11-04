@@ -7,7 +7,8 @@
 #include "Graphics/images.h"
 #include "Graphics/graphics.h"
 #include "System/platformLog.h"
-#include "Utils/helpers.h"
+#include "Game/values.h"
+#include "Graphics/Platform/graphicsPlatform.h"
 
 typedef struct {
 	Vector2 pos;
@@ -160,8 +161,8 @@ static void drawGeomTrailPoints( GeomTrail* trail, GeomTrailRenderEntry* trailRe
 		vert3.col = color1;
 
 		//if( trail->debug ) llog( LOG_DEBUG, " 0: %.2f, %.2f  -  1: %.2f, %.2f  -  2: %.2f, %.2f  -  3: %.2f, %.2f", vert0.pos.x, vert0.pos.y, vert1.pos.x, vert1.pos.y, vert2.pos.x, vert2.pos.y, vert3.pos.x, vert3.pos.y );
-		triRenderer_Add( vert0, vert1, vert2, ST_DEFAULT, texture, 0.0f, -1, trail->camFlags, trail->depth, TT_TRANSPARENT );
-		triRenderer_Add( vert1, vert3, vert2, ST_DEFAULT, texture, 0.0f, -1, trail->camFlags, trail->depth, TT_TRANSPARENT );
+		triRenderer_Add( vert0, vert1, vert2, ST_DEFAULT, texture, gfxPlatform_GetDefaultPlatformTexture( ), 0.0f, -1, trail->camFlags, trail->depth, TT_TRANSPARENT );
+		triRenderer_Add( vert1, vert3, vert2, ST_DEFAULT, texture, gfxPlatform_GetDefaultPlatformTexture( ), 0.0f, -1, trail->camFlags, trail->depth, TT_TRANSPARENT );
 	}
 }
 

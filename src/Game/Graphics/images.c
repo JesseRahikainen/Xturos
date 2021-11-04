@@ -34,6 +34,7 @@ typedef struct {
 	int packageID;
 	int nextInPackage;
 	ShaderType shaderType;
+	int extraImageObj;
 } Image;
 
 static Image images[MAX_IMAGES];
@@ -61,6 +62,8 @@ typedef struct {
 	int8_t depth;
 	ShaderType shaderType;
 	bool isStencil;
+	PlatformTexture extraTextureObj;
+	int extraImageObj;
 } DrawInstruction;
 
 static DrawInstruction renderBuffer[MAX_RENDER_INSTRUCTIONS];
@@ -148,6 +151,7 @@ int img_Load( const char* fileName, ShaderType shaderType )
 	images[newIdx].uvMin = VEC2_ZERO;
 	images[newIdx].uvMax = VEC2_ONE;
 	images[newIdx].shaderType = shaderType;
+	images[newIdx].extraImageObj = -1;
 	if( texture.flags & TF_IS_TRANSPARENT ) {
 		images[newIdx].flags |= IMGFLAG_HAS_TRANSPARENCY;
 	}
@@ -183,6 +187,7 @@ int img_CreateFromLoadedImage( LoadedImage* loadedImg, ShaderType shaderType, co
 	images[newIdx].uvMin = VEC2_ZERO;
 	images[newIdx].uvMax = VEC2_ONE;
 	images[newIdx].shaderType = shaderType;
+	images[newIdx].extraImageObj = -1;
 	if( texture.flags & TF_IS_TRANSPARENT ) {
 		images[newIdx].flags |= IMGFLAG_HAS_TRANSPARENCY;
 	}
@@ -214,6 +219,7 @@ int img_CreateFromTexture( Texture* texture, ShaderType shaderType, const char* 
 	images[newIdx].uvMin = VEC2_ZERO;
 	images[newIdx].uvMax = VEC2_ONE;
 	images[newIdx].shaderType = shaderType;
+	images[newIdx].extraImageObj = -1;
 	if( texture->flags & TF_IS_TRANSPARENT ) {
 		images[newIdx].flags |= IMGFLAG_HAS_TRANSPARENCY;
 	}
@@ -274,6 +280,7 @@ static void bindImageJob( void* data )
 	images[newIdx].uvMin = VEC2_ZERO;
 	images[newIdx].uvMax = VEC2_ONE;
 	images[newIdx].shaderType = loadData->shaderType;
+	images[newIdx].extraImageObj = -1;
 	if( texture.flags & TF_IS_TRANSPARENT ) {
 		images[newIdx].flags |= IMGFLAG_HAS_TRANSPARENCY;
 	}
@@ -374,6 +381,7 @@ int img_Create( SDL_Surface* surface, ShaderType shaderType, const char* id )
 		images[newIdx].uvMin = VEC2_ZERO;
 		images[newIdx].uvMax = VEC2_ONE;
 		images[newIdx].shaderType = shaderType;
+		images[newIdx].extraImageObj = -1;
 		if( texture.flags & TF_IS_TRANSPARENT ) {
 			images[newIdx].flags |= IMGFLAG_HAS_TRANSPARENCY;
 		}
@@ -683,6 +691,24 @@ int img_GetExistingByID( const char* id )
 	return idx;
 }
 
+// Sets the image at colorIdx to use use alphaIdx as a signed distance field alpha map
+int img_SetSDFAlphaMap( int colorIdx, int alphaIdx )
+{
+	if( ( colorIdx < 0 ) || ( !( images[colorIdx].flags & IMGFLAG_IN_USE ) ) || ( colorIdx >= MAX_IMAGES ) ) {
+		return -1;
+	}
+
+	if( ( alphaIdx < 0 ) || ( !( images[alphaIdx].flags & IMGFLAG_IN_USE ) ) || ( alphaIdx >= MAX_IMAGES ) ) {
+		return -1;
+	}
+
+	images[colorIdx].shaderType = ST_ALPHA_MAPPED_SDF;
+	images[colorIdx].extraImageObj = alphaIdx;
+	images[colorIdx].flags |= IMGFLAG_HAS_TRANSPARENCY;
+
+	return 0;
+}
+
 /*
 initializes the structure so only what's used needs to be set, also fill in
   some stuff that all of the queueRenderImage functions use, returns the pointer
@@ -731,6 +757,12 @@ static DrawInstruction* GetNextRenderInstruction( int imgObj, uint32_t camFlags,
 	ri->depth = depth;
 	ri->stencilID = -1;
 	ri->isStencil = false;
+	ri->extraImageObj = images[imgObj].extraImageObj;
+	if( ri->extraImageObj >= 0 ) {
+		ri->extraTextureObj = images[ri->extraImageObj].textureObj;
+	} else {
+		ri->extraTextureObj = gfxPlatform_GetDefaultPlatformTexture( );
+	}
 	memcpy( ri->uvs, DEFAULT_DRAW_INSTRUCTION.uvs, sizeof( ri->uvs ) );
 
 	ri->uvs[0] = images[imgObj].uvMin;
@@ -789,6 +821,12 @@ int img_CreateDraw( int imgID, uint32_t camFlags, Vector2 startPos, Vector2 endP
 	ri->depth = depth;
 	ri->stencilID = -1;
 	ri->isStencil = false;
+	ri->extraImageObj = images[imgID].extraImageObj;
+	if( ri->extraImageObj >= 0 ) {
+		ri->extraTextureObj = images[ri->extraImageObj].textureObj;
+	} else {
+		ri->extraTextureObj = gfxPlatform_GetDefaultPlatformTexture( );
+	}
 	memcpy( ri->uvs, DEFAULT_DRAW_INSTRUCTION.uvs, sizeof( ri->uvs ) );
 
 	ri->uvs[0] = images[imgID].uvMin;
@@ -1128,11 +1166,11 @@ void img_Render( float normTimeElapsed )
 		}
 
 		triRenderer_Add( verts[indices[0]], verts[indices[1]], verts[indices[2]],
-			renderBuffer[idx].shaderType, renderBuffer[idx].textureObj, floatVal0,
+			renderBuffer[idx].shaderType, renderBuffer[idx].textureObj, renderBuffer[idx].extraTextureObj, floatVal0,
 			renderBuffer[idx].stencilID, renderBuffer[idx].camFlags, renderBuffer[idx].depth,
 			type );
 		triRenderer_Add( verts[indices[3]], verts[indices[4]], verts[indices[5]],
-			renderBuffer[idx].shaderType, renderBuffer[idx].textureObj, floatVal0,
+			renderBuffer[idx].shaderType, renderBuffer[idx].textureObj, renderBuffer[idx].extraTextureObj, floatVal0,
 			renderBuffer[idx].stencilID, renderBuffer[idx].camFlags, renderBuffer[idx].depth,
 			type );
 	}
