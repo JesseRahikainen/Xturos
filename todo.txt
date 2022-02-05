@@ -6,6 +6,7 @@ Child states, hfsm
 Optional switch for having a locked graphics update rate (must always be >= gameplay fps), would be easier if it was a multiple of the gameplay fps
 Render to image
 Full support for UTF-8 strings.
+Better abstraction for renderers.
 
 eventually:
 Find a better way to enumerate all the combinations of stuff that can go into a render instruction.
