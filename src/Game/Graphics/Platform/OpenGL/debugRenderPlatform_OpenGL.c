@@ -110,7 +110,7 @@ void debugRendererPlatform_Render( DebugVertex* debugBuffer, int lastDebugVert )
 			cam_GetVPMatrix( currCamera, &vpMat );
 			GL( glUniformMatrix4fv( debugShaderProgram.uniformLocs[0], 1, GL_FALSE, &( vpMat.m[0] ) ) );
 
-			// build the index array and render use it
+			// build the index array and render it
 			int lastDebugIndex = -1;
 			for( int i = 0; i <= lastDebugVert; ++i ) {
 				if( ( debugBuffer[i].camFlags & camFlags ) != 0 ) {

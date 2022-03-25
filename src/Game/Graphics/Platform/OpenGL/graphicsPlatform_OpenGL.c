@@ -156,6 +156,7 @@ void gfxPlatform_DynamicSizeRender( float dt, float t, int renderWidth, int rend
         // clear the screen and draw everything to a frame buffer
         GL( glClearColor( clearColor.r, clearColor.g, clearColor.b, clearColor.a ) );
         GL( glColorMask( GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE ) );
+		GL( glDepthMask( true ) );
         GL( glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT ) );
 		gfx_MakeRenderCalls( dt, t );
 	GL( glBindFramebuffer( GL_DRAW_FRAMEBUFFER, defaultFBO ) );
@@ -213,21 +214,33 @@ void gfxPlatform_ShutDown( void )
 
 bool gfxPlatform_CreateTextureFromLoadedImage( TextureFormat texFormat, LoadedImage* image, Texture* outTexture )
 {
+	int start = 3;
+	int step = 4;
     GLenum glTexFormat = GL_RGBA;
     switch( texFormat ) {
         case TF_RED:
+			start = 0;
+			step = 1;
             glTexFormat = GL_RED;
             break;
         case TF_GREEN:
+			start = 0;
+			step = 1;
             glTexFormat = GL_GREEN;
             break;
         case TF_BLUE:
+			start = 0;
+			step = 1;
             glTexFormat = GL_BLUE;
             break;
         case TF_ALPHA:
+			start = 0;
+			step = 1;
             glTexFormat = GL_ALPHA;
             break;
         case TF_RGBA:
+			start = 3;
+			step = 4;
             glTexFormat = GL_RGBA;
 			break;
     }
@@ -258,7 +271,7 @@ bool gfxPlatform_CreateTextureFromLoadedImage( TextureFormat texFormat, LoadedIm
 	outTexture->flags = 0;
 
 	// check to see if there are any translucent pixels in the image
-	for( int i = 3; ( i < ( image->width * image->height ) ) && !( outTexture->flags & TF_IS_TRANSPARENT ); i += 4 ) {
+	for( int i = start; ( i < ( image->width * image->height ) ) && !( outTexture->flags & TF_IS_TRANSPARENT ); i += step ) {
 		if( ( image->data[i] > 0x00 ) && ( image->data[i] < 0xFF ) ) {
 			outTexture->flags |= TF_IS_TRANSPARENT;
 		}

@@ -321,6 +321,15 @@
     <ClInclude Include="..\..\src\Game\System\platformSpecific.h">
       <Filter>Header Files\System</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\Game\Game\testBloomScreen.h">
+      <Filter>Header Files\Game</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Game\Game\gameOfUrScreen.h">
+      <Filter>Header Files\Game</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Game\Game\labels.h">
+      <Filter>Header Files\Game</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\Game\Game\gameScreen.c">
@@ -526,6 +535,18 @@
     </ClCompile>
     <ClCompile Include="..\..\src\Game\System\platformSpecific.c">
       <Filter>Source Files\System</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Game\Game\testBloomScreen.c">
+      <Filter>Source Files\Game</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Game\Utils\MCTS.c">
+      <Filter>Source Files\Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Game\Game\gameOfUrScreen.c">
+      <Filter>Source Files\Game</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Game\Game\labels.c">
+      <Filter>Source Files\Game</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

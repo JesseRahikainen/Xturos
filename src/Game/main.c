@@ -36,6 +36,8 @@
 #include "Game/testSteeringScreen.h"
 #include "Game/bordersTestScreen.h"
 #include "Game/hexTestScreen.h"
+#include "Game/testBloomScreen.h"
+#include "Game/gameOfUrScreen.h"
 
 #include "System/memory.h"
 #include "System/systems.h"
@@ -51,17 +53,17 @@
 
 // 540 x 960
 
-#define DESIRED_WORLD_WIDTH 540
-#define DESIRED_WORLD_HEIGHT 960
+#define DESIRED_WORLD_WIDTH 800
+#define DESIRED_WORLD_HEIGHT 600
 
-#define DESIRED_RENDER_WIDTH 540
-#define DESIRED_RENDER_HEIGHT 960
+#define DESIRED_RENDER_WIDTH 800
+#define DESIRED_RENDER_HEIGHT 600
 #ifdef __EMSCRIPTEN__
 	#define DESIRED_WINDOW_WIDTH RENDER_WIDTH
 	#define DESIRED_WINDOW_HEIGHT RENDER_HEIGHT
 #else
-	#define DESIRED_WINDOW_WIDTH 540
-	#define DESIRED_WINDOW_HEIGHT 960
+	#define DESIRED_WINDOW_WIDTH 800
+	#define DESIRED_WINDOW_HEIGHT 600
 #endif
 
 #define DEFAULT_REFRESH_RATE 30
@@ -685,7 +687,9 @@ int main( int argc, char** argv )
 	//gsm_EnterState( &globalFSM, &testPointerResponseScreenState );
 	//gsm_EnterState( &globalFSM, &testSteeringScreenState );
 	//gsm_EnterState( &globalFSM, &bordersTestScreenState );
-	gsm_EnterState( &globalFSM, &hexTestScreenState );
+	//gsm_EnterState( &globalFSM, &hexTestScreenState );
+	//gsm_EnterState( &globalFSM, &testBloomScreenState );
+	gsm_EnterState( &globalFSM, &gameOfUrScreenState );
 
 #if defined( __EMSCRIPTEN__ )
 	emscripten_set_main_loop_arg( mainLoop, NULL, -1, 1 );

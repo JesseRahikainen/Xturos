@@ -204,7 +204,7 @@ int gfxUtil_CreateTextureFromAlphaBitmap( uint8_t* data, int width, int height, 
 #else
 	texFormat = TF_RED;
 #endif
-	if( gfxPlatform_CreateTextureFromLoadedImage( texFormat, &image, outTexture ) ) {
+	if( !gfxPlatform_CreateTextureFromLoadedImage( texFormat, &image, outTexture ) ) {
 		returnCode = -1;
 		goto clean_up;
 	}
