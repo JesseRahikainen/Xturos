@@ -350,7 +350,7 @@ static int bordersTestScreen_Enter( void )
 	gfx_SetClearColor( CLR_BLACK );
 
 	img_LoadSpriteSheet( "Images/borders_template.ss", ST_DEFAULT, &sbTiles );
-	highlightImg = img_Load( "Images/highlight.png", ST_DEFAULT );
+	highlightImg = img_Load( "Images/hilite.png", ST_DEFAULT );
 
 	// set the map to empty
 	for( int i = 0; i < ( MAP_WIDTH * MAP_HEIGHT ); ++i ) {
@@ -412,10 +412,14 @@ static void bordersTestScreen_Draw( void )
 			int i = MAP_COORD_TO_IDX( x, y );
 			Vector2 pos = vec2( x * SPRITE_WIDTH, y * SPRITE_HEIGHT );
 			img_CreateDraw( spriteMap[i], 1, pos, pos, 0 );
+
+			//debugRenderer_AABB( 1, pos, vec2( 32.0f, 32.0f ), CLR_RED );
 		}
 	}
 
 	img_CreateDraw( highlightImg, 1, highlightPos, highlightPos, 1 );
+
+	//debugRenderer_Circle( 1, VEC2_ZERO, 100.0f, CLR_RED );
 }
 
 static void bordersTestScreen_PhysicsTick( float dt )

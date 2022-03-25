@@ -249,12 +249,14 @@ static void gameScreen_Process( void )
 
 static void gameScreen_Draw( void )
 {
-	//img_Draw( spriteSheetImg, 1, pos[0], pos[0], 0 );
+	//img_CreateDraw( spriteSheetImg, 1, pos[0], pos[0], 0 );
 	for( int i = 0; i < numImagesOnSheet; ++i ) {
 		img_CreateDraw( imageSheet[i], 1, pos[i], pos[i], 0 );
 	}
 
-	txt_DisplayString( "Testing stuff\nAnd even more stuff\nAnd once more", VEC2_ZERO, CLR_RED, HORIZ_ALIGN_LEFT, VERT_ALIGN_TOP, font, 1, 0, 128.0f );
+	txt_DisplayString( "Testing stuff\nAnd even more stuff\nAnd once more", VEC2_ZERO, CLR_RED, HORIZ_ALIGN_LEFT, VERT_ALIGN_TOP, font, 1, 0, 128.0f );//*/
+
+	debugRenderer_Circle( 1, VEC2_ZERO, 100.0f, CLR_RED );
 }
 
 static EntityID spawnerEntity = INVALID_ENTITY_ID;
@@ -265,7 +267,7 @@ static int currPeriod = 0;
 
 static void gameScreen_PhysicsTick( float dt )
 {
-	llog( LOG_DEBUG, "Starting process" );
+	/*llog( LOG_DEBUG, "Starting process" );
 
 	++currPeriod;
 	if( spawnerEntity == INVALID_ENTITY_ID ) {
@@ -295,7 +297,7 @@ static void gameScreen_PhysicsTick( float dt )
 
 	ecps_RunProcess( &testECPS, &spawnProc );
 	ecps_RunProcess( &testECPS, &attackProc );
-	ecps_RunProcess( &testECPS, &selfDestructProc );
+	ecps_RunProcess( &testECPS, &selfDestructProc );//*/
 }
 
 GameState gameScreenState = { gameScreen_Enter, gameScreen_Exit, gameScreen_ProcessEvents,

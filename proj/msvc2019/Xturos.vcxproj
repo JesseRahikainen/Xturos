@@ -145,9 +145,12 @@
     <ClInclude Include="..\..\src\Game\Components\generalComponents.h" />
     <ClInclude Include="..\..\src\Game\gameState.h" />
     <ClInclude Include="..\..\src\Game\Game\bordersTestScreen.h" />
+    <ClInclude Include="..\..\src\Game\Game\gameOfUrScreen.h" />
     <ClInclude Include="..\..\src\Game\Game\gameScreen.h" />
     <ClInclude Include="..\..\src\Game\Game\hexTestScreen.h" />
+    <ClInclude Include="..\..\src\Game\Game\labels.h" />
     <ClInclude Include="..\..\src\Game\Game\testAStarScreen.h" />
+    <ClInclude Include="..\..\src\Game\Game\testBloomScreen.h" />
     <ClInclude Include="..\..\src\Game\Game\testJobQueueScreen.h" />
     <ClInclude Include="..\..\src\Game\Game\testPointerResponseScreen.h" />
     <ClInclude Include="..\..\src\Game\Game\testSoundsScreen.h" />
@@ -220,9 +223,12 @@
     <ClCompile Include="..\..\src\Game\Components\generalComponents.c" />
     <ClCompile Include="..\..\src\Game\gameState.c" />
     <ClCompile Include="..\..\src\Game\Game\bordersTestScreen.c" />
+    <ClCompile Include="..\..\src\Game\Game\gameOfUrScreen.c" />
     <ClCompile Include="..\..\src\Game\Game\gameScreen.c" />
     <ClCompile Include="..\..\src\Game\Game\hexTestScreen.c" />
+    <ClCompile Include="..\..\src\Game\Game\labels.c" />
     <ClCompile Include="..\..\src\Game\Game\testAStarScreen.c" />
+    <ClCompile Include="..\..\src\Game\Game\testBloomScreen.c" />
     <ClCompile Include="..\..\src\Game\Game\testJobQueueScreen.c" />
     <ClCompile Include="..\..\src\Game\Game\testPointerResponseScreen.c" />
     <ClCompile Include="..\..\src\Game\Game\testSoundsScreen.c" />
@@ -285,6 +291,9 @@
     <ClCompile Include="..\..\src\Game\Utils\helpers.c" />
     <ClCompile Include="..\..\src\Game\Utils\hexGrid.c" />
     <ClCompile Include="..\..\src\Game\Utils\idSet.c" />
+    <ClCompile Include="..\..\src\Game\Utils\MCTS.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="..\..\src\Game\Utils\permutations.c" />
     <ClCompile Include="..\..\src\Game\Utils\sequence.c" />
     <ClCompile Include="..\..\src\Game\world.c" />

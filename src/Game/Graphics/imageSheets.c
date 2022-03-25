@@ -61,6 +61,7 @@ static bool loadSpriteSheetData( const char* fileName, TempSpriteSheetData* outD
 	//  image file name
 	//  spriteID rect.x rect.y rect.w rect.h
 	//  final blank line
+	//  lines starting with # are ignored
 	int version;
 	outData->numSpritesRead = 0;
 
@@ -87,51 +88,55 @@ static bool loadSpriteSheetData( const char* fileName, TempSpriteSheetData* outD
 
 	// now go through individual lines, parsing stuff as necessary
 	while( line != NULL ) {
-		switch( currentState ) {
-		case RS_VERSION:
-			version = SDL_strtol( line, NULL, 10 );
-			currentState = RS_FILENAME;
-			break;
-		case RS_FILENAME:
-			// assuming the file name will be local to the .ss file, so we need to rip the directory off it and
-			//  append the file name to it
-			// line will be the file name for the image, attempt to create the texture
-			SDL_strlcpy( outData->imageFileName, fileName, ARRAY_SIZE( outData->imageFileName ) );
-			fileNameLoc = SDL_strrchr( outData->imageFileName, '/' );
+		if( line[0] != '#' ) {
+			switch( currentState ) {
+			case RS_VERSION:
+				version = SDL_strtol( line, NULL, 10 );
+				assert( version == 2 );
+				currentState = RS_FILENAME;
+				break;
+			case RS_FILENAME:
+				// assuming the file name will be local to the .ss file, so we need to rip the directory off it and
+				//  append the file name to it
+				// line will be the file name for the image, attempt to create the texture
+				SDL_strlcpy( outData->imageFileName, fileName, ARRAY_SIZE( outData->imageFileName ) );
+				fileNameLoc = SDL_strrchr( outData->imageFileName, '/' );
 
-			if( fileNameLoc != NULL ) {
-				++fileNameLoc;
-				( *fileNameLoc ) = 0; // move the null terminator
-				SDL_strlcat( outData->imageFileName, line, ARRAY_SIZE( outData->imageFileName ) );
+				if( fileNameLoc != NULL ) {
+					++fileNameLoc;
+					( *fileNameLoc ) = 0; // move the null terminator
+					SDL_strlcat( outData->imageFileName, line, ARRAY_SIZE( outData->imageFileName ) );
+				}
+				currentState = RS_SPRITES;
+				break;
+			case RS_SPRITES:
+				// id
+				idEndLoc = SDL_strchr( line, ' ' );
+				idLen = (uintptr_t)idEndLoc - (uintptr_t)line + 1;
+				id = mem_Allocate( idLen );
+				SDL_strlcpy( id, line, idLen );
+
+				sb_Push( outData->sbIDs, id );
+
+				rectStart = idEndLoc + 1;
+				while( ( *rectStart ) == ' ' ) ++rectStart;
+
+				// x, y, w, h
+				min.x = (float)SDL_strtol( rectStart, &rectStart, 10 );
+				while( (*rectStart) == ' ' ) ++rectStart;
+				min.y = (float)SDL_strtol( rectStart, &rectStart, 10 );
+				while( ( *rectStart ) == ' ' ) ++rectStart;
+				max.x = min.x + ( (float)SDL_strtol( rectStart, &rectStart, 10 ) );
+				while( ( *rectStart ) == ' ' ) ++rectStart;
+				max.y = min.y + ( (float)SDL_strtol( rectStart, &rectStart, 10 ) );
+
+				sb_Push( outData->sbMins, min );
+				sb_Push( outData->sbMaxes, max );
+
+				++( outData->numSpritesRead );
+
+				break;
 			}
-			currentState = RS_SPRITES;
-			break;
-		case RS_SPRITES:
-			// id
-			idEndLoc = SDL_strchr( line, ' ' );
-			idLen = (uintptr_t)idEndLoc - (uintptr_t)line + 1;
-			id = mem_Allocate( idLen );
-			SDL_strlcpy( id, line, idLen );
-
-			sb_Push( outData->sbIDs, id );
-
-			rectStart = idEndLoc + 1;
-
-			// x, y, w, h
-			min.x = (float)SDL_strtol( rectStart, &rectStart, 10 );
-			++rectStart;
-			min.y = (float)SDL_strtol( rectStart, &rectStart, 10 );
-			++rectStart;
-			max.x = min.x + ( (float)SDL_strtol( rectStart, &rectStart, 10 ) );
-			++rectStart;
-			max.y = min.y + ( (float)SDL_strtol( rectStart, &rectStart, 10 ) );
-
-			sb_Push( outData->sbMins, min );
-			sb_Push( outData->sbMaxes, max );
-
-			++( outData->numSpritesRead );
-
-			break;
 		}
 		line = strtok( NULL, delim );
 	}
