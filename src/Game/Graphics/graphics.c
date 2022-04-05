@@ -263,7 +263,7 @@ void gfx_Render( float dt )
 	t = clamp( 0.0f, 1.0f, ( currentTime / endTime ) );
 
 #if defined( __EMSCRIPTEN__ )
-	gfxPlatform_StaticSizeRender( dt, t, windowClearColor );
+	gfxPlatform_StaticSizeRender( dt, t, gameClearColor );
 #else
 	//gfxPlatform_StaticSizeRender( dt, t, windowClearColor );/*
 	gfxPlatform_DynamicSizeRender( dt, t, renderWidth, renderHeight, windowRenderX0, windowRenderY0, windowRenderX1, windowRenderY1, gameClearColor );//*/

@@ -8,8 +8,7 @@
 Handles the platform specific OpenGL stuff.
 */
 #if defined( __ANDROID__ ) || defined( __EMSCRIPTEN__ ) || defined( __IPHONEOS__ )
-
-  #if defined( __ANDROID__ ) || defined( __EMPSCRIPTEN__ )
+  #if defined( __ANDROID__ ) || defined( __EMSCRIPTEN__ )
     #include <GLES3/gl3.h>
     #if defined( __EMSCRIPTEN__ )
 	  #include <GLES2/gl2ext.h>
@@ -166,7 +165,7 @@ Handles the platform specific OpenGL stuff.
 	"void main( void )\n" \
 	"{\n" \
 	"   outCol = texture(textureUnit0, vTex) * vCol;\n" \
-    "   float dist = texture(textureUnit1, vTex).a;\n " \
+    "   mediump float dist = texture(textureUnit1, vTex).a;\n " \
 	"	const mediump float edgeDist = 0.5f;\n" \
 	"	mediump float edgeWidth = 0.7f * fwidth( dist );\n" \
 	"	outCol.a = smoothstep( edgeDist - edgeWidth, edgeDist + edgeWidth, dist );\n" \

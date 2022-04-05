@@ -690,7 +690,7 @@ void txt_DisplayString( const char* utf8Str, Vector2 pos, Color clr, HorizTextAl
 		} else if( codepoint == 0xA ) {
 			// new line
 			currPos.x = pos.x;
-			currPos.y += fonts[fontID].nextLineDescent;
+			currPos.y += fonts[fontID].nextLineDescent * scale;
 			positionStringStartX( str, fontID, hAlign, scale, &currPos );
 		} else {
 			Glyph* glyph = getCodepointGlyph( fontID, codepoint );

@@ -45,11 +45,10 @@ float degreeRotLerp( float from, float to, float t )
 
 float radianRotDiff( float from, float to )
 {
-	assert( from >= -M_PI_F );
-	assert( from <= M_PI_F );
-	assert( to >= -M_PI_F );
-	assert( to <= M_PI_F );
-	float diff = to - from;
+	from = radianRotWrap( from );
+	to = radianRotWrap( to );
+
+	float diff = fmodf( ( to - from + M_PI_F ), M_TWO_PI_F ) - M_PI_F;
 
 	if( diff > M_PI_F ) {
 		diff -= M_TWO_PI_F;
@@ -64,11 +63,9 @@ float radianRotDiff( float from, float to )
 
 float degreeRotDiff( float from, float to )
 {
-	assert( from >= -180.0f );
-	assert( from <= 180.0f );
-	assert( to >= -180.0f );
-	assert( to <= 180.0f );
-	float diff = to - from;
+	from = degreeRotWrap( from );
+	to = degreeRotWrap( to );
+	float diff = fmodf( ( to - from + 180.0f ), 360.0f ) - 180.0f;
 
 	if( diff > 180.0f ) {
 		diff -= 360.0f;

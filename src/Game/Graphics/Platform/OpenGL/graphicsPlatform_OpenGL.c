@@ -145,7 +145,7 @@ void gfxPlatform_DynamicSizeRender( float dt, float t, int renderWidth, int rend
 {
 	GL( glViewport( 0, 0, renderWidth, renderHeight ) );
 
-#if !defined( __ANDROID__ ) && !defined( __IPHONEOS__ )
+#if !defined( __IPHONEOS__ ) && !defined( __ANDROID__ ) && !defined( __EMSCRIPTEN__ )
 	GL( glEnable( GL_MULTISAMPLE ) );
 #endif
 
@@ -180,7 +180,7 @@ void gfxPlatform_DynamicSizeRender( float dt, float t, int renderWidth, int rend
 	// editor and debugging ui stuff
 	//nk_xu_render( &editorIMGUI );
 
-#if !defined( __ANDROID__ ) && !defined( __IPHONEOS__ )
+#if !defined( __IPHONEOS__ ) && !defined( __ANDROID__ ) && !defined( __EMSCRIPTEN__ )
 	GL( glDisable( GL_MULTISAMPLE ) );
 #endif
 }

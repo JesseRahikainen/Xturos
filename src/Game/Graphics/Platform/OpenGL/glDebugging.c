@@ -81,7 +81,7 @@ int checkAndLogFrameBufferCompleteness( GLenum target, const char* extraInfo )
 		// GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT is returned if the framebuffer does not have at least one image attached to it.
 		errorMsg = "Framebuffer Incomplete Missing Attachment";
 		break;
-#if !defined( __IPHONEOS__ ) && !defined( __ANDROID__ )
+#if !defined( __IPHONEOS__ ) && !defined( __ANDROID__ ) && !defined( __EMSCRIPTEN__ )
 	case GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER:
 		// GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER is returned if the value of GL_FRAMEBUFFER_ATTACHMENT_OBJECT_TYPE
 		//  is GL_NONE for any color attachment point(s) named by GL_DRAW_BUFFERi.        

@@ -146,6 +146,10 @@ bool triPlatform_InitTriList( TriangleList* triList, TriType listType )
 
 static void fillTriDataArrays( TriangleList* triList )
 {
+	if( triList->lastTriIndex < 0 ) {
+		// some OGL ES implementations doesn't like when you try to buffer data with a size of 0
+		return;
+	}
 	GL( glBindBuffer( GL_ARRAY_BUFFER, triList->platformTriList.VBO ) );
 	GL( glBufferSubData( GL_ARRAY_BUFFER, 0, sizeof( Vertex ) * ( ( triList->lastTriIndex + 1 ) * 3 ), triList->vertices ) );
 }

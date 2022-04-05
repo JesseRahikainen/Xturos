@@ -59,8 +59,8 @@
 #define DESIRED_RENDER_WIDTH 800
 #define DESIRED_RENDER_HEIGHT 600
 #ifdef __EMSCRIPTEN__
-	#define DESIRED_WINDOW_WIDTH RENDER_WIDTH
-	#define DESIRED_WINDOW_HEIGHT RENDER_HEIGHT
+	#define DESIRED_WINDOW_WIDTH DESIRED_WORLD_WIDTH
+	#define DESIRED_WINDOW_HEIGHT DESIRED_WORLD_WIDTH
 #else
 	#define DESIRED_WINDOW_WIDTH 800
 	#define DESIRED_WINDOW_HEIGHT 600
@@ -231,7 +231,7 @@ int initEverything( void )
 	int stencilSize;
 
  #if defined( __EMSCRIPTEN__ )
-	majorVersion = 2;
+	majorVersion = 3;
 	minorVersion = 0;
 	redSize = 8;
 	greenSize = 8;
@@ -472,6 +472,8 @@ void processEvents( int windowsEventsOnly )
 		// special keys used only on the pc version, primarily for taking screenshots of scenes at different resolutions
 #if defined( WIN32 )
 		if( e.type == SDL_KEYDOWN ) {
+
+#ifdef _DEBUG
 			if( e.key.keysym.sym == SDLK_PRINTSCREEN ) {
 				// take a screen shot
 
@@ -490,11 +492,13 @@ void processEvents( int windowsEventsOnly )
 				mem_Release( fileName );
 				mem_Release( savePath );
 			}
+#endif
 
 			if( e.key.keysym.sym == SDLK_PAUSE ) {
 				// pause the game
 				paused = !paused;
 			}
+
 
 			// have the F# keys change the size of the window based on some predetermined values
 			int pressedFKey = -1;
@@ -653,7 +657,6 @@ void mainLoop( void* v )
 	//llog( priority, "%smain: %.4f", ( mainTimerSec >= 0.02f ) ? "!!! " : "", mainTimerSec );
 }
 
-#include "Utils/hashMap.h"
 int main( int argc, char** argv )
 {
 /*#ifdef _DEBUG
