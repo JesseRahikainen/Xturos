@@ -34,6 +34,7 @@ float perlinBlend( float t );
 uint8_t lerp_uint8_t( uint8_t from, uint8_t to, float t );
 float inverseLerp( float from, float to, float val );
 float clamp( float min, float max, float val );
+float clamp01( float val );
 float randFloat( float min, float max );
 float randFloatVar( float mid, float var );
 float sign( float val );
@@ -41,6 +42,7 @@ int signi( int val );
 Vector3* vec2ToVec3( const Vector2* vec2, float z, Vector3* out );
 float jerkLerp( float t );
 float remap( float origMin, float origMax, float val, float newMin, float newMax );
+int wrapi( int val, int min, int max );
 
 void closestPtToSegment( const Vector2* segOne, const Vector2* segTwo, const Vector2* pos, Vector2* outPos, float* outParam );
 float sqDistPointSegment( const Vector2* segOne, const Vector2* segTwo, const Vector2* pos );

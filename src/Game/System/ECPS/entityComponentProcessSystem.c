@@ -817,21 +817,6 @@ int ecps_AddComponentToEntity( ECPS* ecps, Entity* entity, ComponentID component
 	}
 }
 
-// add a component to an entity, does not immediately change the entity, intended to be used while a process is running, will fail otherwise
-int ecps_AddComponentToEntityMidProcess( ECPS* ecps, const Entity* entity, ComponentID componentID, void* data )
-{
-	assert( ecps != NULL );
-	assert( entity != NULL );
-
-	if( ecps->isRunningProcess ) {
-		pushAddComponentCommand( ecps, entity, componentID, data );
-		return 0;
-	}
-
-	llog( LOG_ERROR, "Callilng ecps_AddComponentToEntityMidProcess( ) while no processes are running. Component not added." );
-	return 1;
-}
-
 // acts as ecps_AddComponentToEntity( ), but uses an entityID instead of an Entity structure
 int ecps_AddComponentToEntityByID( ECPS* ecps, EntityID entityID, ComponentID componentID, void* data )
 {
@@ -968,21 +953,6 @@ int ecps_RemoveComponentFromEntity( ECPS* ecps, Entity* entity, ComponentID comp
 	} else {
 		return immediateRemoveComponentFromEntity( ecps, entity, componentID );
 	}
-}
-
-// remove a component from an entity, does not immediately change the entity, intended to be used while a process is running, will fail otherwise
-int ecps_RemoveComponentFromEntityMidProcess( ECPS* ecps, const Entity* entity, ComponentID componentID )
-{
-	assert( ecps != NULL );
-	assert( entity != NULL );
-
-	if( ecps->isRunningProcess ) {
-		pushRemoveComponentCommand( ecps, entity, componentID );
-		return 0;
-	}
-
-	llog( LOG_ERROR, "Callilng ecps_RemoveComponentFromEntityMidProcess( ) while no processes are running. Component not removed." );
-	return 1;
 }
 
 int ecps_RemoveComponentFromEntityByID( ECPS* ecps, EntityID entityID, ComponentID componentID )

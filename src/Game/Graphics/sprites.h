@@ -23,11 +23,18 @@ EntityID spr_CreateSprite( int image, uint32_t camFlags, Vector2 pos, Vector2 sc
 void spr_DestroySprite( EntityID sprite );
 
 void spr_Update( EntityID sprite, const Vector2* newPos, const Vector2* newScale, float newRot );
-void spr_Update_p( EntityID sprite, const Vector2* newPos );
-void spr_Update_pc( EntityID sprite, const Vector2* newPos, const Color* clr );
-void spr_Update_c( EntityID sprite, const Color* clr );
-void spr_Update_sc( EntityID sprite, const Vector2* newScale, const Color* clr );
-void spr_Update_psc( EntityID sprite, const Vector2* newPos, const Vector2* newScale, const Color* clr );
-void spr_UpdateDelta( EntityID sprite, const Vector2* posOffset, const Vector2* scaleOffset, float rotOffset );
+
+void spr_SwitchImage( EntityID sprite, int newImage );
+
+void spr_UpdatePos( EntityID sprite, const Vector2* newPos );
+void spr_UpdateColor( EntityID sprite, const Color* clr );
+void spr_UpdateScale( EntityID sprite, const Vector2* newScale );
+void spr_UpdateRot( EntityID sprite, float newRot );
+
+void spr_UpdatePos_Delta( EntityID sprite, const Vector2* posOffset );
+void spr_UpdateScale_Delta( EntityID sprite, const Vector2* scaleOffset );
+void spr_UpdateRot_Delta( EntityID sprite, float rotOffset );
+
+void spr_SnapPos( EntityID sprite, const Vector2* newPos );
 
 #endif // inclusion guard

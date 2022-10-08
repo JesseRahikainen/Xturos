@@ -4,6 +4,8 @@ STB_DIR = F:/Data/Libraries/stb-master
 
 CSRC = $(wildcard ../../src/Game/*.c) \
        $(wildcard ../../src/Game/Graphics/*.c) \
+	   $(wildcard ../../src/Game/Graphics/Platform/*.c) \
+	   $(wildcard ../../src/Game/Graphics/Platform/OpenGL/*.c) \
        $(wildcard ../../src/Game/IMGUI/*.c) \
 	   $(wildcard ../../src/Game/Input/*.c) \
 	   $(wildcard ../../src/Game/Math/*.c) \
@@ -28,11 +30,14 @@ CFLAGS = -s WASM=1 \
 		 -I$(NUKLEAR_DIR) \
 		 -I$(STB_DIR) \
 		 -I$(SPINE_DIR)/include \
+		 -I../../src/Game \
 		 --emrun \
 		 --preload-file ../../bin/data@/ \
-		 --no-heap-copy
+		 --no-heap-copy \
+		 -DOPENGL_GFX \
+		 -DNK_INCLUDE_STANDARD_IO
 		 
-OUT = Xturos.html
+OUT = index.html
 RBUILD = release_build
 DBUILD = debug_build
 

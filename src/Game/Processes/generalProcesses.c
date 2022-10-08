@@ -536,7 +536,7 @@ static void posTweenUpdate( ECPS* ecps, const Entity* entity )
 
 	if( runVec2Tween( posTween, &( pos->futurePos ) ) ) {
 		// done, remove
-		ecps_RemoveComponentFromEntityMidProcess( ecps, entity, gcPosTweenCompID );
+		ecps_RemoveComponentFromEntityByID( ecps, entity->id, gcPosTweenCompID );
 	}
 }
 
@@ -565,7 +565,7 @@ static void scaleTweenUpdate( ECPS* ecps, const Entity* entity )
 
 	if( runVec2Tween( scaleTween, &( scale->futureScale ) ) ) {
 		// done, remove
-		ecps_RemoveComponentFromEntityMidProcess( ecps, entity, gcScaleTweenCompID );
+		ecps_RemoveComponentFromEntityByID( ecps, entity->id, gcScaleTweenCompID );
 	}
 }
 
@@ -594,7 +594,7 @@ static void alphaTweenUpdate( ECPS* ecps, const Entity* entity )
 
 	if( runFloatTween( alphaTween, &( clr->futureClr.a ) ) ) {
 		// done, remove
-		ecps_RemoveComponentFromEntityMidProcess( ecps, entity, gcAlphaTweenCompID );
+		ecps_RemoveComponentFromEntityByID( ecps, entity->id, gcAlphaTweenCompID );
 	}
 }
 

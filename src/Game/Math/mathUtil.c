@@ -162,6 +162,11 @@ float clamp( float min, float max, float val )
 	return val;
 }
 
+float clamp01( float val )
+{
+	return MIN( 1.0f, MAX( val, 0.0f ) );
+}
+
 float randFloat( float min, float max )
 {
 	assert( min <= max );
@@ -206,6 +211,19 @@ float jerkLerp( float t )
 float remap( float origMin, float origMax, float val, float newMin, float newMax )
 {
 	return lerp( newMin, newMax, inverseLerp( origMin, origMax, val ) );
+}
+
+int wrapi( int val, int min, int max )
+{
+	assert( min <= max );
+
+	int range = ( max - min ) + 1;
+	int offset = val - min;
+
+	while( offset >= range ) offset -= range;
+	while( offset < 0 ) offset += range;
+
+	return min + offset;
 }
 
 // Real-Time Collision Detection, pg 128

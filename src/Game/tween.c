@@ -189,7 +189,7 @@ float easeInOutExpo( float t )
 
 float easeInCirc( float t )
 {
-	return -( SDL_sqrtf( 1.0f - ( t * t ) - 1.0f ) );
+	return -( SDL_sqrtf( 1.0f - ( t * t ) ) - 1.0f );
 }
 
 float easeOutCirc( float t )

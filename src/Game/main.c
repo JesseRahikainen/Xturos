@@ -268,7 +268,7 @@ int initEverything( void )
 	SDL_GL_SetAttribute( SDL_GL_STENCIL_SIZE, stencilSize );
 #if !defined( __ANDROID__ ) && !defined( __IPHONEOS__ )
 	SDL_GL_SetAttribute( SDL_GL_MULTISAMPLEBUFFERS, 1 );
-	SDL_GL_SetAttribute( SDL_GL_MULTISAMPLESAMPLES, 4 );
+	SDL_GL_SetAttribute( SDL_GL_MULTISAMPLESAMPLES, 16 );
 #endif
 
 	llog( LOG_INFO, "Desired GL version: %i.%i", majorVersion, minorVersion );

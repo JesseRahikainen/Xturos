@@ -31,6 +31,9 @@ static const Color CLR_WHITE = { 1.0f, 1.0f, 1.0f, 1.0f };
 static const Color CLR_DARK_GREY = { 0.25f, 0.25f, 0.25f, 1.0f };
 static const Color CLR_GREY = { 0.5f, 0.5f, 0.5f, 1.0f };
 static const Color CLR_LIGHT_GREY = { 0.75f, 0.75f, 0.75f, 1.0f };
+static const Color CLR_ORANGE = { 1.0f, 0.65f, 0.0f, 1.0f };
+static const Color CLR_CLEAR_BLACK = { 0.0f, 0.0f, 0.0f, 0.0f };
+static const Color CLR_CLEAR_WHITE = { 1.0f, 1.0f, 1.0f, 0.0f };
 
 Color clr( float r, float g, float b, float a );
 Color clr_byte( uint8_t r, uint8_t g, uint8_t b, uint8_t a );

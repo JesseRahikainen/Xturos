@@ -51,9 +51,6 @@ bool ecps_GetEntityByID( ECPS* ecps, EntityID entityID, Entity* outEntity );
 //  returns whether the addition was a success or not
 int ecps_AddComponentToEntity( ECPS* ecps, Entity* entity, ComponentID componentID, void* data );
 
-// add a component to an entity, does not immediately change the entity, intended to be used while a process is running, will fail otherwise
-int ecps_AddComponentToEntityMidProcess( ECPS* ecps, const Entity* entity, ComponentID componentID, void* data );
-
 // acts as ecps_AddComponentToEntity( ), but uses an EntityID instead of an Entity structure
 int ecps_AddComponentToEntityByID( ECPS* ecps, EntityID entityID, ComponentID componentID, void* data );
 
@@ -62,9 +59,6 @@ int ecps_AddComponentToEntityByID( ECPS* ecps, EntityID entityID, ComponentID co
 //  returns >= 0 if successful, < 0 if unsuccesful
 //  modifies the passed in Entity to match the new structure
 int ecps_RemoveComponentFromEntity( ECPS* ecps, Entity* entity, ComponentID componentID );
-
-// remove a component from an entity, does not immediately change the entity, intended to be used while a process is running, will fail otherwise
-int ecps_RemoveComponentFromEntityMidProcess( ECPS* ecps, const Entity* entity, ComponentID componentID );
 
 // acts as ecps_RemoveComponentFromEntity( ), but uses an EntityID instead of an Entity structure
 int ecps_RemoveComponentFromEntityByID( ECPS* ecps, EntityID entityID, ComponentID componentID );

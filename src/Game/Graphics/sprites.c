@@ -130,7 +130,19 @@ void spr_Update( EntityID sprite, const Vector2* newPos, const Vector2* newScale
 	rot->futureRot = newRot;
 }
 
-void spr_Update_p( EntityID sprite, const Vector2* newPos )
+void spr_SwitchImage( EntityID sprite, int newImage )
+{
+	Entity entity;
+	if( !ecps_GetEntityByID( &spriteECPS, sprite, &entity ) ) {
+		return;
+	}
+
+	GCSpriteData* spriteData = NULL;
+	ecps_GetComponentFromEntity( &entity, spriteCompID, &spriteData );
+	spriteData->img = newImage;
+}
+
+void spr_UpdatePos( EntityID sprite, const Vector2* newPos )
 {
 	assert( newPos != NULL );
 
@@ -144,26 +156,7 @@ void spr_Update_p( EntityID sprite, const Vector2* newPos )
 	pos->futurePos = *newPos;
 }
 
-void spr_Update_pc( EntityID sprite, const Vector2* newPos, const Color* clr )
-{
-	assert( newPos != NULL );
-	assert( clr != NULL );
-
-	Entity entity;
-	if( !ecps_GetEntityByID( &spriteECPS, sprite, &entity ) ) {
-		return;
-	}
-
-	GCPosData* pos = NULL;
-	ecps_GetComponentFromEntity( &entity, posCompID, &pos );
-	pos->futurePos = *newPos;
-
-	GCColorData* color = NULL;
-	ecps_GetComponentFromEntity( &entity, clrCompID, &color );
-	color->futureClr = *clr;
-}
-
-void spr_Update_c( EntityID sprite, const Color* clr )
+void spr_UpdateColor( EntityID sprite, const Color* clr )
 {
 	assert( clr != NULL );
 
@@ -177,10 +170,9 @@ void spr_Update_c( EntityID sprite, const Color* clr )
 	color->futureClr = *clr;
 }
 
-void spr_Update_sc( EntityID sprite, const Vector2* newScale, const Color* clr )
+void spr_UpdateScale( EntityID sprite, const Vector2* newScale )
 {
 	assert( newScale != NULL );
-	assert( clr != NULL );
 
 	Entity entity;
 	if( !ecps_GetEntityByID( &spriteECPS, sprite, &entity ) ) {
@@ -190,40 +182,23 @@ void spr_Update_sc( EntityID sprite, const Vector2* newScale, const Color* clr )
 	GCScaleData* scale = NULL;
 	ecps_GetComponentFromEntity( &entity, scaleCompID, &scale );
 	scale->futureScale = *newScale;
-
-	GCColorData* color = NULL;
-	ecps_GetComponentFromEntity( &entity, clrCompID, &color );
-	color->futureClr = *clr;
 }
 
-void spr_Update_psc( EntityID sprite, const Vector2* newPos, const Vector2* newScale, const Color* clr )
+void spr_UpdateRot( EntityID sprite, float newRot )
 {
-	assert( newPos != NULL );
-	assert( newScale != NULL );
-	assert( clr != NULL );
-
 	Entity entity;
 	if( !ecps_GetEntityByID( &spriteECPS, sprite, &entity ) ) {
 		return;
 	}
 
-	GCPosData* pos = NULL;
-	ecps_GetComponentFromEntity( &entity, posCompID, &pos );
-	pos->futurePos = *newPos;
-
-	GCScaleData* scale = NULL;
-	ecps_GetComponentFromEntity( &entity, scaleCompID, &scale );
-	scale->futureScale = *newScale;
-
-	GCColorData* color = NULL;
-	ecps_GetComponentFromEntity( &entity, clrCompID, &color );
-	color->futureClr = *clr;
+	GCRotData* rot = NULL;
+	ecps_GetComponentFromEntity( &entity, rotCompID, &rot );
+	rot->futureRot = newRot;
 }
 
-void spr_UpdateDelta( EntityID sprite, const Vector2* posOffset, const Vector2* scaleOffset, float rotOffset )
+void spr_UpdatePos_Delta( EntityID sprite, const Vector2* posOffset )
 {
 	assert( posOffset != NULL );
-	assert( scaleOffset != NULL );
 
 	Entity entity;
 	if( !ecps_GetEntityByID( &spriteECPS, sprite, &entity ) ) {
@@ -233,12 +208,45 @@ void spr_UpdateDelta( EntityID sprite, const Vector2* posOffset, const Vector2* 
 	GCPosData* pos = NULL;
 	ecps_GetComponentFromEntity( &entity, posCompID, &pos );
 	vec2_Add( &( pos->futurePos ), posOffset, &( pos->futurePos ) );
+}
+
+void spr_UpdateScale_Delta( EntityID sprite, const Vector2* scaleOffset )
+{
+	assert( scaleOffset != NULL );
+
+	Entity entity;
+	if( !ecps_GetEntityByID( &spriteECPS, sprite, &entity ) ) {
+		return;
+	}
 
 	GCScaleData* scale = NULL;
 	ecps_GetComponentFromEntity( &entity, scaleCompID, &scale );
 	vec2_Add( &( scale->futureScale ), scaleOffset, &( scale->futureScale ) );
+}
+
+void spr_UpdateRot_Delta( EntityID sprite, float rotOffset )
+{
+	Entity entity;
+	if( !ecps_GetEntityByID( &spriteECPS, sprite, &entity ) ) {
+		return;
+	}
 
 	GCRotData* rot = NULL;
 	ecps_GetComponentFromEntity( &entity, rotCompID, &rot );
 	rot->futureRot += rotOffset;
+}
+
+void spr_SnapPos( EntityID sprite, const Vector2* newPos )
+{
+	assert( newPos != NULL );
+
+	Entity entity;
+	if( !ecps_GetEntityByID( &spriteECPS, sprite, &entity ) ) {
+		return;
+	}
+
+	GCPosData* pos = NULL;
+	ecps_GetComponentFromEntity( &entity, posCompID, &pos );
+	pos->futurePos = *newPos;
+	pos->currPos = *newPos;
 }

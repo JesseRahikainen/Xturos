@@ -135,6 +135,16 @@ int32_t rand_GetRangeS32( RandomGroup* rg, int32_t min, int32_t max )
 	return min + ( (int32_t)getBalancedRandom( rg, range ) );
 }
 
+uint32_t rand_GetRangeU32( RandomGroup* rg, uint32_t min, uint32_t max )
+{
+	assert( min >= max );
+	uint32_t range = ( max - min ) + 1;
+	if( range <= 0 ) {
+		return min;
+	}
+	return min + ( (uint32_t)getBalancedRandom( rg, range ) );
+}
+
 size_t rand_GetArrayEntry( RandomGroup* rg, size_t arraySize )
 {
 	return (size_t)getBalancedRandom( rg, (uint64_t)arraySize );
@@ -157,4 +167,56 @@ Vector2* rand_PointInUnitCircle( RandomGroup* rg, Vector2* out )
 bool rand_Choice( RandomGroup* rg )
 {
 	return (bool)( next( rg ) % 2 );
+}
+
+void entropyRoll_Init( EntropyRoller* roller, RandomGroup* rg )
+{
+	assert( roller != NULL );
+
+	roller->rg = rg;
+	roller->entropy = rand_GetNormalizedFloat( rg );
+}
+
+bool entropyRoll_Roll( EntropyRoller* roller, float chanceSuccess )
+{
+	assert( roller != NULL );
+	assert( chanceSuccess >= 0.0f );
+	assert( chanceSuccess <= 1.0f );
+
+	if( chanceSuccess >= 1.0f ) {
+		return true;
+	} else if( chanceSuccess <= 0.0f ) {
+		return false;
+	}
+
+	bool ret = false;
+	roller->entropy += rand_GetRangeFloat( roller->rg, 0.0f, chanceSuccess ) + rand_GetRangeFloat( roller->rg, 0.0f, chanceSuccess );
+	if( roller->entropy >= 1.0f ) {
+		ret = true;
+		roller->entropy -= 1.0f;
+	}
+
+	return ret;
+}
+
+void infiniteListSelector_Init( InfiniteListSelector* selector, RandomGroup* rg, int invalidId )
+{
+	assert( selector != NULL );
+
+	selector->chosenId = invalidId;
+	selector->rg = rg;
+	selector->weightTotal = 0;
+}
+
+void infiniteListSelector_Choose( InfiniteListSelector* selector, int itemId, uint32_t itemWeight )
+{
+	assert( selector != NULL );
+
+	if( itemWeight == 0 ) return;
+
+	uint32_t totalWeight = selector->weightTotal + itemWeight;
+	if( rand_GetRangeU32( selector->rg, 0, totalWeight ) > selector->weightTotal ) {
+		selector->chosenId = itemId;
+	}
+	selector->weightTotal = totalWeight;
 }

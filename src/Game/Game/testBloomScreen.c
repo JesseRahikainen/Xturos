@@ -112,7 +112,7 @@ static void testBloomScreen_PhysicsTick( float dt )
 			movingThings[i].velocity.y = -SDL_fabsf( movingThings[i].velocity.y );
 		}
 
-		spr_Update_p( movingThings[i].img, &movingThings[i].pos );
+		spr_UpdatePos( movingThings[i].img, &movingThings[i].pos );
 	}
 }
 
