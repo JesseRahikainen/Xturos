@@ -12,7 +12,6 @@
 
 #include "images.h"
 #include "debugRendering.h"
-#include "spineGfx.h"
 #include "triRendering.h"
 
 #include "IMGUI/nuklearWrapper.h"
@@ -93,9 +92,6 @@ int gfx_Init( SDL_Window* window, int desiredRenderWidth, int desiredRenderHeigh
 		return -1;
 	}
 	llog( LOG_INFO, "Debug renderer initialized." );
-
-	spine_Init( );
-	llog( LOG_INFO, "Spine initialized." );
 
 	if( triRenderer_Init( ) < 0 ) {
 		return -1;
@@ -230,13 +226,9 @@ void gfx_ClearDrawCommands( float timeToEnd )
 
 void gfx_MakeRenderCalls( float dt, float t )
 {
-	spine_UpdateInstances( dt );
-	spine_FlipInstancePositions( );
-
 	// draw all the stuff that routes through the triangle rendering
 	triRenderer_Clear( );
 	img_Render( t );
-	spine_RenderInstances( t );
 
 	for( size_t i = 0; i < sb_Count( sbAdditionalDrawFuncs ); ++i ) {
 		sbAdditionalDrawFuncs[i]( t );

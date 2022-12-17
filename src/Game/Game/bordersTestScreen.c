@@ -4,7 +4,6 @@
 
 #include "../Graphics/graphics.h"
 #include "../Graphics/images.h"
-#include "../Graphics/spineGfx.h"
 #include "../Graphics/camera.h"
 #include "../Graphics/debugRendering.h"
 #include "../Graphics/imageSheets.h"

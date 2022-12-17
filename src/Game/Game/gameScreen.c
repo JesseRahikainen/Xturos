@@ -2,7 +2,6 @@
 
 #include "../Graphics/graphics.h"
 #include "../Graphics/images.h"
-#include "../Graphics/spineGfx.h"
 #include "../Graphics/camera.h"
 #include "../Graphics/debugRendering.h"
 #include "../Graphics/imageSheets.h"
@@ -203,18 +202,6 @@ static int gameScreen_Enter( void )
 	spriteSheetImg = img_Load( "Images/spritesheet_test.png", ST_DEFAULT );
 
 	numImagesOnSheet = img_LoadSpriteSheet( "Images/spritesheet_test.ss", ST_DEFAULT, &imageSheet );
-
-	/*
-	templateID[0] = spine_LoadTemplate( "Spines/JSON/yellow_mob" );
-	instanceID[0] = spine_CreateInstance( templateID[0], pos[0], 1, 0, NULL );
-	spAnimationState_setAnimationByName( spine_GetInstanceAnimState( instanceID[0] ), 0, "idle", 1 ); //*/
-
-	/*
-	templateID[1] = spine_LoadTemplate( "Spines/Goblin/goblins-ffd" );
-	instanceID[1] = spine_CreateInstance( templateID[1], pos[1], 1, 0, NULL );
-	spAnimationState_setAnimationByName( spine_GetInstanceAnimState( instanceID[1] ), 0, "walk", 1 );
-	spSkeleton_setSkinByName( spine_GetInstanceSkeleton( instanceID[1] ), "goblin" ); /*
-	spSkeleton_setSkinByName( spine_GetInstanceSkeleton( instanceID[1] ), "goblingirl" ); // */
 
 	//img_LoadPackage( 3, fileNames, testImages );
 
