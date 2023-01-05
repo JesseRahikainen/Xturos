@@ -11,6 +11,7 @@
 #include "Graphics/Platform/OpenGL/glDebugging.h"
 #include "System/platformLog.h"
 #include "System/memory.h"
+#include "IMGUI/nuklearWrapper.h"
 
 #include "Graphics/graphics.h"
 
@@ -178,7 +179,7 @@ void gfxPlatform_DynamicSizeRender( float dt, float t, int renderWidth, int rend
 #endif
     
 	// editor and debugging ui stuff
-	//nk_xu_render( &editorIMGUI );
+	nk_xu_render( &editorIMGUI );
 
 #if !defined( __IPHONEOS__ ) && !defined( __ANDROID__ ) && !defined( __EMSCRIPTEN__ )
 	GL( glDisable( GL_MULTISAMPLE ) );

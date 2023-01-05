@@ -25,6 +25,7 @@ void spr_DestroySprite( EntityID sprite );
 void spr_Update( EntityID sprite, const Vector2* newPos, const Vector2* newScale, float newRot );
 
 void spr_SwitchImage( EntityID sprite, int newImage );
+int spr_GetImage( EntityID sprite );
 
 void spr_UpdatePos( EntityID sprite, const Vector2* newPos );
 void spr_UpdateColor( EntityID sprite, const Color* clr );
@@ -36,5 +37,6 @@ void spr_UpdateScale_Delta( EntityID sprite, const Vector2* scaleOffset );
 void spr_UpdateRot_Delta( EntityID sprite, float rotOffset );
 
 void spr_SnapPos( EntityID sprite, const Vector2* newPos );
+void spr_SnapCurrentPos( EntityID sprite );
 
 #endif // inclusion guard

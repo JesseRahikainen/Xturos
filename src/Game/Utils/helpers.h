@@ -6,6 +6,7 @@
 #define ANY_BITS_ON( bits, testOnBits ) ( ( bits ) & ( testOnBits ) )
 #define TURN_ON_BITS( currBits, onBits ) ( ( currBits ) |= ( onBits ) )
 #define TURN_OFF_BITS( currBits, offBits ) ( ( currBits ) &= ~( offBits ) )
+#define TOGGLE_BITS( currBits, toggleBits ) ( ( currBits ) ^= ( toggleBits ) )
 
 // copied from nuklear.h, don't want to have to rely on that
 #if defined( _MSC_VER )

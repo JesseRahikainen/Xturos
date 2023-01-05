@@ -746,7 +746,7 @@ static void aiChooseMove_Process( void )
 
 static void aiChooseMove_Draw( void )
 {
-	Vector2 basePos = vec2( 100.0f, 300.0f );
+	Vector2 basePos = vec2( 100.0f, 350.0f );
 	img_CreateDraw( headProfileImg, 1, basePos, basePos, 100 );
 
 	Vector2 gearOffset = vec2( 10.0f, -20.0f );

@@ -617,6 +617,77 @@ void gp_AddAlphaTween( ECPS* ecps, EntityID entity, float duration, float startA
 	}
 }
 
+// ***** Collision processes
+// This is an example of a gather-run process. We first gather all the collisions, then run the collision detection at the end phase of the process.
+// TODO: Make this more configurable.
+Process gpCollisionProc;
+typedef struct CollisionEntry {
+	Collider coll;
+	EntityID id;
+} CollisionEntry;
+
+static CollisionEntry* colliders = NULL;
+static ECPS* collisionECPS;
+
+static void clearColliders( ECPS* ecps )
+{
+	sb_Clear( colliders );
+	collisionECPS = ecps;
+}
+
+static void addCollider( ECPS* ecps, const Entity* entity )
+{
+	GCColliderData* collData = NULL;
+	GCPosData* posData = NULL;
+
+	ecps_GetComponentFromEntity( entity, gcColliderCompID, &collData );
+	ecps_GetComponentFromEntity( entity, gcPosCompID, &posData );
+
+	CollisionEntry newEntry;
+	newEntry.id = entity->id;
+	gc_ColliderDataToCollider( collData, posData, &(newEntry.coll) );
+	sb_Push( colliders, newEntry );
+}
+
+static void exampleCollisionResponse( Entity* eOne, Entity* eTwo )
+{
+	// eOne will have firstCompID, eTwo will have secondCompID
+	SDL_assert( false && "Example only, make you're own." );
+}
+
+bool collisionTestAndResponse( Entity* eOne, Entity* eTwo, ComponentID firstCompID, ComponentID secondCompID, void ( *response )( Entity*, Entity* ) )
+{
+	if( ecps_DoesEntityHaveComponent( eOne, firstCompID ) && ecps_DoesEntityHaveComponent( eTwo, secondCompID ) ) {
+		response( eOne, eTwo );
+		return true;
+	} else if( ecps_DoesEntityHaveComponent( eTwo, firstCompID ) && ecps_DoesEntityHaveComponent( eOne, secondCompID ) ) {
+		response( eTwo, eOne );
+		return true;
+	}
+	return false;
+}
+
+void collisionResponse( int firstColliderIdx, int secondColliderIdx, Vector2 separation )
+{
+	Entity eOne;
+	Entity eTwo;
+
+	if( !ecps_GetEntityByID( collisionECPS, colliders[firstColliderIdx].id, &eOne ) ) return;
+	if( !ecps_GetEntityByID( collisionECPS, colliders[secondColliderIdx].id, &eTwo ) ) return;
+
+	// add responses to collisions here
+	//if( collisionTestAndResponse( &eOne, &eTwo, firstCompID, secondCompID, exampleCollisionResponse ) ) return;
+}
+
+static void runCollisions( ECPS* ecps )
+{
+	ColliderCollection coll;
+	coll.firstCollider = &colliders[0].coll;
+	coll.count = sb_Count( colliders );
+	coll.stride = sizeof( colliders[0] );
+	collision_DetectAllInternal( coll, collisionResponse );
+}
+
 // ***** Register the processes
 void gp_RegisterProcesses( ECPS* ecps )
 {
@@ -666,4 +737,8 @@ void gp_RegisterProcesses( ECPS* ecps )
 	SDL_assert( gcClrCompID != INVALID_COMPONENT_ID );
 	SDL_assert( gcAlphaTweenCompID != INVALID_COMPONENT_ID );
 	ecps_CreateProcess( ecps, "ALPHA_TWEEN", NULL, alphaTweenUpdate, NULL, &gpAlphaTweenProc, 2, gcClrCompID, gcAlphaTweenCompID );
+
+	SDL_assert( gcPosCompID != INVALID_COMPONENT_ID );
+	SDL_assert( gcColliderCompID != INVALID_COMPONENT_ID );
+	ecps_CreateProcess( ecps, "COLLISION", clearColliders, addCollider, runCollisions, &gpCollisionProc, gcPosCompID, gcColliderCompID );
 }

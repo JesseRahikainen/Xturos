@@ -76,7 +76,9 @@ static Uint64 lastTicks;
 static Uint64 physicsTickAcc;
 static SDL_Window* window;
 static SDL_RWops* logFile;
-static const char* windowName = "Xturos";
+static const char* windowName = "Oton";
+static bool canResize;
+static bool isEditorMode;
 
 typedef struct {
 	uint32_t width;
@@ -154,7 +156,8 @@ static void initIMGUI( NuklearWrapper* imgui, bool useRelativeMousePos, int widt
 	struct nk_font_atlas* fontAtlas;
 	nk_xu_fontStashBegin( imgui, &fontAtlas );
 	// load fonts
-	struct nk_font *font = nk_font_atlas_add_from_file( fontAtlas, "./Fonts/kenpixel.ttf", 12, 0 );
+	struct nk_font *font = nk_font_atlas_add_from_file( fontAtlas, "./Fonts/Aileron-Regular.otf", 12, 0 );
+	
 	nk_xu_fontStashEnd( imgui );
 	nk_style_set_font( &( imgui->ctx ), &( font->handle ) );
 }
@@ -283,7 +286,11 @@ int initEverything( void )
 	int windowHeight = DESIRED_WINDOW_HEIGHT;
 	int windowWidth = DESIRED_WINDOW_WIDTH;
 
-	Uint32 windowFlags = SDL_WINDOW_SHOWN | SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE;
+	Uint32 windowFlags = SDL_WINDOW_SHOWN | SDL_WINDOW_OPENGL;
+
+	if( canResize ) {
+		windowFlags |= SDL_WINDOW_RESIZABLE;
+	}
  #endif
 
 #elif defined( METAL_GFX )
@@ -418,28 +425,28 @@ void processEvents( int windowsEventsOnly )
 		if( e.type == SDL_WINDOWEVENT ) {
 			switch( e.window.event ) {
 			case SDL_WINDOWEVENT_SIZE_CHANGED:
-#ifdef RENDER_RESIZE
-				// TODO: Make this based on a config file instead of a define
-				// resize the rendering based on the size of the new window
-				gfx_RenderResize( window, e.window.data1, e.window.data2 );
+				if( canResize ) {
+					//llog( LOG_DEBUG, "Window size changed to %i x %i", e.window.data1, e.window.data2 );
+					// resize the rendering based on the size of the new window
+					gfx_RenderResize( window, e.window.data1, e.window.data2 );
 
-				// adjust world size so everything base don that scales correctly
-				int worldHeight = DESIRED_WORLD_HEIGHT;
-				int worldWidth = (int)( worldHeight * (float)e.window.data1 / (float)e.window.data2 );
-				world_SetSize( worldWidth, worldHeight );
-				recalculateSafeArea( );
+					// adjust world size so everything base don that scales correctly
+					int worldHeight = DESIRED_WORLD_HEIGHT;
+					int worldWidth = (int)( worldHeight * (float)e.window.data1 / (float)e.window.data2 );
+					world_SetSize( worldWidth, worldHeight );
+					//recalculateSafeArea( );
 
-				// adjust the cameras to work with the new render aspect ratio
-				setCameraMatrices( worldWidth, worldHeight );
+					// adjust the cameras to work with the new render aspect ratio
+					//setCameraMatrices( worldWidth, worldHeight );
 
-				// need to signal to everything else that stuff had changed and stuff may need to be relayed out
-				mb_BroadcastMessage( RESIZE_UI_ELEMENTS, NULL );
+					// need to signal to everything else that stuff had changed and stuff may need to be relayed out
+					//mb_BroadcastMessage( RESIZE_UI_ELEMENTS, NULL );
 
-				// force a draw so everything updates correctly
-				if( paused ) {
-					forceDraw = true;
+					// force a draw so everything updates correctly
+					if( paused ) {
+						forceDraw = true;
+					}
 				}
-#endif
 				// data1 == width, data2 == height
 				gfx_SetWindowSize( e.window.data1, e.window.data2 );
 				input_UpdateMouseWindow( e.window.data1, e.window.data2 );
@@ -659,6 +666,14 @@ void mainLoop( void* v )
 
 int main( int argc, char** argv )
 {
+	isEditorMode = false;
+	canResize = false;
+	for( int i = 1; i < argc; ++i ) {
+		if( SDL_strcmp( argv[i], "-e" ) == 0 ) {
+			isEditorMode = true;
+			canResize = true;
+		}
+	}
 /*#ifdef _DEBUG
 	SDL_LogSetAllPriority( SDL_LOG_PRIORITY_VERBOSE );
 #else
@@ -683,6 +698,11 @@ int main( int argc, char** argv )
 	focused = true;
 #endif
 
+	// TODO: Get some basic editor stuff working.
+	/*GameState* startState = &otonMainScreenState;
+	if( isEditorMode ) {
+		startState = &editorHubScreenState;
+	}//*/
 	//gsm_EnterState( &globalFSM, &gameScreenState );
 	//gsm_EnterState( &globalFSM, &testAStarScreenState );
 	//gsm_EnterState( &globalFSM, &testJobQueueScreenState );

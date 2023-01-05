@@ -5,6 +5,7 @@
 
 #include "Graphics/graphics.h"
 #include "Graphics/triRendering.h"
+#include "Graphics/gfxUtil.h"
 #include "System/memory.h"
 #include "Math/matrix4.h"
 #include "Input/input.h"
@@ -17,8 +18,6 @@
 #include "Graphics/Platform/OpenGL/glShaderManager.h"
 
 #include "Graphics/Platform/OpenGL/glDebugging.h"
-
-//struct nk_context* nkCtx = NULL;
 
 #define MAX_VERTEX_MEMORY ( 512 * 1024 )
 #define MAX_ELEMENT_MEMORY ( 128 * 1024 )
@@ -198,6 +197,13 @@ void nk_xu_init( NuklearWrapper* xu, SDL_Window* win, bool useRelativeMousePos, 
 	xu->useRelativeMousePos = useRelativeMousePos;
 }
 
+static const nk_rune* defaultGlyphRanges( void )
+{
+	// add any extra glyphs you want to be loaded in here
+	static const nk_rune ranges[] = { 0x0020, 0x00FF, 0 };
+	return ranges;
+}
+
 void nk_xu_fontStashBegin( NuklearWrapper* xu, struct nk_font_atlas** atlas )
 {
 	struct nk_allocator alloc;
@@ -214,6 +220,12 @@ void nk_xu_fontStashEnd( NuklearWrapper* xu )
 	const void *image;
 	int w, h;
 
+	if( xu->fontAtlas.config == NULL ) {
+		llog( LOG_WARN, "Font not properly loaded, text will not be rendered in IMGUI dialogs." );
+		return;
+	}
+
+	xu->fontAtlas.config->range = defaultGlyphRanges( );
 	image = nk_font_atlas_bake( &( xu->fontAtlas ), &w, &h, NK_FONT_ATLAS_RGBA32 );
 	uploadAtlas( xu, image, w, h );
 	nk_font_atlas_end(&( xu->fontAtlas ), nk_handle_id((int)xu->platform.fontTx), &( xu->nullTx ) );
@@ -312,6 +324,8 @@ void nk_xu_handleEvent( NuklearWrapper* xu, SDL_Event* evt )
     }
 }
 
+// TODO: Get it so the clear and render are separate. Allowing the drawing of the ui and the frames to match. As of right now we have to
+//  draw any Nuklear UIs every frame instead of every draw.
 void nk_xu_render( NuklearWrapper* xu )
 {
 	Matrix4 ortho;
@@ -367,9 +381,9 @@ void nk_xu_render( NuklearWrapper* xu )
 			config.shape_AA = NK_ANTI_ALIASING_OFF;
 			config.line_AA = NK_ANTI_ALIASING_OFF;
 			config.circle_segment_count = 22;
-			config.curve_segment_count = 22;
 			config.arc_segment_count = 22;
-			config.null = xu->nullTx;
+			config.curve_segment_count = 22;
+			config.tex_null = xu->nullTx;
 
 			// setup buffers to load vertices and elements
 			{
@@ -463,4 +477,16 @@ void nk_xu_clear( NuklearWrapper* xu )
 {
 	llog( LOG_DEBUG, "Manual clear" );
 	nk_clear( &( xu->ctx ) );
+}
+
+struct nk_image nk_xu_loadImage( const char* filePath )
+{
+	Texture loadedTexture;
+
+	if( gfxUtil_LoadTexture( filePath, &loadedTexture ) < 0 ) {
+		// load failed, just use an invalid texture
+		return nk_image_id( -1 );
+	}
+
+	return nk_image_id( (int)loadedTexture.texture.id );
 }

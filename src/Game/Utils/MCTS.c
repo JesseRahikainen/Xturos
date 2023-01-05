@@ -489,6 +489,7 @@ static void setMCTSMove( void* data )
 
 static void runMCTSThread( void* data )
 {
+	// TODO: This allocate isn't working for some reason. Tries to lock the mutex but it never gets through.
 	MCTS_MOVE* move = (MCTS_MOVE*)mem_Allocate( sizeof( MCTS_MOVE ) );
 	BoardGameThreadData* threadData = (BoardGameThreadData*)data;
 

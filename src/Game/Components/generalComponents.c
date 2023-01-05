@@ -11,8 +11,7 @@ ComponentID gcScaleCompID = INVALID_COMPONENT_ID;
 ComponentID gcSpriteCompID = INVALID_COMPONENT_ID;
 ComponentID gcStencilCompID = INVALID_COMPONENT_ID;
 ComponentID gc3x3SpriteCompID = INVALID_COMPONENT_ID;
-ComponentID gcAABBCollCompID = INVALID_COMPONENT_ID;
-ComponentID gcCircleCollCompID = INVALID_COMPONENT_ID;
+ComponentID gcColliderCompID = INVALID_COMPONENT_ID;
 ComponentID gcPointerResponseCompID = INVALID_COMPONENT_ID;
 ComponentID gcCleanUpFlagCompID = INVALID_COMPONENT_ID;
 ComponentID gcTextCompID = INVALID_COMPONENT_ID;
@@ -64,6 +63,34 @@ void gc_WatchEntity( ECPS* ecps, EntityID id )
 	ecps_AddComponentToEntityByID( ecps, id, gcWatchCompID, NULL );
 }
 
+void gc_ColliderDataToCollider( GCColliderData* colliderData, GCPosData* posData, Collider* outCollider )
+{
+	SDL_assert( colliderData != NULL );
+	SDL_assert( outCollider != NULL );
+
+	switch( colliderData->base.type ) {
+	case CT_DEACTIVATED:
+		outCollider->type = CT_DEACTIVATED;
+		break;
+	case CT_AABB:
+		outCollider->type = CT_AABB;
+		outCollider->aabb.halfDim = colliderData->aab.halfDim;
+		outCollider->aabb.center = posData->futurePos;
+		break;
+	case CT_CIRCLE:
+		outCollider->type = CT_CIRCLE;
+		outCollider->circle.radius = colliderData->circle.radius;
+		outCollider->circle.center = posData->futurePos;
+		break;
+	case CT_HALF_SPACE:
+		outCollider->type = CT_HALF_SPACE;
+		collision_CalculateHalfSpace( &(posData->futurePos), &(colliderData->halfSpace.normal), outCollider );
+		break;
+	default:
+		SDL_assert( false && "Invalid collider type." );
+	}
+}
+
 void gc_Register( ECPS* ecps )
 {
 	gcPosCompID = ecps_AddComponentType( ecps, "GC_POS", sizeof( GCPosData ), ALIGN_OF( GCPosData ), NULL, NULL );
@@ -72,8 +99,7 @@ void gc_Register( ECPS* ecps )
 	gcScaleCompID = ecps_AddComponentType( ecps, "GC_SCL", sizeof( GCScaleData ), ALIGN_OF( GCScaleData ), NULL, NULL );
 	gcSpriteCompID = ecps_AddComponentType( ecps, "GC_SPRT", sizeof( GCSpriteData ), ALIGN_OF( GCSpriteData ), NULL, NULL );
 	gc3x3SpriteCompID = ecps_AddComponentType( ecps, "GC_3x3", sizeof( GC3x3SpriteData ), ALIGN_OF( GC3x3SpriteData ), NULL, NULL );
-	gcAABBCollCompID = ecps_AddComponentType( ecps, "GC_AABB", sizeof( GCAABBCollisionData ), ALIGN_OF( GCAABBCollisionData ), NULL, NULL );
-	gcCircleCollCompID = ecps_AddComponentType( ecps, "GC_CIRCLE", sizeof( GCCircleCollisionData ), ALIGN_OF( GCCircleCollisionData ), NULL, NULL );
+	gcColliderCompID = ecps_AddComponentType( ecps, "GC_COLL", sizeof( GCColliderData ), ALIGN_OF( GCColliderData ), NULL, NULL );
 	gcPointerResponseCompID = ecps_AddComponentType( ecps, "GC_CLICK", sizeof( GCPointerResponseData ), ALIGN_OF( GCPointerResponseData ), NULL, NULL );
 	gcCleanUpFlagCompID = ecps_AddComponentType( ecps, "GC_DEAD", 0, 0, NULL, NULL );
 	gcTextCompID = ecps_AddComponentType( ecps, "GC_TXT", sizeof( GCTextData ), ALIGN_OF( GCTextData ), NULL, NULL );

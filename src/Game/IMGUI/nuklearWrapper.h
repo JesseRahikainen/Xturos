@@ -5,6 +5,8 @@
 We should only need this file in the main game loop, anything that wants to use the ui stuff
 should only need to include nuklear.h and use that.
 This is just an adaptation of the nuklear_sdl_gl3 example.
+In a screen state you should draw the UI every frame in the Process function instead of in
+the Draw function.
 */
 
 #include <stdbool.h>
@@ -38,8 +40,6 @@ typedef struct {
 extern NuklearWrapper editorIMGUI;
 extern NuklearWrapper inGameIMGUI;
 
-//extern struct nk_context* nkCtx;
-
 void nk_xu_init( NuklearWrapper* xu, SDL_Window* win, bool useRelativeMousePos, int renderWidth, int renderHeight );
 void nk_xu_fontStashBegin( NuklearWrapper* xu, struct nk_font_atlas** atlas );
 void nk_xu_fontStashEnd( NuklearWrapper* xu );
@@ -47,5 +47,6 @@ void nk_xu_handleEvent( NuklearWrapper* xu, SDL_Event* e );
 void nk_xu_render( NuklearWrapper* xu );
 void nk_xu_shutdown( NuklearWrapper* xu );
 void nk_xu_clear( NuklearWrapper* xu );
+struct nk_image nk_xu_loadImage( const char* filePath );
 
 #endif

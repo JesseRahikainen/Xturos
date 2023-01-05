@@ -132,6 +132,9 @@ void spr_Update( EntityID sprite, const Vector2* newPos, const Vector2* newScale
 
 void spr_SwitchImage( EntityID sprite, int newImage )
 {
+#ifdef _DEBUG
+	SDL_assert( img_IsValidImage( newImage ) );
+#endif
 	Entity entity;
 	if( !ecps_GetEntityByID( &spriteECPS, sprite, &entity ) ) {
 		return;
@@ -140,6 +143,18 @@ void spr_SwitchImage( EntityID sprite, int newImage )
 	GCSpriteData* spriteData = NULL;
 	ecps_GetComponentFromEntity( &entity, spriteCompID, &spriteData );
 	spriteData->img = newImage;
+}
+
+int spr_GetImage( EntityID sprite )
+{
+	Entity entity;
+	if( !ecps_GetEntityByID( &spriteECPS, sprite, &entity ) ) {
+		return -1;
+	}
+
+	GCSpriteData* spriteData = NULL;
+	ecps_GetComponentFromEntity( &entity, spriteCompID, &spriteData );
+	return spriteData->img;
 }
 
 void spr_UpdatePos( EntityID sprite, const Vector2* newPos )
@@ -249,4 +264,16 @@ void spr_SnapPos( EntityID sprite, const Vector2* newPos )
 	ecps_GetComponentFromEntity( &entity, posCompID, &pos );
 	pos->futurePos = *newPos;
 	pos->currPos = *newPos;
+}
+
+void spr_SnapCurrentPos( EntityID sprite )
+{
+	Entity entity;
+	if( !ecps_GetEntityByID( &spriteECPS, sprite, &entity ) ) {
+		return;
+	}
+
+	GCPosData* pos = NULL;
+	ecps_GetComponentFromEntity( &entity, posCompID, &pos );
+	pos->currPos = pos->futurePos;
 }

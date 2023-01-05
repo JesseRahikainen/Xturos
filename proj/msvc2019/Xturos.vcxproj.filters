@@ -327,6 +327,12 @@
     <ClInclude Include="..\..\src\Game\Game\labels.h">
       <Filter>Header Files\Game</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\Game\Others\nuklear.h">
+      <Filter>Header Files\Others</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Game\Graphics\spriteAnimation.h">
+      <Filter>Header Files\Graphics</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\Game\Game\gameScreen.c">
@@ -541,6 +547,9 @@
     </ClCompile>
     <ClCompile Include="..\..\src\Game\Game\labels.c">
       <Filter>Source Files\Game</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Game\Graphics\spriteAnimation.c">
+      <Filter>Source Files\Graphics</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

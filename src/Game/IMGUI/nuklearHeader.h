@@ -12,6 +12,10 @@
 #define NK_INCLUDE_STANDARD_VARARGS
 //#define NK_BUTTON_TRIGGER_ON_RELEASE
 
-#include <nuklear.h>
+// some warnings in their code, assume they know what they're doing until proven otherwise
+#pragma warning( push )
+#pragma warning( disable : 4701 )
+#include "Others/nuklear.h"
+#pragma warning( pop )
 
 #endif

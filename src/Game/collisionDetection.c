@@ -131,8 +131,14 @@ int RayCastvHalfSpace( Vector2* start, Vector2* dir, Collider* collider, float* 
 	return 0;
 }
 
+int invalidRayCastType( Vector2* start, Vector2* dir, Collider* collider, float* t, Vector2* pt )
+{
+	llog( LOG_WARN, "Attempting to detect a collision between a ray and a collider that has no valid detection method." );
+	return 0;
+}
+
 typedef int(*RayCastCheck)( Vector2* start, Vector2* dir, Collider* collider, float* t, Vector2* pt );
-RayCastCheck rayCastChecks[NUM_COLLIDER_TYPES] = { RayCastvAABB, RayCastvCircle, RayCastvHalfSpace };
+RayCastCheck rayCastChecks[NUM_COLLIDER_TYPES] = { RayCastvAABB, RayCastvCircle, RayCastvHalfSpace, invalidRayCastType };
 
 // Standard Collision Functions
 //  used if we don't want to ever handle collisions between these two types.

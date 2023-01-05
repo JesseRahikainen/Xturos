@@ -161,6 +161,14 @@ int img_Load( const char* fileName, ShaderType shaderType )
 	return newIdx;
 }
 
+// Returns whether imgIdx points to a valid image.
+bool img_IsValidImage( int imgIdx )
+{
+	if( imgIdx >= MAX_IMAGES ) return false;
+	if( imgIdx < 0 ) return false;
+	return images[imgIdx].flags & IMGFLAG_IN_USE;
+}
+
 int img_CreateFromLoadedImage( LoadedImage* loadedImg, ShaderType shaderType, const char* id )
 {
 	int newIdx = -1;

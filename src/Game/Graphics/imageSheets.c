@@ -159,7 +159,7 @@ This opens up the sprite sheet file and loads all the images, putting the ids in
  the size of it.
  Returns the number of images loaded if it was successful, otherwise returns -1.
 */
-int img_LoadSpriteSheet( char* fileName, ShaderType shaderType, int** imgOutArray )
+int img_LoadSpriteSheet( const char* fileName, ShaderType shaderType, int** imgOutArray )
 {
 	TempSpriteSheetData tempData;
 

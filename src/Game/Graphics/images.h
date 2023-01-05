@@ -25,6 +25,9 @@ void img_ThreadedLoad( const char* fileName, ShaderType shaderType, int* outIdx,
 //  Returns -1 on failure, and prints a message to the log.
 int img_Load( const char* fileName, ShaderType shaderType );
 
+// Returns whether imgIdx points to a valid image.
+bool img_IsValidImage( int imgIdx );
+
 // Creates an image from a LoadedImage.
 int img_CreateFromLoadedImage( LoadedImage* loadedImg, ShaderType shaderType, const char* id );
 

@@ -10,7 +10,7 @@ This opens up the sprite sheet file and loads all the images, putting image ids 
  The returned integers are ids for the images source files.
  Returns the number of images loaded if it was successful, otherwise returns -1.
 */
-int img_LoadSpriteSheet( char* fileName, ShaderType shaderType, int** imgOutArray );
+int img_LoadSpriteSheet( const char* fileName, ShaderType shaderType, int** imgOutArray );
 
 /*
 Cleans up all the images created from img_LoadSpriteSheet( ). The pointer passed in will be invalid after this

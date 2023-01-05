@@ -18,6 +18,7 @@ extern Process gpDebugDrawPointerReponsesProc;
 extern Process gpPosTweenProc;
 extern Process gpScaleTweenProc;
 extern Process gpAlphaTweenProc;
+extern Process gpCollisionProc;
 
 void gp_RegisterProcesses( ECPS* ecps );
 

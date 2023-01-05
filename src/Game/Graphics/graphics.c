@@ -137,7 +137,13 @@ void gfx_SetWindowSize( int windowWidth, int windowHeight )
 	float windowRatio = (float)windowWidth/(float)windowHeight;
 	float renderRatio = (float)renderWidth/(float)renderHeight;
 
-	if( windowRatio < renderRatio ) {
+	if( FLT_EQ( windowRatio, renderRatio ) ) {
+		// if they're equal there's a chance of some precision errors causing issues
+		windowRenderX0 = 0;
+		windowRenderX1 = windowWidth;
+		windowRenderY0 = 0;
+		windowRenderY1 = windowHeight;
+	} else if( windowRatio < renderRatio ) {
 		windowRenderX0 = 0;
 		windowRenderX1 = windowWidth;
 
@@ -238,7 +244,7 @@ void gfx_MakeRenderCalls( float dt, float t )
 	// in game ui stuff
 	//  note: this sets the glViewport, so if the render width and height of the imgui instance doesn't match the
 	//   render width and height used above that will cause issues with the UI and the debug rendering
-	//nk_xu_render( &inGameIMGUI );
+	nk_xu_render( &inGameIMGUI );
 
 	// now draw all the debug stuff over everything
 	debugRenderer_Render( );

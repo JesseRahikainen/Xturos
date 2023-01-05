@@ -7,6 +7,7 @@
 #include "Math/vector2.h"
 #include "Graphics/color.h"
 #include "tween.h"
+#include "collisionDetection.h"
 
 // general use components that are shared between games
 typedef struct {
@@ -59,15 +60,35 @@ typedef struct {
 } GC3x3SpriteData;
 extern ComponentID gc3x3SpriteCompID;
 
+// colliders, we only store the data that isn't be stored elsewhere for the collisions
+//  structured similar to the collider union in the collision detection code, could be
+//  sped up by caching some things, or having a backing Collider array we could use.
 typedef struct {
-	Vector2 halfDim;
-} GCAABBCollisionData;
-extern ComponentID gcAABBCollCompID;
+	enum ColliderType type;
+} GCBaseCollisionData;
 
 typedef struct {
+	GCBaseCollisionData base;
+	Vector2 halfDim;
+} GCAABCollisionData;
+
+typedef struct {
+	GCBaseCollisionData base;
 	float radius;
 } GCCircleCollisionData;
-extern ComponentID gcCircleCollCompID;
+
+typedef struct {
+	GCBaseCollisionData base;
+	Vector2 normal;
+} GCHalfSpaceCollisionData;
+
+typedef union {
+	GCBaseCollisionData base;
+	GCAABCollisionData aab;
+	GCCircleCollisionData circle;
+	GCHalfSpaceCollisionData halfSpace;
+} GCColliderData;
+extern ComponentID gcColliderCompID;
 
 // used for buttons or anything else that should be clickable
 typedef struct {
@@ -127,6 +148,8 @@ typedef struct {
 } GCVec2TweenData;
 extern ComponentID gcPosTweenCompID;
 extern ComponentID gcScaleTweenCompID;
+
+void gc_ColliderDataToCollider( GCColliderData* colliderData, GCPosData* posData, Collider* outCollider );
 
 // attaches the child entity to the parent entity, use the existing positions to calculate the offset
 void gc_MountEntity( ECPS* ecps, EntityID parentID, EntityID childID );

@@ -169,6 +169,7 @@
     <ClInclude Include="..\..\src\Game\Graphics\Platform\OpenGL\glShaderManager.h" />
     <ClInclude Include="..\..\src\Game\Graphics\Platform\OpenGL\graphicsDataTypes_OpenGL.h" />
     <ClInclude Include="..\..\src\Game\Graphics\Platform\triRenderingPlatform.h" />
+    <ClInclude Include="..\..\src\Game\Graphics\spriteAnimation.h" />
     <ClInclude Include="..\..\src\Game\Graphics\sprites.h" />
     <ClInclude Include="..\..\src\Game\Graphics\imageSheets.h" />
     <ClInclude Include="..\..\src\Game\Graphics\triRendering.h" />
@@ -185,6 +186,7 @@
     <ClInclude Include="..\..\src\Game\Math\vector2.h" />
     <ClInclude Include="..\..\src\Game\Math\vector3.h" />
     <ClInclude Include="..\..\src\Game\Others\gl_core.h" />
+    <ClInclude Include="..\..\src\Game\Others\nuklear.h" />
     <ClInclude Include="..\..\src\Game\particles.h" />
     <ClInclude Include="..\..\src\Game\Processes\generalProcesses.h" />
     <ClInclude Include="..\..\src\Game\sound.h" />
@@ -245,6 +247,7 @@
     <ClCompile Include="..\..\src\Game\Graphics\Platform\OpenGL\glShaderManager.c" />
     <ClCompile Include="..\..\src\Game\Graphics\Platform\OpenGL\graphicsPlatform_OpenGL.c" />
     <ClCompile Include="..\..\src\Game\Graphics\Platform\OpenGL\triRenderingPlatform_OpenGL.c" />
+    <ClCompile Include="..\..\src\Game\Graphics\spriteAnimation.c" />
     <ClCompile Include="..\..\src\Game\Graphics\sprites.c" />
     <ClCompile Include="..\..\src\Game\Graphics\imageSheets.c" />
     <ClCompile Include="..\..\src\Game\Graphics\triRendering.c" />
