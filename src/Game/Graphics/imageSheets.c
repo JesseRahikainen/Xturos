@@ -78,7 +78,8 @@ static bool loadSpriteSheetData( const char* fileName, TempSpriteSheetData* outD
 	sb_Push( fileText, 0 );
 
 	const char* delim = "\r\n";
-	char* line = strtok( fileText, delim );
+	char* context = NULL;
+	char* line = SDL_strtokr( fileText, delim, &context );
 	char* fileNameLoc;
 	char* idEndLoc;
 	char* rectStart;
@@ -138,7 +139,7 @@ static bool loadSpriteSheetData( const char* fileName, TempSpriteSheetData* outD
 				break;
 			}
 		}
-		line = strtok( NULL, delim );
+		line = SDL_strtokr( NULL, delim, &context );
 	}
 
 	ret = true;
