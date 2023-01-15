@@ -106,20 +106,20 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
     <IncludePath>$(ProjectDir)..\..\libraries\stb-master;$(IncludePath)</IncludePath>
-    <OutDir>$(SolutionDir)\..\..\tools\</OutDir>
+    <OutDir>$(SolutionDir)\..\..\tools\$(PlatformShortName)_$(Configuration)\</OutDir>
     <IntDir>SpriteSheetGenerator\$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DebugRelease|Win32'">
     <LinkIncremental>false</LinkIncremental>
     <IncludePath>$(ProjectDir)..\..\libraries\stb-master;$(IncludePath)</IncludePath>
-    <OutDir>$(SolutionDir)\..\..\tools\</OutDir>
+    <OutDir>$(SolutionDir)\..\..\tools\$(PlatformShortName)_$(Configuration)\</OutDir>
     <IntDir>SpriteSheetGenerator\$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
     <IncludePath>$(ProjectDir)..\..\libraries\stb-master;$(IncludePath)</IncludePath>
-    <OutDir>$(SolutionDir)\..\..\tools\</OutDir>
-    <TargetName>$(ProjectName)-dbg</TargetName>
+    <OutDir>$(SolutionDir)\..\..\tools\$(PlatformShortName)_$(Configuration)\</OutDir>
+    <TargetName>$(ProjectName)</TargetName>
     <IntDir>SpriteSheetGenerator\$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">

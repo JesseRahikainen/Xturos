@@ -16,7 +16,8 @@
 x64/
 build/
 bld/
-bin/win32
+bin/x86*
+bin/x64*
 [Oo]bj/
 proj/android/bin/
 tools/

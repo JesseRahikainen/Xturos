@@ -2,9 +2,9 @@
 #include <math.h>
 #include <stddef.h>
 
-#include "../Utils/stretchyBuffer.h"
-#include "../System/jobQueue.h"
-#include "../System/random.h"
+#include "Utils/stretchyBuffer.h"
+#include "System/jobQueue.h"
+#include "System/random.h"
 
 // Implementation of the Monte Carlo Search Tree algorithm
 //  Before inclusion of this file you'll need to #define a few things:

@@ -1,5 +1,4 @@
 NUKLEAR_DIR = F:/Data/Libraries/nuklear-master
-SPINE_DIR = F:/Data/Libraries/spine-runtimes-master/spine-c
 STB_DIR = F:/Data/Libraries/stb-master
 
 CSRC = $(wildcard ../../src/Game/*.c) \
@@ -15,8 +14,7 @@ CSRC = $(wildcard ../../src/Game/*.c) \
 	   $(wildcard ../../src/Game/Utils/*.c) \
 	   $(wildcard ../../src/Game/Components/*.c) \
 	   $(wildcard ../../src/Game/Processes/*.c) \
-	   $(wildcard ../../src/Game/Game/*.c) \
-	   $(wildcard $(SPINE_DIR)/src/spine/*.c)
+	   $(wildcard ../../src/Game/Game/*.c)
 
 OBJS = $(CSRC:.c=.o)
 
@@ -29,7 +27,6 @@ CFLAGS = -s WASM=1 \
 		 -s ALLOW_MEMORY_GROWTH=1 \
 		 -I$(NUKLEAR_DIR) \
 		 -I$(STB_DIR) \
-		 -I$(SPINE_DIR)/include \
 		 -I../../src/Game \
 		 --emrun \
 		 --preload-file ../../bin/data@/ \

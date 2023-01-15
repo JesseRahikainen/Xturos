@@ -710,9 +710,9 @@ int main( int argc, char** argv )
 	//gsm_EnterState( &globalFSM, &testPointerResponseScreenState );
 	//gsm_EnterState( &globalFSM, &testSteeringScreenState );
 	//gsm_EnterState( &globalFSM, &bordersTestScreenState );
-	gsm_EnterState( &globalFSM, &hexTestScreenState );
+	//gsm_EnterState( &globalFSM, &hexTestScreenState );
 	//gsm_EnterState( &globalFSM, &testBloomScreenState );
-	//gsm_EnterState( &globalFSM, &gameOfUrScreenState );
+	gsm_EnterState( &globalFSM, &gameOfUrScreenState );
 
 #if defined( __EMSCRIPTEN__ )
 	emscripten_set_main_loop_arg( mainLoop, NULL, -1, 1 );

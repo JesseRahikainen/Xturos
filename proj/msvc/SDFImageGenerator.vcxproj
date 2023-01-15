@@ -99,8 +99,8 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <OutDir>$(SolutionDir)\..\..\tools\</OutDir>
-    <TargetName>$(ProjectName)-dbg</TargetName>
+    <OutDir>$(SolutionDir)\..\..\tools\$(PlatformShortName)_$(Configuration)\</OutDir>
+    <TargetName>$(ProjectName)</TargetName>
     <IncludePath>$(ProjectDir)..\..\libraries\stb-master;$(IncludePath)</IncludePath>
     <IntDir>SDFImageGenerator\$(Configuration)\</IntDir>
   </PropertyGroup>
@@ -111,13 +111,13 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <OutDir>$(SolutionDir)\..\..\tools\</OutDir>
+    <OutDir>$(SolutionDir)\..\..\tools\$(PlatformShortName)_$(Configuration)\</OutDir>
     <IncludePath>$(ProjectDir)..\..\libraries\stb-master;$(IncludePath)</IncludePath>
     <IntDir>SDFImageGenerator\$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DebugRelease|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <OutDir>$(SolutionDir)\..\..\tools\</OutDir>
+    <OutDir>$(SolutionDir)\..\..\tools\$(PlatformShortName)_$(Configuration)\</OutDir>
     <IncludePath>$(ProjectDir)..\..\libraries\stb-master;$(IncludePath)</IncludePath>
     <IntDir>SDFImageGenerator\$(Configuration)\</IntDir>
   </PropertyGroup>

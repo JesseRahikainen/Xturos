@@ -1,5 +1,7 @@
 #include "testJobQueueScreen.h"
 
+#include <stdbool.h>
+
 #include "Graphics/graphics.h"
 #include "Graphics/images.h"
 #include "Graphics/camera.h"
@@ -24,6 +26,13 @@ static int testImg;
 static int testFont;
 
 static int testSound;
+
+// baseic producer/consumer setup to allow
+static bool prodConsActive = false;
+static SDL_mutex* bufferLock = NULL;
+static SDL_cond* canProduce = NULL;
+static SDL_cond* canConsume = NULL;
+static int buffer = -1;
 
 static void delayedLoadTest( void* data )
 {
@@ -59,7 +68,7 @@ static void testJobTwo( void* data )
 	for( int i = 0; i < 10; ++i ) {
 		// NOTE: SDL logging is NOT thread safe, so this might cause a crash
 		printf( "Fast Job %i\n", i );
-		SDL_Delay( 500 ); // wait one second
+		SDL_Delay( 500 ); // wait half a second
 	}
 }
 
@@ -122,6 +131,59 @@ static void testSoundPlay( int btnID )
 	}
 }
 
+static void testProducer( void* data )
+{
+	printf( "Producer started\n" );
+
+	for( int i = 0; i < 100; ++i ) {
+		SDL_Delay( rand( ) % 1000 );
+
+		SDL_LockMutex( bufferLock ); {
+			if( buffer != -1 ) {
+				printf( "Producer encountered full buffer, waiting for consumer to empty it.\n" );
+				SDL_CondWait( canProduce, bufferLock );
+			}
+
+			buffer = rand( ) % 255;
+			printf( "Produced %i\n", buffer );
+		} SDL_UnlockMutex( bufferLock );
+		SDL_CondSignal( canConsume );
+	}
+
+	printf( "Producer done.\n" );
+}
+
+static void testConsumer( void* data )
+{
+	printf( "Consumer started\n" );
+
+	for( int i = 0; i < 100; ++i ) {
+		SDL_Delay( rand( ) % 1000 );
+
+		SDL_LockMutex( bufferLock ); {
+			if( buffer == -1 ) {
+				printf( "Consumer encountered empty buffer, waiting for producer to fill it.\n" );
+				SDL_CondWait( canConsume, bufferLock );
+			}
+
+			printf( "Consumed %i\n", buffer );
+			buffer = -1;
+		} SDL_UnlockMutex( bufferLock );
+		SDL_CondSignal( canProduce );
+	}
+
+	printf( "Consumer done.\n" );
+}
+
+static void testProduceConsumer( int btnID )
+{
+	if( prodConsActive ) return;
+
+	prodConsActive = true;
+	jq_AddJob( testProducer, NULL );
+	jq_AddJob( testConsumer, NULL );
+}
+
 static int testJobQueueScreen_Enter( void )
 {
 	//testImg = img_Load( "Images/tile.png", ST_DEFAULT );
@@ -129,11 +191,18 @@ static int testJobQueueScreen_Enter( void )
 	testFont = -1;
 	testSound = -1;
 
+	bufferLock = SDL_CreateMutex( );
+	canProduce = SDL_CreateCond( );
+	canConsume = SDL_CreateCond( );
+	prodConsActive = false;
+
+
+
 	cam_TurnOnFlags( 0, 1 );
 	
 	gfx_SetClearColor( CLR_BLACK );
 
-	jq_Initialize( 1 );
+	jq_Initialize( 8 );
 
 	btn_RegisterSystem( );
 
@@ -164,6 +233,9 @@ static int testJobQueueScreen_Enter( void )
 	btn_Create( vec2( 50.0f, 150.0f ), vec2( 50.0f, 50.0f ), vec2( 60.0f, 60.0f ), "Test Snd\nPlay",
 		font, 12.0f, CLR_WHITE, VEC2_ZERO, NULL, whiteImg, CLR_BLUE, 1, 0 , testSoundPlay, NULL );
 
+	btn_Create( vec2( 150.0f, 150.0f ), vec2( 50.0f, 50.0f ), vec2( 60.0f, 60.0f ), "Test\nProd/Cons",
+		font, 12.0f, CLR_WHITE, VEC2_ZERO, NULL, whiteImg, CLR_BLUE, 1, 0, testProduceConsumer, NULL );
+
 	return 1;
 }
 
@@ -187,7 +259,9 @@ static void testJobQueueScreen_Process( void )
 
 static void testJobQueueScreen_Draw( void )
 {
-	img_CreateDraw( testImg, 1, vec2( 400.0f, 400.0f ), vec2( 400.0f, 400.0f ), 0 );
+	if( img_IsValidImage( testImg ) ) {
+		img_CreateDraw( testImg, 1, vec2( 400.0f, 400.0f ), vec2( 400.0f, 400.0f ), 0 );
+	}
 
 //#error the string is being displayed all garbled
 	//const char* testString = "Testing some string stuff.\nSeeing if it works.";

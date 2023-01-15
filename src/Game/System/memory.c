@@ -47,7 +47,6 @@ jump for the delete. Just need to align the size of the header.
 //#define TEST_CLEAR_VALUES
 //#define LOG_MEMORY_ALLOCATIONS
 //#define TEST_EVERY_CHANGE
-//#define TEST_LOCKING
 
 typedef struct MemoryBlockHeader {
 	uint32_t guardValue;
@@ -79,33 +78,28 @@ typedef struct {
 
 	void* watchedAddress;
 	MemoryBlockHeader* watchedHeader;
-
-#ifdef TEST_LOCKING
-	bool isLocked;
-#endif
 } MemoryArena;
 
-static MemoryArena memoryBlock;
+static MemoryArena memoryBlock = { NULL, NULL, NULL, NULL };
 
+#include <stdio.h>
 #ifdef THREAD_SUPPORT
 static void lockMemoryMutex( void )
 {
-	SDL_LockMutex( memoryBlock.mutex );
-#ifdef TEST_LOCKING
-	memoryBlock.isLocked = true;
-#endif
+	if( SDL_LockMutex( memoryBlock.mutex ) < 0 ) {
+		printf( "Error locking memory mutex: %s\n", SDL_GetError( ) );
+	}
 }
 
 static void unlockMemoryMutex( void )
 {
-	SDL_UnlockMutex( memoryBlock.mutex );
-#ifdef TEST_LOCKING
-	memoryBlock.isLocked = false;
-#endif
+	if( SDL_UnlockMutex( memoryBlock.mutex ) < 0 ) {
+		printf( "Error unlocking memory mutex: %s\n", SDL_GetError( ) );
+	}
 }
 #else
 static void lockMemoryMutex( void ) { }
-static void SDL_UnlockMutex( void ) { }
+static void unlockMemoryMutex( void ) { }
 #endif
 
 static void* watchedAddress = NULL;
@@ -611,6 +605,10 @@ void mem_GetReportValues( size_t* totalOut, size_t* inUseOut, size_t* overheadOu
 
 void* mem_Allocate_Data( size_t size, const char* fileName, const int line )
 {
+	// if the size is 0 malloc can return NULL or an unusable pointer, NULL works better for us as
+	//  it avoids littering the memory with zero sized headers
+	if( size == 0 ) return NULL;
+
 	uint8_t* result = NULL;
 
 	lockMemoryMutex( ); {
@@ -618,12 +616,6 @@ void* mem_Allocate_Data( size_t size, const char* fileName, const int line )
 		internal_verify( );
 #endif
 		assert( memoryBlock.memory != NULL );
-
-		// if the size is 0 malloc can return NULL or an unusable pointer, NULL works better for us as
-		//  it avoids littering the memory with zero sized headers
-		if( size == 0 ) {
-			return NULL;
-		}
 
 		size = ALIGN_SIZE( size );
 
@@ -682,35 +674,35 @@ void* mem_Resize_Data( void* memory, size_t newSize, const char* fileName, const
 
 		if( newSize == 0 ) {
 			internal_release_Data( memory, fileName, line );
-			return NULL;
-		}
-
-		newSize = ALIGN_SIZE( newSize );
-
-		// two cases, when we want more and when we want less
-		// we'll see if there's enough memory in the next block, if there is then just
-		//  expand this block, otherwise find a space to fit it
-		// if we can't find a space then we'll return NULL, but won't deallocate the old
-		//  memory
-		// or we could just assert
-		if( memory != NULL ) {
-			MemoryBlockHeader* header = (MemoryBlockHeader*)( (uintptr_t)memory - MEMORY_HEADER_SIZE );
-			if( newSize > header->size ) {
-				result = growBlock( header, newSize, fileName, line );
-			} else if( newSize < header->size ) {
-				result = shrinkBlock( header, newSize, fileName, line );
-			}
+			result = NULL;
 		} else {
-			result = mem_Allocate_Data( newSize, fileName, line );
-		}
+
+			newSize = ALIGN_SIZE( newSize );
+
+			// two cases, when we want more and when we want less
+			// we'll see if there's enough memory in the next block, if there is then just
+			//  expand this block, otherwise find a space to fit it
+			// if we can't find a space then we'll return NULL, but won't deallocate the old
+			//  memory
+			// or we could just assert
+			if( memory != NULL ) {
+				MemoryBlockHeader* header = (MemoryBlockHeader*)( (uintptr_t)memory - MEMORY_HEADER_SIZE );
+				if( newSize > header->size ) {
+					result = growBlock( header, newSize, fileName, line );
+				} else if( newSize < header->size ) {
+					result = shrinkBlock( header, newSize, fileName, line );
+				}
+			} else {
+				result = mem_Allocate_Data( newSize, fileName, line );
+			}
 
 #ifdef TEST_EVERY_CHANGE
-		mem_Verify( );
+			mem_Verify( );
 #endif
-		assert( result != NULL );
+			assert( result != NULL );
 
-		logWatchedMemoryAddressChange( (MemoryBlockHeader*)( (uintptr_t)result - MEMORY_HEADER_SIZE ), "mem_Resize_Data", NULL );
-
+			logWatchedMemoryAddressChange( (MemoryBlockHeader*)( (uintptr_t)result - MEMORY_HEADER_SIZE ), "mem_Resize_Data", NULL );
+		}
 	} unlockMemoryMutex( );
 
 	return result;
