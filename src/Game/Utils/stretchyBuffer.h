@@ -50,7 +50,7 @@
 // returns the amount of total space reserved for the buffer
 #define sb_Reserved( ptr ) ( (ptr) ? sb__Total( (ptr) ) : 0 )
 
-static void* sb__GrowData( void* p, int increment, size_t itemSize, const char* fileName, const int fileLine )
+static void* sb__GrowData( void* p, size_t increment, size_t itemSize, const char* fileName, const int fileLine )
 {
 	size_t currSize = p ? sb__Total( p ) : 0;
 	size_t currBased = currSize + ( currSize / 2 ); // 1.5 * current

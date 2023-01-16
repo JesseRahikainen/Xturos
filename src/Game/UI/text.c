@@ -63,7 +63,7 @@ typedef struct {
 	Glyph* glyphsBuffer;
 	int packageID;
 
-	int missingCharGlyphIdx;
+	size_t missingCharGlyphIdx;
 
 	float descent;
 	float lineGap;
@@ -106,15 +106,15 @@ int txt_Init( void )
 void txt_AddCharacterToLoad( int c )
 {
 	// check to see if the character already exists
-	int cnt = sb_Count( fontPackRange.array_of_unicode_codepoints );
-	for( int i = 0; i < cnt; ++i ) {
+	size_t cnt = sb_Count( fontPackRange.array_of_unicode_codepoints );
+	for( size_t i = 0; i < cnt; ++i ) {
 		if( fontPackRange.array_of_unicode_codepoints[i] == c ) {
 			return;
 		}
 	}
 
 	sb_Push( fontPackRange.array_of_unicode_codepoints, c );
-	fontPackRange.num_chars = sb_Count( fontPackRange.array_of_unicode_codepoints );
+	fontPackRange.num_chars = (int)sb_Count( fontPackRange.array_of_unicode_codepoints );
 }
 
 int findUnusedFontID( void )
@@ -552,9 +552,9 @@ Glyph* getCodepointGlyph( int fontID, int codepoint )
 {
 	Font* font = &( fonts[fontID] );
 	Glyph* out = NULL;
-	int glyphCount = sb_Count( font->glyphsBuffer );
+	size_t glyphCount = sb_Count( font->glyphsBuffer );
 	// TODO: Make this faster
-	for( int i = 0; i < glyphCount; ++i ) {
+	for( size_t i = 0; i < glyphCount; ++i ) {
 		if( font->glyphsBuffer[i].codepoint == codepoint ) {
 			return &( font->glyphsBuffer[i] );
 		}

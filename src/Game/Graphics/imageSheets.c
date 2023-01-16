@@ -68,10 +68,10 @@ static bool loadSpriteSheetData( const char* fileName, TempSpriteSheetData* outD
 	ReadState currentState = RS_VERSION;
 
 	// first read in the text from the file, should never be too large
-	int readAmt;
+	size_t readAmt;
 	while( ( readAmt = SDL_RWread( rwopsFile, (void*)buffer, sizeof( char ), ( sizeof( buffer ) / sizeof( buffer[0] ) ) ) ) != 0 ) {
 		char* c = sb_Add( fileText, readAmt );
-		for( int i = 0; i < readAmt; ++i ) {
+		for( size_t i = 0; i < readAmt; ++i ) {
 			*c++ = buffer[i];
 		}
 	}
@@ -208,8 +208,8 @@ Cleans up all the images created from img_LoadSpriteSheet( ). The pointer passed
 void img_UnloadSpriteSheet( int* imgArray )
 {
 	// free all the images
-	int length = sb_Count( imgArray );
-	for( int i = 0; i < length; ++i ) {
+	size_t length = sb_Count( imgArray );
+	for( size_t i = 0; i < length; ++i ) {
 		img_Clean( imgArray[i] );
 	}
 

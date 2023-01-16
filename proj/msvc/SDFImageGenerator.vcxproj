@@ -102,34 +102,37 @@
     <OutDir>$(SolutionDir)\..\..\tools\$(PlatformShortName)_$(Configuration)\</OutDir>
     <TargetName>$(ProjectName)</TargetName>
     <IncludePath>$(ProjectDir)..\..\libraries\stb-master;$(IncludePath)</IncludePath>
-    <IntDir>SDFImageGenerator\$(Configuration)\</IntDir>
+    <IntDir>SDFImageGenerator\$(PlatformShortName)_$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IntDir>SDFImageGenerator\$(Platform)\$(Configuration)\</IntDir>
-    <OutDir>$(SolutionDir)\..\..\tools\</OutDir>
+    <IntDir>SDFImageGenerator\$(PlatformShortName)_$(Configuration)\</IntDir>
+    <OutDir>$(SolutionDir)\..\..\tools\$(PlatformShortName)_$(Configuration)\</OutDir>
+    <IncludePath>$(ProjectDir)..\..\libraries\stb-master;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
     <OutDir>$(SolutionDir)\..\..\tools\$(PlatformShortName)_$(Configuration)\</OutDir>
     <IncludePath>$(ProjectDir)..\..\libraries\stb-master;$(IncludePath)</IncludePath>
-    <IntDir>SDFImageGenerator\$(Configuration)\</IntDir>
+    <IntDir>SDFImageGenerator\$(PlatformShortName)_$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DebugRelease|Win32'">
     <LinkIncremental>false</LinkIncremental>
     <OutDir>$(SolutionDir)\..\..\tools\$(PlatformShortName)_$(Configuration)\</OutDir>
     <IncludePath>$(ProjectDir)..\..\libraries\stb-master;$(IncludePath)</IncludePath>
-    <IntDir>SDFImageGenerator\$(Configuration)\</IntDir>
+    <IntDir>SDFImageGenerator\$(PlatformShortName)_$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <IntDir>SDFImageGenerator\$(Platform)\$(Configuration)\</IntDir>
-    <OutDir>$(SolutionDir)\..\..\tools\</OutDir>
+    <IntDir>SDFImageGenerator\$(PlatformShortName)_$(Configuration)\</IntDir>
+    <OutDir>$(SolutionDir)\..\..\tools\$(PlatformShortName)_$(Configuration)\</OutDir>
+    <IncludePath>$(ProjectDir)..\..\libraries\stb-master;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <IntDir>SDFImageGenerator\$(Platform)\$(Configuration)\</IntDir>
-    <OutDir>$(SolutionDir)\..\..\tools\</OutDir>
+    <IntDir>SDFImageGenerator\$(PlatformShortName)_$(Configuration)\</IntDir>
+    <OutDir>$(SolutionDir)\..\..\tools\$(PlatformShortName)_$(Configuration)\</OutDir>
+    <IncludePath>$(ProjectDir)..\..\libraries\stb-master;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -224,6 +227,9 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugRelease|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="..\..\src\SDFImageGenerator\sdfImageGenerator.c" />
   </ItemGroup>

@@ -107,8 +107,8 @@ int cfg_SaveFile( void* cfgFile )
 	char strVal[32];
 
 	int writeNewLine = 0;
-	int count = sb_Count( file->sbAttributes );
-	for( int i = 0; i < count; ++i ) {
+	size_t count = sb_Count( file->sbAttributes );
+	for( size_t i = 0; i < count; ++i ) {
 		char* c = NULL;
 		if( writeNewLine ) {
 			c = sb_Add( outBuffer, 1 );

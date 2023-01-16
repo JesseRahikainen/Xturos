@@ -103,7 +103,6 @@ static bool createProcessVA( ECPS* ecps,
 static void modifyEntityDirectoryEntry( ECPS* ecps, EntityID entityID, int32_t packedArrayIdx, size_t offset )
 {
 	size_t idx = (size_t)idSet_GetIndex( entityID );
-	int cnt = sb_Count( ecps->componentData.sbEntityDirectory );
 
 	// grow if necessary
 	while( idx >= sb_Count( ecps->componentData.sbEntityDirectory ) ) {
@@ -179,7 +178,7 @@ static uint32_t createNewPackagedArray( ECPS* ecps,  const ComponentBitFlags* fl
 	newArray.firstAlign = 0;
 	for( size_t i = 0; i < MAX_NUM_COMPONENT_TYPES; ++i ) {
 		// all packaged arrays need the component id
-		if( ( i < cnt ) && ( ( i == sharedComponent_ID ) || ecps_cbf_IsFlagOn( flags, i ) ) ) {
+		if( ( i < cnt ) && ( ( i == sharedComponent_ID ) || ecps_cbf_IsFlagOn( flags, (uint32_t)i ) ) ) {
 			size_t align = ecps_ct_GetComponentTypeAlign( &( ecps->componentTypes ), i );
 
 			// check to see if currentOffset is aligned correctly, if it isn't then add some packing
@@ -190,7 +189,8 @@ static uint32_t createNewPackagedArray( ECPS* ecps,  const ComponentBitFlags* fl
 				}
 			}
 
-			newArray.structure.entries[i].offset = currentOffset;
+			assert( currentOffset <= INT32_MAX );
+			newArray.structure.entries[i].offset = (int32_t)currentOffset;
 			currentOffset += ecps_ct_GetComponentTypeSize( &( ecps->componentTypes ), i );
 
 			// get the alignment we'll need for the first component
@@ -217,7 +217,9 @@ static uint32_t createNewPackagedArray( ECPS* ecps,  const ComponentBitFlags* fl
 	// add the matching packaged component array
 	sb_Push( ecps->componentData.sbComponentArrays, newArray );
 
-	return sb_Count( ecps->componentData.sbComponentArrays ) - 1;
+	size_t paIdx = sb_Count( ecps->componentData.sbComponentArrays ) - 1;
+	assert( paIdx <= UINT32_MAX );
+	return (uint32_t)paIdx;
 }
 
 // finds the index for the packaged array that contains the set component bits
@@ -510,6 +512,8 @@ static void createEntityVA( ECPS* ecps, EntityID entityID, size_t numComponents,
 
 static void pushCreateCommand( ECPS* ecps, EntityID entityID, size_t numComponents, va_list va )
 {
+	assert( numComponents <= UINT32_MAX );
+
 	va_list list;
 
 	// first gather how much memory we'll need to allocate, should be slightly faster to do a 
@@ -533,7 +537,7 @@ static void pushCreateCommand( ECPS* ecps, EntityID entityID, size_t numComponen
 	CreateEntityCommand cmd;
 	cmd.cmd = CMD_CREATE_ENTITY;
 	cmd.id = entityID;
-	cmd.numComps = numComponents;
+	cmd.numComps = (uint32_t)numComponents;
 	memcpy( currMem, &cmd, sizeof( CreateEntityCommand ) );
 	currMem += sizeof( CreateEntityCommand );
 

@@ -366,7 +366,7 @@ static void mcts_RollOut( MCTSGameDefinition* gameDefinition, MCTS_BOARD_STATE* 
 		sb_Clear( sbRolloutMoves );
 		gameDefinition->getPossibleMoveList( &currState, &sbRolloutMoves );
 		assert( sb_Count( sbRolloutMoves ) > 0 );
-		gameDefinition->applyMove( &currState, &( sbRolloutMoves[rand_GetRangeS32( &mctsRandom, 0, sb_Count( sbRolloutMoves ) )] ), &nextState );
+		gameDefinition->applyMove( &currState, &( sbRolloutMoves[rand_GetArrayEntry( &mctsRandom, sb_Count( sbRolloutMoves ) )] ), &nextState );
 		currState = nextState;
 		winner = gameDefinition->getWinner( &currState );
 		++depth;
@@ -385,7 +385,7 @@ static void mcts_RollOut( MCTSGameDefinition* gameDefinition, MCTS_BOARD_STATE* 
 }
 
 // Go up the tree propagating the score
-static void mcts_BackPropagate( MCTree* tree, int idx, int playerIdx, float score )
+static void mcts_BackPropagate( MCTree* tree, size_t idx, int playerIdx, float score )
 {
 	assert( tree != NULL );
 

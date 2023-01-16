@@ -25,7 +25,7 @@ struct Shader
 static char shaderContents[MAX_SHADER_SIZE + 1];
 
 static struct Shader* shaders;
-static int numShaders;
+static size_t numShaders;
 
 static int isValidShader( int shaderIdx, struct Shader* shaderList )
 {
@@ -150,7 +150,7 @@ static struct Shader loadShader( const ShaderDefinition* definition )
 }
 
 // Returns the shader program id, as usual for these a value of 0 means it was unsuccessful
-static GLuint createShaderProgram( const ShaderProgramDefinition* def, int logIdx )
+static GLuint createShaderProgram( const ShaderProgramDefinition* def, size_t logIdx )
 {
 	int anyMatch;
 	GLuint programID;
@@ -238,7 +238,7 @@ size_t shaders_Load( const ShaderDefinition* shaderDefs, size_t numShaderDefs,
 {
 	llog( LOG_VERBOSE, "Loading shaders - definitions: %u  programs: %u", numShaderDefs, numShaderPrograms );
 	size_t numSuccessful = 0;
-	size_t i;
+	int i;
 
 	// zero out, this also sets all the programs to invalid
 	memset( shaderPrograms, 0, sizeof(GLuint) * numShaderPrograms );

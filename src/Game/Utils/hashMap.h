@@ -35,12 +35,12 @@ typedef struct {
 	size_t capacity; // number of spots available
 	HashMapKey* keys;
 	int* values;
-	uint32_t probeLimit;
+	size_t probeLimit;
 	HashFunc hashFunc;
 } HashMap;
 
 // if hashFunc == NULL will use a default function
-void hashMap_Init( HashMap* hashMap, uint32_t estimatedSize, HashFunc hashFunc );
+void hashMap_Init( HashMap* hashMap, size_t estimatedSize, HashFunc hashFunc );
 
 // if the value already exists it will replace it, otherwise it will add it
 void hashMap_Set( HashMap* hashMap, const char* key, int value );

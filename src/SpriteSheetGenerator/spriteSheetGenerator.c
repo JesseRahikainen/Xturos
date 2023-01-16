@@ -1,3 +1,6 @@
+// Microsoft's *_s methods aren't portable, so we disable the warnings about them.
+#define _CRT_SECURE_NO_WARNINGS
+
 #include <stdio.h>
 #include <Windows.h>
 #include <stdbool.h>
@@ -57,6 +60,8 @@ char* getFileName( char* filePath )
 
 void addFile( char* filePath )
 {
+	assert( sb_Count( sbSpriteInfos ) <= INT_MAX );
+
 	// get just the file name without the path included
 	SpriteInfo newSpriteInfo;
 	
@@ -77,7 +82,7 @@ void addFile( char* filePath )
 	stbrp_rect newRect;
 	newRect.w = w + paddingX;
 	newRect.h = h + paddingY;
-	newRect.id = sb_Count( sbSpriteInfos );
+	newRect.id = (int)sb_Count( sbSpriteInfos );
 	newRect.was_packed = 0;
 
 	sb_Push( sbRects, newRect );
@@ -197,6 +202,7 @@ int main( int argc, char** argv )
 
 	// for the starting size we'll find the largest along each dimension and choose the
 	//  next highest power of 2
+	assert( sb_Count( sbRects ) <= INT_MAX );
 	int maxW = -1;
 	int maxH = -1;
 	for( size_t i = 0; i < sb_Count( sbRects ); ++i ) {
@@ -223,8 +229,10 @@ int main( int argc, char** argv )
 		sb_Clear( sbNodes );
 		sb_Add( sbNodes, width );
 
-		stbrp_init_target( &rpContext, width, height, sbNodes, sb_Count( sbNodes ) );
-		success = stbrp_pack_rects( &rpContext, sbRects, sb_Count( sbRects ) );
+		assert( sb_Count( sbNodes ) <= INT_MAX );
+
+		stbrp_init_target( &rpContext, width, height, sbNodes, (int)sb_Count( sbNodes ) );
+		success = stbrp_pack_rects( &rpContext, sbRects, (int)sb_Count( sbRects ) );
 
 		if( !success ) {
 			if( width < height ) {

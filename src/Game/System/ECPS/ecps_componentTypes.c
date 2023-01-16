@@ -30,7 +30,7 @@ ComponentID ecps_ct_AddType( ComponentTypeCollection* ctc, const char* name, siz
 		newType.name[sizeof( newType.name ) - 1] = 0;
 	}
 
-	uint32_t id = sb_Count( ctc->sbTypes );
+	ComponentID id = (ComponentID)sb_Count( ctc->sbTypes );
 	sb_Push( ctc->sbTypes, newType );
 
 	return id;

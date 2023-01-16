@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.29613.14
+# Visual Studio Version 17
+VisualStudioVersion = 17.4.33213.308
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Xturos", "Xturos.vcxproj", "{52003A75-2AD7-44C0-B8FC-08605C0E25E5}"
 EndProject
@@ -21,7 +21,8 @@ Global
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{52003A75-2AD7-44C0-B8FC-08605C0E25E5}.Debug|Win32.ActiveCfg = Debug|Win32
 		{52003A75-2AD7-44C0-B8FC-08605C0E25E5}.Debug|Win32.Build.0 = Debug|Win32
-		{52003A75-2AD7-44C0-B8FC-08605C0E25E5}.Debug|x64.ActiveCfg = Debug|Win32
+		{52003A75-2AD7-44C0-B8FC-08605C0E25E5}.Debug|x64.ActiveCfg = Debug|x64
+		{52003A75-2AD7-44C0-B8FC-08605C0E25E5}.Debug|x64.Build.0 = Debug|x64
 		{52003A75-2AD7-44C0-B8FC-08605C0E25E5}.DebugRelease|Win32.ActiveCfg = DebugRelease|Win32
 		{52003A75-2AD7-44C0-B8FC-08605C0E25E5}.DebugRelease|Win32.Build.0 = DebugRelease|Win32
 		{52003A75-2AD7-44C0-B8FC-08605C0E25E5}.DebugRelease|x64.ActiveCfg = DebugRelease|Win32

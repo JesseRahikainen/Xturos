@@ -21,6 +21,9 @@ bin/x64*
 [Oo]bj/
 proj/android/bin/
 tools/
+Game/
+SDFImageGenerator/
+SpriteSheetGenerator/
 
 # Roslyn cache directories
 *.ide/

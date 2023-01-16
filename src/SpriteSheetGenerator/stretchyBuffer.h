@@ -52,14 +52,13 @@
 // returns the amount of total space reserved for the buffer
 #define sb_Reserved( ptr ) ( (ptr) ? sb__Total( (ptr) ) : 0 )
 
-static void* sb__GrowData( void* p, int increment, size_t itemSize, const char* fileName, const int fileLine )
+static void* sb__GrowData( void* p, size_t increment, size_t itemSize, const char* fileName, const int fileLine )
 {
-	int currSize = p ? sb__Total( p ) : 0;
-	int currBased = currSize + ( currSize / 2 ); // 1.5 * current
-	int min = currSize + increment;
-	int newCount = ( min > currBased ) ? min : currBased;
-	int* np = (int*)realloc( p ? (void*)( sb__Raw( p ) ) : NULL, ( newCount * itemSize ) + ( sizeof( int ) * 2 ) );
-	//int* np = mem_Resize( p ? (void*)( sb__Raw(p) ) : NULL, ( newCount * itemSize ) + ( sizeof( int) * 2 ) );
+	size_t currSize = p ? sb__Total( p ) : 0;
+	size_t currBased = currSize + ( currSize / 2 ); // 1.5 * current
+	size_t min = currSize + increment;
+	size_t newCount = ( min > currBased ) ? min : currBased;
+	size_t* np = (size_t*)realloc( p ? (void*)( sb__Raw( p ) ) : NULL, ( newCount * itemSize ) + ( sizeof( size_t ) * 2 ) );
 	if( np != NULL ) {
 		if( p == NULL ) {
 			np[1] = 0;

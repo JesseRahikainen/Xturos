@@ -57,7 +57,7 @@ typedef union {
 typedef struct {
 	Collider* firstCollider;
 	size_t stride;
-	int count;
+	size_t count;
 } ColliderCollection;
 
 typedef void(*CollisionResponse)( int firstColliderIdx, int secondColliderIdx, Vector2 separation );

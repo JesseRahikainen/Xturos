@@ -27,19 +27,19 @@ static uint32_t hashFunc_DJB2( const char* str )
 	return hash;
 }
 
-static bool isPowerOfTwoU32( uint32_t val )
+static bool isPowerOfTwoU32( size_t val )
 {
 	return ( ( val == 1 ) || ( ( val & ( val - 1 ) ) == 0 ) );
 }
 
 // we're assuming denom is a power of two
-static uint32_t powerTwoModulus( uint32_t num, uint32_t denom )
+static size_t powerTwoModulus( size_t num, size_t denom )
 {
 	assert( isPowerOfTwoU32( denom ) );
 	return ( num & ( denom - 1 ) );
 }
 
-static uint32_t chooseCapacity( uint32_t baseSize )
+static size_t chooseCapacity( size_t baseSize )
 {
 	size_t size = baseSize - 1;
 	size = size | ( size >> 1 );
@@ -52,14 +52,14 @@ static uint32_t chooseCapacity( uint32_t baseSize )
 }
 
 // wraps the modulus function, so it doesn't have to be in the hash function
-static uint32_t hash( HashMap* hashMap, const char* key )
+static size_t hash( HashMap* hashMap, const char* key )
 {
 	return powerTwoModulus( hashMap->hashFunc( key ), hashMap->capacity );
 }
 
 #define NEXT_IDX( hm, curr ) ( ( ( (curr) + 1 ) >= ( (hm)->capacity ) ) ? 0 : ( (curr) + 1 ) )
 
-void hashMap_Init( HashMap* hashMap, uint32_t estimatedSize, HashFunc hashFunc )
+void hashMap_Init( HashMap* hashMap, size_t estimatedSize, HashFunc hashFunc )
 {
 	//hashMap->hashFunc = hashFunc_Test;
 	hashMap->keys = NULL;
@@ -91,7 +91,7 @@ void hashMap_Init( HashMap* hashMap, uint32_t estimatedSize, HashFunc hashFunc )
 	hashMap->probeLimit = (size_t)( SDL_log( (double)hashMap->capacity ) * 1.4426950408889634 );
 }
 
-static void resize( HashMap* hashMap, uint32_t newSize )
+static void resize( HashMap* hashMap, size_t newSize )
 {
 	// allocate new list and move data
 	HashMap newHashMap;
@@ -113,15 +113,15 @@ static void resize( HashMap* hashMap, uint32_t newSize )
 	(*hashMap) = newHashMap;
 }
 
-static bool matches( HashMap* hashMap, const char* key, int idx, uint8_t currLength )
+static bool matches( HashMap* hashMap, const char* key, size_t idx, uint8_t currLength )
 {
 	return ( ( hashMap->keys[idx].probeLength == currLength ) && ( strcmp( key, hashMap->keys[idx].key ) == 0 ) );
 }
 
 // returns whether the key was found, if it was outIdx will contain the index
-static bool findIndex( HashMap* hashMap, const char* key, uint32_t* outIdx )
+static bool findIndex( HashMap* hashMap, const char* key, size_t* outIdx )
 {
-	uint32_t idx = hash( hashMap, key );
+	size_t idx = hash( hashMap, key );
 	uint8_t currLength = 0;
 
 	while( ( hashMap->keys[idx].probeLength != UINT8_MAX ) && ( currLength <= hashMap->keys[idx].probeLength ) ) {
@@ -158,14 +158,14 @@ void hashMap_Set( HashMap* hashMap, const char* key, int value )
 	char* newKey = mem_Allocate( sizeof( char ) * len );
 	SDL_strlcpy( newKey, key, len );
 	
-	uint32_t idx = hash( hashMap, newKey );
+	size_t idx = hash( hashMap, newKey );
 	uint8_t currLength = 0;
 	bool increaseLength = true;
 
 	while( ( hashMap->keys[idx].probeLength != UINT8_MAX ) &&
 		   !matches( hashMap, newKey, idx, currLength ) ) {
 
-		uint32_t nextIdx = NEXT_IDX( hashMap, idx );
+		size_t nextIdx = NEXT_IDX( hashMap, idx );
 
 		if( currLength > hashMap->probeLimit ) {
 			// past the probe limit, this is a failed insert, rebuild and reset insertion stuff
@@ -197,7 +197,7 @@ bool hashMap_Find( HashMap* hashMap, const char* key, int* outValue )
 {
 	assert( hashMap != NULL );
 
-	uint32_t idx;
+	size_t idx;
 	if( !findIndex( hashMap, key, &idx ) ) {
 		return false;
 	}
@@ -209,17 +209,17 @@ bool hashMap_Find( HashMap* hashMap, const char* key, int* outValue )
 bool hashMap_Exists( HashMap* hashMap, const char* key )
 {
 	assert( hashMap != NULL );
-	uint32_t idx;
+	size_t idx;
 	return findIndex( hashMap, key, &idx );
 }
 
-static void removeAtIdx( HashMap* hashMap, uint32_t idx )
+static void removeAtIdx( HashMap* hashMap, size_t idx )
 {
 	// mark idx as unused
 	hashMap->keys[idx].probeLength = UINT8_MAX;
 	mem_Release( hashMap->keys[idx].key );
 	hashMap->keys[idx].key = NULL;
-	uint32_t prevIdx = idx;
+	size_t prevIdx = idx;
 	idx = NEXT_IDX( hashMap, idx );
 
 	// swap with the next element as long as the next element is in use, decrement the distance by one as well
@@ -240,7 +240,7 @@ void hashMap_Remove( HashMap* hashMap, const char* key )
 	assert( hashMap != NULL );
 
 	// first see if what wants to be removed exists
-	uint32_t idx;
+	size_t idx;
 	if( !findIndex( hashMap, key, &idx ) ) {
 		return;
 	}
@@ -256,7 +256,7 @@ void hashMap_RemoveFirstByValue( HashMap* hashMap, int value )
 	for( size_t i = 0; i < hashMap->capacity; ++i ) {
 		if( hashMap->keys[i].probeLength != UINT8_MAX ) {
 			if( hashMap->values[i] == value ) {
-				removeAtIdx( hashMap, (uint32_t)i );
+				removeAtIdx( hashMap, i );
 				return;
 			}
 		}
