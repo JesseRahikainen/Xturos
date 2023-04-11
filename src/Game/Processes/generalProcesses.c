@@ -134,7 +134,8 @@ static void renderText( ECPS* ecps, const Entity* entity )
 	Vector2 topLeft;
 	vec2_AddScaled( &currPos, &currScale, -0.5f, &topLeft );
 
-	txt_DisplayTextArea( txt->text, topLeft, currScale, txt->clr, HORIZ_ALIGN_CENTER, VERT_ALIGN_CENTER, txt->fontID, 0, NULL, txt->camFlags, txt->depth, (float)txt_GetBaseSize( txt->fontID ) );
+	//(float)txt_GetBaseSize( txt->fontID )
+	txt_DisplayTextArea( txt->text, topLeft, currScale, txt->clr, HORIZ_ALIGN_CENTER, VERT_ALIGN_CENTER, txt->fontID, 0, NULL, txt->camFlags, txt->depth, txt->pixelSize );
 }
 
 // ***** Clickable Objects
@@ -336,17 +337,6 @@ static void pointerResponseFinalize_Mouse( ECPS* ecps )
 	Entity entity;
 	GCPointerResponseData* prd = NULL;
 
-	if( ( pointerResponseState == PRS_IDLE ) && ( currChosenPointerResponseID != INVALID_ENTITY_ID ) ) {
-		// mouse is currently over chosen entity, switch from idle to over, call over response
-		pointerResponseState = PRS_OVER;
-
-		if( ecps_GetEntityAndComponentByID( ecps, currChosenPointerResponseID, gcPointerResponseCompID, &entity, &prd ) ) {
-			if( prd->overResponse != NULL ) {
-				prd->overResponse( &entity );
-			}
-		}
-	}
-
 	if( pointerResponseState == PRS_OVER ) {
 		if( currChosenPointerResponseID != prevChosenPointerResponseID ) {
 			pointerResponseState = PRS_IDLE;
@@ -365,6 +355,17 @@ static void pointerResponseFinalize_Mouse( ECPS* ecps )
 				if( prd->pressResponse != NULL ) {
 					prd->pressResponse( &entity );
 				}
+			}
+		}
+	}
+
+	if( ( pointerResponseState == PRS_IDLE ) && ( currChosenPointerResponseID != INVALID_ENTITY_ID ) ) {
+		// mouse is currently over chosen entity, switch from idle to over, call over response
+		pointerResponseState = PRS_OVER;
+
+		if( ecps_GetEntityAndComponentByID( ecps, currChosenPointerResponseID, gcPointerResponseCompID, &entity, &prd ) ) {
+			if( prd->overResponse != NULL ) {
+				prd->overResponse( &entity );
 			}
 		}
 	}
@@ -688,6 +689,31 @@ static void runCollisions( ECPS* ecps )
 	collision_DetectAllInternal( coll, collisionResponse );
 }
 
+// ***** Helper functions for dealing with groups
+void gp_AddGroupID( ECPS* ecps, EntityID entity, size_t groupID )
+{
+	GCGroupIDData groupIDData;
+	groupIDData.groupID = groupID;
+	ecps_AddComponentToEntityByID( ecps, entity, gcGroupIDCompID, &groupIDData );
+}
+
+static size_t deleteGroupID = SIZE_MAX;
+static void testAndDeleteEnemy( ECPS* ecps, const Entity* entity )
+{
+	GCGroupIDData* groupID = NULL;
+	ecps_GetComponentFromEntity( entity, gcGroupIDCompID, &groupID );
+	if(groupID->groupID == deleteGroupID) {
+		ecps_DestroyEntity( ecps, entity );
+	}
+}
+
+void gp_DeleteAllOfGroup( ECPS* ecps, size_t groupID )
+{
+	// just use a custom process
+	deleteGroupID = groupID;
+	ecps_RunCustomProcess( ecps, NULL, testAndDeleteEnemy, NULL, 1, gcGroupIDCompID );
+}
+
 // ***** Register the processes
 void gp_RegisterProcesses( ECPS* ecps )
 {
@@ -707,12 +733,11 @@ void gp_RegisterProcesses( ECPS* ecps )
 
 	SDL_assert( gcPosCompID != INVALID_COMPONENT_ID );
 	SDL_assert( gcPointerResponseCompID != INVALID_COMPONENT_ID );
-/*#if defined( __ANDROID__ )
+#if defined( __ANDROID__ )
 	ecps_CreateProcess( ecps, "CLICK", pointerResponseGetMouse, pointerResponseDetectState, pointerResponseFinalize_TouchScreen, &gpPointerResponseProc, 2, gcPosCompID, gcPointerResponseCompID );
 #else
 	ecps_CreateProcess( ecps, "CLICK", pointerResponseGetMouse, pointerResponseDetectState, pointerResponseFinalize_Mouse, &gpPointerResponseProc, 2, gcPosCompID, gcPointerResponseCompID );
-#endif//*/
-	ecps_CreateProcess( ecps, "CLICK", pointerResponseGetMouse, pointerResponseDetectState, pointerResponseFinalize_TouchScreen, &gpPointerResponseProc, 2, gcPosCompID, gcPointerResponseCompID );
+#endif
 
 	SDL_assert( gcPosCompID != INVALID_COMPONENT_ID );
 	SDL_assert( gcMountedPosOffsetCompID != INVALID_COMPONENT_ID );

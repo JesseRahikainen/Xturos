@@ -204,7 +204,7 @@ static int testJobQueueScreen_Enter( void )
 
 	jq_Initialize( 8 );
 
-	btn_RegisterSystem( );
+	btn_Init( );
 
 	font = txt_LoadFont( "Fonts/kenpixel.ttf", 12 );
 
@@ -241,7 +241,7 @@ static int testJobQueueScreen_Enter( void )
 
 static int testJobQueueScreen_Exit( void )
 {
-	btn_UnRegisterSystem( );
+	btn_CleanUp( );
 
 	txt_UnloadFont( font );
 	img_Clean( whiteImg );

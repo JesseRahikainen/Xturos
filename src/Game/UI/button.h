@@ -16,6 +16,7 @@ typedef void (*ButtonResponse)(int);
 
 /* Call this before trying to use any buttons. */
 void btn_Init( );
+void btn_CleanUp( );
 
 int btn_Create( Vector2 position, Vector2 size, Vector2 clickedSize,
 	const char* text, int fontID, float fontPixelSize, Color fontColor, Vector2 textOffset,
@@ -23,18 +24,6 @@ int btn_Create( Vector2 position, Vector2 size, Vector2 clickedSize,
 	unsigned int camFlags, char layer, ButtonResponse pressResponse, ButtonResponse releaseResponse );
 void btn_Destroy( int buttonIdx );
 void btn_DestroyAll( void );
-
-/*
-Handles the system level stuff.
- Returns a number < 0 if there was a problem.
-*/
-int btn_RegisterSystem( void );
-void btn_UnRegisterSystem( void );
-
-void btn_Update( float dt );
-void btn_Draw( void );
-void btn_Process( void );
-void btn_ProcessEvents( SDL_Event* sdlEvent );
 
 void btn_DebugDraw( Color idle, Color hover, Color clicked );
 

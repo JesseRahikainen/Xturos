@@ -5,6 +5,7 @@
 #include <stdint.h>
 #include <string.h>
 #include "System/memory.h"
+#include "System/random.h"
 
 // this is basically the stb library stretchy buffer modified to use our memory manager
 //  assume the pointer used is what we'll use, before the pointer are two size_ts, one for the last used, and one for the allocated size

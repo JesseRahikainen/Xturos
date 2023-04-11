@@ -1,6 +1,3 @@
-// Microsoft's *_s methods aren't portable, so we disable the warnings about them.
-#define _CRT_SECURE_NO_WARNINGS
-
 #include <stdio.h>
 #include <Windows.h>
 #include <stdbool.h>

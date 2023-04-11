@@ -80,6 +80,8 @@ static Font fonts[MAX_FONTS] = { 0 };
 // TODO: for localization we can define stbtt_pack_range for each language and link them together to be loaded
 stbtt_pack_range fontPackRange = { 0 };
 
+static bool textInitialized = false;
+
 // Sets up the default codepoints to load and clears out any currently loaded fonts.
 int txt_Init( void )
 {
@@ -96,6 +98,8 @@ int txt_Init( void )
 	}
 
 	sb_Add( sbStringCodepointBuffer, 1024 );
+
+	textInitialized = true;
 
 	return 0;
 }
@@ -1016,6 +1020,9 @@ static bool saveSDFFont( const char* fileName,
 	}
 	CHECK_WRITE( SDL_WriteBE64( rwopsFile, (Uint64)sb_Count( sbSaveImageData ) ), "writing out image size", 1 );
 	CHECK_WRITE( SDL_RWwrite( rwopsFile, sbSaveImageData, sizeof( uint8_t ), sb_Count( sbSaveImageData ) ), "writing out image", sb_Count( sbSaveImageData ) );
+
+	// for testing out issues with images
+	//stbi_write_png( "test.png", image->width, image->height, image->comp, image->data, 0 );
 	
 	succeeded = true;
 
@@ -1040,6 +1047,11 @@ clean_up:
 //  Returns -1 if it fails, returns the font id to use otherwise.
 static int loadSDFFont( const char* fileName )
 {
+	SDL_assert( textInitialized );
+	if( !textInitialized ) {
+		return 0;
+	}
+
 	int fontID = -1;
 	uint8_t* pngBuffer = NULL;
 	int* retIDs = NULL;
@@ -1212,6 +1224,10 @@ clean_up:
 //  can be loaded later much quicker.
 int txt_CreateSDFFont( const char* fileName )
 {
+	SDL_assert( textInitialized );
+	if( !textInitialized ) {
+		return 0;
+	}
 	/*
 	int font = loadSDFFont( fileName );
 	if( font == -1 ) {
@@ -1289,7 +1305,7 @@ int txt_CreateSDFFont( const char* fileName )
 	fonts[newFont].nextLineDescent = fonts[newFont].ascent - fonts[newFont].descent + fonts[newFont].lineGap;
 	fonts[newFont].baseSize = pixelHeight;
 
-	float test = (float)pixelHeight / ( ascent - descent );
+	//float test = (float)pixelHeight / ( ascent - descent );
 
 	const int WIDTH = 1024;
 	const int HEIGHT = 1024;
@@ -1326,6 +1342,9 @@ int txt_CreateSDFFont( const char* fileName )
 
 		int sdfWidth, sdfHeight, sdfXOff, sdfYOff;
 		unsigned char* charSDF = stbtt_GetCodepointSDF( &font, scale, rects[i].id, padding, onEdgeValue, pixelDistScale, &sdfWidth, &sdfHeight, &sdfXOff, &sdfYOff );
+		if( charSDF == NULL ) {
+			continue;
+		}
 
 		//llog( LOG_INFO, "Packing codepoint %i - x: %i  y: %i  w: %i  h: %i  xo: %i  yo: %i", rects[i].id, rects[i].x, rects[i].y, sdfWidth, sdfHeight, sdfXOff, sdfYOff );
 		//if( rects[i].w != sdfWidth ) llog( LOG_WARN, "  - widths don't match!" );
@@ -1353,8 +1372,8 @@ int txt_CreateSDFFont( const char* fileName )
 	CHECK_POINTER( offsets, "Unable to allocate offsets list" );
 
 	for( int i = 0; i < fontPackRange.num_chars; ++i ) {
-		mins[i].x = rects[i].x;
-		mins[i].y = rects[i].y;
+		mins[i].x = (float)rects[i].x;
+		mins[i].y = (float)rects[i].y;
 		maxes[i].x = (float)( rects[i].x + rects[i].w );
 		maxes[i].y = (float)( rects[i].y + rects[i].h );
 	}

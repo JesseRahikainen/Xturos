@@ -100,11 +100,35 @@
     <Filter Include="Source Files\IMGUI\Platform">
       <UniqueIdentifier>{9e6af113-3652-438c-b9bf-6fc9ab1f9f7a}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Game\Components">
+      <UniqueIdentifier>{7b563d7f-ea48-41b8-a435-9ee7c8215e43}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Game\Components">
+      <UniqueIdentifier>{62afd20d-24cc-4a9a-98d2-c160dd48a580}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Game\Processes">
+      <UniqueIdentifier>{a58a0d4e-98f4-433e-beb0-716ff30e1479}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Game\Processes">
+      <UniqueIdentifier>{e21ec9fd-276e-48ea-8b49-7ae996c2b27f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Game\TestScreens">
+      <UniqueIdentifier>{c682fc19-12f7-4b32-b8e8-f6a892ccb4dc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Game\TestScreens">
+      <UniqueIdentifier>{ad6e1b5d-a7a6-4360-a951-108192c072bd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Game\States">
+      <UniqueIdentifier>{71471fc1-b927-4dbf-ae77-de05f5fac6df}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Game\States">
+      <UniqueIdentifier>{c928b319-c59d-4fe4-92db-a8963139d679}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="_ProjectToolScripts">
+      <UniqueIdentifier>{b616a4c9-a239-4541-8752-202485e5ca11}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\src\Game\Game\gameScreen.h">
-      <Filter>Header Files\Game</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\Game\Graphics\graphics.h">
       <Filter>Header Files\Graphics</Filter>
     </ClInclude>
@@ -204,23 +228,14 @@
     <ClInclude Include="..\..\src\Game\System\random.h">
       <Filter>Header Files\System</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\Game\Game\testAStarScreen.h">
-      <Filter>Header Files\Game</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\Game\Utils\aStar.h">
       <Filter>Header Files\Utils</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Game\System\jobQueue.h">
       <Filter>Header Files\System</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\Game\Game\testJobQueueScreen.h">
-      <Filter>Header Files\Game</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\Game\System\jobRingQueue.h">
       <Filter>Header Files\System</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Game\Game\testSoundsScreen.h">
-      <Filter>Header Files\Game</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Game\Utils\hashMap.h">
       <Filter>Header Files\Utils</Filter>
@@ -252,26 +267,14 @@
     <ClInclude Include="..\..\src\Game\Graphics\geomTrail.h">
       <Filter>Header Files\Graphics</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\Game\Game\testPointerResponseScreen.h">
-      <Filter>Header Files\Game</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\Game\System\gameTime.h">
       <Filter>Header Files\System</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Game\Game\testSteeringScreen.h">
-      <Filter>Header Files\Game</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Game\Math\fixedPoint.h">
       <Filter>Header Files\Math</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\Game\Game\bordersTestScreen.h">
-      <Filter>Header Files\Game</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\Game\Utils\hexGrid.h">
       <Filter>Header Files\Utils</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Game\Game\hexTestScreen.h">
-      <Filter>Header Files\Game</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Game\world.h">
       <Filter>Header Files</Filter>
@@ -318,26 +321,53 @@
     <ClInclude Include="..\..\src\Game\System\platformSpecific.h">
       <Filter>Header Files\System</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\Game\Game\testBloomScreen.h">
-      <Filter>Header Files\Game</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Game\Game\gameOfUrScreen.h">
-      <Filter>Header Files\Game</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Game\Game\labels.h">
-      <Filter>Header Files\Game</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\Game\Others\nuklear.h">
       <Filter>Header Files\Others</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Game\Graphics\spriteAnimation.h">
       <Filter>Header Files\Graphics</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\Game\Game\gameComponents.h">
+      <Filter>Header Files\Game\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Game\Game\gameProcesses.h">
+      <Filter>Header Files\Game\Processes</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Game\Game\bordersTestScreen.h">
+      <Filter>Header Files\Game\TestScreens</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Game\Game\gameOfUrScreen.h">
+      <Filter>Header Files\Game\TestScreens</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Game\Game\testECPSScreen.h">
+      <Filter>Header Files\Game\TestScreens</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Game\Game\hexTestScreen.h">
+      <Filter>Header Files\Game\TestScreens</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Game\Game\labels.h">
+      <Filter>Header Files\Game\TestScreens</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Game\Game\testAStarScreen.h">
+      <Filter>Header Files\Game\TestScreens</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Game\Game\testBloomScreen.h">
+      <Filter>Header Files\Game\TestScreens</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Game\Game\testJobQueueScreen.h">
+      <Filter>Header Files\Game\TestScreens</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Game\Game\testPointerResponseScreen.h">
+      <Filter>Header Files\Game\TestScreens</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Game\Game\testSoundsScreen.h">
+      <Filter>Header Files\Game\TestScreens</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Game\Game\testSteeringScreen.h">
+      <Filter>Header Files\Game\TestScreens</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\src\Game\Game\gameScreen.c">
-      <Filter>Source Files\Game</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\Game\Graphics\graphics.c">
       <Filter>Source Files\Graphics</Filter>
     </ClCompile>
@@ -434,23 +464,14 @@
     <ClCompile Include="..\..\src\Game\System\random.c">
       <Filter>Source Files\System</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\Game\Game\testAStarScreen.c">
-      <Filter>Source Files\Game</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\Game\Utils\aStar.c">
       <Filter>Source Files\Utils</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\Game\System\jobQueue.c">
       <Filter>Source Files\System</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\Game\Game\testJobQueueScreen.c">
-      <Filter>Source Files\Game</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\Game\System\jobRingQueue.c">
       <Filter>Source Files\System</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\Game\Game\testSoundsScreen.c">
-      <Filter>Source Files\Game</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\Game\Utils\hashMap.c">
       <Filter>Source Files\Utils</Filter>
@@ -476,26 +497,14 @@
     <ClCompile Include="..\..\src\Game\Graphics\geomTrail.c">
       <Filter>Source Files\Graphics</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\Game\Game\testPointerResponseScreen.c">
-      <Filter>Source Files\Game</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\Game\System\gameTime.c">
       <Filter>Source Files\System</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\Game\Game\testSteeringScreen.c">
-      <Filter>Source Files\Game</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\Game\Math\fixedPoint.c">
       <Filter>Source Files\Math</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\Game\Game\bordersTestScreen.c">
-      <Filter>Source Files\Game</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\Game\Utils\hexGrid.c">
       <Filter>Source Files\Utils</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\Game\Game\hexTestScreen.c">
-      <Filter>Source Files\Game</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\Game\world.c">
       <Filter>Source Files</Filter>
@@ -536,20 +545,50 @@
     <ClCompile Include="..\..\src\Game\System\platformSpecific.c">
       <Filter>Source Files\System</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\Game\Game\testBloomScreen.c">
-      <Filter>Source Files\Game</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\Game\Utils\MCTS.c">
       <Filter>Source Files\Utils</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\Game\Game\gameOfUrScreen.c">
-      <Filter>Source Files\Game</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\Game\Game\labels.c">
-      <Filter>Source Files\Game</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\Game\Graphics\spriteAnimation.c">
       <Filter>Source Files\Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Game\Game\gameComponents.c">
+      <Filter>Source Files\Game\Components</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Game\Game\gameProcesses.c">
+      <Filter>Source Files\Game\Processes</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Game\Game\testSteeringScreen.c">
+      <Filter>Source Files\Game\TestScreens</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Game\Game\bordersTestScreen.c">
+      <Filter>Source Files\Game\TestScreens</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Game\Game\gameOfUrScreen.c">
+      <Filter>Source Files\Game\TestScreens</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Game\Game\testECPSScreen.c">
+      <Filter>Source Files\Game\TestScreens</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Game\Game\hexTestScreen.c">
+      <Filter>Source Files\Game\TestScreens</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Game\Game\labels.c">
+      <Filter>Source Files\Game\TestScreens</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Game\Game\testAStarScreen.c">
+      <Filter>Source Files\Game\TestScreens</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Game\Game\testBloomScreen.c">
+      <Filter>Source Files\Game\TestScreens</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Game\Game\testJobQueueScreen.c">
+      <Filter>Source Files\Game\TestScreens</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Game\Game\testPointerResponseScreen.c">
+      <Filter>Source Files\Game\TestScreens</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Game\Game\testSoundsScreen.c">
+      <Filter>Source Files\Game\TestScreens</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -565,5 +604,10 @@
     <Text Include="..\..\state_template.txt">
       <Filter>_Text</Filter>
     </Text>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\src\ProjectToolScripts\addNewState.ps1">
+      <Filter>_ProjectToolScripts</Filter>
+    </None>
   </ItemGroup>
 </Project>

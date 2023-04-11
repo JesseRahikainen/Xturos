@@ -1,0 +1,39 @@
+#include "<temp>State.h"
+
+#include "Graphics/debugRendering.h"
+#include "System/ECPS/entityComponentProcessSystem.h"
+#include "Components/generalComponents.h"
+#include "gameComponents.h"
+#include "gameProcesses.h"
+#include "System/platformLog.h"
+#include "Processes/generalProcesses.h"
+
+static int <temp>State_Enter( void )
+{
+	return 1;
+}
+
+static int <temp>State_Exit( void )
+{
+	return 1;
+}
+
+static void <temp>State_ProcessEvents( SDL_Event* e )
+{
+}
+
+static void <temp>State_Process( void )
+{
+}
+
+static void <temp>State_Draw( void )
+{
+
+}
+
+static void <temp>State_PhysicsTick( float dt )
+{
+}
+
+GameState <temp>State = { <temp>State_Enter, <temp>State_Exit, <temp>State_ProcessEvents,
+	<temp>State_Process, <temp>State_Draw, <temp>State_PhysicsTick };

@@ -1,0 +1,8 @@
+#ifndef <TEMP>_STATE_H
+#define <TEMP>_STATE_H
+
+#include "gameState.h"
+
+GameState <temp>State;
+
+#endif // inclusion guard

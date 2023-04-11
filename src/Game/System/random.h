@@ -34,6 +34,7 @@ float rand_GetRangeFloat( RandomGroup* rg, float min, float max );
 int32_t rand_GetRangeS32( RandomGroup* rg, int32_t min, int32_t max );
 uint32_t rand_GetRangeU32( RandomGroup* rg, uint32_t min, uint32_t max );
 size_t rand_GetArrayEntry( RandomGroup* rg, size_t arraySize );
+size_t rand_GetArrayEntryInRange( RandomGroup* rg, size_t min, size_t max );
 Vector2* rand_PointInUnitCircle( RandomGroup* rg, Vector2* out );
 
 bool rand_Choice( RandomGroup* rg );

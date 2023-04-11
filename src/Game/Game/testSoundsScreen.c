@@ -1,4 +1,4 @@
-#include "gameScreen.h"
+#include "testSoundsScreen.h"
 
 #include "Graphics/graphics.h"
 #include "Graphics/images.h"
@@ -46,14 +46,14 @@ static int testSoundsScreen_Enter( void )
 	btn_Create( vec2( 400.0f, 100.0f ), vec2( 100.0f, 100.0f ), vec2( 100.0f, 100.0f ),
 		"Stream", font, 32.0f, CLR_BLUE, VEC2_ZERO, NULL, -1, CLR_WHITE, 1, 0, NULL, ToggleStream );
 
-	btn_RegisterSystem( );
+	btn_Init( );
 
 	return 1;
 }
 
 static int testSoundsScreen_Exit( void )
 {
-	btn_UnRegisterSystem( );
+	btn_CleanUp( );
 
 	snd_UnloadSample( testSnd );
 	snd_UnloadStream( testStrm );

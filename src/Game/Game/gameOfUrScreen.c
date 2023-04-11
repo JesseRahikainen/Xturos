@@ -456,7 +456,7 @@ static int gameOfUrState_Enter( void )
 
 	gfx_SetClearColor( CLR_BLACK );
 
-	btn_RegisterSystem( );
+	btn_Init( );
 
 	boardImg = img_Load( "Images/ur_board_labeled.png", ST_DEFAULT );
 	pieceImg = img_Load( "Images/piece.png", ST_DEFAULT );
@@ -479,7 +479,7 @@ static int gameOfUrState_Enter( void )
 
 static int gameOfUrState_Exit( void )
 {
-	btn_UnRegisterSystem( );
+	btn_CleanUp( );
 	return 1;
 }
 

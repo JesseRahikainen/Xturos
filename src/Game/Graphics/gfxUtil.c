@@ -10,7 +10,10 @@
 #define realloc(ptr,size) mem_Resize(ptr,size)
 #define malloc(size) mem_Allocate(size)
 #define STB_IMAGE_IMPLEMENTATION
+#pragma warning( push )
+#pragma warning( disable : 4244 )
 #include <stb_image.h>
+#pragma warning( pop )
 #undef malloc
 #undef free
 #undef realloc

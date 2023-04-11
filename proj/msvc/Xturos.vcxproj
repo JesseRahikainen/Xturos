@@ -309,8 +309,10 @@
     <ClInclude Include="..\..\src\Game\Components\generalComponents.h" />
     <ClInclude Include="..\..\src\Game\gameState.h" />
     <ClInclude Include="..\..\src\Game\Game\bordersTestScreen.h" />
+    <ClInclude Include="..\..\src\Game\Game\gameComponents.h" />
     <ClInclude Include="..\..\src\Game\Game\gameOfUrScreen.h" />
-    <ClInclude Include="..\..\src\Game\Game\gameScreen.h" />
+    <ClInclude Include="..\..\src\Game\Game\gameProcesses.h" />
+    <ClInclude Include="..\..\src\Game\Game\testECPSScreen.h" />
     <ClInclude Include="..\..\src\Game\Game\hexTestScreen.h" />
     <ClInclude Include="..\..\src\Game\Game\labels.h" />
     <ClInclude Include="..\..\src\Game\Game\testAStarScreen.h" />
@@ -388,8 +390,10 @@
     <ClCompile Include="..\..\src\Game\Components\generalComponents.c" />
     <ClCompile Include="..\..\src\Game\gameState.c" />
     <ClCompile Include="..\..\src\Game\Game\bordersTestScreen.c" />
+    <ClCompile Include="..\..\src\Game\Game\gameComponents.c" />
     <ClCompile Include="..\..\src\Game\Game\gameOfUrScreen.c" />
-    <ClCompile Include="..\..\src\Game\Game\gameScreen.c" />
+    <ClCompile Include="..\..\src\Game\Game\gameProcesses.c" />
+    <ClCompile Include="..\..\src\Game\Game\testECPSScreen.c" />
     <ClCompile Include="..\..\src\Game\Game\hexTestScreen.c" />
     <ClCompile Include="..\..\src\Game\Game\labels.c" />
     <ClCompile Include="..\..\src\Game\Game\testAStarScreen.c" />
@@ -472,6 +476,9 @@
     <Text Include="..\..\screen_template.txt" />
     <Text Include="..\..\state_template.txt" />
     <Text Include="..\..\todo.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\src\ProjectToolScripts\addNewState.ps1" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
 </Project>

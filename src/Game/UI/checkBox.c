@@ -145,13 +145,16 @@ void chkBox_Init( )
 	memset( checkBoxes, 0, sizeof( checkBoxes ) );
 	mouseDown = 0;
 
-	checkBoxSystem = sys_Register( processEvents, process, draw, NULL );
+	if( checkBoxSystem != -1 ) {
+		checkBoxSystem = sys_Register( processEvents, process, draw, NULL );
+	}
 }
 
 void chkBox_CleanUp( )
 {
 	chkBox_DestroyAll( );
 	sys_UnRegister( checkBoxSystem );
+	checkBoxSystem = -1;
 }
 
 /*

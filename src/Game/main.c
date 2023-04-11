@@ -28,7 +28,7 @@
 #include "System/gameTime.h"
 
 #include "gameState.h"
-#include "Game/gameScreen.h"
+#include "Game/testECPSScreen.h"
 #include "Game/testAStarScreen.h"
 #include "Game/testJobQueueScreen.h"
 #include "Game/testSoundsScreen.h"
@@ -364,6 +364,7 @@ int initEverything( void )
 	rand_Seed( NULL, (uint32_t)time( NULL ) );
 
 	jq_Initialize( 2 );
+
 	return 0;
 }
 

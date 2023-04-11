@@ -56,6 +56,8 @@ int txt_GetCharacterImage( int fontID, int c );
 
 // Creates a font that's rendered out as a signed distance field. Will also attempt to save a version of this font that
 //  can be loaded later much quicker.
+// NOTE: The library we're using to generate the SDF font doesn't handle cubic curves so some OTF fonts won't work. You
+//  can either use it non-SDF, or convert it to a TTF font.
 int txt_CreateSDFFont( const char* fileName );
 
 #endif /* inclusion guard */

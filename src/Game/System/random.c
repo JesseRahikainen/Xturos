@@ -137,17 +137,29 @@ int32_t rand_GetRangeS32( RandomGroup* rg, int32_t min, int32_t max )
 
 uint32_t rand_GetRangeU32( RandomGroup* rg, uint32_t min, uint32_t max )
 {
-	assert( min >= max );
-	uint32_t range = ( max - min ) + 1;
+	assert( min <= max );
+	uint32_t range = ( max - min );
 	if( range <= 0 ) {
 		return min;
 	}
+	range += 1;
 	return min + ( (uint32_t)getBalancedRandom( rg, range ) );
 }
 
 size_t rand_GetArrayEntry( RandomGroup* rg, size_t arraySize )
 {
 	return (size_t)getBalancedRandom( rg, (uint64_t)arraySize );
+}
+
+size_t rand_GetArrayEntryInRange( RandomGroup* rg, size_t min, size_t max )
+{
+	assert( min <= max );
+	size_t range = ( max - min );
+	if( range <= 0 ) {
+		return min;
+	}
+	range += 1;
+	return min + rand_GetArrayEntry( rg, range );
 }
 
 Vector2* rand_PointInUnitCircle( RandomGroup* rg, Vector2* out )

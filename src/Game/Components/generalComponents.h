@@ -112,6 +112,7 @@ typedef struct {
 	const uint8_t* text;
 	int fontID;
 	Color clr; // assuming any color components aren't for this, need to find a better way to do this
+	float pixelSize;
 } GCTextData;
 extern ComponentID gcTextCompID;
 
@@ -148,6 +149,11 @@ typedef struct {
 } GCVec2TweenData;
 extern ComponentID gcPosTweenCompID;
 extern ComponentID gcScaleTweenCompID;
+
+typedef struct {
+	size_t groupID;
+} GCGroupIDData;
+extern ComponentID gcGroupIDCompID;
 
 void gc_ColliderDataToCollider( GCColliderData* colliderData, GCPosData* posData, Collider* outCollider );
 

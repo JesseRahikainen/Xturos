@@ -32,4 +32,8 @@ void gp_AddAlphaTween( ECPS* ecps, EntityID entity, float duration, float startA
 // assume we're using the general components, just need to know what component ids to use then
 void gp_GeneralRender( ECPS* ecps, const Entity* entity, ComponentID posCompID, ComponentID sprCompID, ComponentID scaleCompID, ComponentID clrCompID, ComponentID rotCompID, ComponentID floatVal0CompID, ComponentID stencilCompID );
 
+// helper functions for dealing with groups
+void gp_AddGroupID( ECPS* ecps, EntityID entity, size_t groupID );
+void gp_DeleteAllOfGroup( ECPS* ecps, size_t groupID );
+
 #endif // inclusion guard

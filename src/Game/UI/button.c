@@ -65,10 +65,154 @@ struct Button {
 static struct Button buttons[MAX_BUTTONS];
 static char mouseDown;
 
+void btn_Update( float dt )
+{
+	for( int i = 0; i < MAX_BUTTONS; ++i ) {
+		if( buttons[i].inUse ) {
+			float max = ( buttons[i].state == BS_CLICKED ) ? ANIM_START_LENGTH : ANIM_LENGTH;
+			buttons[i].timeInAnim = clamp( 0.0f, max, buttons[i].timeInAnim + dt );
+		}
+	}
+}
+
+void btn_Draw( void )
+{
+	int i;
+	int img = -1;
+
+	for( i = 0; i < MAX_BUTTONS; ++i ) {
+		if( buttons[i].inUse ) {
+
+			float t = buttons[i].timeInAnim / ANIM_LENGTH;
+
+			if( t < ( ( ANIM_START_LENGTH / ANIM_LENGTH ) * 0.5f ) ) {
+				t = inverseLerp( 0.0f, ( ( ANIM_START_LENGTH / ANIM_LENGTH ) * 0.5f ), t );
+				t = easeInQuad( t );
+			} else if( t < ( ANIM_START_LENGTH / ANIM_LENGTH ) ) {
+				t = inverseLerp( ( ( ANIM_START_LENGTH / ANIM_LENGTH ) * 0.5f ), ( ANIM_START_LENGTH / ANIM_LENGTH ), t );
+				t = ( 1.0f - t );
+				t = ( ( ( -2.0f * t * t * t ) + ( 3.0f * t * t ) ) / 2.0f ) + 0.5f;
+			} else { // past the start/clicked portion
+				t = inverseLerp( ( ANIM_START_LENGTH / ANIM_LENGTH ), 1.0f, t );
+				t = easeOutQuad( 1.0f - t ) * 0.5f;
+			}
+
+			if( buttons[i].imgID >= 0 ) {
+				Vector2 scale;
+				vec2_Lerp( &( buttons[i].normalImgScale ), &( buttons[i].clickedImgScale ), t, &scale );
+
+				int drawID = img_CreateDraw( buttons[i].imgID, buttons[i].camFlags, buttons[i].position, buttons[i].position, buttons[i].depth );
+				img_SetDrawScaleV( drawID, buttons[i].prevScale, scale );
+				img_SetDrawColor( drawID, buttons[i].borderColor, buttons[i].borderColor );
+				/*img_Draw_sv_c( buttons[i].imgID, buttons[i].camFlags, buttons[i].position, buttons[i].position, buttons[i].prevScale,
+					scale, buttons[i].borderColor, buttons[i].borderColor, buttons[i].depth );//*/
+				buttons[i].prevScale = scale;
+			}
+
+			if( buttons[i].slicedBorder != NULL ) {
+				Vector2 size;
+				vec2_Lerp( &( buttons[i].normalDrawBorderSize ), &( buttons[i].clickedDrawBorderSize ), t, &size );
+				img_Draw3x3v_c( buttons[i].slicedBorder, buttons[i].camFlags, buttons[i].position, buttons[i].position, buttons[i].prevSize, size,
+					buttons[i].borderColor, buttons[i].borderColor, buttons[i].depth );
+				buttons[i].prevSize = size;
+			}
+
+			if( ( buttons[i].text[0] != 0 ) && ( buttons[i].fontID >= 0 ) ) {
+				Vector2 textPos;
+				vec2_Add( &( buttons[i].position ), &( buttons[i].textOffset ), &textPos );
+				txt_DisplayString( buttons[i].text, textPos, buttons[i].fontColor, HORIZ_ALIGN_CENTER, VERT_ALIGN_CENTER,
+					buttons[i].fontID, buttons[i].camFlags, buttons[i].depth, buttons[i].fontPixelSize );
+			}
+		}
+	}
+}
+
+void btn_Process( void )
+{
+	int i;
+	Vector2 transMousePos = { 0.0f, 0.0f };
+	Vector2 diff;
+	enum ButtonState prevState;
+
+	/* see if the mouse is positioned over any buttons */
+	Vector2 mousePos;
+	if( !input_GetMousePosition( &mousePos ) ) {
+		return;
+	}
+
+	for( int currCamera = cam_StartIteration( ); currCamera != -1; currCamera = cam_GetNextActiveCam( ) ) {
+		unsigned int camFlags = cam_GetFlags( currCamera );
+		cam_ScreenPosToWorldPos( currCamera, &mousePos, &transMousePos );
+
+		for( i = 0; i < MAX_BUTTONS; ++i ) {
+			if( buttons[i].inUse == 0 ) {
+				continue;
+			}
+
+			if( ( buttons[i].camFlags & camFlags ) == 0 ) {
+				continue;
+			}
+
+			/* see if mouse pos is within the buttons borders */
+			prevState = buttons[i].state;
+			diff.x = buttons[i].position.x - transMousePos.x;
+			diff.y = buttons[i].position.y - transMousePos.y;
+			if( ( fabsf( diff.x ) <= buttons[i].collisionHalfSize.x ) && ( fabsf( diff.y ) <= buttons[i].collisionHalfSize.y ) ) {
+				if( mouseDown ) {
+					buttons[i].state = BS_CLICKED;
+				} else {
+					buttons[i].state = BS_FOCUSED;
+				}
+			} else {
+				buttons[i].state = BS_NORMAL;
+			}
+
+#if defined( __ANDROID__ ) // touch screens respond differently, don't need focus
+			if( ( prevState != BS_CLICKED ) && ( buttons[i].state == BS_CLICKED ) ) {
+				buttons[i].timeInAnim = 0.0f;
+				if( buttons[i].pressResponse != NULL ) buttons[i].pressResponse( i );
+			} else if( ( prevState == BS_CLICKED ) && ( buttons[i].state != BS_CLICKED ) && ( buttons[i].releaseResponse != NULL ) ) {
+				buttons[i].releaseResponse( i );
+			}
+#else
+			if( ( prevState == BS_FOCUSED ) && ( buttons[i].state == BS_CLICKED ) ) {
+				buttons[i].timeInAnim = 0.0f;
+				if( buttons[i].pressResponse != NULL ) buttons[i].pressResponse( i );
+			} else if( ( prevState == BS_CLICKED ) && ( buttons[i].state == BS_FOCUSED ) && ( buttons[i].releaseResponse != NULL ) ) {
+				buttons[i].releaseResponse( i );
+			}
+#endif
+		}
+	}
+}
+
+void btn_ProcessEvents( SDL_Event* sdlEvent )
+{
+	if( ( sdlEvent->type == SDL_MOUSEBUTTONDOWN ) && ( sdlEvent->button.button == SDL_BUTTON_LEFT ) ) {
+		mouseDown = 1;
+	} else if( ( sdlEvent->type == SDL_MOUSEBUTTONUP ) && ( sdlEvent->button.button == SDL_BUTTON_LEFT ) ) {
+		mouseDown = 0;
+	}
+}
+
 void btn_Init( )
 {
 	memset( buttons, 0, sizeof( buttons ) );
 	mouseDown = 0;
+	
+	if( systemID == -1 ) { // don't register twice
+		systemID = sys_Register( btn_ProcessEvents, btn_Process, btn_Draw, btn_Update );
+	}
+}
+
+void btn_CleanUp( )
+{
+	btn_DestroyAll( );
+
+	if( systemID != -1 ) {
+		sys_UnRegister( systemID );
+		systemID = -1;
+	}
 }
 
 int btn_Create( Vector2 position, Vector2 normalSize, Vector2 clickedSize,
@@ -147,149 +291,6 @@ void btn_Destroy( int idx )
 void btn_DestroyAll( void )
 {
 	memset( buttons, 0, sizeof( buttons ) );
-}
-
-int btn_RegisterSystem( void )
-{
-	if( systemID != -1 ) return systemID; // don't register twice
-	systemID = sys_Register( btn_ProcessEvents, btn_Process, btn_Draw, btn_Update );
-	return systemID;
-}
-
-void btn_UnRegisterSystem( void )
-{
-	sys_UnRegister( systemID );
-	systemID = -1;
-}
-
-void btn_Update( float dt )
-{
-	for( int i = 0; i < MAX_BUTTONS; ++i ) {
-		if( buttons[i].inUse ) {
-			float max = ( buttons[i].state == BS_CLICKED ) ? ANIM_START_LENGTH : ANIM_LENGTH;
-			buttons[i].timeInAnim = clamp( 0.0f, max, buttons[i].timeInAnim + dt );
-		}
-	}
-}
-
-void btn_Draw( void )
-{
-	int i;
-	int img = -1;
-
-	for( i = 0; i < MAX_BUTTONS; ++i ) {
-		if( buttons[i].inUse ) {
-
-			float t = buttons[i].timeInAnim / ANIM_LENGTH;
-
-			if( t < ( ( ANIM_START_LENGTH / ANIM_LENGTH ) * 0.5f ) ) {
-				t = inverseLerp( 0.0f, ( ( ANIM_START_LENGTH / ANIM_LENGTH ) * 0.5f ), t );
-				t = easeInQuad( t );
-			} else if( t < ( ANIM_START_LENGTH / ANIM_LENGTH ) ) {
-				t = inverseLerp( ( ( ANIM_START_LENGTH / ANIM_LENGTH ) * 0.5f ), ( ANIM_START_LENGTH / ANIM_LENGTH ), t );
-				t = ( 1.0f - t );
-				t = ( ( ( -2.0f * t * t * t) + ( 3.0f * t * t ) ) / 2.0f ) + 0.5f;
-			} else { // past the start/clicked portion
-				t = inverseLerp( ( ANIM_START_LENGTH / ANIM_LENGTH ), 1.0f, t );
-				t = easeOutQuad( 1.0f - t ) * 0.5f;
-			}
-
-			if( buttons[i].imgID >= 0 ) {
-				Vector2 scale;
-				vec2_Lerp( &( buttons[i].normalImgScale ), &( buttons[i].clickedImgScale ), t, &scale );
-
-				int drawID = img_CreateDraw( buttons[i].imgID, buttons[i].camFlags, buttons[i].position, buttons[i].position, buttons[i].depth );
-				img_SetDrawScaleV( drawID, buttons[i].prevScale, scale );
-				img_SetDrawColor( drawID, buttons[i].borderColor, buttons[i].borderColor );
-				/*img_Draw_sv_c( buttons[i].imgID, buttons[i].camFlags, buttons[i].position, buttons[i].position, buttons[i].prevScale,
-					scale, buttons[i].borderColor, buttons[i].borderColor, buttons[i].depth );//*/
-				buttons[i].prevScale = scale;
-			}
-			
-			if( buttons[i].slicedBorder != NULL ) {
-				Vector2 size;
-				vec2_Lerp( &( buttons[i].normalDrawBorderSize ), &( buttons[i].clickedDrawBorderSize ), t, &size );
-				img_Draw3x3v_c( buttons[i].slicedBorder, buttons[i].camFlags, buttons[i].position, buttons[i].position, buttons[i].prevSize, size,
-					buttons[i].borderColor, buttons[i].borderColor, buttons[i].depth );
-				buttons[i].prevSize = size;
-			}
-
-			if( ( buttons[i].text[0] != 0 ) && ( buttons[i].fontID >= 0 ) ) {
-				Vector2 textPos;
-				vec2_Add( &( buttons[i].position ), &( buttons[i].textOffset ), &textPos );
-				txt_DisplayString( buttons[i].text, textPos, buttons[i].fontColor, HORIZ_ALIGN_CENTER, VERT_ALIGN_CENTER,
-									buttons[i].fontID, buttons[i].camFlags, buttons[i].depth, buttons[i].fontPixelSize );
-			}
-		}
-	}
-}
-
-void btn_Process( void )
-{
-	int i;
-	Vector2 transMousePos = { 0.0f, 0.0f };
-	Vector2 diff;
-	enum ButtonState prevState;
-
-	/* see if the mouse is positioned over any buttons */
-	Vector2 mousePos;
-	if( !input_GetMousePosition( &mousePos ) ) {
-		return;
-	}
-
-	for( int currCamera = cam_StartIteration( ); currCamera != -1; currCamera = cam_GetNextActiveCam( ) ) {
-		unsigned int camFlags = cam_GetFlags( currCamera );
-		cam_ScreenPosToWorldPos( currCamera, &mousePos, &transMousePos );
-
-		for( i = 0; i < MAX_BUTTONS; ++i ) {
-			if( buttons[i].inUse == 0 ) {
-				continue;
-			}
-
-			if( ( buttons[i].camFlags & camFlags ) == 0 ) {
-				continue;
-			}
-
-			/* see if mouse pos is within the buttons borders */
-			prevState = buttons[i].state;
-			diff.x = buttons[i].position.x - transMousePos.x;
-			diff.y = buttons[i].position.y - transMousePos.y;
-			if( ( fabsf( diff.x ) <= buttons[i].collisionHalfSize.x ) && ( fabsf( diff.y ) <= buttons[i].collisionHalfSize.y ) ) {
-				if( mouseDown ) {
-					buttons[i].state = BS_CLICKED;
-				} else {
-					buttons[i].state = BS_FOCUSED;
-				}
-			} else {
-				buttons[i].state = BS_NORMAL;
-			}
-
-#if defined( __ANDROID__ ) // touch screens respond differently, don't need focus
-			if( ( prevState != BS_CLICKED ) && ( buttons[i].state == BS_CLICKED ) ) {
-				buttons[i].timeInAnim = 0.0f;
-				if( buttons[i].pressResponse != NULL ) buttons[i].pressResponse( i );
-			} else if( ( prevState == BS_CLICKED ) && ( buttons[i].state != BS_CLICKED ) && ( buttons[i].releaseResponse != NULL ) ) {
-				buttons[i].releaseResponse( i );
-			}
-#else
-			if( ( prevState == BS_FOCUSED ) && ( buttons[i].state == BS_CLICKED ) ) {
-				buttons[i].timeInAnim = 0.0f;
-				if( buttons[i].pressResponse != NULL ) buttons[i].pressResponse( i );
-			} else if( ( prevState == BS_CLICKED ) && ( buttons[i].state == BS_FOCUSED ) && ( buttons[i].releaseResponse != NULL ) ) {
-				buttons[i].releaseResponse( i );
-			}
-#endif
-		}
-	}
-}
-
-void btn_ProcessEvents( SDL_Event* sdlEvent )
-{
-	if( ( sdlEvent->type == SDL_MOUSEBUTTONDOWN ) && ( sdlEvent->button.button == SDL_BUTTON_LEFT ) ) {
-		mouseDown = 1;
-	} else if( ( sdlEvent->type == SDL_MOUSEBUTTONUP ) && ( sdlEvent->button.button == SDL_BUTTON_LEFT ) ) {
-		mouseDown = 0;
-	}
 }
 
 void btn_DebugDraw( Color idle, Color hover, Color clicked )

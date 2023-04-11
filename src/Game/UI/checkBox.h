@@ -9,7 +9,6 @@ typedef void (*CheckBoxResponse)(bool);
 
 /* Call this before trying to use any check boxes. */
 void chkBox_Init( );
-
 void chkBox_CleanUp( );
 
 /*
