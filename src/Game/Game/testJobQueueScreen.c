@@ -44,7 +44,7 @@ static void delayedLoadTest( void* data )
 static void delayedFontLoadTest( void* data )
 {
 	SDL_Delay( 2000 );
-	txt_ThreadedLoadFont( "Fonts/kenpixel.ttf", 24.0f, &testFont );
+	txt_ThreadedLoadFont( "Fonts/Aileron-Regular.otf", 24.0f, &testFont );
 }
 
 static void delayedSoundLoadTest( void* data )
@@ -206,7 +206,7 @@ static int testJobQueueScreen_Enter( void )
 
 	btn_Init( );
 
-	font = txt_LoadFont( "Fonts/kenpixel.ttf", 12 );
+	font = txt_LoadFont( "Fonts/Aileron-Regular.otf", 12 );
 
 	//testFont = txt_LoadFont( "Fonts/kenpixel.ttf", 24.0f );
 

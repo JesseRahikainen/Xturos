@@ -463,7 +463,7 @@ static int gameOfUrState_Enter( void )
 	headProfileImg = img_Load( "Images/head_profile.png", ST_DEFAULT );
 	gearImg = img_Load( "Images/gear.png", ST_DEFAULT );
 	whiteBoxImg = img_Load( "Images/white.png", ST_DEFAULT );
-	font = txt_LoadFont( "Fonts/kenpixel.ttf", 24 );
+	font = txt_LoadFont( "Fonts/Aileron-Regular.otf", 24 );
 	img_LoadSpriteSheet( "Images/button.ss", ST_DEFAULT, &buttonImg );
 	hiliteImg = img_Load( "Images/hilite.png", ST_DEFAULT );
 
