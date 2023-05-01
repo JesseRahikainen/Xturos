@@ -205,7 +205,7 @@ static int gameScreen_Enter( void )
 
 	//img_LoadPackage( 3, fileNames, testImages );
 
-	font = txt_LoadFont( "Fonts/kenpixel.ttf", 128 );
+	font = txt_LoadFont( "Fonts/Aileron-Regular.otf", 128 );
 
 	ecps_StartInitialization( &testECPS ); {
 		spawningCompID = ecps_AddComponentType( &testECPS, "SPAWN", 0, 0, NULL, NULL );
