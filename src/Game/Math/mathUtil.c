@@ -276,6 +276,46 @@ float signed2DTriArea( const Vector2* a, const Vector2* b, const Vector2* c )
 	return ( ( a->x - c->x ) * ( b->y - c->y ) - ( a->y - c->y ) * ( b->x - c->x ) );
 }
 
+int digitsInI32( int32_t num )
+{
+	if( num < 0 ) num = ( num == INT32_MIN ) ? INT32_MAX : -num;
+	return digitsInU32( (uint32_t)num );
+}
+
+int digitsInU32( uint32_t num )
+{
+	if( num < 10 ) return 1;
+	if( num < 100 ) return 2;
+	if( num < 1000 ) return 3;
+	if( num < 10000 ) return 4;
+	if( num < 100000 ) return 5;
+	if( num < 1000000 ) return 6;
+	if( num < 10000000 ) return 7;
+	if( num < 100000000 ) return 8;
+	if( num < 1000000000 ) return 9;
+	return 10;
+}
+
+int32_t divisorForDigitExtractionI32( int32_t num )
+{
+	if( num < 0 ) num = ( num == INT32_MIN ) ? INT32_MAX : -num;
+	return (int32_t)divisorForDigitExtractionU32( (uint32_t)num );
+}
+
+uint32_t divisorForDigitExtractionU32( uint32_t num )
+{
+	if( num < 10 ) return 1;
+	if( num < 100 ) return 10;
+	if( num < 1000 ) return 100;
+	if( num < 10000 ) return 1000;
+	if( num < 100000 ) return 10000;
+	if( num < 1000000 ) return 100000;
+	if( num < 10000000 ) return 1000000;
+	if( num < 100000000 ) return 10000000;
+	if( num < 1000000000 ) return 100000000;
+	return 1000000000;
+}
+
 // finds the squared distance from the point pos to the line segment defined by lineA to lineB
 float sqrdDistToSegment( Vector2* pos, Vector2* lineA, Vector2* lineB )
 {

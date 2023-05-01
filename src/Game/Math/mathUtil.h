@@ -49,6 +49,11 @@ float sqDistPointSegment( const Vector2* segOne, const Vector2* segTwo, const Ve
 
 float signed2DTriArea( const Vector2* a, const Vector2* b, const Vector2* c );
 
+int digitsInI32( int32_t num );
+int digitsInU32( uint32_t num );
+int32_t divisorForDigitExtractionI32( int32_t num );
+uint32_t divisorForDigitExtractionU32( uint32_t num );
+
 #define FLOAT_TOLERANCE 0.0001f
 // used for testing floats within a certain tolerance, TODO: configurable tolerance?
 #define FLT_EQ( f, t ) ( ( ( ( f ) - ( t ) ) <= FLOAT_TOLERANCE ) && ( ( f ) - ( t ) >= -FLOAT_TOLERANCE ) )

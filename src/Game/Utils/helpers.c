@@ -9,6 +9,7 @@
 #include <SDL.h>
 
 #include "Math/vector2.h"
+#include "Math/mathUtil.h"
 #include "Input/input.h"
 #include "System/platformLog.h"
 #include "System/memory.h"
@@ -32,4 +33,37 @@ char* getSavePath( char* fileName )
 	SDL_free( path );
 
 	return fullPath;
+}
+
+void printCash( char* string, size_t maxLen, int cash )
+{
+	bool printNegative = cash < 0;
+	cash = SDL_abs( cash );
+	int maxMod = divisorForDigitExtractionI32( cash );
+	size_t pos = 0;
+	size_t nextComma = digitsInI32( cash ) % 3;
+	bool anyNumberPrinted = false;
+	bool printedDollarSign = false;
+	while( ( pos < maxLen - 1 ) && ( maxMod > 0 ) ) {
+		if( printNegative ) {
+			string[pos] = '-';
+			printNegative = false;
+		} else if( !printedDollarSign ) {
+			string[pos] = '$';
+			printedDollarSign = true;
+		} else if( ( nextComma == 0 ) && anyNumberPrinted ) {
+			string[pos] = ',';
+			nextComma = 3;
+		} else {
+			string[pos] = '0' + (char)( cash / maxMod );
+			cash = cash % maxMod;
+			maxMod /= 10;
+			nextComma = ( nextComma == 0 ) ? 2 : ( nextComma - 1 );
+			anyNumberPrinted = true;
+		}
+		++pos;
+	}
+
+	// null terminate
+	string[pos] = 0;
 }

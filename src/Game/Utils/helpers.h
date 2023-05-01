@@ -1,6 +1,8 @@
 #ifndef HELPERS_H
 #define HELPERS_H
 
+#include <stdint.h>
+
 // general helper functions
 #define ARRAY_SIZE( a ) ( sizeof( a ) / sizeof( a[0] ) )
 #define ANY_BITS_ON( bits, testOnBits ) ( ( bits ) & ( testOnBits ) )
@@ -23,5 +25,7 @@
 
 void logMousePos( void );
 char* getSavePath( char* fileName );
+
+void printCash( char* string, size_t maxLen, int32_t cash );
 
 #endif /* inclusion guard */

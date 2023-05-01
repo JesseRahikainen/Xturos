@@ -183,6 +183,7 @@ static void drawTriangles( uint32_t currCamera, TriangleList* triList, void( *on
 	Matrix4 vpMat;
 	uint32_t camFlags = 0;
 	int lastSetClippingArea = -1;
+	onStencilSwitch( lastSetClippingArea ); // reset stencil
 
 	// we'll only be accessing the one vertex array
 	GL( glBindVertexArray( triList->platformTriList.VAO ) );
