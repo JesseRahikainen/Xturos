@@ -17,7 +17,7 @@ void ecps_CleanUp( ECPS* ecps );
 
 // adds a component type and returns the id to reference it by
 //  this can only be done before
-ComponentID ecps_AddComponentType( ECPS* ecps, const char* name, size_t size, size_t align, CleanUpComponent cleanUp, VerifyComponent verify );
+ComponentID ecps_AddComponentType( ECPS* ecps, const char* name, uint32_t version, size_t size, size_t align, CleanUpComponent cleanUp, VerifyComponent verify );
 
 // this attempts to set up a process to be used by the passed in ecps
 bool ecps_CreateProcess( ECPS* ecps,

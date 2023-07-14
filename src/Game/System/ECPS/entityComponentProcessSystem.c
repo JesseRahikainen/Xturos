@@ -306,7 +306,7 @@ void ecps_CleanUp( ECPS* ecps )
 
 // adds a component type and returns the id to reference it by
 //  this can only be done before
-ComponentID ecps_AddComponentType( ECPS* ecps, const char* name, size_t size, size_t align, CleanUpComponent cleanUp, VerifyComponent verify )
+ComponentID ecps_AddComponentType( ECPS* ecps, const char* name, uint32_t version, size_t size, size_t align, CleanUpComponent cleanUp, VerifyComponent verify )
 {
 	assert( ecps != NULL );
 
@@ -321,11 +321,20 @@ ComponentID ecps_AddComponentType( ECPS* ecps, const char* name, size_t size, si
 	newType.align = align;
 	newType.verify = verify;
 	newType.cleanUp = cleanUp;
+	newType.version = version;
 
 	if( name != NULL ) {
-		strncpy( newType.name, name, sizeof( newType.name ) - 1 );
+		strncpy( newType.name, name, MAX_COMPONENT_NAME_SIZE );
 		newType.name[sizeof( newType.name ) - 1] = 0;
 	}
+
+#ifdef _DEBUG
+	// check to make sure the name is unique
+	for( size_t i = 0; i < sb_Count( ecps->componentTypes.sbTypes ); ++i ) {
+		bool isUnique = SDL_strcmp( newType.name, ecps->componentTypes.sbTypes[i].name ) == 0;
+		assert( isUnique );
+	}
+#endif
 
 	ComponentID id = (ComponentID)sb_Count( ecps->componentTypes.sbTypes );
 	sb_Push( ecps->componentTypes.sbTypes, newType );

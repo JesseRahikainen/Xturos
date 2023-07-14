@@ -41,13 +41,13 @@ static void draw( void )
 int spr_Init( void )
 {
 	ecps_StartInitialization( &spriteECPS ); {
-		posCompID = ecps_AddComponentType( &spriteECPS, "POS", sizeof( GCPosData ), ALIGN_OF( GCPosData ), NULL, NULL );
-		spriteCompID = ecps_AddComponentType( &spriteECPS, "SPRT", sizeof( GCSpriteData ), ALIGN_OF( GCSpriteData ), NULL, NULL );
-		scaleCompID = ecps_AddComponentType( &spriteECPS, "SCL", sizeof( GCScaleData ), ALIGN_OF( GCScaleData ), NULL, NULL );
-		clrCompID = ecps_AddComponentType( &spriteECPS, "CLR", sizeof( GCColorData ), ALIGN_OF( GCColorData ), NULL, NULL );
-		rotCompID = ecps_AddComponentType( &spriteECPS, "ROT", sizeof( GCRotData ), ALIGN_OF( GCRotData ), NULL, NULL );
-		floatVal0CompID = ecps_AddComponentType( &spriteECPS, "VAL0", sizeof( GCFloatVal0Data ), ALIGN_OF( GCFloatVal0Data ), NULL, NULL );
-		stencilCompID = ecps_AddComponentType( &spriteECPS, "STNCL", sizeof( GCStencilData ), ALIGN_OF( GCStencilData ), NULL, NULL );
+		posCompID = ecps_AddComponentType( &spriteECPS, "POS", 0, sizeof( GCPosData ), ALIGN_OF( GCPosData ), NULL, NULL );
+		spriteCompID = ecps_AddComponentType( &spriteECPS, "SPRT", 0, sizeof( GCSpriteData ), ALIGN_OF( GCSpriteData ), NULL, NULL );
+		scaleCompID = ecps_AddComponentType( &spriteECPS, "SCL", 0, sizeof( GCScaleData ), ALIGN_OF( GCScaleData ), NULL, NULL );
+		clrCompID = ecps_AddComponentType( &spriteECPS, "CLR", 0, sizeof( GCColorData ), ALIGN_OF( GCColorData ), NULL, NULL );
+		rotCompID = ecps_AddComponentType( &spriteECPS, "ROT", 0, sizeof( GCRotData ), ALIGN_OF( GCRotData ), NULL, NULL );
+		floatVal0CompID = ecps_AddComponentType( &spriteECPS, "VAL0", 0, sizeof( GCFloatVal0Data ), ALIGN_OF( GCFloatVal0Data ), NULL, NULL );
+		stencilCompID = ecps_AddComponentType( &spriteECPS, "STNCL", 0, sizeof( GCStencilData ), ALIGN_OF( GCStencilData ), NULL, NULL );
 
 		ecps_CreateProcess( &spriteECPS, "DRAW", NULL, render, NULL, &renderProc, 2, posCompID, spriteCompID );
 	} ecps_FinishInitialization( &spriteECPS );

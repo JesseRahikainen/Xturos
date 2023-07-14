@@ -7,6 +7,9 @@
 #include "Utils/idSet.h"
 #include "ecps_values.h"
 
+// doesn't include the terminating null
+#define MAX_COMPONENT_NAME_SIZE 32
+
 typedef uint32_t ComponentID;
 #define INVALID_COMPONENT_ID UINT32_MAX
 
@@ -14,7 +17,8 @@ typedef int ( *VerifyComponent )( EntityID entityID );
 typedef void ( *CleanUpComponent )( void* data );
 
 typedef struct {
-	char name[32];
+	char name[MAX_COMPONENT_NAME_SIZE + 1];
+	uint32_t version;
 	size_t size;
 	size_t align; // desired aligment of the structure
 

@@ -94,24 +94,24 @@ void gc_ColliderDataToCollider( GCColliderData* colliderData, GCPosData* posData
 
 void gc_Register( ECPS* ecps )
 {
-	gcPosCompID = ecps_AddComponentType( ecps, "GC_POS", sizeof( GCPosData ), ALIGN_OF( GCPosData ), NULL, NULL );
-	gcClrCompID = ecps_AddComponentType( ecps, "GC_CLR", sizeof( GCColorData ), ALIGN_OF( GCColorData ), NULL, NULL );
-	gcRotCompID = ecps_AddComponentType( ecps, "GC_ROT", sizeof( GCRotData ), ALIGN_OF( GCRotData ), NULL, NULL );
-	gcScaleCompID = ecps_AddComponentType( ecps, "GC_SCL", sizeof( GCScaleData ), ALIGN_OF( GCScaleData ), NULL, NULL );
-	gcSpriteCompID = ecps_AddComponentType( ecps, "GC_SPRT", sizeof( GCSpriteData ), ALIGN_OF( GCSpriteData ), NULL, NULL );
-	gc3x3SpriteCompID = ecps_AddComponentType( ecps, "GC_3x3", sizeof( GC3x3SpriteData ), ALIGN_OF( GC3x3SpriteData ), NULL, NULL );
-	gcColliderCompID = ecps_AddComponentType( ecps, "GC_COLL", sizeof( GCColliderData ), ALIGN_OF( GCColliderData ), NULL, NULL );
-	gcPointerResponseCompID = ecps_AddComponentType( ecps, "GC_CLICK", sizeof( GCPointerResponseData ), ALIGN_OF( GCPointerResponseData ), NULL, NULL );
-	gcCleanUpFlagCompID = ecps_AddComponentType( ecps, "GC_DEAD", 0, 0, NULL, NULL );
-	gcTextCompID = ecps_AddComponentType( ecps, "GC_TXT", sizeof( GCTextData ), ALIGN_OF( GCTextData ), NULL, NULL );
-	gcFloatVal0CompID = ecps_AddComponentType( ecps, "GC_VAL0", sizeof( GCFloatVal0Data ), ALIGN_OF( GCFloatVal0Data ), NULL, NULL );
-	gcWatchCompID = ecps_AddComponentType( ecps, "GC_WATCH", 0, 0, NULL, NULL );
-	gcMountedPosOffsetCompID = ecps_AddComponentType( ecps, "GC_MNTPOS", sizeof( GCMountedPosOffset ), ALIGN_OF( GCMountedPosOffset ), NULL, NULL );
-	gcStencilCompID = ecps_AddComponentType( ecps, "GC_STENCIL", sizeof( GCStencilData ), ALIGN_OF( GCStencilData ), NULL, NULL );
+	gcPosCompID = ecps_AddComponentType( ecps, "GC_POS", 0, sizeof( GCPosData ), ALIGN_OF( GCPosData ), NULL, NULL );
+	gcClrCompID = ecps_AddComponentType( ecps, "GC_CLR", 0, sizeof( GCColorData ), ALIGN_OF( GCColorData ), NULL, NULL );
+	gcRotCompID = ecps_AddComponentType( ecps, "GC_ROT", 0, sizeof( GCRotData ), ALIGN_OF( GCRotData ), NULL, NULL );
+	gcScaleCompID = ecps_AddComponentType( ecps, "GC_SCL", 0, sizeof( GCScaleData ), ALIGN_OF( GCScaleData ), NULL, NULL );
+	gcSpriteCompID = ecps_AddComponentType( ecps, "GC_SPRT", 0, sizeof( GCSpriteData ), ALIGN_OF( GCSpriteData ), NULL, NULL );
+	gc3x3SpriteCompID = ecps_AddComponentType( ecps, "GC_3x3", 0, sizeof( GC3x3SpriteData ), ALIGN_OF( GC3x3SpriteData ), NULL, NULL );
+	gcColliderCompID = ecps_AddComponentType( ecps, "GC_COLL", 0, sizeof( GCColliderData ), ALIGN_OF( GCColliderData ), NULL, NULL );
+	gcPointerResponseCompID = ecps_AddComponentType( ecps, "GC_CLICK", 0, sizeof( GCPointerResponseData ), ALIGN_OF( GCPointerResponseData ), NULL, NULL );
+	gcCleanUpFlagCompID = ecps_AddComponentType( ecps, "GC_DEAD", 0, 0, 0, NULL, NULL );
+	gcTextCompID = ecps_AddComponentType( ecps, "GC_TXT", 0, sizeof( GCTextData ), ALIGN_OF( GCTextData ), NULL, NULL );
+	gcFloatVal0CompID = ecps_AddComponentType( ecps, "GC_VAL0", 0, sizeof( GCFloatVal0Data ), ALIGN_OF( GCFloatVal0Data ), NULL, NULL );
+	gcWatchCompID = ecps_AddComponentType( ecps, "GC_WATCH", 0, 0, 0, NULL, NULL );
+	gcMountedPosOffsetCompID = ecps_AddComponentType( ecps, "GC_MNTPOS", 0, sizeof( GCMountedPosOffset ), ALIGN_OF( GCMountedPosOffset ), NULL, NULL );
+	gcStencilCompID = ecps_AddComponentType( ecps, "GC_STENCIL", 0, sizeof( GCStencilData ), ALIGN_OF( GCStencilData ), NULL, NULL );
 
-	gcPosTweenCompID = ecps_AddComponentType( ecps, "P_TWN", sizeof( GCVec2TweenData ), ALIGN_OF( GCVec2TweenData ), NULL, NULL );
-	gcScaleTweenCompID = ecps_AddComponentType( ecps, "S_TWN", sizeof( GCVec2TweenData ), ALIGN_OF( GCVec2TweenData ), NULL, NULL );
-	gcAlphaTweenCompID = ecps_AddComponentType( ecps, "A_TWN", sizeof( GCFloatTweenData ), ALIGN_OF( GCFloatTweenData ), NULL, NULL );
+	gcPosTweenCompID = ecps_AddComponentType( ecps, "P_TWN", 0, sizeof( GCVec2TweenData ), ALIGN_OF( GCVec2TweenData ), NULL, NULL );
+	gcScaleTweenCompID = ecps_AddComponentType( ecps, "S_TWN", 0, sizeof( GCVec2TweenData ), ALIGN_OF( GCVec2TweenData ), NULL, NULL );
+	gcAlphaTweenCompID = ecps_AddComponentType( ecps, "A_TWN", 0, sizeof( GCFloatTweenData ), ALIGN_OF( GCFloatTweenData ), NULL, NULL );
 
-	gcGroupIDCompID = ecps_AddComponentType( ecps, "GRP", sizeof( GCGroupIDData ), ALIGN_OF( GCGroupIDData ), NULL, NULL );
+	gcGroupIDCompID = ecps_AddComponentType( ecps, "GRP", 0, sizeof( GCGroupIDData ), ALIGN_OF( GCGroupIDData ), NULL, NULL );
 }
