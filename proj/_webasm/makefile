@@ -1,4 +1,3 @@
-NUKLEAR_DIR = F:/Data/Libraries/nuklear-master
 STB_DIR = F:/Data/Libraries/stb-master
 
 CSRC = $(wildcard ../../src/Game/*.c) \
@@ -6,6 +5,7 @@ CSRC = $(wildcard ../../src/Game/*.c) \
 	   $(wildcard ../../src/Game/Graphics/Platform/*.c) \
 	   $(wildcard ../../src/Game/Graphics/Platform/OpenGL/*.c) \
        $(wildcard ../../src/Game/IMGUI/*.c) \
+	   $(wildcard ../../src/Game/IMGUI/Platform/OpenGL/*.c) \
 	   $(wildcard ../../src/Game/Input/*.c) \
 	   $(wildcard ../../src/Game/Math/*.c) \
 	   $(wildcard ../../src/Game/System/*.c) \
@@ -25,7 +25,6 @@ CFLAGS = -s WASM=1 \
 		 -s USE_WEBGL2=1 \
 		 -s FULL_ES3=1 \
 		 -s ALLOW_MEMORY_GROWTH=1 \
-		 -I$(NUKLEAR_DIR) \
 		 -I$(STB_DIR) \
 		 -I../../src/Game \
 		 --emrun \

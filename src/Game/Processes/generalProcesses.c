@@ -765,5 +765,5 @@ void gp_RegisterProcesses( ECPS* ecps )
 
 	SDL_assert( gcPosCompID != INVALID_COMPONENT_ID );
 	SDL_assert( gcColliderCompID != INVALID_COMPONENT_ID );
-	ecps_CreateProcess( ecps, "COLLISION", clearColliders, addCollider, runCollisions, &gpCollisionProc, gcPosCompID, gcColliderCompID );
+	ecps_CreateProcess( ecps, "COLLISION", clearColliders, addCollider, runCollisions, &gpCollisionProc, 2, gcPosCompID, gcColliderCompID );
 }

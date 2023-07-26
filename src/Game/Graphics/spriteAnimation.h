@@ -2,6 +2,7 @@
 #define SPRITE_ANIMATION_H
 
 #include <stdint.h>
+#include <stddef.h>
 
 #include "Math/vector2.h"
 

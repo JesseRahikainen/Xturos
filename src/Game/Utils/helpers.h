@@ -2,6 +2,7 @@
 #define HELPERS_H
 
 #include <stdint.h>
+#include <stddef.h>
 
 // general helper functions
 #define ARRAY_SIZE( a ) ( sizeof( a ) / sizeof( a[0] ) )

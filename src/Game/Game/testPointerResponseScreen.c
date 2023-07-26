@@ -11,6 +11,8 @@
 #include "../Components/generalComponents.h"
 #include "../Processes/generalProcesses.h"
 
+#include "../System/platformLog.h"
+
 static ECPS ecps;
 static int whiteImg;
 static Vector2 imgSize;
@@ -79,7 +81,7 @@ static void createTestButton( Vector2 position, Vector2 size )
 		gcScaleCompID, &scale );
 }
 
-static int testPointerResponseScreen_Enter( void )
+static void testPointerResponseScreen_Enter( void )
 {
 	cam_TurnOnFlags( 0, 1 );
 	
@@ -97,13 +99,10 @@ static int testPointerResponseScreen_Enter( void )
 	createTestButton( vec2( 375.0f, 275.0f ), vec2( 100.0f, 100.0f ) );
 	createTestButton( vec2( 350.0f, 250.0f ), vec2( 100.0f, 100.0f ) );
 	createTestButton( vec2( 325.0f, 225.0f ), vec2( 100.0f, 100.0f ) );
-
-	return 1;
 }
 
-static int testPointerResponseScreen_Exit( void )
+static void testPointerResponseScreen_Exit( void )
 {
-	return 1;
 }
 
 static void testPointerResponseScreen_ProcessEvents( SDL_Event* e )

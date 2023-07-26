@@ -336,7 +336,7 @@ static void endMove( void )
 	currState = MS_IDLE;
 }
 
-static int bordersTestScreen_Enter( void )
+static void bordersTestScreen_Enter( void )
 {
 	cam_TurnOnFlags( 0, 1 );
 	cam_SetCenteredProjectionMatrix( 0, 800, 600 );
@@ -365,13 +365,10 @@ static int bordersTestScreen_Enter( void )
 
 	input_BindOnMouseButtonPress( SDL_BUTTON_MIDDLE, startMove );
 	input_BindOnMouseButtonRelease( SDL_BUTTON_MIDDLE, endMove );
-
-	return 1;
 }
 
-static int bordersTestScreen_Exit( void )
+static void bordersTestScreen_Exit( void )
 {
-	return 1;
 }
 
 static void bordersTestScreen_ProcessEvents( SDL_Event* e )

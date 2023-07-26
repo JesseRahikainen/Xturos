@@ -339,29 +339,29 @@ static Move currMove;
 static float gearRot = 0.0f;
 
 // state predefines
-static int start_Enter( void );
-static int start_Exit( void );
+static void start_Enter( void );
+static void start_Exit( void );
 static void start_ProcessEvents( SDL_Event* e );
 static void start_Process( void );
 static void start_Draw( void );
 static void start_PhysicsTick( float dt );
 
-static int humanChooseMove_Enter( void );
-static int humanChooseMove_Exit( void );
+static void humanChooseMove_Enter( void );
+static void humanChooseMove_Exit( void );
 static void humanChooseMove_ProcessEvents( SDL_Event* e );
 static void humanChooseMove_Process( void );
 static void humanChooseMove_Draw( void );
 static void humanChooseMove_PhysicsTick( float dt );
 
-static int aiChooseMove_Enter( void );
-static int aiChooseMove_Exit( void );
+static void aiChooseMove_Enter( void );
+static void aiChooseMove_Exit( void );
 static void aiChooseMove_ProcessEvents( SDL_Event* e );
 static void aiChooseMove_Process( void );
 static void aiChooseMove_Draw( void );
 static void aiChooseMove_PhysicsTick( float dt );
 
-static int animate_Enter( void );
-static int animate_Exit( void );
+static void animate_Enter( void );
+static void animate_Exit( void );
 static void animate_ProcessEvents( SDL_Event* e );
 static void animate_Process( void );
 static void animate_Draw( void );
@@ -449,7 +449,7 @@ static void dumpPos( void )
 	vec2_Dump( &pos, NULL );
 }
 
-static int gameOfUrState_Enter( void )
+static void gameOfUrState_Enter( void )
 {
 	jq_Initialize( 4 );
 	cam_TurnOnFlags( 0, 1 );
@@ -473,14 +473,11 @@ static int gameOfUrState_Enter( void )
 
 	//rand_Seed( &mctsRandom, 0xFEEDBEEF );
 	rand_Seed( &mctsRandom, (uint32_t)time( NULL ) );
-
-	return 1;
 }
 
-static int gameOfUrState_Exit( void )
+static void gameOfUrState_Exit( void )
 {
 	btn_CleanUp( );
-	return 1;
 }
 
 static void gameOfUrState_ProcessEvents( SDL_Event* e )
@@ -573,7 +570,7 @@ static void pressStart_ComputerVsComputer( int id )
 	chooseMoveState( );
 }
 
-static int start_Enter( void )
+static void start_Enter( void )
 {
 	currBoardState = initialBoardState( );
 
@@ -600,16 +597,12 @@ static int start_Enter( void )
 	btn_Create( vec2( 500.0f, 400.0f ), vec2( 200.0f, 40.0f ), vec2( 200.0f, 40.0f ),
 		"Start CvC", font, 24.0f, CLR_WHITE, VEC2_ZERO, NULL, -1, CLR_WHITE, 1, 0,
 		pressStart_ComputerVsComputer, NULL );
-
-	return 1;
 }
 
-static int start_Exit( void )
+static void start_Exit( void )
 {
 	destroyAllLabels( );
 	btn_DestroyAll( );
-
-	return 1;
 }
 
 static void start_ProcessEvents( SDL_Event* e )
@@ -641,7 +634,7 @@ static void pressedButton( int id )
 	}
 }
 
-static int humanChooseMove_Enter( void )
+static void humanChooseMove_Enter( void )
 {
 	// grab the list of moves and create the buttons for them
 	sb_Clear( sbHumanMoveList );
@@ -685,16 +678,13 @@ static int humanChooseMove_Enter( void )
 
 	createTurnLabel( );
 	createRollLabel( );
-
-	return 1;
 }
 
-static int humanChooseMove_Exit( void )
+static void humanChooseMove_Exit( void )
 {
 	mem_Release( matchingMoveList );
 	btn_DestroyAll( );
 	destroyAllLabels( );
-	return 1;
 }
 
 static void humanChooseMove_ProcessEvents( SDL_Event* e )
@@ -713,22 +703,18 @@ static void humanChooseMove_PhysicsTick( float dt )
 
 //****************************************************
 // ai choose move state
-static int aiChooseMove_Enter( void )
+static void aiChooseMove_Enter( void )
 {
 	createTurnLabel( );
 	createRollLabel( );
 
 	float searchConstant = MCTS_DEFAULT_SEARCH_CONSTANT;
 	startMCTSThread( urDefinition, searchConstant, &currBoardState );
-
-	return 1;
 }
 
-static int aiChooseMove_Exit( void )
+static void aiChooseMove_Exit( void )
 {
 	destroyAllLabels( );
-
-	return 1;
 }
 
 static void aiChooseMove_ProcessEvents( SDL_Event* e )
@@ -784,7 +770,7 @@ static float timePassed = 0.0f;
 #define HUMAN_TIME_TO_ANIMATE 0.75f
 #define AI_TIME_TO_ANIMATE 1.5f
 
-static int animate_Enter( void )
+static void animate_Enter( void )
 {
 	// choose what to animate
 	//  roll shouldn't do anything
@@ -799,15 +785,11 @@ static int animate_Enter( void )
 
 	createTurnLabel( );
 	createRollLabel( );
-
-	return 1;
 }
 
-static int animate_Exit( void )
+static void animate_Exit( void )
 {
 	destroyAllLabels( );
-
-	return 1;
 }
 
 static void animate_ProcessEvents( SDL_Event* e )

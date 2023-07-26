@@ -19,8 +19,7 @@
 typedef enum {
 	RS_VERSION,
 	RS_FILENAME,
-	RS_SPRITES,
-	RS_FINISHED
+	RS_SPRITES
 } ReadState;
 
 typedef struct {
@@ -78,8 +77,7 @@ static bool loadSpriteSheetData( const char* fileName, TempSpriteSheetData* outD
 	sb_Push( fileText, 0 );
 
 	const char* delim = "\r\n";
-	char* context = NULL;
-	char* line = SDL_strtokr( fileText, delim, &context );
+	char* line = strtok( fileText, delim );
 	char* fileNameLoc;
 	char* idEndLoc;
 	char* rectStart;
@@ -139,7 +137,7 @@ static bool loadSpriteSheetData( const char* fileName, TempSpriteSheetData* outD
 				break;
 			}
 		}
-		line = SDL_strtokr( NULL, delim, &context );
+		line = strtok( NULL, delim );
 	}
 
 	ret = true;
@@ -242,7 +240,7 @@ static void bindSpriteSheetJob( void* data )
 	//llog( LOG_DEBUG, "Done loading %s", loadData->fileName );
 
 	Texture texture;
-	if( gfxPlatform_CreateTextureFromLoadedImage( TF_RGBA, &( loadData->loadedImage ), &texture ) < 0 ) {
+	if( !gfxPlatform_CreateTextureFromLoadedImage( TF_RGBA, &( loadData->loadedImage ), &texture ) ) {
 		llog( LOG_DEBUG, "Unable to create texture for %s", loadData->fileName );
 		goto clean_up;
 	}

@@ -184,7 +184,7 @@ static void testProduceConsumer( int btnID )
 	jq_AddJob( testConsumer, NULL );
 }
 
-static int testJobQueueScreen_Enter( void )
+static void testJobQueueScreen_Enter( void )
 {
 	//testImg = img_Load( "Images/tile.png", ST_DEFAULT );
 	testImg = -1;
@@ -235,18 +235,14 @@ static int testJobQueueScreen_Enter( void )
 
 	btn_Create( vec2( 150.0f, 150.0f ), vec2( 50.0f, 50.0f ), vec2( 60.0f, 60.0f ), "Test\nProd/Cons",
 		font, 12.0f, CLR_WHITE, VEC2_ZERO, NULL, whiteImg, CLR_BLUE, 1, 0, testProduceConsumer, NULL );
-
-	return 1;
 }
 
-static int testJobQueueScreen_Exit( void )
+static void testJobQueueScreen_Exit( void )
 {
 	btn_CleanUp( );
 
 	txt_UnloadFont( font );
 	img_Clean( whiteImg );
-
-	return 1;
 }
 
 static void testJobQueueScreen_ProcessEvents( SDL_Event* e )

@@ -366,6 +366,9 @@
     <ClInclude Include="..\..\src\Game\Game\testSteeringScreen.h">
       <Filter>Header Files\Game\TestScreens</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\Game\System\ECPS\ecps_trackedCallbacks.h">
+      <Filter>Header Files\System\ECPS</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\Game\Graphics\graphics.c">
@@ -589,6 +592,9 @@
     </ClCompile>
     <ClCompile Include="..\..\src\Game\Game\testSoundsScreen.c">
       <Filter>Source Files\Game\TestScreens</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Game\System\ECPS\ecps_trackedCallbacks.c">
+      <Filter>Source Files\System\ECPS</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

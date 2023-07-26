@@ -91,7 +91,7 @@ static void setLineEnd( void )
 	}
 }
 
-static int hexTestScreen_Enter( void )
+static void hexTestScreen_Enter( void )
 {
 	cam_TurnOnFlags( 0, 1 );
 
@@ -133,13 +133,10 @@ static int hexTestScreen_Enter( void )
 	input_BindOnKeyPress( SDLK_MINUS, decreaseRadius );
 	input_BindOnKeyPress( SDLK_q, setLineStart );
 	input_BindOnKeyPress( SDLK_w, setLineEnd );
-
-	return 1;
 }
 
-static int hexTestScreen_Exit( void )
+static void hexTestScreen_Exit( void )
 {
-	return 1;
 }
 
 static void hexTestScreen_ProcessEvents( SDL_Event* e )

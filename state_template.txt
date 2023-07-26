@@ -21,14 +21,12 @@ GameState <temp>State;
 #include "System/platformLog.h"
 #include "Processes/generalProcesses.h"
 
-static int <temp>State_Enter( void )
+static void <temp>State_Enter( void )
 {
-	return 1;
 }
 
-static int <temp>State_Exit( void )
+static void <temp>State_Exit( void )
 {
-	return 1;
 }
 
 static void <temp>State_ProcessEvents( SDL_Event* e )

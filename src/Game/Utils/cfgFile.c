@@ -67,8 +67,7 @@ void* cfg_OpenFile( const char* fileName )
 	//  off of each end
 	int gettingAttrName = 1;
 	const char* delimiters = "\f\v\t =\r\n";
-	char* context = NULL;
-	char* token = SDL_strtokr( fileText, delimiters, &context );
+	char* token = strtok( fileText, delimiters );
 	CFGAttribute attr;
 
 	while( token != NULL ) {
@@ -85,7 +84,7 @@ void* cfg_OpenFile( const char* fileName )
 			gettingAttrName = 1;
 		}
 
-		token = SDL_strtokr( NULL, delimiters, &context );
+		token = strtok( NULL, delimiters );
 	}
 
 	sb_Release( fileText );

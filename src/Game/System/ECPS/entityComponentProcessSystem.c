@@ -87,6 +87,9 @@ static bool createProcessVA( ECPS* ecps,
 	memset( &( outProcess->bitFlags ), 0, sizeof( ComponentBitFlags ) );
 	for( size_t i = 0; i < numComponents; ++i ) {
 		ComponentID compID = va_arg( list, ComponentID );
+		if( !ecps_ct_IsComponentTypeValid( &( ecps->componentTypes ), compID ) ) {
+			llog( LOG_ERROR, "Invalid component type %i attempting to be used for process %s", compID, name );
+		}
 		assert( ecps_ct_IsComponentTypeValid( &( ecps->componentTypes ), compID ) );
 		ecps_cbf_SetFlagOn( &( outProcess->bitFlags ), compID );
 	}
@@ -331,7 +334,7 @@ ComponentID ecps_AddComponentType( ECPS* ecps, const char* name, uint32_t versio
 #ifdef _DEBUG
 	// check to make sure the name is unique
 	for( size_t i = 0; i < sb_Count( ecps->componentTypes.sbTypes ); ++i ) {
-		bool isUnique = SDL_strcmp( newType.name, ecps->componentTypes.sbTypes[i].name ) == 0;
+		bool isUnique = SDL_strcmp( newType.name, ecps->componentTypes.sbTypes[i].name ) != 0;
 		assert( isUnique );
 	}
 #endif
@@ -1200,6 +1203,8 @@ void ecps_DumpEntity( ECPS* ecps, const Entity* entity, const char* tag )
 	sb_Release( sbTypeList );
 }
 
+#pragma warning(push)
+#pragma warning(disable:4701)
 // lists all entities and the type of components they have
 void ecps_DumpAllEntities( ECPS* ecps, const char* tag )
 {
@@ -1242,3 +1247,4 @@ void ecps_DumpAllEntities( ECPS* ecps, const char* tag )
 
 	sb_Release( sbTypeList );
 }
+#pragma warning(pop)

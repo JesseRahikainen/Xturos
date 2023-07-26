@@ -193,7 +193,7 @@ static void selfDestructing( ECPS* ecps, const Entity* entity )
 	  - not while processing
 	*/
 
-static int gameScreen_Enter( void )
+static void gameScreen_Enter( void )
 {
 	cam_TurnOnFlags( 0, 1 );
 	
@@ -216,13 +216,10 @@ static int gameScreen_Enter( void )
 		ecps_CreateProcess( &testECPS, "ATTACK", NULL, attacking, NULL, &attackProc, 1, attackingCompID );
 		ecps_CreateProcess( &testECPS, "SUDOKU", NULL, selfDestructing, NULL, &selfDestructProc, 1, selfDestructCompID );
 	} ecps_FinishInitialization( &testECPS );
-
-	return 1;
 }
 
-static int gameScreen_Exit( void )
+static void gameScreen_Exit( void )
 {
-	return 1;
 }
 
 static void gameScreen_ProcessEvents( SDL_Event* e )

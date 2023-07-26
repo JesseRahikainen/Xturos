@@ -184,7 +184,7 @@ static void repositionTarget( void )
 	cam_ScreenPosToWorldPos( 0, &mousePos, &testTarget );
 }
 
-static int testSteeringScreen_Enter( void )
+static void testSteeringScreen_Enter( void )
 {
 	cam_TurnOnFlags( 0, 1 );
 
@@ -202,13 +202,10 @@ static int testSteeringScreen_Enter( void )
 	createVehicle( VEC2_ZERO, CLR_GREEN );
 
 	input_BindOnMouseButtonPress( SDL_BUTTON_LEFT, repositionTarget );
-
-	return 1;
 }
 
-static int testSteeringScreen_Exit( void )
+static void testSteeringScreen_Exit( void )
 {
-	return 1;
 }
 
 static void testSteeringScreen_ProcessEvents( SDL_Event* e )

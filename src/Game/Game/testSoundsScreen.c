@@ -28,7 +28,7 @@ void ToggleStream( int id )
 	}
 }
 
-static int testSoundsScreen_Enter( void )
+static void testSoundsScreen_Enter( void )
 {
 	cam_TurnOnFlags( 0, 1 );
 	gfx_SetClearColor( CLR_BLACK );
@@ -47,18 +47,14 @@ static int testSoundsScreen_Enter( void )
 		"Stream", font, 32.0f, CLR_BLUE, VEC2_ZERO, NULL, -1, CLR_WHITE, 1, 0, NULL, ToggleStream );
 
 	btn_Init( );
-
-	return 1;
 }
 
-static int testSoundsScreen_Exit( void )
+static void testSoundsScreen_Exit( void )
 {
 	btn_CleanUp( );
 
 	snd_UnloadSample( testSnd );
 	snd_UnloadStream( testStrm );
-
-	return 1;
 }
 
 static void testSoundsScreen_ProcessEvents( SDL_Event* e )

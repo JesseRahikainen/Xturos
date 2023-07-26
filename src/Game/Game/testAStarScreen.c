@@ -294,7 +294,7 @@ static void generateMaze( void )
 	searchForPath( );
 }
 
-static int testAStarScreen_Enter( void )
+static void testAStarScreen_Enter( void )
 {
 	cam_TurnOnFlags( 0, 1 );
 	
@@ -326,11 +326,9 @@ static int testAStarScreen_Enter( void )
 	sbPath = NULL;
 
 	searchForPath( );
-
-	return 1;
 }
 
-static int testAStarScreen_Exit( void )
+static void testAStarScreen_Exit( void )
 {
 	img_Clean( tileImg );
 	img_Clean( tileMarkerImg );
@@ -340,8 +338,6 @@ static int testAStarScreen_Exit( void )
 	input_ClearAllKeyBinds( );
 
 	sb_Release( sbPath );
-
-	return 1;
 }
 
 static void testAStarScreen_ProcessEvents( SDL_Event* e )

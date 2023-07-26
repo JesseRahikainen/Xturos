@@ -27,7 +27,7 @@ typedef struct {
 } MovingThing;
 static MovingThing movingThings[40];
 
-static int testBloomScreen_Enter( void )
+static void testBloomScreen_Enter( void )
 {
 	cam_TurnOnFlags( 0, 1 );
 
@@ -73,14 +73,11 @@ static int testBloomScreen_Enter( void )
 			// make glow!
 		}
 	}
-
-	return 1;
 }
 
-static int testBloomScreen_Exit( void )
+static void testBloomScreen_Exit( void )
 {
 	spr_CleanUp( );
-	return 1;
 }
 
 static void testBloomScreen_ProcessEvents( SDL_Event* e )
