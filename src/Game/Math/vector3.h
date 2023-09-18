@@ -1,6 +1,9 @@
 #ifndef VECTOR_3_H
 #define VECTOR_3_H
 
+#include <stdbool.h>
+#include "Others/cmp.h"
+
 typedef struct {
 	union {
 		struct {
@@ -43,5 +46,8 @@ Vector3* vec3_Perpindicular( const Vector3* vec, const Vector3* ref, Vector3* ou
 Vector3 vec3( float x, float y, float z );
 
 void vec3_Dump( const Vector3* vec, const char* extra );
+
+bool vec3_Serialize( cmp_ctx_t* cmp, const Vector3* vec );
+bool vec3_Deserialize( cmp_ctx_t* cmp, Vector3* outVec );
 
 #endif // inclusion guard

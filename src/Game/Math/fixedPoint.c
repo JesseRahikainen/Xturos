@@ -1,6 +1,9 @@
 #include "fixedPoint.h"
 
 #include <math.h>
+#include <SDL_assert.h>
+
+#include "System/platformLog.h"
 
 // will be in the Q16.16 format
 //  https://en.wikipedia.org/wiki/Q_(number_format)
@@ -75,4 +78,30 @@ fixed32 f32_Divide( fixed32 lhs, fixed32 rhs )
 	}
 
 	return (fixed32)( temp / rhs );
+}
+
+bool f32_Serialize( cmp_ctx_t* cmp, fixed32 fp )
+{
+	SDL_assert( cmp != NULL );
+
+	if( !cmp_write_s32( cmp, fp ) ) {
+		llog( LOG_ERROR, "Unable to write fixed point." );
+		return false;
+	}
+
+	return true;
+}
+
+bool f32_Deserialize( cmp_ctx_t* cmp, fixed32* outFp )
+{
+	SDL_assert( cmp != NULL );
+
+	*outFp = 0;
+
+	if( !cmp_read_s32( cmp, outFp ) ) {
+		llog( LOG_ERROR, "Unable to load fixed point." );
+		return false;
+	}
+
+	return true;
 }

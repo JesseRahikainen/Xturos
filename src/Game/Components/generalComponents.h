@@ -9,6 +9,12 @@
 #include "tween.h"
 #include "collisionDetection.h"
 
+// bools will have to become uint8_t to ensure they're all the same size
+// int ids will have to change to int32_t or uint32_t
+// all other ints should be converted to uint32_t as well
+// size_t should be converted to uin32_t or uint64_t as needed
+// enums will also need to use a fixed integer storage instead of the enum directly
+
 // general use components that are shared between games
 typedef struct {
 	Vector2 currPos;
@@ -93,21 +99,21 @@ extern ComponentID gcColliderCompID;
 // used for buttons or anything else that should be clickable
 typedef struct {
 	Vector2 collisionHalfDim;
-	int state;
-	int camFlags;
+	uint32_t camFlags;
 	int32_t priority;
-	void ( *overResponse )( Entity* btn );
-	void ( *leaveResponse )( Entity* btn );
-	void ( *pressResponse )( Entity* btn );
-	void ( *releaseResponse )( Entity* btn );
+	void ( *overResponse )( ECPS* ecps, Entity* btn );
+	void ( *leaveResponse )( ECPS* ecps, Entity* btn );
+	void ( *pressResponse )( ECPS* ecps, Entity* btn );
+	void ( *releaseResponse )( ECPS* ecps, Entity* btn );
 } GCPointerResponseData;
 extern ComponentID gcPointerResponseCompID;
 
+// a flag used to indicate that an entity should be destroyed when next possible
 extern ComponentID gcCleanUpFlagCompID;
 
 // for right now all text will be drawn centered
 typedef struct {
-	int camFlags;
+	uint32_t camFlags;
 	int8_t depth;
 	const uint8_t* text;
 	int fontID;
@@ -151,7 +157,7 @@ extern ComponentID gcPosTweenCompID;
 extern ComponentID gcScaleTweenCompID;
 
 typedef struct {
-	size_t groupID;
+	uint32_t groupID;
 } GCGroupIDData;
 extern ComponentID gcGroupIDCompID;
 
@@ -161,6 +167,7 @@ void gc_ColliderDataToCollider( GCColliderData* colliderData, GCPosData* posData
 void gc_MountEntity( ECPS* ecps, EntityID parentID, EntityID childID );
 
 void gc_WatchEntity( ECPS* ecps, EntityID id );
+void gc_UnWatchEntity( ECPS* ecps, EntityID id );
 
 void gc_Register( ECPS* ecps );
 

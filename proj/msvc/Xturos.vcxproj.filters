@@ -369,6 +369,12 @@
     <ClInclude Include="..\..\src\Game\System\ECPS\ecps_trackedCallbacks.h">
       <Filter>Header Files\System\ECPS</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\Game\System\ECPS\ecps_serialization.h">
+      <Filter>Header Files\System\ECPS</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Game\Others\cmp.h">
+      <Filter>Header Files\Others</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\Game\Graphics\graphics.c">
@@ -595,6 +601,12 @@
     </ClCompile>
     <ClCompile Include="..\..\src\Game\System\ECPS\ecps_trackedCallbacks.c">
       <Filter>Source Files\System\ECPS</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Game\System\ECPS\ecps_serialization.c">
+      <Filter>Source Files\System\ECPS</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Game\Others\cmp.c">
+      <Filter>Source Files\Others</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

@@ -1,6 +1,7 @@
 #include "color.h"
-#include <assert.h>
+#include <SDL_assert.h>
 #include "Math/mathUtil.h"
+#include "System/platformLog.h"
 
 Color clr( float r, float g, float b, float a )
 {
@@ -38,7 +39,7 @@ Color clr_hex( uint32_t c )
 
 SDL_Color clr_ToSDLColor( const Color* color )
 {
-	assert( color );
+	SDL_assert( color );
 
 	SDL_Color out;
 
@@ -107,9 +108,9 @@ Color clr_hsv( int hue, float saturation, float value )
 
 Color* clr_Lerp( const Color* from, const Color* to, float t, Color* out )
 {
-	assert( from != NULL );
-	assert( to != NULL );
-	assert( out != NULL );
+	SDL_assert( from != NULL );
+	SDL_assert( to != NULL );
+	SDL_assert( out != NULL );
 
 	out->r = lerp( from->r, to->r, t );
 	out->g = lerp( from->g, to->g, t );
@@ -121,8 +122,8 @@ Color* clr_Lerp( const Color* from, const Color* to, float t, Color* out )
 
 Color* clr_Scale( const Color* color, float scale, Color* out )
 {
-	assert( color != NULL );
-	assert( out != NULL );
+	SDL_assert( color != NULL );
+	SDL_assert( out != NULL );
 
 	out->r = color->r * scale;
 	out->g = color->g * scale;
@@ -134,9 +135,9 @@ Color* clr_Scale( const Color* color, float scale, Color* out )
 
 Color* clr_AddScaled( const Color* base, const Color* scaled, float scale, Color* out )
 {
-	assert( base != NULL );
-	assert( scaled != NULL );
-	assert( out != NULL );
+	SDL_assert( base != NULL );
+	SDL_assert( scaled != NULL );
+	SDL_assert( out != NULL );
 
 	out->r = base->r + ( scaled->r * scale );
 	out->g = base->g + ( scaled->g * scale );
@@ -144,4 +145,60 @@ Color* clr_AddScaled( const Color* base, const Color* scaled, float scale, Color
 	out->a = base->a + ( scaled->a * scale );
 
 	return out;
+}
+
+bool clr_Serialize( cmp_ctx_t* cmp, const Color* clr )
+{
+	SDL_assert( cmp != NULL );
+	SDL_assert( clr != NULL );
+
+	if( !cmp_write_float( cmp, clr->r ) ) {
+		llog( LOG_ERROR, "Unable to write red component of Color." );
+		return false;
+	}
+
+	if( !cmp_write_float( cmp, clr->g ) ) {
+		llog( LOG_ERROR, "Unable to write green component of Color." );
+		return false;
+	}
+
+	if( !cmp_write_float( cmp, clr->b ) ) {
+		llog( LOG_ERROR, "Unable to write blue component of Color." );
+		return false;
+	}
+
+	if( !cmp_write_float( cmp, clr->a ) ) {
+		llog( LOG_ERROR, "Unable to write alpha component of Color." );
+		return false;
+	}
+
+	return true;
+}
+
+bool clr_Deserialize( cmp_ctx_t* cmp, Color* outClr )
+{
+	SDL_assert( cmp != NULL );
+	SDL_assert( outClr != NULL );
+
+	if( !cmp_read_float( cmp, &( outClr->r ) ) ) {
+		llog( LOG_ERROR, "Unable to read red component of Color." );
+		return false;
+	}
+
+	if( !cmp_read_float( cmp, &( outClr->g ) ) ) {
+		llog( LOG_ERROR, "Unable to read green component of Color." );
+		return false;
+	}
+
+	if( !cmp_read_float( cmp, &( outClr->b ) ) ) {
+		llog( LOG_ERROR, "Unable to read blue component of Color." );
+		return false;
+	}
+
+	if( !cmp_read_float( cmp, &( outClr->a ) ) ) {
+		llog( LOG_ERROR, "Unable to read alpha component of Color." );
+		return false;
+	}
+
+	return true;
 }

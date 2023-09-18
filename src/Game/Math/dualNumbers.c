@@ -1,8 +1,9 @@
 #include "dualNumbers.h"
 
-#include <assert.h>
+#include <SDL_assert.h>
 #include <math.h>
 #include "mathUtil.h"
+#include "System/platformLog.h"
 
 DualNumber dual( float r, float d )
 {
@@ -14,9 +15,9 @@ DualNumber dual( float r, float d )
 
 DualNumber* dual_Add( const DualNumber* lhs, const DualNumber* rhs, DualNumber* out )
 {
-	assert( lhs != NULL );
-	assert( rhs != NULL );
-	assert( out != NULL );
+	SDL_assert( lhs != NULL );
+	SDL_assert( rhs != NULL );
+	SDL_assert( out != NULL );
 
 	out->real = lhs->real + rhs->real;
 	out->dual = lhs->dual + rhs->dual;
@@ -26,9 +27,9 @@ DualNumber* dual_Add( const DualNumber* lhs, const DualNumber* rhs, DualNumber* 
 
 DualNumber* dual_Subtract( const  DualNumber* lhs, const DualNumber* rhs, DualNumber* out )
 {
-	assert( lhs != NULL );
-	assert( rhs != NULL );
-	assert( out != NULL );
+	SDL_assert( lhs != NULL );
+	SDL_assert( rhs != NULL );
+	SDL_assert( out != NULL );
 
 	out->real = lhs->real - rhs->real;
 	out->dual = lhs->dual - rhs->dual;
@@ -38,9 +39,9 @@ DualNumber* dual_Subtract( const  DualNumber* lhs, const DualNumber* rhs, DualNu
 
 DualNumber* dual_Multiply( const  DualNumber* lhs, const DualNumber* rhs, DualNumber* out )
 {
-	assert( lhs != NULL );
-	assert( rhs != NULL );
-	assert( out != NULL );
+	SDL_assert( lhs != NULL );
+	SDL_assert( rhs != NULL );
+	SDL_assert( out != NULL );
 
 	float lr = lhs->real;
 	float rr = rhs->real;
@@ -55,9 +56,9 @@ DualNumber* dual_Multiply( const  DualNumber* lhs, const DualNumber* rhs, DualNu
 
 DualNumber* dual_Divide( const DualNumber* lhs, const DualNumber* rhs, DualNumber* out )
 {
-	assert( lhs != NULL );
-	assert( rhs != NULL );
-	assert( out != NULL );
+	SDL_assert( lhs != NULL );
+	SDL_assert( rhs != NULL );
+	SDL_assert( out != NULL );
 
 	float lr = lhs->real;
 	float rr = rhs->real;
@@ -72,8 +73,8 @@ DualNumber* dual_Divide( const DualNumber* lhs, const DualNumber* rhs, DualNumbe
 
 DualNumber* dual_Negate( const DualNumber* in, DualNumber* out )
 {
-	assert( in != NULL );
-	assert( out != NULL );
+	SDL_assert( in != NULL );
+	SDL_assert( out != NULL );
 
 	out->real = -in->real;
 	out->dual = -in->dual;
@@ -84,8 +85,8 @@ DualNumber* dual_Negate( const DualNumber* in, DualNumber* out )
 // any differentiable function can be extended to dual numbers as f(a + be) = f(a) + b*f'(a)e
 DualNumber* dual_Sin( const DualNumber* in, DualNumber* out )
 {
-	assert( in != NULL );
-	assert( out != NULL );
+	SDL_assert( in != NULL );
+	SDL_assert( out != NULL );
 
 	float r = in->real;
 	float d = in->dual;
@@ -98,8 +99,8 @@ DualNumber* dual_Sin( const DualNumber* in, DualNumber* out )
 
 DualNumber* dual_Cos( const DualNumber* in, DualNumber* out )
 {
-	assert( in != NULL );
-	assert( out != NULL );
+	SDL_assert( in != NULL );
+	SDL_assert( out != NULL );
 
 	float r = in->real;
 	float d = in->dual;
@@ -112,8 +113,8 @@ DualNumber* dual_Cos( const DualNumber* in, DualNumber* out )
 
 DualNumber* dual_Tan( const DualNumber* in, DualNumber* out )
 {
-	assert( in != NULL );
-	assert( out != NULL );
+	SDL_assert( in != NULL );
+	SDL_assert( out != NULL );
 
 	float r = in->real;
 	float d = in->dual;
@@ -128,8 +129,47 @@ DualNumber* dual_Tan( const DualNumber* in, DualNumber* out )
 
 int dual_Compare( const DualNumber* lhs, const DualNumber* rhs )
 {
-	assert( lhs != NULL );
-	assert( rhs != NULL );
+	SDL_assert( lhs != NULL );
+	SDL_assert( rhs != NULL );
 
 	return ( FLT_LT( lhs->real, rhs->real ) ? -1 : ( FLT_GT( lhs->real, rhs->real ) ? 1 : 0 ) );
+}
+
+bool dual_Serialize( cmp_ctx_t* cmp, const DualNumber* dual )
+{
+	SDL_assert( dual != NULL );
+	SDL_assert( cmp != NULL );
+
+	if( !cmp_write_float( cmp, dual->real ) ) {
+		llog( LOG_ERROR, "Unable to write real part of DualNumber." );
+		return false;
+	}
+
+	if( !cmp_write_float( cmp, dual->dual ) ) {
+		llog( LOG_ERROR, "Unable to write dual part of DualNumber." );
+		return false;
+	}
+
+	return true;
+}
+
+bool dual_Deserialize( cmp_ctx_t* cmp, DualNumber* outDual )
+{
+	SDL_assert( outDual != NULL );
+	SDL_assert( cmp != NULL );
+
+	outDual->real = 0.0f;
+	outDual->dual = 0.0f;
+
+	if( !cmp_read_float( cmp, &( outDual->real ) ) ) {
+		llog( LOG_ERROR, "Unable to load real part of DualNumber." );
+		return false;
+	}
+
+	if( !cmp_read_float( cmp, &( outDual->dual ) ) ) {
+		llog( LOG_ERROR, "Unable to load dual part of DualNumber." );
+		return false;
+	}
+
+	return true;
 }

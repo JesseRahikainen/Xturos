@@ -4,6 +4,8 @@
 
 #include <stdbool.h>
 
+#include "Others/cmp.h"
+
 typedef struct {
 	union {
 		struct {
@@ -69,5 +71,8 @@ Vector2* vec2_PerpLeft( const Vector2* v, Vector2* out );
 bool vec2_Comp( const Vector2* lhs, const Vector2* rhs );
 
 void vec2_Dump( const Vector2* vec, const char* extra );
+
+bool vec2_Serialize( cmp_ctx_t* cmp, const Vector2* vec );
+bool vec2_Deserialize( cmp_ctx_t* cmp, Vector2* outVec );
 
 #endif /* end inclusion guard */

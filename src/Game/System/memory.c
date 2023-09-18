@@ -1,6 +1,6 @@
 #include "memory.h"
 
-#include <assert.h>
+#include <SDL_assert.h>
 #include <stdint.h>
 #include <string.h>
 #include <SDL_stdinc.h>
@@ -221,8 +221,8 @@ static void logWatchedMemoryAddressChange( MemoryBlockHeader* header, void* ptr,
 // returns the remaining block after the condensation
 static MemoryBlockHeader* condenseMemoryBlocks( MemoryBlockHeader* start, const char* fileName, int line )
 {
-	assert( start != NULL );
-	assert( !( start->flags & IN_USE_FLAG ) );
+	SDL_assert( start != NULL );
+	SDL_assert( !( start->flags & IN_USE_FLAG ) );
 
 	// find the earliest block that's not in use
 	while( ( start->prev != NULL ) && !( start->prev->flags & IN_USE_FLAG ) ) {
@@ -269,8 +269,8 @@ static MemoryBlockHeader* createNewBlock( void* start, MemoryBlockHeader* prev, 
 
 static void* growBlock( MemoryBlockHeader* header, size_t newSize, const char* fileName, int line )
 {
-	assert( header != NULL );
-	assert( header->size < newSize );
+	SDL_assert( header != NULL );
+	SDL_assert( header->size < newSize );
 
 	void* result = NULL;
 
@@ -330,8 +330,8 @@ static void* growBlock( MemoryBlockHeader* header, size_t newSize, const char* f
 
 static void* shrinkBlock( MemoryBlockHeader* header, size_t newSize, const char* fileName, int line )
 {
-	assert( header != NULL );
-	assert( header->size > newSize );
+	SDL_assert( header != NULL );
+	SDL_assert( header->size > newSize );
 
 	// see if there's enough left after the shrink for a new block, if there is
 	//  then make it and condense it
@@ -377,17 +377,17 @@ static void internal_verify( void )
 	MemoryBlockHeader* header = (MemoryBlockHeader*)( memoryBlock.memory );
 	bool firstBlock = true;
 	while( header != NULL ) {
-		assert( header->guardValue == GUARD_VALUE );
-		assert( header->postGuardValue == GUARD_VALUE );
+		SDL_assert( header->guardValue == GUARD_VALUE );
+		SDL_assert( header->postGuardValue == GUARD_VALUE );
 
 		if( header->prev != NULL ) {
-			assert( header->prev->next == header );
+			SDL_assert( header->prev->next == header );
 		} else {
-			assert( firstBlock );
+			SDL_assert( firstBlock );
 		}
 
 		if( header->next != NULL ) {
-			assert( header->next->prev == header );
+			SDL_assert( header->next->prev == header );
 		}
 
 		header = header->next;
@@ -415,7 +415,7 @@ static bool internal_getVerify( void )
 static void internal_verifyPointer( void* p )
 {
 	// verify the pointer is pointing to valid memory
-	assert( findMemoryBlock( p, true ) != NULL );
+	SDL_assert( findMemoryBlock( p, true ) != NULL );
 }
 
 static void internal_getReportValues( size_t* totalOut, size_t* inUseOut, size_t* overheadOut, uint32_t* fragmentsOut )
@@ -466,7 +466,7 @@ static void internal_release_Data( void* memory, const char* fileName, const int
 #ifdef TEST_EVERY_CHANGE
 	mem_Verify( );
 #endif
-	assert( memoryBlock.memory != NULL );
+	SDL_assert( memoryBlock.memory != NULL );
 
 	if( memory == NULL ) {
 		return;
@@ -478,8 +478,8 @@ static void internal_release_Data( void* memory, const char* fileName, const int
 	logWatchedMemoryAddressChange( header, "mem_Release_Data", NULL );
 	header->flags &= ~IN_USE_FLAG;
 
-	assert( header->guardValue == GUARD_VALUE );
-	assert( header->postGuardValue == GUARD_VALUE );
+	SDL_assert( header->guardValue == GUARD_VALUE );
+	SDL_assert( header->postGuardValue == GUARD_VALUE );
 	
 	header = condenseMemoryBlocks( header, fileName, line );
 	testingSetMemory( (void*)( (uintptr_t)header + MEMORY_HEADER_SIZE ), header->size, 0xAB );
@@ -615,7 +615,7 @@ void* mem_Allocate_Data( size_t size, const char* fileName, const int line )
 #ifdef TEST_EVERY_CHANGE
 		internal_verify( );
 #endif
-		assert( memoryBlock.memory != NULL );
+		SDL_assert( memoryBlock.memory != NULL );
 
 		size = ALIGN_SIZE( size );
 
@@ -654,9 +654,11 @@ void* mem_Allocate_Data( size_t size, const char* fileName, const int line )
 	#ifdef TEST_EVERY_CHANGE
 		mem_Verify( );
 	#endif
-		assert( result != NULL );
+		SDL_assert( result != NULL );
 
-		logWatchedMemoryAddressChange( (MemoryBlockHeader*)( (uint8_t*)result - MEMORY_HEADER_SIZE ), "mem_Allocate_Data", NULL );
+		if( result != NULL ) {
+			logWatchedMemoryAddressChange( (MemoryBlockHeader*)( (uint8_t*)result - MEMORY_HEADER_SIZE ), "mem_Allocate_Data", NULL );
+		}
 
 	} unlockMemoryMutex( );
 
@@ -670,7 +672,7 @@ void* mem_Resize_Data( void* memory, size_t newSize, const char* fileName, const
 #ifdef TEST_EVERY_CHANGE
 		internal_verify( );
 #endif
-		assert( memoryBlock.memory != NULL );
+		SDL_assert( memoryBlock.memory != NULL );
 
 		if( newSize == 0 ) {
 			internal_release_Data( memory, fileName, line );
@@ -699,9 +701,11 @@ void* mem_Resize_Data( void* memory, size_t newSize, const char* fileName, const
 #ifdef TEST_EVERY_CHANGE
 			mem_Verify( );
 #endif
-			assert( result != NULL );
+			SDL_assert( result != NULL );
 
-			logWatchedMemoryAddressChange( (MemoryBlockHeader*)( (uintptr_t)result - MEMORY_HEADER_SIZE ), "mem_Resize_Data", NULL );
+			if( result != NULL ) {
+				logWatchedMemoryAddressChange( (MemoryBlockHeader*)( (uintptr_t)result - MEMORY_HEADER_SIZE ), "mem_Resize_Data", NULL );
+			}
 		}
 	} unlockMemoryMutex( );
 
@@ -740,9 +744,9 @@ void mem_RunTests( void )
 	uint8_t* backup;
 
 	// test basic allocation and release
-	assert( mem_Init( 32 * 1024 ) == 0 ); {
+	SDL_assert( mem_Init( 32 * 1024 ) == 0 ); {
 		testOne = (uint8_t*)mem_Allocate( 100 );
-		assert( testOne != NULL );
+		SDL_assert( testOne != NULL );
 		mem_Verify( );
 
 		mem_Release( testOne );
@@ -750,13 +754,13 @@ void mem_RunTests( void )
 	} mem_CleanUp( );
 
 	// test multiple allocations and releases
-	assert( mem_Init( 32 * 1024 ) == 0 ); {
+	SDL_assert( mem_Init( 32 * 1024 ) == 0 ); {
 		testOne = (uint8_t*)mem_Allocate( 100 );
-		assert( testOne != NULL );
+		SDL_assert( testOne != NULL );
 		mem_Verify( );
 
 		testTwo = (uint8_t*)mem_Allocate( 100 );
-		assert( testTwo != NULL );
+		SDL_assert( testTwo != NULL );
 		mem_Verify( );
 
 		mem_Release( testTwo );
@@ -767,32 +771,32 @@ void mem_RunTests( void )
 	} mem_CleanUp( );
 
 	// test basic resize
-	assert( mem_Init( 32 * 1024 ) == 0 ); {
+	SDL_assert( mem_Init( 32 * 1024 ) == 0 ); {
 		testOne = (uint8_t*)mem_Allocate( 1000 );
-		assert( testOne != NULL );
+		SDL_assert( testOne != NULL );
 		mem_Verify( );
 
 		testOne = (uint8_t*)mem_Resize( testOne, 500 );
-		assert( testOne != NULL );
+		SDL_assert( testOne != NULL );
 		mem_Verify( );
 
 		testOne = (uint8_t*)mem_Resize( testOne, 750 );
-		assert( testOne != NULL );
+		SDL_assert( testOne != NULL );
 		mem_Verify( );
 	} mem_CleanUp( );
 
 	// test resize grow with enough open space in next block to allocate data, and enough data to create new header
-	assert( mem_Init( 32 * 1024 ) == 0 ); {
+	SDL_assert( mem_Init( 32 * 1024 ) == 0 ); {
 		testOne = (uint8_t*)mem_Allocate( 100 );
-		assert( testOne != NULL );
+		SDL_assert( testOne != NULL );
 		mem_Verify( );
 
 		testTwo = (uint8_t*)mem_Allocate( 100 + MEMORY_HEADER_SIZE + MIN_ALLOC_SIZE );
-		assert( testTwo != NULL );
+		SDL_assert( testTwo != NULL );
 		mem_Verify( );
 
 		testThree = (uint8_t*)mem_Allocate( 100 );
-		assert( testThree != NULL );
+		SDL_assert( testThree != NULL );
 		mem_Verify( );
 
 		mem_Release( testTwo );
@@ -800,23 +804,23 @@ void mem_RunTests( void )
 
 		backup = testOne;
 		testOne = mem_Resize( testOne, 200 );
-		assert( testOne != NULL );
-		assert( testOne == backup );
+		SDL_assert( testOne != NULL );
+		SDL_assert( testOne == backup );
 		mem_Verify( );
 	} mem_CleanUp( );
 
 	// test resize grow with enough open space in next block to allocate data, and not enough space to create new header
-	assert( mem_Init( 32 * 1024 ) == 0 ); {
+	SDL_assert( mem_Init( 32 * 1024 ) == 0 ); {
 		testOne = (uint8_t*)mem_Allocate( 100 );
-		assert( testOne != NULL );
+		SDL_assert( testOne != NULL );
 		mem_Verify( );
 
 		testTwo = (uint8_t*)mem_Allocate( 100 );
-		assert( testTwo != NULL );
+		SDL_assert( testTwo != NULL );
 		mem_Verify( );
 
 		testThree = (uint8_t*)mem_Allocate( 100 );
-		assert( testThree != NULL );
+		SDL_assert( testThree != NULL );
 		mem_Verify( );
 
 		mem_Release( testTwo );
@@ -824,23 +828,23 @@ void mem_RunTests( void )
 
 		backup = testOne;
 		testOne = mem_Resize( testOne, 199 );
-		assert( testOne != NULL );
-		assert( testOne == backup );
+		SDL_assert( testOne != NULL );
+		SDL_assert( testOne == backup );
 		mem_Verify( );
 	} mem_CleanUp( );
 
 	// test resize grow without enough open space in next block to allocate data
-	assert( mem_Init( 32 * 1024 ) == 0 ); {
+	SDL_assert( mem_Init( 32 * 1024 ) == 0 ); {
 		testOne = (uint8_t*)mem_Allocate( 100 );
-		assert( testOne != NULL );
+		SDL_assert( testOne != NULL );
 		mem_Verify( );
 
 		testTwo = (uint8_t*)mem_Allocate( 100 );
-		assert( testTwo != NULL );
+		SDL_assert( testTwo != NULL );
 		mem_Verify( );
 
 		testThree = (uint8_t*)mem_Allocate( 100 );
-		assert( testThree != NULL );
+		SDL_assert( testThree != NULL );
 		mem_Verify( );
 
 		mem_Release( testTwo );
@@ -848,13 +852,13 @@ void mem_RunTests( void )
 
 		backup = testOne;
 		testOne = mem_Resize( testOne, 1000 );
-		assert( testOne != NULL );
-		assert( testOne != backup );
+		SDL_assert( testOne != NULL );
+		SDL_assert( testOne != backup );
 		mem_Verify( );
 	} mem_CleanUp( );
 
 	// test resize shrink where there is enough open space after to create new block
-	assert( mem_Init( 32 * 1024 ) == 0 ); {
+	SDL_assert( mem_Init( 32 * 1024 ) == 0 ); {
 		testOne = (uint8_t*)mem_Allocate( 100 + MEMORY_HEADER_SIZE + MIN_ALLOC_SIZE );
 		mem_Verify( );
 
@@ -863,14 +867,14 @@ void mem_RunTests( void )
 
 		backup = testOne;
 		testOne = (uint8_t*)mem_Resize( testOne, 10 );
-		assert( testOne != NULL );
-		assert( testOne == backup );
+		SDL_assert( testOne != NULL );
+		SDL_assert( testOne == backup );
 		mem_Verify( );
 
 	} mem_CleanUp( );
 
 	// test resize shrink where there is not enough open space after to create new block
-	assert( mem_Init( 32 * 1024 ) == 0 ); {
+	SDL_assert( mem_Init( 32 * 1024 ) == 0 ); {
 		testOne = (uint8_t*)mem_Allocate( 100 );
 		mem_Verify( );
 
@@ -879,8 +883,8 @@ void mem_RunTests( void )
 
 		backup = testOne;
 		testOne = (uint8_t*)mem_Resize( testOne, 99 );
-		assert( testOne != NULL );
-		assert( testOne == backup );
+		SDL_assert( testOne != NULL );
+		SDL_assert( testOne == backup );
 		mem_Verify( );
 	} mem_CleanUp( );
 

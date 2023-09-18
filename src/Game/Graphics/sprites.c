@@ -41,13 +41,14 @@ static void draw( void )
 int spr_Init( void )
 {
 	ecps_StartInitialization( &spriteECPS ); {
-		posCompID = ecps_AddComponentType( &spriteECPS, "POS", 0, sizeof( GCPosData ), ALIGN_OF( GCPosData ), NULL, NULL );
-		spriteCompID = ecps_AddComponentType( &spriteECPS, "SPRT", 0, sizeof( GCSpriteData ), ALIGN_OF( GCSpriteData ), NULL, NULL );
-		scaleCompID = ecps_AddComponentType( &spriteECPS, "SCL", 0, sizeof( GCScaleData ), ALIGN_OF( GCScaleData ), NULL, NULL );
-		clrCompID = ecps_AddComponentType( &spriteECPS, "CLR", 0, sizeof( GCColorData ), ALIGN_OF( GCColorData ), NULL, NULL );
-		rotCompID = ecps_AddComponentType( &spriteECPS, "ROT", 0, sizeof( GCRotData ), ALIGN_OF( GCRotData ), NULL, NULL );
-		floatVal0CompID = ecps_AddComponentType( &spriteECPS, "VAL0", 0, sizeof( GCFloatVal0Data ), ALIGN_OF( GCFloatVal0Data ), NULL, NULL );
-		stencilCompID = ecps_AddComponentType( &spriteECPS, "STNCL", 0, sizeof( GCStencilData ), ALIGN_OF( GCStencilData ), NULL, NULL );
+		// we're not concerned about serializing these as it's meant to just speed up prototyping
+		posCompID = ecps_AddComponentType( &spriteECPS, "POS", 0, sizeof( GCPosData ), ALIGN_OF( GCPosData ), NULL, NULL, NULL, NULL );
+		spriteCompID = ecps_AddComponentType( &spriteECPS, "SPRT", 0, sizeof( GCSpriteData ), ALIGN_OF( GCSpriteData ), NULL, NULL, NULL, NULL );
+		scaleCompID = ecps_AddComponentType( &spriteECPS, "SCL", 0, sizeof( GCScaleData ), ALIGN_OF( GCScaleData ), NULL, NULL, NULL, NULL );
+		clrCompID = ecps_AddComponentType( &spriteECPS, "CLR", 0, sizeof( GCColorData ), ALIGN_OF( GCColorData ), NULL, NULL, NULL, NULL );
+		rotCompID = ecps_AddComponentType( &spriteECPS, "ROT", 0, sizeof( GCRotData ), ALIGN_OF( GCRotData ), NULL, NULL, NULL, NULL );
+		floatVal0CompID = ecps_AddComponentType( &spriteECPS, "VAL0", 0, sizeof( GCFloatVal0Data ), ALIGN_OF( GCFloatVal0Data ), NULL, NULL, NULL, NULL );
+		stencilCompID = ecps_AddComponentType( &spriteECPS, "STNCL", 0, sizeof( GCStencilData ), ALIGN_OF( GCStencilData ), NULL, NULL, NULL, NULL );
 
 		ecps_CreateProcess( &spriteECPS, "DRAW", NULL, render, NULL, &renderProc, 2, posCompID, spriteCompID );
 	} ecps_FinishInitialization( &spriteECPS );

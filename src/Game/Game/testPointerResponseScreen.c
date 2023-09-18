@@ -13,37 +13,43 @@
 
 #include "../System/platformLog.h"
 
+#include "../System/ECPS/ecps_trackedCallbacks.h"
+
 static ECPS ecps;
 static int whiteImg;
 static Vector2 imgSize;
 
-static void onButtonOver( Entity* btn )
+static void onButtonOver( ECPS* btnEcps, Entity* btn )
 {
 	GCColorData* clr;
 	ecps_GetComponentFromEntity( btn, gcClrCompID, &clr );
 	clr->futureClr = CLR_GREY;
 }
+ADD_TRACKED_ECPS_CALLBACK( "TEST_ON_BUTTON_OVER", onButtonOver );
 
-static void onButtonLeave( Entity* btn )
+static void onButtonLeave( ECPS* btnEcps, Entity* btn )
 {
 	GCColorData* clr;
 	ecps_GetComponentFromEntity( btn, gcClrCompID, &clr );
 	clr->futureClr = CLR_WHITE;
 }
+ADD_TRACKED_ECPS_CALLBACK( "TEST_ON_BUTTON_LEAVE", onButtonLeave );
 
-static void onButtonPress( Entity* btn )
+static void onButtonPress( ECPS* btnEcps, Entity* btn )
 {
 	GCColorData* clr;
 	ecps_GetComponentFromEntity( btn, gcClrCompID, &clr );
 	clr->futureClr = CLR_RED;
 }
+ADD_TRACKED_ECPS_CALLBACK( "TEST_ON_BUTTON_PRESS", onButtonPress );
 
-static void onButtonRelease( Entity* btn )
+static void onButtonRelease( ECPS* btnEcps, Entity* btn )
 {
 	GCColorData* clr;
 	ecps_GetComponentFromEntity( btn, gcClrCompID, &clr );
 	clr->futureClr = CLR_YELLOW;
 }
+ADD_TRACKED_ECPS_CALLBACK( "TEST_ON_BUTTON_RELEASE", onButtonRelease );
 
 static void createTestButton( Vector2 position, Vector2 size )
 {
@@ -61,7 +67,6 @@ static void createTestButton( Vector2 position, Vector2 size )
 	ptr.pressResponse = onButtonPress;
 	ptr.releaseResponse = onButtonRelease;
 	ptr.priority = 1;
-	ptr.state = 0;
 
 	GCSpriteData sprite;
 	sprite.camFlags = 1;
@@ -73,12 +78,30 @@ static void createTestButton( Vector2 position, Vector2 size )
 	scale.currScale.y = size.y / imgSize.y;
 	scale.futureScale = scale.currScale;
 
-	ecps_CreateEntity( &ecps, 5,
+	GCGroupIDData group;
+	group.groupID = 1;
+
+	ecps_CreateEntity( &ecps, 6,
 		gcPosCompID, &pos,
 		gcClrCompID, &clr,
 		gcPointerResponseCompID, &ptr,
 		gcSpriteCompID, &sprite,
-		gcScaleCompID, &scale );
+		gcScaleCompID, &scale,
+		gcGroupIDCompID, &group );
+}
+
+#include "System/ECPS/ecps_serialization.h"
+#include "Utils/stretchyBuffer.h"
+
+static size_t buttonCount = 0;
+void countButtonsStart( ECPS* gameECPS )
+{
+	buttonCount = 0;
+}
+
+void countButtons( ECPS* gameECPS, const Entity* entity )
+{
+	++buttonCount;
 }
 
 static void testPointerResponseScreen_Enter( void )
@@ -99,6 +122,38 @@ static void testPointerResponseScreen_Enter( void )
 	createTestButton( vec2( 375.0f, 275.0f ), vec2( 100.0f, 100.0f ) );
 	createTestButton( vec2( 350.0f, 250.0f ), vec2( 100.0f, 100.0f ) );
 	createTestButton( vec2( 325.0f, 225.0f ), vec2( 100.0f, 100.0f ) );
+
+	// serialize the buttons
+	SerializedECPS serializedECPS;
+	ecps_InitSerialized( &serializedECPS );
+
+	ecps_GenerateSerializedECPS( &ecps, &serializedECPS );
+
+	// make sure the number of buttons is correct
+	ecps_RunCustomProcess( &ecps, countButtonsStart, countButtons, NULL, 1, gcGroupIDCompID );
+	assert( buttonCount == 4 );
+
+	// destroy all buttons
+	gp_DeleteAllOfGroup( &ecps, 1 );
+
+	// make sure the number of buttons is correct
+	ecps_RunCustomProcess( &ecps, countButtonsStart, countButtons, NULL, 1, gcGroupIDCompID );
+	assert( buttonCount == 0 );
+
+	// try saving out and loading in
+	ecps_SaveSerializedECPS( "test.pkg", &serializedECPS );
+	ecps_CleanSerialized( &serializedECPS );
+	ecps_LoadSerializedECPS( "test.pkg", &serializedECPS );
+
+	// deserialize the buttons
+	ecps_CreateEntitiesFromSerializedComponents( &ecps, &serializedECPS );
+	
+	// clean up
+	ecps_CleanSerialized( &serializedECPS );
+
+	// make sure the number of buttons is correct
+	ecps_RunCustomProcess( &ecps, countButtonsStart, countButtons, NULL, 1, gcGroupIDCompID );
+	assert( buttonCount == 4 );//*/
 }
 
 static void testPointerResponseScreen_Exit( void )

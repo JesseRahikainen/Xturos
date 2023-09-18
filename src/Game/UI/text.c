@@ -750,7 +750,7 @@ void convertOutToBuffer( const uint8_t* utf8Str )
 //  grab the position of the character at storeCharPos and put it in there. Returns if outCharPos is valid.
 bool txt_DisplayTextArea( const uint8_t* utf8Str, Vector2 upperLeft, Vector2 size, Color clr,
 	HorizTextAlignment hAlign, VertTextAlignment vAlign, int fontID, size_t storeCharPos, Vector2* outCharPos,
-	int camFlags, int8_t depth, float desiredPixelSize )
+	uint32_t camFlags, int8_t depth, float desiredPixelSize )
 {
 	assert( utf8Str != NULL );
 

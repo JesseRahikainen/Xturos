@@ -4,6 +4,8 @@
 #include <stdint.h>
 #include <stddef.h>
 
+#include <SDL_assert.h>
+
 // general helper functions
 #define ARRAY_SIZE( a ) ( sizeof( a ) / sizeof( a[0] ) )
 #define ANY_BITS_ON( bits, testOnBits ) ( ( bits ) & ( testOnBits ) )
@@ -24,9 +26,20 @@
 #define STRINGIZE(x) STRINGIZE_HELPER(x)
 #define WARNING(desc) message(__FILE__ "(" STRINGIZE(__LINE__) ") : Warning: " #desc)
 
+// https://scaryreasoner.wordpress.com/2009/02/28/checking-sizeof-at-compile-time/
+#define BUILD_BUG_ON(condition) ((void)sizeof(char[1 - 2*!!(condition)]))
+
 void logMousePos( void );
 char* getSavePath( char* fileName );
 
 void printCash( char* string, size_t maxLen, int32_t cash );
+
+// creates a copy of the string on the heap, memory will have to be released manually
+char* createStringCopy( const char* str );
+
+// does a null test on str and returns 0 if it's NULL
+size_t strlenNullTest( const char* str );
+
+#define ASSERT_AND_IF( x ) SDL_assert( x ); if( !( x ) )
 
 #endif /* inclusion guard */

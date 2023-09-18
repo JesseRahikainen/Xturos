@@ -191,6 +191,10 @@ int unalignedAccess( void )
 
 int initEverything( void )
 {
+	// compile checks, we're assuming these types will have these sizes for serialization
+	BUILD_BUG_ON( sizeof( float ) != 4 );
+	BUILD_BUG_ON( sizeof( double ) != 8 );
+
 #ifndef _DEBUG
 	logFile = SDL_RWFromFile( "log.txt", "w" );
 	if( logFile != NULL ) {

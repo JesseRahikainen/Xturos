@@ -14,7 +14,7 @@ uint32_t sharedComponent_Enabled;
 uint32_t sharedComponent_ID;
 
 // TODO: Why is this here when we're doing the same things in entityComponentProcessSystem.c?
-ComponentID ecps_ct_AddType( ComponentTypeCollection* ctc, const char* name, size_t size, size_t align, CleanUpComponent cleanUp, VerifyComponent verify )
+ComponentID ecps_ct_AddType( ComponentTypeCollection* ctc, const char* name, uint32_t version, size_t size, size_t align, CleanUpComponent cleanUp, VerifyComponent verify )
 {
 	assert( sb_Count( ctc->sbTypes ) < MAX_NUM_COMPONENT_TYPES );
 
@@ -24,6 +24,9 @@ ComponentID ecps_ct_AddType( ComponentTypeCollection* ctc, const char* name, siz
 	newType.align = align;
 	newType.verify = verify;
 	newType.cleanUp = cleanUp;
+	newType.version = version;
+	newType.serialize = NULL;
+	newType.deserialize = NULL;
 
 	if( name != NULL ) {
 		strncpy( newType.name, name, sizeof( newType.name ) - 1 );
@@ -40,8 +43,8 @@ void ecps_ct_Init( ComponentTypeCollection* ctc )
 {
 	ctc->sbTypes = NULL;
 
-	sharedComponent_ID = ecps_ct_AddType( ctc, "S_ID", sizeof( uint32_t ), ALIGN_OF( uint32_t ), NULL, NULL );
-	sharedComponent_Enabled = ecps_ct_AddType( ctc, "S_ENABLED", 0, 0, NULL, NULL );
+	sharedComponent_ID = ecps_ct_AddType( ctc, "S_ID", 0, sizeof( uint32_t ), ALIGN_OF( uint32_t ), NULL, NULL );
+	sharedComponent_Enabled = ecps_ct_AddType( ctc, "S_ENABLED", 0, 0, 0, NULL, NULL );
 }
 
 // helper function to create bit flag sets

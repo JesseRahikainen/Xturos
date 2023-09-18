@@ -1,16 +1,17 @@
 #include "matrix3.h"
-#include <assert.h>
+#include <SDL_assert.h>
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
 
 #include "mathUtil.h"
+#include "System/platformLog.h"
 
 Matrix3* mat3_Multiply( const Matrix3* m, const Matrix3* n, Matrix3* out )
 {
-	assert( m != NULL );
-	assert( n != NULL );
-	assert( out != NULL );
+	SDL_assert( m != NULL );
+	SDL_assert( n != NULL );
+	SDL_assert( out != NULL );
 	
 	// temporary storage in case out is m or n
 	Matrix3 temp;
@@ -34,10 +35,10 @@ Matrix3* mat3_Multiply( const Matrix3* m, const Matrix3* n, Matrix3* out )
 
 Vector3* mat3_TransformVec3Dir( const Matrix3* m, const Vector3* v, Vector3* out )
 {
-	assert( m != NULL );
-	assert( v != NULL );
-	assert( out != NULL );
-	assert( v != out );
+	SDL_assert( m != NULL );
+	SDL_assert( v != NULL );
+	SDL_assert( out != NULL );
+	SDL_assert( v != out );
 
 	out->v[0] = ( m->m[0] * v->v[0] ) + ( m->m[3] * v->v[1] ) + ( m->m[6] * v->v[2] );
 	out->v[1] = ( m->m[1] * v->v[0] ) + ( m->m[4] * v->v[1] ) + ( m->m[7] * v->v[2] );
@@ -48,9 +49,9 @@ Vector3* mat3_TransformVec3Dir( const Matrix3* m, const Vector3* v, Vector3* out
 
 void mat3_SetColumn( Matrix3* m, int column, const Vector3* col )
 {
-	assert( m != NULL );
-	assert( col != NULL );
-	assert( ( column >= 0 ) && ( column < 3 ) );
+	SDL_assert( m != NULL );
+	SDL_assert( col != NULL );
+	SDL_assert( ( column >= 0 ) && ( column < 3 ) );
 
 	column *= 3;
 	m->m[column+0] = col->v[0];
@@ -60,9 +61,9 @@ void mat3_SetColumn( Matrix3* m, int column, const Vector3* col )
 
 Vector3* mat3_GetColumn( const Matrix3* m, int column, Vector3* out )
 {
-	assert( m != NULL );
-	assert( out != NULL );
-	assert( ( column >= 0 ) && ( column < 3 ) );
+	SDL_assert( m != NULL );
+	SDL_assert( out != NULL );
+	SDL_assert( ( column >= 0 ) && ( column < 3 ) );
 
 	column *= 3;
 	out->v[0] = m->m[column+0];
@@ -74,9 +75,9 @@ Vector3* mat3_GetColumn( const Matrix3* m, int column, Vector3* out )
 
 Vector2* mat3_GetColumn_2( const Matrix3* m, int column, Vector2* out )
 {
-	assert( m != NULL );
-	assert( out != NULL );
-	assert( ( column >= 0 ) && ( column < 3 ) );
+	SDL_assert( m != NULL );
+	SDL_assert( out != NULL );
+	SDL_assert( ( column >= 0 ) && ( column < 3 ) );
 
 	column *= 3;
 	out->v[0] = m->m[column+0];
@@ -87,8 +88,8 @@ Vector2* mat3_GetColumn_2( const Matrix3* m, int column, Vector2* out )
 
 Vector2* mat3_GetPosition( const Matrix3* m, Vector2* out )
 {
-	assert( m != NULL );
-	assert( out != NULL );
+	SDL_assert( m != NULL );
+	SDL_assert( out != NULL );
 
 	out->x = m->m[6] / m->m[8];
 	out->y = m->m[7] / m->m[8];
@@ -98,8 +99,8 @@ Vector2* mat3_GetPosition( const Matrix3* m, Vector2* out )
 
 void mat3_SetPosition( Matrix3* m, const Vector2* pos )
 {
-	assert( m != NULL );
-	assert( pos != NULL );
+	SDL_assert( m != NULL );
+	SDL_assert( pos != NULL );
 
 	m->m[6] = pos->x;
 	m->m[7] = pos->y;
@@ -107,7 +108,7 @@ void mat3_SetPosition( Matrix3* m, const Vector2* pos )
 
 Matrix3* mat3_CreateTranslation( float fwd, float side, Matrix3* out )
 {
-	assert( out != NULL );
+	SDL_assert( out != NULL );
 
 	memcpy( out, &IDENTITY_MATRIX_3, sizeof( Matrix3 ) );
 	out->m[6] = fwd;
@@ -118,9 +119,9 @@ Matrix3* mat3_CreateTranslation( float fwd, float side, Matrix3* out )
 
 Vector2* mat3_TransformVec2Dir( const Matrix3* m, const Vector2* v, Vector2* out )
 {
-	assert( m != NULL );
-	assert( v != NULL );
-	assert( out != NULL );
+	SDL_assert( m != NULL );
+	SDL_assert( v != NULL );
+	SDL_assert( out != NULL );
 
 	out->v[0] = ( m->m[0] * v->v[0] ) + ( m->m[3] * v->v[1] );
 	out->v[1] = ( m->m[1] * v->v[0] ) + ( m->m[4] * v->v[1] );
@@ -130,9 +131,9 @@ Vector2* mat3_TransformVec2Dir( const Matrix3* m, const Vector2* v, Vector2* out
 
 Vector2* mat3_TransformVec2Pos( const Matrix3* m, const Vector2* v, Vector2* out )
 {
-	assert( m != NULL );
-	assert( v != NULL );
-	assert( out != NULL );
+	SDL_assert( m != NULL );
+	SDL_assert( v != NULL );
+	SDL_assert( out != NULL );
 
 	out->v[0] = ( m->m[0] * v->v[0] ) + ( m->m[3] * v->v[1] ) + m->m[6];
 	out->v[1] = ( m->m[1] * v->v[0] ) + ( m->m[4] * v->v[1] ) + m->m[7];
@@ -142,8 +143,8 @@ Vector2* mat3_TransformVec2Pos( const Matrix3* m, const Vector2* v, Vector2* out
 
 Vector2* mat3_TransformVec2Pos_InPlace( const Matrix3* m, Vector2* v )
 {
-	assert( m != NULL );
-	assert( v != NULL );
+	SDL_assert( m != NULL );
+	SDL_assert( v != NULL );
 
 	Vector2 temp;
 	memcpy( &temp, v, sizeof( Vector2 ) );
@@ -156,7 +157,7 @@ Vector2* mat3_TransformVec2Pos_InPlace( const Matrix3* m, Vector2* v )
 
 Matrix3* mat3_SetRotation( float rotDeg, Matrix3* out )
 {
-	assert( out != NULL );
+	SDL_assert( out != NULL );
 
 	float sinRot = sinf( DEG_TO_RAD( rotDeg ) );
 	float cosRot = cosf( DEG_TO_RAD( rotDeg ) );
@@ -178,8 +179,8 @@ Matrix3* mat3_SetRotation( float rotDeg, Matrix3* out )
 
 bool mat3_Inverse( const Matrix3* m, Matrix3* out )
 {
-	assert( m != NULL );
-	assert( out != NULL );
+	SDL_assert( m != NULL );
+	SDL_assert( out != NULL );
 
 	float det = ( m->m[0] * ( ( m->m[4] * m->m[8] ) - ( m->m[7] * m->m[5] ) ) ) -
 		( m->m[3] * ( ( m->m[1] * m->m[8] ) - ( m->m[7] * m->m[2] ) ) ) -
@@ -199,6 +200,38 @@ bool mat3_Inverse( const Matrix3* m, Matrix3* out )
 	out->m[6] = invDet * ( ( m->m[3] * m->m[7] ) - ( m->m[6] * m->m[4] ) );
 	out->m[7] = invDet * ( ( m->m[6] * m->m[1] ) - ( m->m[0] * m->m[7] ) );
 	out->m[8] = invDet * ( ( m->m[0] * m->m[4] ) - ( m->m[3] * m->m[1] ) );
+
+	return true;
+}
+
+bool mat3_Serialize( cmp_ctx_t* cmp, const Matrix3* mat )
+{
+	SDL_assert( mat != NULL );
+	SDL_assert( cmp != NULL );
+
+	for( int i = 0; i < 16; ++i ) {
+		if( !cmp_write_float( cmp, mat->m[i] ) ) {
+			llog( LOG_ERROR, "Unable to write entry %i in Matrix4.", i );
+			return false;
+		}
+	}
+
+	return true;
+}
+
+bool mat3_Deserialize( cmp_ctx_t* cmp, Matrix3* outMat )
+{
+	SDL_assert( outMat != NULL );
+	SDL_assert( cmp != NULL );
+
+	*outMat = ZERO_MATRIX_3;
+
+	for( int i = 0; i < 16; ++i ) {
+		if( !cmp_read_float( cmp, &( outMat->m[i] ) ) ) {
+			llog( LOG_ERROR, "Unable to read entry %i in Matrix4.", i );
+			return false;
+		}
+	}
 
 	return true;
 }

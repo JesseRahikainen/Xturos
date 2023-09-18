@@ -9,6 +9,9 @@
 #include "triRendering.h"
 #include "gfxUtil.h"
 
+typedef int32_t ImageID;
+#define INVALID_IMAGE_ID UINT32_MAX
+
 // Initializes images.
 //  Returns < 0 on an error.
 int img_Init( void );
@@ -93,6 +96,8 @@ void img_SetDrawRotation( int drawID, float start, float end );
 void img_SetDrawFloatVal0( int drawID, float start, float end );
 void img_SetDrawStencil( int drawID, bool isStencil, int stencilID );
 void img_SetDrawSize( int drawID, Vector2 start, Vector2 end ); // overrides scaling
+
+const char* img_GetImgStringID( int imgID );
 
 // all 3x3 draw from the center
 //  TODO: Get this switched over to the using the same system as the images now use. Will require some more work.

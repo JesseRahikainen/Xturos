@@ -309,7 +309,7 @@ void ecps_CleanUp( ECPS* ecps )
 
 // adds a component type and returns the id to reference it by
 //  this can only be done before
-ComponentID ecps_AddComponentType( ECPS* ecps, const char* name, uint32_t version, size_t size, size_t align, CleanUpComponent cleanUp, VerifyComponent verify )
+ComponentID ecps_AddComponentType( ECPS* ecps, const char* name, uint32_t version, size_t size, size_t align, CleanUpComponent cleanUp, VerifyComponent verify, SerializeComponent serialize, DeserializeComponent deserialize )
 {
 	assert( ecps != NULL );
 
@@ -325,6 +325,8 @@ ComponentID ecps_AddComponentType( ECPS* ecps, const char* name, uint32_t versio
 	newType.verify = verify;
 	newType.cleanUp = cleanUp;
 	newType.version = version;
+	newType.serialize = serialize;
+	newType.deserialize = deserialize;
 
 	if( name != NULL ) {
 		strncpy( newType.name, name, MAX_COMPONENT_NAME_SIZE );
@@ -650,7 +652,7 @@ EntityID ecps_CreateEntity( ECPS* ecps, size_t numComponents, ... )
 }
 
 // finds the entity with the given id
-bool ecps_GetEntityByID( ECPS* ecps, EntityID entityID, Entity* outEntity )
+bool ecps_GetEntityByID( const ECPS* ecps, EntityID entityID, Entity* outEntity )
 {
 	assert( ecps != NULL );
 
@@ -990,7 +992,7 @@ bool ecps_DoesEntityHaveComponent( const Entity* entity, ComponentID componentID
 	return ( entity->structure->entries[componentID].offset >= 0 );
 }
 
-bool ecps_DoesEntityHaveComponentByID( ECPS* ecps, EntityID entityID, ComponentID componentID )
+bool ecps_DoesEntityHaveComponentByID( const ECPS* ecps, EntityID entityID, ComponentID componentID )
 {
 	assert( ecps != NULL );
 
@@ -1025,7 +1027,7 @@ bool ecps_GetComponentFromEntity( const Entity* entity, ComponentID componentID,
 	return true;
 }
 
-bool ecps_GetComponentFromEntityByID( ECPS* ecps, EntityID entityID, ComponentID componentID, void** outData )
+bool ecps_GetComponentFromEntityByID( const ECPS* ecps, EntityID entityID, ComponentID componentID, void** outData )
 {
 	assert( ecps != NULL );
 
@@ -1037,7 +1039,7 @@ bool ecps_GetComponentFromEntityByID( ECPS* ecps, EntityID entityID, ComponentID
 	return ecps_GetComponentFromEntity( &entity, componentID, outData );
 }
 
-bool ecps_GetEntityAndComponentByID( ECPS* ecps, EntityID entityID, ComponentID componentID, Entity* outEntity, void** outData )
+bool ecps_GetEntityAndComponentByID( const ECPS* ecps, EntityID entityID, ComponentID componentID, Entity* outEntity, void** outData )
 {
 	assert( ecps != NULL );
 	assert( outEntity != NULL );
@@ -1149,6 +1151,28 @@ void ecps_DestroyAllEntities( ECPS* ecps )
 
 	sb_Release( ecps->componentData.sbEntityDirectory );
 	ecps->componentData.sbEntityDirectory = NULL;
+}
+
+SerializeComponent ecps_GetComponentSerializtionFunction( const ECPS* ecps, ComponentID componentID )
+{
+	assert( ecps != NULL );
+	assert( componentID < sb_Count( ecps->componentTypes.sbTypes ) );
+
+	if( componentID >= sb_Count( ecps->componentTypes.sbTypes ) ) {
+		return NULL;
+	}
+	return ecps->componentTypes.sbTypes[componentID].serialize;
+}
+
+DeserializeComponent ecps_GetComponentDeserializationFunction( const ECPS* ecps, ComponentID componentID )
+{
+	assert( ecps != NULL );
+	assert( componentID < sb_Count( ecps->componentTypes.sbTypes ) );
+
+	if( componentID >= sb_Count( ecps->componentTypes.sbTypes ) ) {
+		return NULL;
+	}
+	return ecps->componentTypes.sbTypes[componentID].deserialize;
 }
 
 // list out the components of one entity

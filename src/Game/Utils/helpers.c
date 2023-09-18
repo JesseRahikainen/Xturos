@@ -67,3 +67,23 @@ void printCash( char* string, size_t maxLen, int cash )
 	// null terminate
 	string[pos] = 0;
 }
+
+char* createStringCopy( const char* str )
+{
+	size_t len = SDL_strlen( str ) + 1;
+	char* newStr = mem_Allocate( len );
+	SDL_assert( newStr != NULL );
+	if( newStr != NULL ) {
+		SDL_strlcpy( newStr, str, len );
+	}
+	return newStr;
+}
+
+size_t strlenNullTest( const char* str )
+{
+	if( str == NULL ) {
+		return 0;
+	}
+
+	return SDL_strlen( str );
+}

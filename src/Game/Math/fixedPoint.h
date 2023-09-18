@@ -4,6 +4,8 @@
 // primarily used to convert floating to fixed point for saving
 
 #include <stdint.h>
+#include <stdbool.h>
+#include "Others/cmp.h"
 
 typedef int32_t fixed32;
 
@@ -16,5 +18,8 @@ fixed32 f32_SaturatedAdd( fixed32 lhs, fixed32 rhs );
 fixed32 f32_Subtract( fixed32 lhs, fixed32 rhs );
 fixed32 f32_Multiply( fixed32 lhs, fixed32 rhs );
 fixed32 f32_Divide( fixed32 lhs, fixed32 hrs );
+
+bool f32_Serialize( cmp_ctx_t* cmp, fixed32 fp );
+bool f32_Deserialize( cmp_ctx_t* cmp, fixed32* outFp );
 
 #endif /* inclusion guard */

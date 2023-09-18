@@ -14,7 +14,7 @@
 #include "System/jobRingQueue.h"
 #include "System/memory.h"
 
-#include "Utils/hashMap.h"
+#include "Utils/helpers.h"
 
 /* Image loading types and variables */
 #define MAX_IMAGES 512
@@ -35,6 +35,7 @@ typedef struct {
 	int nextInPackage;
 	ShaderType shaderType;
 	int extraImageObj;
+	char* id;
 } Image;
 
 static Image images[MAX_IMAGES];
@@ -80,7 +81,7 @@ static const DrawInstruction DEFAULT_DRAW_INSTRUCTION = {
 
 static int maxTextureSize;
 
-static HashMap imgIDMap;
+//static HashMap imgIDMap;
 
 /*
 Initializes images.
@@ -90,7 +91,6 @@ int img_Init( void )
 {
     maxTextureSize = gfxPlatform_GetMaxTextureSize( );
 	memset( images, 0, sizeof(images) );
-	hashMap_Init( &imgIDMap, 64, NULL );
 	return 0;
 }
 
@@ -113,6 +113,22 @@ static int findAvailableImageIndex( )
 	return newIdx;
 }
 
+bool findImageByID( const char* id, int* outIdx )
+{
+	for( int i = 0; i < MAX_IMAGES; ++i ) {
+		if( !( images[i].flags & IMGFLAG_IN_USE ) ) {
+			continue;
+		}
+
+		if( SDL_strcmp( id, images[i].id ) == 0 ) {
+			( *outIdx ) = i;
+			return true;
+		}
+	}
+
+	return false;
+}
+
 /*
 Loads the image stored at file name.
  Returns the index of the image on success.
@@ -123,7 +139,7 @@ int img_Load( const char* fileName, ShaderType shaderType )
 	int newIdx = -1;
 
 	// if we've already loaded the image don't load it again
-	if( hashMap_Find( &imgIDMap, fileName, &newIdx ) ) {
+	if( findImageByID( fileName, &newIdx ) ) {
 		return newIdx;
 	}
 
@@ -155,8 +171,7 @@ int img_Load( const char* fileName, ShaderType shaderType )
 	if( texture.flags & TF_IS_TRANSPARENT ) {
 		images[newIdx].flags |= IMGFLAG_HAS_TRANSPARENCY;
 	}
-
-	hashMap_Set( &imgIDMap, fileName, newIdx );
+	images[newIdx].id = createStringCopy( fileName );
 
 	return newIdx;
 }
@@ -172,6 +187,11 @@ bool img_IsValidImage( int imgIdx )
 int img_CreateFromLoadedImage( LoadedImage* loadedImg, ShaderType shaderType, const char* id )
 {
 	int newIdx = -1;
+
+	// if we've already loaded the image with this id don't load it again
+	if( findImageByID( id, &newIdx ) ) {
+		return newIdx;
+	}
 
 	newIdx = findAvailableImageIndex( );
 	if( newIdx < 0 ) {
@@ -199,10 +219,7 @@ int img_CreateFromLoadedImage( LoadedImage* loadedImg, ShaderType shaderType, co
 	if( texture.flags & TF_IS_TRANSPARENT ) {
 		images[newIdx].flags |= IMGFLAG_HAS_TRANSPARENCY;
 	}
-
-	if( id != NULL ) {
-		hashMap_Set( &imgIDMap, id, newIdx );
-	}
+	images[newIdx].id = createStringCopy( id );
 
 	return newIdx;
 }
@@ -210,6 +227,11 @@ int img_CreateFromLoadedImage( LoadedImage* loadedImg, ShaderType shaderType, co
 int img_CreateFromTexture( Texture* texture, ShaderType shaderType, const char* id )
 {
 	int newIdx = -1;;
+
+	// if we've already loaded the image with this id don't load it again
+	if( findImageByID( id, &newIdx ) ) {
+		return newIdx;
+	}
 
 	newIdx = findAvailableImageIndex( );
 	if( newIdx < 0 ) {
@@ -231,10 +253,7 @@ int img_CreateFromTexture( Texture* texture, ShaderType shaderType, const char* 
 	if( texture->flags & TF_IS_TRANSPARENT ) {
 		images[newIdx].flags |= IMGFLAG_HAS_TRANSPARENCY;
 	}
-
-	if( id != NULL ) {
-		hashMap_Set( &imgIDMap, id, newIdx );
-	}
+	images[newIdx].id = createStringCopy( id );
 
 	return newIdx;
 }
@@ -292,6 +311,8 @@ static void bindImageJob( void* data )
 	if( texture.flags & TF_IS_TRANSPARENT ) {
 		images[newIdx].flags |= IMGFLAG_HAS_TRANSPARENCY;
 	}
+	images[newIdx].id = createStringCopy( loadData->fileName );
+
 	(*(loadData->outIdx)) = newIdx;
 
 	//llog( LOG_INFO, "Setting outIdx to %i", newIdx );
@@ -325,6 +346,11 @@ Loads the image in a seperate thread. Puts the resulting image index into outIdx
 void img_ThreadedLoad( const char* fileName, ShaderType shaderType, int* outIdx, void (*onLoadDone)( int ) )
 {
 	assert( fileName != NULL );
+
+	// if we've already loaded this image don't load it again
+	if( findImageByID( fileName, outIdx ) ) {
+		return;
+	}
 
 	// set it to something that won't draw anything
 	(*outIdx) = -1;
@@ -367,6 +393,11 @@ int img_Create( SDL_Surface* surface, ShaderType shaderType, const char* id )
 {
 	int newIdx;
 
+	// if we've already loaded the image with this id don't load it again
+	if( findImageByID( id, &newIdx ) ) {
+		return newIdx;
+	}
+
 	assert( surface != NULL );
 
 	newIdx = findAvailableImageIndex( );
@@ -393,10 +424,7 @@ int img_Create( SDL_Surface* surface, ShaderType shaderType, const char* id )
 		if( texture.flags & TF_IS_TRANSPARENT ) {
 			images[newIdx].flags |= IMGFLAG_HAS_TRANSPARENCY;
 		}
-	}
-
-	if( id != NULL ) {
-		hashMap_Set( &imgIDMap, id, newIdx );
+		images[newIdx].id = createStringCopy( id );
 	}
 
 	return newIdx;
@@ -448,8 +476,7 @@ void img_Clean( int idx )
 	images[idx].uvMin = VEC2_ZERO;
 	images[idx].uvMax = VEC2_ZERO;
 	images[idx].shaderType = ST_DEFAULT;
-
-	hashMap_RemoveFirstByValue( &imgIDMap, idx );
+	mem_Release( images[idx].id );
 }
 
 /*
@@ -494,10 +521,7 @@ int split( Texture* texture, int packageID, ShaderType shaderType, int count, Ve
 		if( texture->flags & TF_IS_TRANSPARENT ) {
 			images[newIdx].flags |= IMGFLAG_HAS_TRANSPARENCY;
 		}
-
-		if( ( imgIDs != NULL ) && ( imgIDs[i] != NULL ) ) {
-			hashMap_Set( &imgIDMap, imgIDs[i], newIdx );
-		}
+		images[newIdx].id = createStringCopy( imgIDs[i] );
 
 		if( retIDs != NULL ) {
 			retIDs[i] = newIdx;
@@ -692,11 +716,11 @@ int img_GetTextureID( int idx, PlatformTexture* out )
 // Retrieves a loaded image by it's id, for images loaded from files this will be the local path, for sprite sheet images 
 int img_GetExistingByID( const char* id )
 {
-	int idx;
-	if( !hashMap_Find( &imgIDMap, id, &idx ) ) {
-		return -1;
+	int imgID;
+	if( findImageByID( id, &imgID ) ) {
+		return imgID;
 	}
-	return idx;
+	return -1;
 }
 
 // Sets the image at colorIdx to use use alphaIdx as a signed distance field alpha map
@@ -1092,6 +1116,14 @@ int img_Draw3x3v_c_f( int* imgs, uint32_t camFlags, Vector2 startPos, Vector2 en
 #undef SET_DRAW_INSTRUCTION_SCALE
 #undef SET_DRAW_INSTRUCTION_COLOR
 #undef SET_DRAW_INSTRUCTION_ROT
+
+const char* img_GetImgStringID( int imgID )
+{
+	if( images[imgID].flags & IMGFLAG_IN_USE ) {
+		return images[imgID].id;
+	}
+	return NULL;
+}
 
 /*
 Clears the image draw list.

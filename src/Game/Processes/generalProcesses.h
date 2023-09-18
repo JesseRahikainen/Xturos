@@ -33,7 +33,7 @@ void gp_AddAlphaTween( ECPS* ecps, EntityID entity, float duration, float startA
 void gp_GeneralRender( ECPS* ecps, const Entity* entity, ComponentID posCompID, ComponentID sprCompID, ComponentID scaleCompID, ComponentID clrCompID, ComponentID rotCompID, ComponentID floatVal0CompID, ComponentID stencilCompID );
 
 // helper functions for dealing with groups
-void gp_AddGroupID( ECPS* ecps, EntityID entity, size_t groupID );
-void gp_DeleteAllOfGroup( ECPS* ecps, size_t groupID );
+void gp_AddGroupID( ECPS* ecps, EntityID entity, uint32_t groupID );
+void gp_DeleteAllOfGroup( ECPS* ecps, uint32_t groupID );
 
 #endif // inclusion guard

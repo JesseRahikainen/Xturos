@@ -132,7 +132,7 @@ void idSet_Clear( IDSet* set )
 /*
 Returns whether the id passed in is currently claimed or not.
 */
-bool idSet_IsIDValid( IDSet* set, EntityID id )
+bool idSet_IsIDValid( const IDSet* set, EntityID id )
 {
 	assert( set != NULL );
 
@@ -162,7 +162,7 @@ uint16_t idSet_GetIndex( EntityID id )
 /*
 Generates an id given an index. Does no checking to see if it's valid.
 */
-EntityID idSet_GetIDFromIndex( IDSet* set, uint16_t index )
+EntityID idSet_GetIDFromIndex( const IDSet* set, uint16_t index )
 {
 	if( index >= sb_Count( set->sbIDData ) ) {
 		return 0;
@@ -174,7 +174,7 @@ EntityID idSet_GetIDFromIndex( IDSet* set, uint16_t index )
 /*
 Returns the first valid id, returns 0 if there is none.
 */
-EntityID idSet_GetFirstValidID( IDSet* set )
+EntityID idSet_GetFirstValidID( const IDSet* set )
 {
 	assert( set != NULL );
 
@@ -191,7 +191,7 @@ EntityID idSet_GetFirstValidID( IDSet* set )
 /*
 Returns the first valid id after the passed in id, returns 0 if there is none.
 */
-EntityID idSet_GetNextValidID( IDSet* set, EntityID id )
+EntityID idSet_GetNextValidID( const IDSet* set, EntityID id )
 {
 	for( uint16_t idx = idSet_GetIndex( id ) + 1; idx <= set->currMaxCount; ++idx ) {
 		if( set->sbIDData[idx].flags & IS_IN_USE ) {

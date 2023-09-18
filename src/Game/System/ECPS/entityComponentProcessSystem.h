@@ -17,7 +17,7 @@ void ecps_CleanUp( ECPS* ecps );
 
 // adds a component type and returns the id to reference it by
 //  this can only be done before
-ComponentID ecps_AddComponentType( ECPS* ecps, const char* name, uint32_t version, size_t size, size_t align, CleanUpComponent cleanUp, VerifyComponent verify );
+ComponentID ecps_AddComponentType( ECPS* ecps, const char* name, uint32_t version, size_t size, size_t align, CleanUpComponent cleanUp, VerifyComponent verify, SerializeComponent serialize, DeserializeComponent deserialize );
 
 // this attempts to set up a process to be used by the passed in ecps
 bool ecps_CreateProcess( ECPS* ecps,
@@ -40,7 +40,7 @@ void ecps_RunProcess( ECPS* ecps, Process* process );
 EntityID ecps_CreateEntity( ECPS* ecps, size_t numComponents, ... );
 
 // finds the entity with the given id
-bool ecps_GetEntityByID( ECPS* ecps, EntityID entityID, Entity* outEntity );
+bool ecps_GetEntityByID( const ECPS* ecps, EntityID entityID, Entity* outEntity );
 
 // adds a component to the specified entity
 //  if the entity already has this component this acts like an expensive ecps_GetComponentFromEntity( )
@@ -64,18 +64,21 @@ int ecps_RemoveComponentFromEntity( ECPS* ecps, Entity* entity, ComponentID comp
 int ecps_RemoveComponentFromEntityByID( ECPS* ecps, EntityID entityID, ComponentID componentID );
 
 bool ecps_DoesEntityHaveComponent( const Entity* entity, ComponentID componentID );
-bool ecps_DoesEntityHaveComponentByID( ECPS* ecps, EntityID entityID, ComponentID componentID );
+bool ecps_DoesEntityHaveComponentByID( const ECPS* ecps, EntityID entityID, ComponentID componentID );
 
 // gets the component from the entity, puts a pointer to it in outData
 //  puts in NULL if the entity doesn't have that component
 bool ecps_GetComponentFromEntity( const Entity* entity, ComponentID componentID, void** outData );
-bool ecps_GetComponentFromEntityByID( ECPS* ecps, EntityID entityID, ComponentID componentID, void** outData );
-bool ecps_GetEntityAndComponentByID( ECPS* ecps, EntityID entityID, ComponentID componentID, Entity* outEntity, void** outData );
+bool ecps_GetComponentFromEntityByID( const ECPS* ecps, EntityID entityID, ComponentID componentID, void** outData );
+bool ecps_GetEntityAndComponentByID( const ECPS* ecps, EntityID entityID, ComponentID componentID, Entity* outEntity, void** outData );
 void ecps_DestroyEntity( ECPS* ecps, const Entity* entity );
 void ecps_DestroyEntityByID( ECPS* ecps, EntityID entityID );
 
 // clears out all entities, not ids will be valid after this is called
 void ecps_DestroyAllEntities( ECPS* ecps );
+
+SerializeComponent ecps_GetComponentSerializtionFunction( const ECPS* ecps, ComponentID componentID );
+DeserializeComponent ecps_GetComponentDeserializationFunction( const ECPS* ecps, ComponentID componentID );
 
 // debugging stuff
 void ecps_DumpEntityByID( ECPS* ecps, const EntityID id, const char* tag );

@@ -255,10 +255,10 @@ static void pointerResponseFinalize_TouchScreen( ECPS* ecps )
 
 		if( ecps_GetEntityAndComponentByID( ecps, currChosenPointerResponseID, gcPointerResponseCompID, &entity, &prd ) ) {
 			if( prd->overResponse != NULL ) {
-				prd->overResponse( &entity );
+				prd->overResponse( ecps, &entity );
 			}
 			if( prd->pressResponse != NULL ) {
-				prd->pressResponse( &entity );
+				prd->pressResponse( ecps, &entity );
 			}
 		}
 	}
@@ -270,7 +270,7 @@ static void pointerResponseFinalize_TouchScreen( ECPS* ecps )
 
 			if( ecps_GetEntityAndComponentByID( ecps, focusedPointerResponseID, gcPointerResponseCompID, &entity, &prd ) ) {
 				if( prd->leaveResponse != NULL ) {
-					prd->leaveResponse( &entity );
+					prd->leaveResponse( ecps, &entity );
 				}
 			}
 		} else if( pointerResponseMouseReleased ) {
@@ -279,7 +279,7 @@ static void pointerResponseFinalize_TouchScreen( ECPS* ecps )
 
 			if( ecps_GetEntityAndComponentByID( ecps, focusedPointerResponseID, gcPointerResponseCompID, &entity, &prd ) ) {
 				if( prd->releaseResponse != NULL ) {
-					prd->releaseResponse( &entity );
+					prd->releaseResponse( ecps, &entity );
 				}
 			}
 		}
@@ -298,7 +298,7 @@ static void pointerResponseFinalize_TouchScreen( ECPS* ecps )
 
 			if( ecps_GetEntityAndComponentByID( ecps, currChosenPointerResponseID, gcPointerResponseCompID, &entity, &prd ) ) {
 				if( prd->overResponse != NULL ) {
-					prd->overResponse( &entity );
+					prd->overResponse( ecps, &entity );
 				}
 			}
 		}
@@ -343,7 +343,7 @@ static void pointerResponseFinalize_Mouse( ECPS* ecps )
 
 			if( ecps_GetEntityAndComponentByID( ecps, prevChosenPointerResponseID, gcPointerResponseCompID, &entity, &prd ) ) {
 				if( prd->leaveResponse != NULL ) {
-					prd->leaveResponse( &entity );
+					prd->leaveResponse( ecps, &entity );
 				}
 			}
 		} else if( pointerResponseMousePressed ) {
@@ -353,7 +353,7 @@ static void pointerResponseFinalize_Mouse( ECPS* ecps )
 
 			if( ecps_GetEntityAndComponentByID( ecps, focusedPointerResponseID, gcPointerResponseCompID, &entity, &prd ) ) {
 				if( prd->pressResponse != NULL ) {
-					prd->pressResponse( &entity );
+					prd->pressResponse( ecps, &entity );
 				}
 			}
 		}
@@ -365,7 +365,7 @@ static void pointerResponseFinalize_Mouse( ECPS* ecps )
 
 		if( ecps_GetEntityAndComponentByID( ecps, currChosenPointerResponseID, gcPointerResponseCompID, &entity, &prd ) ) {
 			if( prd->overResponse != NULL ) {
-				prd->overResponse( &entity );
+				prd->overResponse( ecps, &entity );
 			}
 		}
 	}
@@ -377,7 +377,7 @@ static void pointerResponseFinalize_Mouse( ECPS* ecps )
 
 			if( ecps_GetEntityAndComponentByID( ecps, focusedPointerResponseID, gcPointerResponseCompID, &entity, &prd ) ) {
 				if( prd->leaveResponse != NULL ) {
-					prd->leaveResponse( &entity );
+					prd->leaveResponse( ecps, &entity );
 				}
 			}
 		} else if( pointerResponseMouseReleased ) {
@@ -386,7 +386,7 @@ static void pointerResponseFinalize_Mouse( ECPS* ecps )
 
 			if( ecps_GetEntityAndComponentByID( ecps, focusedPointerResponseID, gcPointerResponseCompID, &entity, &prd ) ) {
 				if( prd->releaseResponse != NULL ) {
-					prd->releaseResponse( &entity );
+					prd->releaseResponse( ecps, &entity );
 				}
 			}
 		}
@@ -404,7 +404,7 @@ static void pointerResponseFinalize_Mouse( ECPS* ecps )
 			
 			if( ecps_GetEntityAndComponentByID( ecps, currChosenPointerResponseID, gcPointerResponseCompID, &entity, &prd ) ) {
 				if( prd->overResponse != NULL ) {
-					prd->overResponse( &entity );
+					prd->overResponse( ecps, &entity );
 				}
 			}
 		}
@@ -690,15 +690,15 @@ static void runCollisions( ECPS* ecps )
 }
 
 // ***** Helper functions for dealing with groups
-void gp_AddGroupID( ECPS* ecps, EntityID entity, size_t groupID )
+void gp_AddGroupID( ECPS* ecps, EntityID entity, uint32_t groupID )
 {
 	GCGroupIDData groupIDData;
 	groupIDData.groupID = groupID;
 	ecps_AddComponentToEntityByID( ecps, entity, gcGroupIDCompID, &groupIDData );
 }
 
-static size_t deleteGroupID = SIZE_MAX;
-static void testAndDeleteEnemy( ECPS* ecps, const Entity* entity )
+static uint32_t deleteGroupID = SIZE_MAX;
+static void testAndDeleteEntity( ECPS* ecps, const Entity* entity )
 {
 	GCGroupIDData* groupID = NULL;
 	ecps_GetComponentFromEntity( entity, gcGroupIDCompID, &groupID );
@@ -707,11 +707,11 @@ static void testAndDeleteEnemy( ECPS* ecps, const Entity* entity )
 	}
 }
 
-void gp_DeleteAllOfGroup( ECPS* ecps, size_t groupID )
+void gp_DeleteAllOfGroup( ECPS* ecps, uint32_t groupID )
 {
 	// just use a custom process
 	deleteGroupID = groupID;
-	ecps_RunCustomProcess( ecps, NULL, testAndDeleteEnemy, NULL, 1, gcGroupIDCompID );
+	ecps_RunCustomProcess( ecps, NULL, testAndDeleteEntity, NULL, 1, gcGroupIDCompID );
 }
 
 // ***** Register the processes

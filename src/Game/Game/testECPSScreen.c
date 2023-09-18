@@ -208,9 +208,9 @@ static void gameScreen_Enter( void )
 	font = txt_LoadFont( "Fonts/Aileron-Regular.otf", 128 );
 
 	ecps_StartInitialization( &testECPS ); {
-		spawningCompID = ecps_AddComponentType( &testECPS, "SPAWN", 0, 0, 0, NULL, NULL );
-		attackingCompID = ecps_AddComponentType( &testECPS, "ATTACK", 0, sizeof( AttackingData ), ALIGN_OF( AttackingData ), NULL, NULL );
-		selfDestructCompID = ecps_AddComponentType( &testECPS, "Sudoku", 0, sizeof( SelfDestructData ), ALIGN_OF( SelfDestructData ), NULL, NULL );
+		spawningCompID = ecps_AddComponentType( &testECPS, "SPAWN", 0, 0, 0, NULL, NULL, NULL, NULL );
+		attackingCompID = ecps_AddComponentType( &testECPS, "ATTACK", 0, sizeof( AttackingData ), ALIGN_OF( AttackingData ), NULL, NULL, NULL, NULL );
+		selfDestructCompID = ecps_AddComponentType( &testECPS, "Sudoku", 0, sizeof( SelfDestructData ), ALIGN_OF( SelfDestructData ), NULL, NULL, NULL, NULL );
 
 		ecps_CreateProcess( &testECPS, "SPAWN", NULL, spawning, NULL, &spawnProc, 1, spawningCompID );
 		ecps_CreateProcess( &testECPS, "ATTACK", NULL, attacking, NULL, &attackProc, 1, attackingCompID );

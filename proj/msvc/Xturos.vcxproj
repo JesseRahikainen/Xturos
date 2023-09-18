@@ -355,6 +355,7 @@
     <ClInclude Include="..\..\src\Game\Math\matrix4.h" />
     <ClInclude Include="..\..\src\Game\Math\vector2.h" />
     <ClInclude Include="..\..\src\Game\Math\vector3.h" />
+    <ClInclude Include="..\..\src\Game\Others\cmp.h" />
     <ClInclude Include="..\..\src\Game\Others\gl_core.h" />
     <ClInclude Include="..\..\src\Game\Others\nuklear.h" />
     <ClInclude Include="..\..\src\Game\particles.h" />
@@ -363,6 +364,7 @@
     <ClInclude Include="..\..\src\Game\System\ECPS\ecps_componentBitFlags.h" />
     <ClInclude Include="..\..\src\Game\System\ECPS\ecps_componentTypes.h" />
     <ClInclude Include="..\..\src\Game\System\ECPS\ecps_dataTypes.h" />
+    <ClInclude Include="..\..\src\Game\System\ECPS\ecps_serialization.h" />
     <ClInclude Include="..\..\src\Game\System\ECPS\ecps_trackedCallbacks.h" />
     <ClInclude Include="..\..\src\Game\System\ECPS\ecps_values.h" />
     <ClInclude Include="..\..\src\Game\System\ECPS\entityComponentProcessSystem.h" />
@@ -434,6 +436,7 @@
     <ClCompile Include="..\..\src\Game\Math\matrix4.c" />
     <ClCompile Include="..\..\src\Game\Math\vector2.c" />
     <ClCompile Include="..\..\src\Game\Math\vector3.c" />
+    <ClCompile Include="..\..\src\Game\Others\cmp.c" />
     <ClCompile Include="..\..\src\Game\Others\gl_core.c" />
     <ClCompile Include="..\..\src\Game\Others\stb_vorbis_sdl.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
@@ -448,6 +451,7 @@
     <ClCompile Include="..\..\src\Game\sound.c" />
     <ClCompile Include="..\..\src\Game\System\ECPS\ecps_componentBitFlags.c" />
     <ClCompile Include="..\..\src\Game\System\ECPS\ecps_componentTypes.c" />
+    <ClCompile Include="..\..\src\Game\System\ECPS\ecps_serialization.c" />
     <ClCompile Include="..\..\src\Game\System\ECPS\ecps_trackedCallbacks.c" />
     <ClCompile Include="..\..\src\Game\System\ECPS\entityComponentProcessSystem.c" />
     <ClCompile Include="..\..\src\Game\System\gameTime.c" />
