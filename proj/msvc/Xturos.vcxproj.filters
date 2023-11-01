@@ -127,6 +127,12 @@
     <Filter Include="_ProjectToolScripts">
       <UniqueIdentifier>{b616a4c9-a239-4541-8752-202485e5ca11}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Editors">
+      <UniqueIdentifier>{a2adf02c-ce91-4986-998c-d525455210d6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Editors">
+      <UniqueIdentifier>{e8a326dc-4592-4514-a7bf-b322063d1a91}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\Game\Graphics\graphics.h">
@@ -375,6 +381,21 @@
     <ClInclude Include="..\..\src\Game\Others\cmp.h">
       <Filter>Header Files\Others</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\Game\Editors\editorHelpers.h">
+      <Filter>Header Files\Editors</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Game\Editors\editorHub.h">
+      <Filter>Header Files\Editors</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Game\Editors\spriteAnimationEditor.h">
+      <Filter>Header Files\Editors</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Game\Editors\spriteSheetEditor.h">
+      <Filter>Header Files\Editors</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Game\Editors\3x3Editor.h">
+      <Filter>Header Files\Editors</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\Game\Graphics\graphics.c">
@@ -607,6 +628,21 @@
     </ClCompile>
     <ClCompile Include="..\..\src\Game\Others\cmp.c">
       <Filter>Source Files\Others</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Game\Editors\editorHelpers.c">
+      <Filter>Source Files\Editors</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Game\Editors\editorHub.c">
+      <Filter>Source Files\Editors</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Game\Editors\spriteAnimationEditor.c">
+      <Filter>Source Files\Editors</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Game\Editors\spriteSheetEditor.c">
+      <Filter>Source Files\Editors</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Game\Editors\3x3Editor.c">
+      <Filter>Source Files\Editors</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

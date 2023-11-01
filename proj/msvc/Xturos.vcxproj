@@ -190,7 +190,7 @@
       <IgnoreSpecificDefaultLibraries>msvcrt.lib</IgnoreSpecificDefaultLibraries>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy $(ProjectDir)..\..\libraries\SDL2\VisualC\x64\Debug\SDL2.dll $(SolutionDir)..\..\bin\$(PlatformShortName)_$(Configuration)\ /d /y</Command>
+      <Command>xcopy "$(ProjectDir)..\..\libraries\SDL2\VisualC\x64\Debug\SDL2.dll" "$(SolutionDir)..\..\bin\$(PlatformShortName)_$(Configuration)\" /d /y</Command>
     </PostBuildEvent>
     <PostBuildEvent>
       <Message>Copy DLLs</Message>
@@ -247,7 +247,7 @@
       </ForceSymbolReferences>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy $(ProjectDir)..\..\libraries\SDL2\VisualC\x64\Release\SDL2.dll $(SolutionDir)..\..\bin\$(PlatformShortName)_$(Configuration)\ /d /y</Command>
+      <Command>xcopy "$(ProjectDir)..\..\libraries\SDL2\VisualC\x64\Debug\SDL2.dll" "$(SolutionDir)..\..\bin\$(PlatformShortName)_$(Configuration)\" /d /y</Command>
     </PostBuildEvent>
     <PostBuildEvent>
       <Message>Copy DLLs</Message>
@@ -302,7 +302,7 @@
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy $(ProjectDir)..\..\libraries\SDL2\VisualC\x64\Release\SDL2.dll $(SolutionDir)..\..\bin\$(PlatformShortName)_$(Configuration)\ /d /y</Command>
+      <Command>xcopy "$(ProjectDir)..\..\libraries\SDL2\VisualC\x64\Debug\SDL2.dll" "$(SolutionDir)..\..\bin\$(PlatformShortName)_$(Configuration)\" /d /y</Command>
     </PostBuildEvent>
     <PostBuildEvent>
       <Message>Copy DLLs</Message>
@@ -311,6 +311,11 @@
   <ItemGroup>
     <ClInclude Include="..\..\src\Game\collisionDetection.h" />
     <ClInclude Include="..\..\src\Game\Components\generalComponents.h" />
+    <ClInclude Include="..\..\src\Game\Editors\3x3Editor.h" />
+    <ClInclude Include="..\..\src\Game\Editors\editorHelpers.h" />
+    <ClInclude Include="..\..\src\Game\Editors\editorHub.h" />
+    <ClInclude Include="..\..\src\Game\Editors\spriteAnimationEditor.h" />
+    <ClInclude Include="..\..\src\Game\Editors\spriteSheetEditor.h" />
     <ClInclude Include="..\..\src\Game\gameState.h" />
     <ClInclude Include="..\..\src\Game\Game\bordersTestScreen.h" />
     <ClInclude Include="..\..\src\Game\Game\gameComponents.h" />
@@ -395,6 +400,11 @@
   <ItemGroup>
     <ClCompile Include="..\..\src\Game\collisionDetection.c" />
     <ClCompile Include="..\..\src\Game\Components\generalComponents.c" />
+    <ClCompile Include="..\..\src\Game\Editors\3x3Editor.c" />
+    <ClCompile Include="..\..\src\Game\Editors\editorHelpers.c" />
+    <ClCompile Include="..\..\src\Game\Editors\editorHub.c" />
+    <ClCompile Include="..\..\src\Game\Editors\spriteAnimationEditor.c" />
+    <ClCompile Include="..\..\src\Game\Editors\spriteSheetEditor.c" />
     <ClCompile Include="..\..\src\Game\gameState.c" />
     <ClCompile Include="..\..\src\Game\Game\bordersTestScreen.c" />
     <ClCompile Include="..\..\src\Game\Game\gameComponents.c" />

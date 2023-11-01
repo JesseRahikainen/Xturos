@@ -426,13 +426,12 @@ bool ecps_SaveSerializedECPS( const char* fileName, SerializedECPS* serializedEC
 	ASSERT_AND_IF( serializedECPS != NULL ) return false;
 
 	// TODO: handle not overwriting an existing file if the writing fails
-	SDL_RWops* rwopsFile = SDL_RWFromFile( fileName, "w" );
+	cmp_ctx_t cmp;
+	SDL_RWops* rwopsFile = openRWopsCMPFile( fileName, "w", &cmp );
 	if( rwopsFile == NULL ) {
-		llog( LOG_ERROR, "Unable to open file %s for writing: %s", fileName, SDL_GetError( ) );
 		return false;
 	}
 
-	cmp_ctx_t cmp;
 	cmp_init( &cmp, rwopsFile, serializationFileReader, serializationFileSkipper, serializationFileWriter );
 	bool done = false;
 
@@ -520,17 +519,13 @@ bool ecps_LoadSerializedECPS( const char* fileName, SerializedECPS* serializedEC
 	ASSERT_AND_IF( serializedECPS->sbCompInfos == NULL ) return false;
 	ASSERT_AND_IF( serializedECPS->sbEntityInfos == NULL ) return false;
 
-	SDL_RWops* rwopsFile = SDL_RWFromFile( fileName, "r" );
+	cmp_ctx_t cmp;
+	SDL_RWops* rwopsFile = openRWopsCMPFile( fileName, "r", &cmp );
 	if( rwopsFile == NULL ) {
-		llog( LOG_ERROR, "Unable to open file %s for reading: %s", fileName, SDL_GetError( ) );
 		return false;
 	}
 
 	bool done = false;
-
-	cmp_ctx_t cmp;
-	cmp_init( &cmp, rwopsFile, serializationFileReader, serializationFileSkipper, serializationFileWriter );
-
 	// read the component infos
 	uint32_t numCompInfos = 0;
 	if( !cmp_read_array( &cmp, &numCompInfos ) ) {

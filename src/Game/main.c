@@ -29,6 +29,7 @@
 #include "System/ECPS/ecps_trackedCallbacks.h"
 
 #include "gameState.h"
+#include "Editors/editorHub.h"
 #include "Game/testECPSScreen.h"
 #include "Game/testAStarScreen.h"
 #include "Game/testJobQueueScreen.h"
@@ -77,7 +78,7 @@ static Uint64 lastTicks;
 static Uint64 physicsTickAcc;
 static SDL_Window* window;
 static SDL_RWops* logFile;
-static const char* windowName = "Oton";
+static const char* windowName = "Xturos";
 static bool canResize;
 static bool isEditorMode;
 
@@ -157,7 +158,7 @@ static void initIMGUI( NuklearWrapper* imgui, bool useRelativeMousePos, int widt
 	struct nk_font_atlas* fontAtlas;
 	nk_xu_fontStashBegin( imgui, &fontAtlas );
 	// load fonts
-	struct nk_font *font = nk_font_atlas_add_from_file( fontAtlas, "./Fonts/Aileron-Regular.otf", 12, 0 );
+	struct nk_font *font = nk_font_atlas_add_from_file( fontAtlas, "./Fonts/Aileron-Regular.otf", 14, 0 );
 	
 	nk_xu_fontStashEnd( imgui );
 	nk_style_set_font( &( imgui->ctx ), &( font->handle ) );
@@ -708,21 +709,21 @@ int main( int argc, char** argv )
 	focused = true;
 #endif
 
-	// TODO: Get some basic editor stuff working.
-	/*GameState* startState = &otonMainScreenState;
+	//GameState* startState = &testPointerResponseScreenState;
+	//GameState* startState = &gameScreenState;
+	//GameState* startState = &testAStarScreenState;
+	//GameState* startState = &testJobQueueScreenState;
+	//GameState* startState = &testSoundsScreenState;
+	//GameState* startState = &testSteeringScreenState;
+	//GameState* startState = &bordersTestScreenState;
+	//GameState* startState = &hexTestScreenState;
+	//GameState* startState = &testBloomScreenState;
+	GameState* startState = &gameOfUrScreenState;
+	//GameState* startState = &testECPSScreenState;
 	if( isEditorMode ) {
 		startState = &editorHubScreenState;
-	}//*/
-	//gsm_EnterState( &globalFSM, &gameScreenState );
-	//gsm_EnterState( &globalFSM, &testAStarScreenState );
-	//gsm_EnterState( &globalFSM, &testJobQueueScreenState );
-	//gsm_EnterState( &globalFSM, &testSoundsScreenState );
-	gsm_EnterState( &globalFSM, &testPointerResponseScreenState );
-	//gsm_EnterState( &globalFSM, &testSteeringScreenState );
-	//gsm_EnterState( &globalFSM, &bordersTestScreenState );
-	//gsm_EnterState( &globalFSM, &hexTestScreenState );
-	//gsm_EnterState( &globalFSM, &testBloomScreenState );
-	//gsm_EnterState( &globalFSM, &gameOfUrScreenState );
+	}
+	gsm_EnterState( &globalFSM, startState );
 
 #if defined( __EMSCRIPTEN__ )
 	emscripten_set_main_loop_arg( mainLoop, NULL, -1, 1 );

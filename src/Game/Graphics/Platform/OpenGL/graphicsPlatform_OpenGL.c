@@ -344,7 +344,18 @@ int gfxPlatform_ComparePlatformTextures( PlatformTexture lhs, PlatformTexture rh
 
 void gfxPlatform_DeletePlatformTexture( PlatformTexture texture )
 {
-	glDeleteTextures( 1, &( texture.id ) );
+	GL( glDeleteTextures( 1, &( texture.id ) ) );
+}
+
+void gfxPlatform_GetPlatformTextureSize( PlatformTexture* texture, int* outWidth, int* outHeight )
+{
+	SDL_assert( texture != NULL );
+	SDL_assert( outWidth != NULL );
+	SDL_assert( outHeight != NULL );
+
+	GL( glBindTexture( GL_TEXTURE_2D, texture->id ) );
+	GL( glGetTexLevelParameteriv( GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, outWidth ) );
+	GL( glGetTexLevelParameteriv( GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, outHeight ) );
 }
 
 void gfxPlatform_Swap( SDL_Window* window )

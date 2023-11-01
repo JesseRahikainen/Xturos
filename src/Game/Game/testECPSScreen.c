@@ -199,11 +199,9 @@ static void gameScreen_Enter( void )
 	
 	gfx_SetClearColor( CLR_BLACK );
 
-	spriteSheetImg = img_Load( "Images/spritesheet_test.png", ST_DEFAULT );
+	spriteSheetImg = img_Load( "Images/test.spritesheet_0.png", ST_DEFAULT );
 
-	numImagesOnSheet = img_LoadSpriteSheet( "Images/spritesheet_test.ss", ST_DEFAULT, &imageSheet );
-
-	//img_LoadPackage( 3, fileNames, testImages );
+	numImagesOnSheet = img_LoadSpriteSheet( "Images/test.spritesheet", ST_DEFAULT, &imageSheet );
 
 	font = txt_LoadFont( "Fonts/Aileron-Regular.otf", 128 );
 

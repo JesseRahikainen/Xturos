@@ -10,9 +10,57 @@
 #include "../System/platformLog.h"
 #include "../Utils/stretchyBuffer.h"
 #include "../Input/input.h"
+#include "../Utils/helpers.h"
 
 // Have wanted this multiple times for LD but always decided it would take too long to implement.
 //  So here's an example to work from in the future.
+
+// tiles are 32x32
+// https://gamedevelopment.tutsplus.com/tutorials/how-to-use-tile-bitmasking-to-auto-tile-your-level-layouts--cms-25673
+// they have two copies of the open tile in the example
+// 
+// Each bit represents a filled spot following this format.The template is layed over the map where a filled spot is
+// and the number is constructed by looking at the adjacent spots.
+// 726
+// 1x0
+// 534
+// So we can query the neighbors and get a number in this format
+// 0b76543210
+// This can then be filtered to have redudant data removed if necessary, corner pieces only
+// matter if the two cardinal pieces surrounding it are also filled, and then a look up table
+// can be used to determine the index in the sprite list.
+// 
+// The last one is a special case, that is when the center spot is not filled.
+// 
+// 0    1    2    3    4    5 * 1  6 * 1  7 * 3
+// 000  000  000  000  010  010  010  010
+// 0x0  0x1  1x0  1x1  0x0  0x1  1x0  1x1
+// 000  000  000  000  000  000  000  000
+// 
+// 8    9 * 1  10 * 1 11 * 3 12   13 * 14 * 15 *
+// 000  000  000  000  010  010  010  010
+// 0x0  0x1  1x0  1x1  0x0  0x1  1x0  1x1
+// 010  010  010  010  010  010  010  010
+// 
+// 25 * 27 * 29 * 31   42 * 43 * 46   47
+// 000  000  010  010  000  000  010  010
+// 0x1  1x1  0x1  1x1  1x0  1x1  1x0  1x1
+// 011  011  011  011  110  110  110  110
+// 
+// 59 * 63   69 * 71 * 77 * 79   93 * 95
+// 000  010  011  011  011  011  011  011
+// 1x1  1x1  0x1  1x1  0x1  1x1  0x1  1x1
+// 111  111  000  000  010  010  011  011
+// 
+// 111  127  134 * 135 * 142  143  159  174
+// 011  011  110  110  110  110  110  110
+// 1x1  1x1  1x0  1x1  1x0  1x1  1x1  1x0
+// 110  111  000  000  010  010  011  110
+// 
+// 175  191  199 * 207  223  239  255
+// 110  110  111  111  111  111  111
+// 1x1  1x1  1x1  1x1  1x1  1x1  1x1
+// 110  111  000  010  011  110  111
 
 static int* sbTiles = NULL;
 
@@ -348,8 +396,16 @@ static void bordersTestScreen_Enter( void )
 	
 	gfx_SetClearColor( CLR_BLACK );
 
-	img_LoadSpriteSheet( "Images/borders_template.ss", ST_DEFAULT, &sbTiles );
+	img_LoadSpriteSheet( "Images/border_template.spritesheet", ST_DEFAULT, NULL );
 	highlightImg = img_Load( "Images/hilite.png", ST_DEFAULT );
+
+	// we're assuming the ids are all in the format bt##.png and that there's 48 of them
+	sb_Add( sbTiles, 48 );
+	for( size_t i = 0; i < sb_Count( sbTiles ); ++i ) {
+		char id[64];
+		SDL_snprintf( id, ARRAY_SIZE( id ), "bt%02i.png", (int)i );
+		sbTiles[i] = img_GetExistingByID( id );
+	}
 
 	// set the map to empty
 	for( int i = 0; i < ( MAP_WIDTH * MAP_HEIGHT ); ++i ) {
@@ -408,14 +464,10 @@ static void bordersTestScreen_Draw( void )
 			int i = MAP_COORD_TO_IDX( x, y );
 			Vector2 pos = vec2( x * SPRITE_WIDTH, y * SPRITE_HEIGHT );
 			img_CreateDraw( spriteMap[i], 1, pos, pos, 0 );
-
-			//debugRenderer_AABB( 1, pos, vec2( 32.0f, 32.0f ), CLR_RED );
 		}
 	}
 
 	img_CreateDraw( highlightImg, 1, highlightPos, highlightPos, 1 );
-
-	//debugRenderer_Circle( 1, VEC2_ZERO, 100.0f, CLR_RED );
 }
 
 static void bordersTestScreen_PhysicsTick( float dt )

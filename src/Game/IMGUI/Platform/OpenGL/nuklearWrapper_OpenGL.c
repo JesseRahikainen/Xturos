@@ -10,6 +10,7 @@
 #include "Math/matrix4.h"
 #include "Input/input.h"
 #include "System/platformLog.h"
+#include "Graphics/images.h"
 
 #include "Graphics/debugRendering.h"
 
@@ -34,11 +35,14 @@ typedef struct {
 
 static void uploadAtlas( NuklearWrapper* xu, const void *image, int width, int height)
 {
-    GL( glGenTextures( 1, &( xu->platform.fontTx ) ) );
-    GL( glBindTexture( GL_TEXTURE_2D, xu->platform.fontTx ) );
-    GL( glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR ) );
-    GL( glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR ) );
-    GL( glTexImage2D( GL_TEXTURE_2D, 0, GL_RGBA, (GLsizei)width, (GLsizei)height, 0, GL_RGBA, GL_UNSIGNED_BYTE, image ) );
+	Texture texture;
+	gfxUtil_CreateTextureFromRGBABitmap( (uint8_t*)image, width, height, &texture );
+
+	xu->platform.fontImg = img_CreateFromTexture( &texture, ST_DEFAULT, "NuklearFont" );
+	if( xu->platform.fontImg < 0 ) {
+		llog( LOG_ERROR, "Error creating Nuklear font image." );
+		return;
+	}
 }
 
 static void clipboardPaste( nk_handle usr, struct nk_text_edit *edit )
@@ -195,6 +199,12 @@ void nk_xu_init( NuklearWrapper* xu, SDL_Window* win, bool useRelativeMousePos, 
 	xu->renderHeight = renderHeight;
 
 	xu->useRelativeMousePos = useRelativeMousePos;
+
+	// slightly different default colors
+	struct nk_color styleTable[SDL_arraysize( nk_default_color_style )];
+	SDL_memcpy( styleTable, nk_default_color_style, sizeof( nk_default_color_style[0] ) * SDL_arraysize( nk_default_color_style ) );
+	styleTable[NK_COLOR_TEXT] = nk_rgb( 255, 255, 255 );
+	nk_style_from_table( &(xu->ctx), styleTable );
 }
 
 static const nk_rune* defaultGlyphRanges( void )
@@ -220,15 +230,10 @@ void nk_xu_fontStashEnd( NuklearWrapper* xu )
 	const void *image;
 	int w, h;
 
-	if( xu->fontAtlas.config == NULL ) {
-		llog( LOG_WARN, "Font not properly loaded, text will not be rendered in IMGUI dialogs." );
-		return;
-	}
-
 	xu->fontAtlas.config->range = defaultGlyphRanges( );
 	image = nk_font_atlas_bake( &( xu->fontAtlas ), &w, &h, NK_FONT_ATLAS_RGBA32 );
 	uploadAtlas( xu, image, w, h );
-	nk_font_atlas_end(&( xu->fontAtlas ), nk_handle_id((int)xu->platform.fontTx), &( xu->nullTx ) );
+	nk_font_atlas_end( &( xu->fontAtlas ), nk_handle_id( xu->platform.fontImg ), &( xu->nullTx ) );
 	if( xu->fontAtlas.default_font ) {
 		nk_style_set_font( &( xu->ctx ), &( xu->fontAtlas.default_font->handle ) );
 	}
@@ -400,14 +405,17 @@ void nk_xu_render( NuklearWrapper* xu )
 		nk_draw_foreach( cmd, &( xu->ctx ), &( xu->cmds ) ) {
 			if( cmd->elem_count == 0 ) continue;
 
-			GL( glBindTexture( GL_TEXTURE_2D, (GLuint)( cmd->texture.id ) ) );
-			glScissor(
-				(GLint)( cmd->clip_rect.x ),
-				(GLint)( ( xu->renderHeight - (GLint)( cmd->clip_rect.y + cmd->clip_rect.h ) ) ),
-				(GLint)( cmd->clip_rect.w ),
-				(GLint)( cmd->clip_rect.h ) );
+			PlatformTexture platformTexture;
+			if( img_GetTextureID( cmd->texture.id, &platformTexture ) >= 0 ) {
+				GL( glBindTexture( GL_TEXTURE_2D, platformTexture.id ) );
+				glScissor(
+					(GLint)( cmd->clip_rect.x ),
+					(GLint)( ( xu->renderHeight - (GLint)( cmd->clip_rect.y + cmd->clip_rect.h ) ) ),
+					(GLint)( cmd->clip_rect.w ),
+					(GLint)( cmd->clip_rect.h ) );
 
-			GL( glDrawElements( GL_TRIANGLES, (GLsizei)cmd->elem_count, GL_UNSIGNED_SHORT, offset ) );
+				GL( glDrawElements( GL_TRIANGLES, (GLsizei)cmd->elem_count, GL_UNSIGNED_SHORT, offset ) );
+			}
 
 #if 0 // for debugging rendering, TODO: make this work with the version of nuklear we're using
 #pragma warning(push)
@@ -464,7 +472,7 @@ void nk_xu_shutdown( NuklearWrapper* xu )
 
 	// destroy the device stuff
 	shaders_Destroy( &( xu->platform.prog ), 1 );
-	GL( glDeleteTextures( 1, &( xu->platform.fontTx ) ) );
+	img_Clean( xu->platform.fontImg );
 	GL( glDeleteBuffers( 1, &( xu->platform.vbo ) ) );
 	GL( glDeleteBuffers( 1, &( xu->platform.ebo ) ) );
 
@@ -479,14 +487,26 @@ void nk_xu_clear( NuklearWrapper* xu )
 	nk_clear( &( xu->ctx ) );
 }
 
-struct nk_image nk_xu_loadImage( const char* filePath )
+struct nk_image nk_xu_loadImage( const char* filePath, int* outWidth, int* outHeight )
 {
-	Texture loadedTexture;
-
-	if( gfxUtil_LoadTexture( filePath, &loadedTexture ) < 0 ) {
-		// load failed, just use an invalid texture
+	int id = img_Load( filePath, ST_DEFAULT );
+	
+	if( id == -1 ) {
+		llog( LOG_ERROR, "Unable to load image %s", filePath );
 		return nk_image_id( -1 );
 	}
 
-	return nk_image_id( (int)loadedTexture.texture.id );
+	Vector2 size;
+	img_GetSize( id, &size );
+	if( outWidth != NULL ) ( *outWidth ) = (int)size.x;
+	if( outHeight != NULL ) ( *outHeight ) = (int)size.y;
+
+	return nk_image_id( id );
+}
+
+void nk_xu_unloadImage( struct nk_image* image )
+{
+	if( image == NULL ) return;
+
+	img_Clean( image->handle.id );
 }

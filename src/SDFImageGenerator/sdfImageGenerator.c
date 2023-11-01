@@ -92,17 +92,16 @@ int main( int argc, char** argv )
 			if( inputFilePath == NULL ) {
 				inputFilePath = argv[i];
 			} else if( outputFilePath == NULL ) {
-				size_t outputFilePathLen = strlen( argv[i] ) + 1 + 4;
-				outputFilePath = malloc( outputFilePathLen );
+				outputFilePath = malloc( strlen( argv[i] ) + 1 + 4 );
 				if( outputFilePath == NULL ) {
 					fprintf( stderr, "Unable to allocate data for output file string name." );
 					ret = 2;
 					goto clean_up;
 				}
-				strcpy_s( outputFilePath, outputFilePathLen, argv[i] );
+				strcpy( outputFilePath, argv[i] );
 
 				if( !endsWith( outputFilePath, png ) ) {
-					strcat_s( outputFilePath, outputFilePathLen, png );
+					strcat( outputFilePath, png );
 				}
 			} else {
 				fprintf( stderr, "Too many files supplied." );

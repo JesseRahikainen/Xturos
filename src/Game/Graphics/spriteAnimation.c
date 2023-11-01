@@ -5,6 +5,8 @@
 #include "Graphics/imageSheets.h"
 #include "Utils/stretchyBuffer.h"
 #include "Math/mathUtil.h"
+#include "Others/cmp.h"
+#include "Utils/helpers.h"
 
 // Helpers for creating events to add to the animation.
 AnimEvent createEvent_SetImage( uint32_t frame, const char* frameName, const Vector2* offset )
@@ -141,7 +143,7 @@ SpriteAnimation spriteAnimation( )
 	return newAnim;
 }
 
-void sprAnim_Load( SpriteAnimation* anim )
+void sprAnim_LoadAssociatedData( SpriteAnimation* anim )
 {
 	// load the sprite sheet associated with the animation
 	img_LoadSpriteSheet( anim->spriteSheetFile, ST_DEFAULT, &( anim->sbSpriteSheet ) );
@@ -254,4 +256,82 @@ uint32_t sprAnim_GetCurrentFrame( PlayingSpriteAnimation* playingAnim )
 	}
 	uint32_t frame = sprAnim_FrameAtTime( playingAnim->animation, playingAnim->timePassed );
 	return frame;
+}
+
+bool sprAnim_Save( const char* fileName, SpriteAnimation* anim )
+{
+	ASSERT_AND_IF( fileName != NULL ) return false;
+	ASSERT_AND_IF( anim != NULL ) return false;
+
+	cmp_ctx_t cmp;
+	SDL_RWops* rwops = openRWopsCMPFile( fileName, "w", &cmp );
+	if( rwops == NULL ) {
+		return false;
+	}
+
+#define CMP_WRITE( val, write, desc ) \
+	if( !write( &cmp, (val) ) ) { \
+		llog( LOG_ERROR, "Unable to write %s for animation: %s", (desc), cmp_strerror( &cmp ) ); \
+		goto clean_up; }
+
+#define CMP_WRITE_STR( val, write, desc ) \
+	if( !cmp_write_str( &cmp, (val), (uint32_t)SDL_strlen((val)) ) ) { \
+		llog( LOG_ERROR, "Unable to write %s for animation: %s", (desc), cmp_strerror( &cmp ) ); \
+		goto clean_up; }
+
+	// create the sprite sheet we'll use
+//#error working here, will just want to feed it a list of image ids to use, it will then extract the pixel data and use it to create one or more sprite sheets
+
+	// write out all the base data first
+	CMP_WRITE( anim->fps, cmp_write_float, "fps" );
+	CMP_WRITE( anim->durationFrames, cmp_write_u32, "duration" );
+	CMP_WRITE( anim->loops, cmp_write_bool, "looping" );
+
+	uint32_t numEvents = (uint32_t)sb_Count( anim->sbEvents );
+	CMP_WRITE( numEvents, cmp_write_array, "event count" );
+
+	for( size_t i = 0; i < sb_Count( anim->sbEvents ); ++i ) {
+		CMP_WRITE( anim->sbEvents[i].base.frame, cmp_write_u32, "event frame" );
+
+		uint32_t typeAsU32 = (uint32_t)anim->sbEvents[i].base.type;
+		CMP_WRITE( typeAsU32, cmp_write_u32, "event type" );
+
+		switch( anim->sbEvents[i].base.type ) {
+		case AET_SWITCH_IMAGE: {
+			const char* imgID = img_GetImgStringID( anim->sbEvents[i].switchImg.imgID );
+			CMP_WRITE_STR( imgID, cmp_write_str, "image id" );
+			CMP_WRITE( &( anim->sbEvents[i].switchImg.offset ), vec2_Serialize, "switch image offset" );
+		} break;
+		case AET_SET_AAB_COLLIDER:
+			CMP_WRITE( anim->sbEvents[i].setAABCollider.colliderID, cmp_write_int, "AAB collider id" );
+			CMP_WRITE( anim->sbEvents[i].setAABCollider.centerX, cmp_write_float, "AAB center x" );
+			CMP_WRITE( anim->sbEvents[i].setAABCollider.centerY, cmp_write_float, "AAB center y" );
+			CMP_WRITE( anim->sbEvents[i].setAABCollider.width, cmp_write_float, "AAB width" );
+			CMP_WRITE( anim->sbEvents[i].setAABCollider.height, cmp_write_float, "AAB height" );
+			break;
+		case AET_SET_CIRCLE_COLLIDER:
+			CMP_WRITE( anim->sbEvents[i].setCircleCollider.colliderID, cmp_write_int, "circle collider id" );
+			CMP_WRITE( anim->sbEvents[i].setCircleCollider.centerX, cmp_write_float, "circle collider center x" );
+			CMP_WRITE( anim->sbEvents[i].setCircleCollider.centerY, cmp_write_float, "circle collider center y" );
+			CMP_WRITE( anim->sbEvents[i].setCircleCollider.radius, cmp_write_float, "circle collider radius" );
+			break;
+		case AET_DEACTIVATE_COLLIDER:
+			CMP_WRITE( anim->sbEvents[i].deactivateCollider.colliderID, cmp_write_int, "deactivate collider id" );
+			break;
+		default:
+			llog( LOG_ERROR, "Unable to write unknown event for animation: %s", cmp_strerror( &cmp ) );
+			goto clean_up;
+		}
+	}
+#undef CMP_WRITE
+
+clean_up:
+
+	SDL_RWclose( rwops );
+	return true;
+}
+
+bool sprAnim_Load( const char* fileName, SpriteAnimation* anim )
+{
+	return false;
 }

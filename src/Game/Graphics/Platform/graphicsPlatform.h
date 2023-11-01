@@ -42,6 +42,8 @@ int gfxPlatform_ComparePlatformTextures( PlatformTexture rhs, PlatformTexture lh
 
 void gfxPlatform_DeletePlatformTexture( PlatformTexture texture );
 
+void gfxPlatform_GetPlatformTextureSize( PlatformTexture* texture, int* outWidth, int* outHeight );
+
 void gfxPlatform_Swap( SDL_Window* window );
 
 int gfxPlatform_GetMaxTextureSize( void );

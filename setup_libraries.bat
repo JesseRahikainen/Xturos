@@ -2,3 +2,6 @@ REM To lazy to learn CMake, setup symbolic links for external libraries, replace
 mkdir .\libraries
 mklink /d .\libraries\SDL2 F:\Data\Libraries\SDL-release-2.26.2
 mklink /d .\libraries\stb-master F:\Data\Libraries\stb-master
+
+REM Powershell script files have to be unblocked so they can be run
+powershell -Command {Unblock-File -Path ./src/ProjectToolScripts/addNewState.ps1}

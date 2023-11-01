@@ -464,7 +464,7 @@ static void gameOfUrState_Enter( void )
 	gearImg = img_Load( "Images/gear.png", ST_DEFAULT );
 	whiteBoxImg = img_Load( "Images/white.png", ST_DEFAULT );
 	font = txt_LoadFont( "Fonts/Aileron-Regular.otf", 24 );
-	img_LoadSpriteSheet( "Images/button.ss", ST_DEFAULT, &buttonImg );
+	img_LoadSpriteSheet( "Images/button.spritesheet", ST_DEFAULT, &buttonImg );
 	hiliteImg = img_Load( "Images/hilite.png", ST_DEFAULT );
 
 	gsm_EnterState( &gameSM, &startState );

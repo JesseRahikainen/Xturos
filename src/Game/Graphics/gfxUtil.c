@@ -10,6 +10,7 @@
 #define realloc(ptr,size) mem_Resize(ptr,size)
 #define malloc(size) mem_Allocate(size)
 #define STB_IMAGE_IMPLEMENTATION
+#define STBI_FAILURE_USERMSG
 #pragma warning( push )
 #pragma warning( disable : 4244 )
 #include <stb_image.h>
@@ -51,7 +52,7 @@ void gfxUtil_ReleaseLoadedImage( LoadedImage* image )
 int gfxUtil_LoadImage( const char* fileName, LoadedImage* outLoadedImage )
 {
 	if( outLoadedImage == NULL ) {
-		llog( LOG_INFO, "Attempting to load an image without a place to store it! %s", fileName );
+		llog( LOG_INFO, "Attempting to load an image %s without a place to store it!", fileName );
 		return -1;
 	}
 
@@ -95,6 +96,30 @@ int gfxUtil_LoadImage( const char* fileName, LoadedImage* outLoadedImage )
 		llog( LOG_INFO, "Unable to load image %s! STB Error: %s", fileName, stbi_failure_reason( ) );
 		return -1;
 	}
+
+	return 0;
+}
+
+// Loads the base info from fileName into outLoadedImage. The data in outLoadedImage will be NULL.
+//  Returns >= 0 on success, < 0 on failure.
+int gfxUtil_LoadImageInfo( const char* fileName, LoadedImage* outLoadedImage )
+{
+	if( outLoadedImage == NULL ) {
+		llog( LOG_INFO, "Attempting to load image %s info without a place to store it!", fileName );
+		return -1;
+	}
+
+	outLoadedImage->reqComp = 0;
+	outLoadedImage->data = NULL;
+
+#if defined( __ANDROID__ )
+	SDL_assert( false && "Not implemented for this platform yet." );
+#else
+	if( !stbi_info( fileName, &( outLoadedImage->width ), &( outLoadedImage->height ), &( outLoadedImage->comp ) ) ) {
+		llog( LOG_ERROR, "Unable to load image info for %s! STB Error: %s", fileName, stbi_failure_reason( ) );
+		return -1;
+	}
+#endif
 
 	return 0;
 }
@@ -263,4 +288,9 @@ void gfxUtil_TakeScreenShot( const char* outputPath )
 	stbi_write_png( outputPath, width, height, 3, pixels, width * 3 );
 
 	mem_Release( pixels );
+}
+
+void gfxUtil_SaveImage( const char* filePath, uint8_t* data, int width, int height, int numComponents )
+{
+	stbi_write_png( filePath, width, height, numComponents, data, width * numComponents );
 }

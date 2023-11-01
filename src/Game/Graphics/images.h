@@ -45,7 +45,7 @@ void img_Clean( int idx );
 
 // Takes in an already loaded texture and some rectangles. I'ts assume the length of mins, maxes and retIDs equals count.
 //  Returns the package ID used to clean up later, returns -1 if there's a problem.
-int img_SplitTexture( Texture* texture, int count, ShaderType shaderType, Vector2* mins, Vector2* maxes, char** imgIDs, int* retIDs );
+int img_SplitTexture( Texture* texture, int count, ShaderType shaderType, Vector2* mins, Vector2* maxes, char** imgIDs, int packageID, int* retIDs );
 
 // Takes in a file name and some rectangles. It's assumed the length of mins, maxes, and retIDs equals count.
 //  Returns package ID used to clean up later, returns -1 if there's a problem.
@@ -72,6 +72,9 @@ void img_ForceTransparency( int idx, bool transparent );
 
 // Gets the size of the image, putting it into the out Vector2. Returns a negative number if there's an issue.
 int img_GetSize( int idx, Vector2* out );
+
+// Gets the the min and max uv coordinates used by the image.
+int img_GetUVCoordinates( int idx, Vector2* outMin, Vector2* outMax );
 
 // Gets a scale to use for the image to get a desired size.
 int img_GetDesiredScale( int idx, Vector2 desiredSize, Vector2* outScale );
@@ -118,5 +121,14 @@ void img_ClearDrawInstructions( void );
 
 // Draw all the images.
 void img_Render( float normTimeElapsed );
+
+// Get the id of the first valid image. Returns -1 if there are none.
+int img_FirstValidID( void );
+
+// Gets the next valid image after the one passed in. Returns -1 if there are none.
+int img_NextValidID( int id );
+
+// Get the human readable id for the image.
+const char* img_HumanReadableID( int id );
 
 #endif /* inclusion guard */

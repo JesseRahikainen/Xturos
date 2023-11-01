@@ -92,7 +92,7 @@ __declspec( allocate( "tweenb$z" ) ) static const TrackedTweenFunctionRef* endTr
 	ADD_TRACKED_ECPS_CALLBACK(id, fn) \
 	void fn(ECPS* ecpsName, Entity* entityName)
 
-#define ADD_TRACK_TWEEN_FUNC(id, fn) \
+#define ADD_TRACKED_TWEEN_FUNC(id, fn) \
 	USES_STATIC const TrackedTweenFunctionRef trackedTweenFunction##fn = { id, fn }; \
 	ADD_TO_TRACKED_ECPS_CALLBACK_SECTION const TrackedTweenFunctionRef* trackedTweenFunction##fn##ptr = &trackedTweenFunction##fn; \
 	FORCE_INTO_BUILD("trackedTweenFunction"#fn) \

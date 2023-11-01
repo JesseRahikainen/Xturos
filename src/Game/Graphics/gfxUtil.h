@@ -44,6 +44,10 @@ void gfxUtil_ReleaseLoadedImage( LoadedImage* image );
 //  Returns >= 0 on success, < 0 on failure.
 int gfxUtil_LoadImage( const char* fileName, LoadedImage* outLoadedImage );
 
+// Loads the base info from fileName into outLoadedImage. The data in outLoadedImage will be NULL.
+//  Returns >= 0 on success, < 0 on failure.
+int gfxUtil_LoadImageInfo( const char* fileName, LoadedImage* outLoadedImage );
+
 // Creates a LoadedImage from the data, decoding the data as it would from a file.
 //  Returns >= 0 on success, < 0 on failure.
 int gfxUtil_LoadImageFromMemory( const uint8_t* data, size_t dataSize, int requiredComponents, LoadedImage* outLoadedImage );;
@@ -65,5 +69,8 @@ int gfxUtil_SurfaceIsTranslucent( SDL_Surface* surface );
 
 // Takes a screenshot of the current window and puts it at outputPath.
 void gfxUtil_TakeScreenShot( const char* outputPath );
+
+// Writes out an image.
+void gfxUtil_SaveImage( const char* filePath, uint8_t* data, int width, int height, int numComponents );
 
 #endif /* inclusion guard */

@@ -145,6 +145,12 @@ static void testPointerResponseScreen_Enter( void )
 	ecps_CleanSerialized( &serializedECPS );
 	ecps_LoadSerializedECPS( "test.pkg", &serializedECPS );
 
+	// add some more buttons
+	createTestButton( vec2( 200.0f, 300.0f ), vec2( 100.0f, 100.0f ) );
+	createTestButton( vec2( 175.0f, 275.0f ), vec2( 100.0f, 100.0f ) );
+	createTestButton( vec2( 150.0f, 250.0f ), vec2( 100.0f, 100.0f ) );
+	createTestButton( vec2( 125.0f, 225.0f ), vec2( 100.0f, 100.0f ) );
+
 	// deserialize the buttons
 	ecps_CreateEntitiesFromSerializedComponents( &ecps, &serializedECPS );
 	
@@ -153,7 +159,7 @@ static void testPointerResponseScreen_Enter( void )
 
 	// make sure the number of buttons is correct
 	ecps_RunCustomProcess( &ecps, countButtonsStart, countButtons, NULL, 1, gcGroupIDCompID );
-	assert( buttonCount == 4 );//*/
+	assert( buttonCount == 8 );//*/
 }
 
 static void testPointerResponseScreen_Exit( void )

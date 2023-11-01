@@ -47,6 +47,7 @@ void nk_xu_handleEvent( NuklearWrapper* xu, SDL_Event* e );
 void nk_xu_render( NuklearWrapper* xu );
 void nk_xu_shutdown( NuklearWrapper* xu );
 void nk_xu_clear( NuklearWrapper* xu );
-struct nk_image nk_xu_loadImage( const char* filePath );
+struct nk_image nk_xu_loadImage( const char* filePath, int* outWidth, int* outHeight );
+void nk_xu_unloadImage( struct nk_image* image );
 
 #endif

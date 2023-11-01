@@ -41,7 +41,7 @@ typedef struct {
 static Image images[MAX_IMAGES];
 
 /* Rendering types and variables */
-#define MAX_RENDER_INSTRUCTIONS 1024
+#define MAX_RENDER_INSTRUCTIONS 2048
 typedef struct {
 	Vector2 pos;
 	Vector2 scaledSize;
@@ -120,7 +120,7 @@ bool findImageByID( const char* id, int* outIdx )
 			continue;
 		}
 
-		if( SDL_strcmp( id, images[i].id ) == 0 ) {
+		if( images[i].id != NULL && SDL_strcmp( id, images[i].id ) == 0 ) {
 			( *outIdx ) = i;
 			return true;
 		}
@@ -521,7 +521,11 @@ int split( Texture* texture, int packageID, ShaderType shaderType, int count, Ve
 		if( texture->flags & TF_IS_TRANSPARENT ) {
 			images[newIdx].flags |= IMGFLAG_HAS_TRANSPARENCY;
 		}
-		images[newIdx].id = createStringCopy( imgIDs[i] );
+		if( imgIDs != NULL ) {
+			images[newIdx].id = createStringCopy( imgIDs[i] );
+		} else {
+			images[newIdx].id = NULL; // TODO: Create a random UUID to use.
+		}
 
 		if( retIDs != NULL ) {
 			retIDs[i] = newIdx;
@@ -531,9 +535,12 @@ int split( Texture* texture, int packageID, ShaderType shaderType, int count, Ve
 	return 0;
 }
 
-int img_SplitTexture( Texture* texture, int count, ShaderType shaderType, Vector2* mins, Vector2* maxes, char** imgIDs, int* retIDs )
+int img_SplitTexture( Texture* texture, int count, ShaderType shaderType, Vector2* mins, Vector2* maxes, char** imgIDs, int packageID, int* retIDs )
 {
-	int currentPackageID = findUnusedPackage( );
+	int currentPackageID = packageID;
+	if( currentPackageID < 0 ) {
+		currentPackageID = findUnusedPackage( );
+	}
 
 	if( split( texture, currentPackageID, shaderType, count, mins, maxes, imgIDs, retIDs ) < 0 ) {
 		return -1;
@@ -681,6 +688,21 @@ int img_GetSize( int idx, Vector2* out )
 	return 0;
 }
 
+// Gets the the min and max uv coordinates used by the image.
+int img_GetUVCoordinates( int idx, Vector2* outMin, Vector2* outMax )
+{
+	assert( outMin != NULL );
+	assert( outMax != NULL );
+
+	if( !img_IsValidImage( idx ) ) {
+		return -1;
+	}
+
+	( *outMin ) = images[idx].uvMin;
+	( *outMax ) = images[idx].uvMax;
+	return 0;
+}
+
 // Gets a scale to use for the image to get a desired size.
 int img_GetDesiredScale( int idx, Vector2 desiredSize, Vector2* outScale )
 {
@@ -824,7 +846,7 @@ int img_CreateDraw( int imgID, uint32_t camFlags, Vector2 startPos, Vector2 endP
 		return -1;
 	}
 
-	if( lastDrawInstruction >= MAX_RENDER_INSTRUCTIONS ) {
+	if( ( lastDrawInstruction + 1 ) >= MAX_RENDER_INSTRUCTIONS ) {
 		llog( LOG_VERBOSE, "Render instruction queue full." );
 		return -1;
 	}
@@ -1214,4 +1236,35 @@ void img_Render( float normTimeElapsed )
 			renderBuffer[idx].stencilID, renderBuffer[idx].camFlags, renderBuffer[idx].depth,
 			type );
 	}
+}
+
+// Get the id of the first valid image. Returns -1 if there are none.
+int img_FirstValidID( void )
+{
+	for( int i = 0; i < MAX_IMAGES; ++i ) {
+		if( img_IsValidImage( i ) ) {
+			return i;
+		}
+	}
+
+	return -1;
+}
+
+// Gets the next valid image after the one passed in. Returns -1 if there are none.
+int img_NextValidID( int id )
+{
+	for( int i = id + 1; i < MAX_IMAGES; ++i ) {
+		if( img_IsValidImage( i ) ) {
+			return i;
+		}
+	}
+
+	return -1;
+}
+
+// Get the human readable id for the image.
+const char* img_HumanReadableID( int id )
+{
+	if( !img_IsValidImage( id ) ) return NULL;
+	return images[id].id;
 }

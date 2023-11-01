@@ -75,31 +75,31 @@ float easeInSin( float t )
 {
 	return ( -SDL_cosf( twoPi * t ) + 1.0f );
 }
-ADD_TRACK_TWEEN_FUNC( "easeInSin", easeInSin );
+ADD_TRACKED_TWEEN_FUNC( "easeInSin", easeInSin );
 
 float easeOutSin( float t )
 {
 	return SDL_sinf( twoPi * t );
 }
-ADD_TRACK_TWEEN_FUNC( "easeOutSin", easeOutSin );
+ADD_TRACKED_TWEEN_FUNC( "easeOutSin", easeOutSin );
 
 float easeInOutSin( float t )
 {
 	return ( ( -SDL_cosf( pi * t ) / 2.0f ) + 0.5f );
 }
-ADD_TRACK_TWEEN_FUNC( "easeInOutSin", easeInOutSin );
+ADD_TRACKED_TWEEN_FUNC( "easeInOutSin", easeInOutSin );
 
 float easeInQuad( float t )
 {
 	return ( t * t );
 }
-ADD_TRACK_TWEEN_FUNC( "easeInQuad", easeInQuad );
+ADD_TRACKED_TWEEN_FUNC( "easeInQuad", easeInQuad );
 
 float easeOutQuad( float t )
 {
 	return ( -t * ( t - 2.0f ) );
 }
-ADD_TRACK_TWEEN_FUNC( "easeOutQuad", easeOutQuad );
+ADD_TRACKED_TWEEN_FUNC( "easeOutQuad", easeOutQuad );
 
 float easeInOutQuad( float t )
 {
@@ -110,20 +110,20 @@ float easeInOutQuad( float t )
 		return ( 1.0f - ( t * t * 2.0f ) );
 	}
 }
-ADD_TRACK_TWEEN_FUNC( "easeInOutQuad", easeInOutQuad );
+ADD_TRACKED_TWEEN_FUNC( "easeInOutQuad", easeInOutQuad );
 
 float easeInCubic( float t )
 {
 	return ( t * t * t );
 }
-ADD_TRACK_TWEEN_FUNC( "easeInCubic", easeInCubic );
+ADD_TRACKED_TWEEN_FUNC( "easeInCubic", easeInCubic );
 
 float easeOutCubic( float t )
 {
 	t -= 1.0f;
 	return ( 1.0f + ( t * t * t ) );
 }
-ADD_TRACK_TWEEN_FUNC( "easeOutCubic", easeOutCubic );
+ADD_TRACKED_TWEEN_FUNC( "easeOutCubic", easeOutCubic );
 
 float easeInOutCubic( float t )
 {
@@ -134,20 +134,20 @@ float easeInOutCubic( float t )
 		return ( 1.0f + ( t * t * t * 4.0f ) );
 	}
 }
-ADD_TRACK_TWEEN_FUNC( "easeInOutCubic", easeInOutCubic );
+ADD_TRACKED_TWEEN_FUNC( "easeInOutCubic", easeInOutCubic );
 
 float easeInQuart( float t )
 {
 	return ( t * t * t * t );
 }
-ADD_TRACK_TWEEN_FUNC( "easeInQuart", easeInQuart );
+ADD_TRACKED_TWEEN_FUNC( "easeInQuart", easeInQuart );
 
 float easeOutQuart( float t )
 {
 	t -= 1.0f;
 	return ( 1.0f - ( t * t * t * t ) );
 }
-ADD_TRACK_TWEEN_FUNC( "easeOutQuart", easeOutQuart );
+ADD_TRACKED_TWEEN_FUNC( "easeOutQuart", easeOutQuart );
 
 float easeInOutQuart( float t )
 {
@@ -158,20 +158,20 @@ float easeInOutQuart( float t )
 		return ( ( ( 1.0f - ( t * t * t * t ) ) / 2.0f ) + 0.5f );
 	}
 }
-ADD_TRACK_TWEEN_FUNC( "easeInOutQuart", easeInOutQuart );
+ADD_TRACKED_TWEEN_FUNC( "easeInOutQuart", easeInOutQuart );
 
 float easeInQuint( float t )
 {
 	return t * t * t * t * t;
 }
-ADD_TRACK_TWEEN_FUNC( "easeInQuint", easeInQuint );
+ADD_TRACKED_TWEEN_FUNC( "easeInQuint", easeInQuint );
 
 float easeOutQuint( float t )
 {
 	t -= 1.0f;
 	return ( ( t * t * t * t * t ) + 1.0f );
 }
-ADD_TRACK_TWEEN_FUNC( "easeOutQuint", easeOutQuint );
+ADD_TRACKED_TWEEN_FUNC( "easeOutQuint", easeOutQuint );
 
 float easeInOutQuint( float t )
 {
@@ -183,19 +183,19 @@ float easeInOutQuint( float t )
 		return ( ( ( t * t * t * t * t ) + 2.0f ) / 2.0f );
 	}
 }
-ADD_TRACK_TWEEN_FUNC( "easeInOutQuint", easeInOutQuint );
+ADD_TRACKED_TWEEN_FUNC( "easeInOutQuint", easeInOutQuint );
 
 float easeInExpo( float t )
 {
 	return SDL_powf( 2.0f, 10.0f * ( t - 1.0f ) );
 }
-ADD_TRACK_TWEEN_FUNC( "easeInExpo", easeInExpo );
+ADD_TRACKED_TWEEN_FUNC( "easeInExpo", easeInExpo );
 
 float easeOutExpo( float t )
 {
 	return ( -SDL_powf( 2.0f, ( -10.0f * t ) ) + 1.0f );
 }
-ADD_TRACK_TWEEN_FUNC( "easeOutExpo", easeOutExpo );
+ADD_TRACKED_TWEEN_FUNC( "easeOutExpo", easeOutExpo );
 
 float easeInOutExpo( float t )
 {
@@ -205,20 +205,20 @@ float easeInOutExpo( float t )
 		return ( -SDL_powf( 2.0f, -10.0f * ( ( t * 2.0f ) - 1.0f ) ) + 2.0f ) / 2.0f;
 	}
 }
-ADD_TRACK_TWEEN_FUNC( "easeInOutExpo", easeInOutExpo );
+ADD_TRACKED_TWEEN_FUNC( "easeInOutExpo", easeInOutExpo );
 
 float easeInCirc( float t )
 {
 	return -( SDL_sqrtf( 1.0f - ( t * t ) ) - 1.0f );
 }
-ADD_TRACK_TWEEN_FUNC( "easeInCirc", easeInCirc );
+ADD_TRACKED_TWEEN_FUNC( "easeInCirc", easeInCirc );
 
 float easeOutCirc( float t )
 {
 	t -= 1.0f;
 	return SDL_sqrtf( 1.0f - ( t * t ) );
 }
-ADD_TRACK_TWEEN_FUNC( "easeOutCirc", easeOutCirc );
+ADD_TRACKED_TWEEN_FUNC( "easeOutCirc", easeOutCirc );
 
 float easeInOutCirc( float t )
 {
@@ -229,20 +229,20 @@ float easeInOutCirc( float t )
 		return ( ( SDL_sqrtf( 1.0f - ( t * t ) ) + 1.0f ) / 2.0f );
 	}
 }
-ADD_TRACK_TWEEN_FUNC( "easeInOutCirc", easeInOutCirc );
+ADD_TRACKED_TWEEN_FUNC( "easeInOutCirc", easeInOutCirc );
 
 float easeInBack( float t )
 {
 	return ( t * t * ( ( 2.70158f * t ) - 1.70158f ) );
 }
-ADD_TRACK_TWEEN_FUNC( "easeInBack", easeInBack );
+ADD_TRACKED_TWEEN_FUNC( "easeInBack", easeInBack );
 
 float easeOutBack( float t )
 {
 	t -= 1.0f;
 	return ( 1 - ( t * t * ( ( -2.70158f * t ) - 1.70158f ) ) );
 }
-ADD_TRACK_TWEEN_FUNC( "easeOutBack", easeOutBack );
+ADD_TRACKED_TWEEN_FUNC( "easeOutBack", easeOutBack );
 
 float easeInOutBack( float t )
 {
@@ -253,13 +253,13 @@ float easeInOutBack( float t )
 	t -= 2.0f;
 	return ( 1.0f - ( t * t * ( ( -2.70158f * t ) - 1.70158f ) / 2.0f ) + 0.5f );
 }
-ADD_TRACK_TWEEN_FUNC( "easeInOutBack", easeInOutBack );
+ADD_TRACKED_TWEEN_FUNC( "easeInOutBack", easeInOutBack );
 
 float easeInBounce( float t )
 {
 	return easeOutBounce( 1.0f - t );
 }
-ADD_TRACK_TWEEN_FUNC( "easeInBounce", easeInBounce );
+ADD_TRACKED_TWEEN_FUNC( "easeInBounce", easeInBounce );
 
 float easeOutBounce( float t )
 {
@@ -274,7 +274,7 @@ float easeOutBounce( float t )
 		return ( 54.0f / 5.0f * t * t ) - ( 513.0f / 25.0f * t ) + ( 268.0f / 25.0f );
 	}
 }
-ADD_TRACK_TWEEN_FUNC( "easeOutBounce", easeOutBounce );
+ADD_TRACKED_TWEEN_FUNC( "easeOutBounce", easeOutBounce );
 
 float easeInOutBounce( float t )
 {
@@ -284,46 +284,46 @@ float easeInOutBounce( float t )
 		return ( easeOutBounce( ( t * 2.0f ) - 1.0f ) * 0.5f ) + 0.5f;
 	}
 }
-ADD_TRACK_TWEEN_FUNC( "easeInOutBounce", easeInOutBounce );
+ADD_TRACKED_TWEEN_FUNC( "easeInOutBounce", easeInOutBounce );
 
 float easeConstantZero( float t )
 {
 	return 0.0f;
 }
-ADD_TRACK_TWEEN_FUNC( "easeConstantZero", easeConstantZero );
+ADD_TRACKED_TWEEN_FUNC( "easeConstantZero", easeConstantZero );
 
 float easeConstantOne( float t )
 {
 	return 1.0f;
 }
-ADD_TRACK_TWEEN_FUNC( "easeConstantOne", easeConstantOne );
+ADD_TRACKED_TWEEN_FUNC( "easeConstantOne", easeConstantOne );
 
 float easeLinear( float t )
 {
 	return t;
 }
-ADD_TRACK_TWEEN_FUNC( "easeLinear", easeLinear );
+ADD_TRACKED_TWEEN_FUNC( "easeLinear", easeLinear );
 
 float easeSmoothStep( float t )
 {
 	return ( -2.0f * ( t * t * t ) ) + ( 3.0f * ( t * t ) );
 }
-ADD_TRACK_TWEEN_FUNC( "easeSmoothStep", easeSmoothStep );
+ADD_TRACKED_TWEEN_FUNC( "easeSmoothStep", easeSmoothStep );
 
 float easePerlinQuintic( float t )
 {
 	return ( 6.0f * ( t * t * t * t * t ) ) + ( -15.0f * ( t * t * t * t ) ) + ( 10.0f * ( t * t * t ) );
 }
-ADD_TRACK_TWEEN_FUNC( "easePerlinQuintic", easePerlinQuintic );
+ADD_TRACKED_TWEEN_FUNC( "easePerlinQuintic", easePerlinQuintic );
 
 float easeSlowMiddle( float t )
 {
 	return ( 3.2f * ( t * t * t ) ) + ( 4.8f * ( t * t ) ) + ( 2.6f * t );
 }
-ADD_TRACK_TWEEN_FUNC( "easeSlowMiddle", easeSlowMiddle );
+ADD_TRACKED_TWEEN_FUNC( "easeSlowMiddle", easeSlowMiddle );
 
 float easeFullSinWave( float t )
 {
 	return ( SDL_sinf( t * M_TWO_PI_F ) + 1.0f ) / 2.0f;
 }
-ADD_TRACK_TWEEN_FUNC( "easeFullSinWave", easeFullSinWave );
+ADD_TRACKED_TWEEN_FUNC( "easeFullSinWave", easeFullSinWave );

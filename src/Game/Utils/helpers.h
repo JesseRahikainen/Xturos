@@ -4,7 +4,9 @@
 #include <stdint.h>
 #include <stddef.h>
 
-#include <SDL_assert.h>
+#include <SDL.h>
+
+#include "Others/cmp.h"
 
 // general helper functions
 #define ARRAY_SIZE( a ) ( sizeof( a ) / sizeof( a[0] ) )
@@ -37,9 +39,24 @@ void printCash( char* string, size_t maxLen, int32_t cash );
 // creates a copy of the string on the heap, memory will have to be released manually
 char* createStringCopy( const char* str );
 
+// creates a copy of the string into a stretchy buffer, will have be cleaned up with sb_Release
+char* createStretchyStringCopy( const char* str );
+
 // does a null test on str and returns 0 if it's NULL
 size_t strlenNullTest( const char* str );
 
 #define ASSERT_AND_IF( x ) SDL_assert( x ); if( !( x ) )
+
+char* extractFileName( const char* filePath );
+
+#if defined( WIN32 )
+#include <wchar.h>
+// wideStr needs to be null terminated, returns a stretchy buffer
+char* wideCharToUTF8SB( const wchar_t* wideStr );
+#endif
+
+SDL_RWops* openRWopsCMPFile( const char* filePath, const char* mode, cmp_ctx_t * cmpCtx );
+
+int nextHighestPowerOfTwo( int v );
 
 #endif /* inclusion guard */

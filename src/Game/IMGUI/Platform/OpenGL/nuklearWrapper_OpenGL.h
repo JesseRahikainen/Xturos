@@ -11,7 +11,7 @@ typedef struct {
 
 	ShaderProgram prog;
 
-	GLuint fontTx;
+	int fontImg;
 } NuklearWrapper_Platform;
 
 #endif // inclusion guard

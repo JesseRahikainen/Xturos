@@ -94,7 +94,7 @@ void processAnimationEvent_SetDeactivedCollider( AnimEvent_DeactivateCollider* e
 void processAnimationEvent( AnimEvent* evt, AnimEventHandler* handler );
 
 SpriteAnimation spriteAnimation( );
-void sprAnim_Load( SpriteAnimation* anim );
+void sprAnim_LoadAssociatedData( SpriteAnimation* anim );
 void sprAnim_AddEvent( SpriteAnimation* anim, AnimEvent evt );
 void sprAnim_Clean( SpriteAnimation* anim );
 void sprAnim_ProcessFrames( SpriteAnimation* anim, AnimEventHandler* handler, uint32_t frame );
@@ -104,6 +104,10 @@ uint32_t sprAnim_FrameAtTime( SpriteAnimation* anim, float time );
 
 // remove all frames that are after the passed in frame
 void sprAnim_RemoveEventsPostFrame( SpriteAnimation* anim, size_t* watchedEvent, uint32_t frame );
+
+// save to and load from external files
+bool sprAnim_Save( const char* fileName, SpriteAnimation* anim );
+bool sprAnim_Load( const char* fileName, SpriteAnimation* anim );
 
 //************************************
 // Playing animation.
