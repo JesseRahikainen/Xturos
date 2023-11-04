@@ -106,55 +106,48 @@ static Vector2 drawnOffset = { 0.0f, 0.0f };
 
 // TODO: get onion skinning working. will want to split it into previous and/or next image to display, along with a transparency amount to use
 
-typedef struct {
-	int loadedImage;
-	int* sbSpriteSheetImages;
-} LoadedImageData;
+static int* sbLoadedImages = NULL;
 
-static LoadedImageData* sbLoadedImageData = NULL;
-
-static void addLoadedImageData( int image )
+static void spriteSheetChosen( const char* filePath )
 {
-	LoadedImageData newData;
-	newData.loadedImage = image;
-	newData.sbSpriteSheetImages = NULL;
-	sb_Push( sbLoadedImageData, newData );
-}
+	// attempt to load the new sprite sheet 
+	int* sbNewlyLoadedImages = editor_loadSpriteSheetFile( filePath );
+	
+	if( sbNewlyLoadedImages == NULL ) return;
 
-static void addLoadedSpriteSheetData( int* sbSpriteSheet )
-{
-	LoadedImageData newData;
-	newData.loadedImage = -1;
-	newData.sbSpriteSheetImages = sbSpriteSheet;
-	sb_Push( sbLoadedImageData, newData );
-}
-
-static void loadSpriteSheetData( const char* filePath )
-{
-	int* sbSprites = editor_loadSpriteSheetFile( filePath );
-	if( sbSprites != NULL ) {
-		addLoadedSpriteSheetData( sbSprites );
-	}
-}
-
-static void loadImageData( const char* filePath )
-{
-	int loadedImage = editor_loadImageFile( filePath );
-	if( loadedImage > 0 ) {
-		addLoadedImageData( loadedImage );
-	}
-}
-
-static void unloadLoadedImages( void )
-{
-	for(size_t i = 0; i < sb_Count( sbLoadedImageData ); ++i) {
-		if(img_IsValidImage( sbLoadedImageData[i].loadedImage )) {
-			img_Clean( sbLoadedImageData[i].loadedImage );
+	// unload the old images and release the array
+	img_UnloadSpriteSheet( sbLoadedImages );
+	
+	// erase all image references in existing events
+	for(size_t i = 0; i < sb_Count( editorSpriteAnimation.sbEvents ); ++i) {
+		if(editorSpriteAnimation.sbEvents[i].base.type == AET_SWITCH_IMAGE) {
+			editorSpriteAnimation.sbEvents[i].switchImg.imgID = INVALID_IMAGE_ID;
 		}
-		if(sbLoadedImageData[i].sbSpriteSheetImages != NULL) {
-			img_UnloadSpriteSheet( sbLoadedImageData[i].sbSpriteSheetImages );
-			sbLoadedImageData[i].sbSpriteSheetImages = NULL;
-		}
+	}
+	
+	// set the new data
+	sbLoadedImages = sbNewlyLoadedImages;
+	mem_Release( editorSpriteAnimation.spriteSheetFile );
+	size_t pathLen = SDL_strlen( filePath ) + 1;
+	editorSpriteAnimation.spriteSheetFile = mem_Allocate( pathLen );
+	SDL_strlcpy( editorSpriteAnimation.spriteSheetFile, filePath, pathLen );
+}
+
+static void chooseSpriteSheet( void )
+{
+	editor_chooseLoadFileLocation( "Sprite Sheet", "spritesheet", false, spriteSheetChosen );
+}
+
+static void loadAndAssociateSpriteSheet( void )
+{
+	if( editorSpriteAnimation.spriteSheetFile != NULL ) {
+		hub_CreateDialog( "Overwrite Existing Sprite Sheet?",
+			"Loading a different sprite sheet will result in loss of currently assigned sprites. Do you wish to continue?",
+			DT_WARNING, 2,
+			"Yes", chooseSpriteSheet,
+			"No", NULL );
+	} else {
+		chooseSpriteSheet( );
 	}
 }
 
@@ -256,7 +249,9 @@ void spriteAnimationEditor_Show( void )
 
 void spriteAnimationEditor_Hide( void )
 {
-	unloadLoadedImages( );
+	img_UnloadSpriteSheet( sbLoadedImages );
+	sbLoadedImages = NULL;
+	sprAnim_Clean( &editorSpriteAnimation );
 }
 
 static uint32_t* sbHeights = NULL;
@@ -351,14 +346,8 @@ static void displayEventData_SwitchImage( struct nk_context* ctx, AnimEvent* evt
 		sb_Push( sbLoadedImageDisplays, newLoadedImageDisplay( img_HumanReadableID( ( id ) ), ( id ) ) ); \
 	}
 
-	for(size_t i = 0; i < sb_Count( sbLoadedImageData ); ++i) {
-		TEST_AND_PUSH_LOADED_IMAGE( sbLoadedImageData[i].loadedImage );
-
-		if(sbLoadedImageData[i].sbSpriteSheetImages != NULL) {
-			for(size_t a = 0; a < sb_Count( sbLoadedImageData[i].sbSpriteSheetImages ); ++a) {
-				TEST_AND_PUSH_LOADED_IMAGE( sbLoadedImageData[i].sbSpriteSheetImages[a] );
-			}
-		}
+	for( size_t i = 0; i < sb_Count( sbLoadedImages ); ++i ) {
+		TEST_AND_PUSH_LOADED_IMAGE( sbLoadedImages[i] );
 	}
 
 #undef TEST_AND_PUSH_LOADED_IMAGE
@@ -556,20 +545,6 @@ void spriteAnimationEditor_IMGUIProcess( void )
 
 				nk_menu_end( ctx );
 			}
-
-			if( nk_menu_begin_label( ctx, "Images", NK_TEXT_ALIGN_LEFT | NK_TEXT_ALIGN_MIDDLE, nk_vec2( 120, 80 ) ) ) {
-				nk_layout_row_dynamic( ctx, 20, 1 );
-				if( nk_menu_item_label( ctx, "Load image...", NK_TEXT_ALIGN_LEFT | NK_TEXT_ALIGN_MIDDLE ) ) {
-					editor_chooseLoadFileLocation( "PNG Image", "png", true, loadImageData );
-				}
-
-				if( nk_menu_item_label( ctx, "Load sprite sheet...", NK_TEXT_LEFT ) ) {
-					editor_chooseLoadFileLocation( "Sprite Sheet", "ss", true, loadSpriteSheetData );
-				}
-
-				nk_menu_end( ctx );
-			}
-
 		} nk_menubar_end( ctx );
 
 		float layoutHeight = nk_window_get_height( ctx ) - 76.0f;
@@ -598,6 +573,13 @@ void spriteAnimationEditor_IMGUIProcess( void )
 					nk_bool loops = editorSpriteAnimation.loops;
 					nk_checkbox_label( ctx, "Loops", &loops );
 					editorSpriteAnimation.loops = loops ? true : false;
+
+					// associated sprite sheet
+					nk_label( ctx, "Sprite Sheet:", NK_TEXT_ALIGN_LEFT | NK_TEXT_ALIGN_MIDDLE );
+					nk_label( ctx, editorSpriteAnimation.spriteSheetFile == NULL ? "NONE SELECTED" : editorSpriteAnimation.spriteSheetFile, NK_TEXT_ALIGN_LEFT | NK_TEXT_ALIGN_MIDDLE );
+					if( nk_button_label( ctx, "Load different sprite sheet" ) ) {
+						loadAndAssociateSpriteSheet( );
+					}
 
 					nk_tree_pop( ctx );
 				}

@@ -73,7 +73,7 @@ typedef struct {
 } AnimEventHandler;
 
 typedef struct {
-	const char* spriteSheetFile; // TODO: Remove once we get the tool set up.
+	char* spriteSheetFile;
 	float fps;
 	uint32_t durationFrames;
 	bool loops;

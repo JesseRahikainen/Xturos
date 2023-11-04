@@ -163,6 +163,8 @@ void sprAnim_AddEvent( SpriteAnimation* anim, AnimEvent evt )
 
 void sprAnim_Clean( SpriteAnimation* anim )
 {
+	mem_Release( anim->spriteSheetFile );
+	anim->spriteSheetFile = NULL;
 	sb_Release( anim->sbEvents );
 	img_UnloadSpriteSheet( anim->sbSpriteSheet );
 }
