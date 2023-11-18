@@ -28,7 +28,7 @@ typedef struct {
 
 typedef struct {
 	AnimEvent_Base base;
-	const char* frameName; // TODO: Remove this once we get the animation tool set up, or maybe not, may be useful for debugging.
+	char* frameName; //#error need to do some shit with this to ensure we're not leaking memory, probably need the heirarchical memory to do this safely
 	int imgID;
 	Vector2 offset;
 } AnimEvent_SwitchImage;
@@ -78,7 +78,7 @@ typedef struct {
 	uint32_t durationFrames;
 	bool loops;
 	AnimEvent* sbEvents; // TODO: Sort by frame.
-	int* sbSpriteSheet;
+	int spriteSheetPackageID;
 } SpriteAnimation;
 
 // Helpers for creating events to add to the animation.
@@ -94,7 +94,7 @@ void processAnimationEvent_SetDeactivedCollider( AnimEvent_DeactivateCollider* e
 void processAnimationEvent( AnimEvent* evt, AnimEventHandler* handler );
 
 SpriteAnimation spriteAnimation( );
-void sprAnim_LoadAssociatedData( SpriteAnimation* anim );
+bool sprAnim_LoadAssociatedData( SpriteAnimation* anim );
 void sprAnim_AddEvent( SpriteAnimation* anim, AnimEvent evt );
 void sprAnim_Clean( SpriteAnimation* anim );
 void sprAnim_ProcessFrames( SpriteAnimation* anim, AnimEventHandler* handler, uint32_t frame );
@@ -105,8 +105,11 @@ uint32_t sprAnim_FrameAtTime( SpriteAnimation* anim, float time );
 // remove all frames that are after the passed in frame
 void sprAnim_RemoveEventsPostFrame( SpriteAnimation* anim, size_t* watchedEvent, uint32_t frame );
 
-// save to and load from external files
+// save to external file, assumes the image ids have been properly set for the animation
 bool sprAnim_Save( const char* fileName, SpriteAnimation* anim );
+
+// load from an external file, these won't load the sprite sheet or set the image ids to use
+//  call sprAnim_LoadAssociatedData after this to load the sprite sheets and set the image ids
 bool sprAnim_Load( const char* fileName, SpriteAnimation* anim );
 
 //************************************

@@ -121,16 +121,16 @@ int editor_loadImageFile( const char* filePath )
 }
 
 // returns a stretchybuffer of image ids, you'll need to manage the memory here
-int* editor_loadSpriteSheetFile( const char* filePath )
+int editor_loadSpriteSheetFile( const char* filePath, int** outImgSB )
 {
 	SDL_assert( filePath != NULL );
 	llog( LOG_DEBUG, "Loading sprite sheet file %s...", filePath );
 
-	int* sbImgs = NULL;
-	if(img_LoadSpriteSheet( filePath, ST_DEFAULT, &sbImgs ) < 0) {
+	int packageID = -1;
+	if( ( packageID = img_LoadSpriteSheet( filePath, ST_DEFAULT, outImgSB ) ) < 0) {
 		hub_CreateDialog( "Error", "Unable to load sprite sheet. Check log file for details.", DT_ERROR, 1, "OK", NULL );
 	}
-	return sbImgs;
+	return packageID;
 }
 
 #ifdef WIN32

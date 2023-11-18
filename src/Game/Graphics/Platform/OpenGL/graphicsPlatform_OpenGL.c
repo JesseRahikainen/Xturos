@@ -398,4 +398,25 @@ PlatformTexture gfxPlatform_GetDefaultPlatformTexture( void )
 	pt.id = 0;
 	return pt;
 }
+
+uint8_t* gfxPlatform_GetPlatformSubTextureBytesRGBA( int xOffset, int yOffset, int width, int height, PlatformTexture* texture )
+{
+	SDL_assert( texture != NULL );
+
+	int numComponents = 4;
+	uint8_t* pixels = mem_Allocate( width * height * numComponents * sizeof( uint8_t ) );
+	if( pixels == NULL ) {
+		return NULL;
+	}
+
+	GL( glBindTexture( GL_TEXTURE_2D, texture->id ) );
+	int error;
+	GLC( error, glTexSubImage2D( GL_TEXTURE_2D, 0, xOffset, yOffset, width, height, GL_RGBA, GL_UNSIGNED_BYTE, pixels ) );
+	if( error < 0 ) {
+		mem_Release( pixels );
+		pixels = NULL;
+	}
+
+	return pixels;
+}
 #endif

@@ -57,6 +57,33 @@ char* wideCharToUTF8SB( const wchar_t* wideStr );
 
 SDL_RWops* openRWopsCMPFile( const char* filePath, const char* mode, cmp_ctx_t * cmpCtx );
 
+#define CMP_WRITE( val, write, type, desc ) \
+	if( !write( &cmp, (val) ) ) { \
+		llog( LOG_ERROR, "Unable to write %s for %s: %s", (desc), (type), cmp_strerror( &cmp ) ); \
+		goto clean_up; }
+
+#define CMP_WRITE_STR( val, type, desc ) \
+	if( !cmp_write_str( &cmp, (val), (uint32_t)SDL_strlen((val)) ) ) { \
+		llog( LOG_ERROR, "Unable to write %s for %s: %s", (desc), (type), cmp_strerror( &cmp ) ); \
+		goto clean_up; }
+
+#define CMP_READ( val, read, type, desc ) \
+	if( !read( &cmp, &(val) ) ) { \
+		llog( LOG_ERROR, "Unable to read %s for %s: %s", (desc), (type), cmp_strerror( &cmp ) ); \
+		goto clean_up; }
+
+#define CMP_READ_STR( val, bufferSize, type, desc ) \
+	if( !cmp_read_str( &cmp, (val), &(bufferSize) ) ) { \
+		llog( LOG_ERROR, "Unable to read %s for %s: %s", (desc), (type), cmp_strerror( &cmp ) ); \
+		goto clean_up; }
+
 int nextHighestPowerOfTwo( int v );
+
+typedef struct {
+	uint8_t parts[16];
+} xtUUID;
+xtUUID createRandomUUID( );
+char* printUUID( const xtUUID* uuid );
+
 
 #endif /* inclusion guard */

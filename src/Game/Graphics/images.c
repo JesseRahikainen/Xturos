@@ -14,6 +14,7 @@
 #include "System/jobRingQueue.h"
 #include "System/memory.h"
 
+#include "Utils/stretchyBuffer.h"
 #include "Utils/helpers.h"
 
 /* Image loading types and variables */
@@ -80,8 +81,6 @@ static const DrawInstruction DEFAULT_DRAW_INSTRUCTION = {
 };
 
 static int maxTextureSize;
-
-//static HashMap imgIDMap;
 
 /*
 Initializes images.
@@ -496,7 +495,7 @@ int findUnusedPackage( void )
 /*
 Splits the texture. Returns a negative number if there's a problem.
 */
-int split( Texture* texture, int packageID, ShaderType shaderType, int count, Vector2* mins, Vector2* maxes, char** imgIDs, int* retIDs )
+static int split( Texture* texture, int packageID, ShaderType shaderType, int count, Vector2* mins, Vector2* maxes, char** imgIDs, int* retIDs )
 {
 	Vector2 inverseSize;
 	inverseSize.x = 1.0f / (float)texture->width;
@@ -610,6 +609,30 @@ int img_SplitAlphaBitmap( uint8_t* data, int width, int height, int count, Shade
 	}
 
 	return currPackageID;
+}
+
+// Gets all the images associated with the packageID and returns a stretchy buffer containing them.
+int* img_GetPackageImages( int packageID )
+{
+	int* sbImgs = NULL;
+	for( int i = 0; i < MAX_IMAGES; ++i ) {
+		if( ( images[i].flags & IMGFLAG_IN_USE ) && ( images[i].packageID == packageID ) ) {
+			sb_Push( sbImgs, i );
+		}
+	}
+	return sbImgs;
+}
+
+// Gets all the number of images associated with the packageID.
+size_t img_GetPackageImageCount( int packageID )
+{
+	size_t count = 0;
+	for( int i = 0; i < MAX_IMAGES; ++i ) {
+		if( ( images[i].flags & IMGFLAG_IN_USE ) && ( images[i].packageID == packageID ) ) {
+			++count;
+		}
+	}
+	return count;
 }
 
 /*

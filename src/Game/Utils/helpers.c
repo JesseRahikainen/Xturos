@@ -14,6 +14,7 @@
 #include "Input/input.h"
 #include "System/platformLog.h"
 #include "System/memory.h"
+#include "System/random.h"
 #include "Utils/stretchyBuffer.h"
 
 void logMousePos( void )
@@ -72,6 +73,8 @@ void printCash( char* string, size_t maxLen, int cash )
 
 char* createStringCopy( const char* str )
 {
+	if( str == NULL ) return NULL;
+
 	size_t len = SDL_strlen( str ) + 1;
 	char* newStr = mem_Allocate( len );
 	SDL_assert( newStr != NULL );
@@ -83,6 +86,8 @@ char* createStringCopy( const char* str )
 
 char* createStretchyStringCopy( const char* str )
 {
+	if( str == NULL ) return NULL;
+
 	size_t len = SDL_strlen( str ) + 1;
 	char* newStr = NULL;
 	sb_Add( newStr, len );
@@ -212,4 +217,31 @@ int nextHighestPowerOfTwo( int v )
 	v++;
 
 	return v;
+}
+
+xtUUID createRandomUUID( )
+{
+	xtUUID uuid;
+
+	for( int i = 0; i < 16; ++i ) {
+		uuid.parts[i] = rand_GetU8( NULL );
+
+		// UUID version 4 identifier
+		if( i == 6 ) uuid.parts[i] = ( uuid.parts[i] & 0x0F ) | 0x40;
+
+		// variant 1
+		if( i == 8 ) uuid.parts[i] = ( uuid.parts[i] & 0x3F ) | 0x80;
+	}
+
+	return uuid;
+}
+
+char* printUUID( const xtUUID* uuid )
+{
+	char* str = mem_Allocate( sizeof( char ) * 37 );
+	SDL_snprintf( str, 37, "%02X%02X%02X%02X-%02X%02X-%02X%02X-%02X%02X-%02X%02X%02X%02X%02X%02X",
+		uuid->parts[0], uuid->parts[1], uuid->parts[2], uuid->parts[3], uuid->parts[4], uuid->parts[5],
+		uuid->parts[6], uuid->parts[7], uuid->parts[8], uuid->parts[9], uuid->parts[10], uuid->parts[11],
+		uuid->parts[12], uuid->parts[13], uuid->parts[14], uuid->parts[15] );
+	return str;
 }

@@ -59,6 +59,12 @@ int img_SplitRGBABitmap( uint8_t* data, int width, int height, int count, Shader
 //  Returns package ID used to clean up later, returns -1 if there's a problem.
 int img_SplitAlphaBitmap( uint8_t* data, int width, int height, int count, ShaderType shaderType, Vector2* mins, Vector2* maxes, int* retIDs );
 
+// Gets all the images associated with the packageID and returns a stretchy buffer containing them.
+int* img_GetPackageImages( int packageID );
+
+// Gets all the number of images associated with the packageID.
+size_t img_GetPackageImageCount( int packageID );
+
 // Cleans up all the images in an image package.
 void img_CleanPackage( int packageID );
 

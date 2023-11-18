@@ -4,37 +4,6 @@
 
 // BIG TODO: make this using an event based approach so we can support undo and redo.
 
-/*
-* With the saving and loading, how tightly do we want to tie the images to the animation.
-* We can embed the images into the animation, make it one large animation file. Or we could
-* keep it separate.
-* We may want to keep it separate, but also allow you to use sprite sheets for it. So not only
-* loading image files, but also sprite sheets.
-* But we may also want to create the sprite sheets from the animation. If we do that we'd also
-* want to be able to group together animations into a single clumped thing to be able to reduce
-* the number of draw calls. Or maybe that's too much for right now, only worry about that once
-* it becomes an issue.
-* 
-* The primary issues are the how do we store the images related to the animations and what format
-* do we store stuff in? Probably want to use a more general storage format, thinking either json
-* or yaml (probably yaml). Or we could just use a custom format. Maybe MessagePack?
-* The question for that is do we want this to be human readable or not?
-* Would prefer that, but also want a very small library, a single header file would be best.
-* This also isn't a hard requirement. We're not doing diffs on files or anything like that.
-* Lets start with a binary format using MessagePack. Once we get that working we can move over to
-* a more text based format along with a build step later if needed.
-* Or we can just us a custom binary format.
-* How we store the images is much more interesting though.
-* Options:
-*  Just store all the files used however they're set up.
-*  Create a sprite sheet for the animation.
-*  Store the image data in the animation file.
-*   - Leaning away from this one because we might want to share images between animated sprites.
-* 
-* Start off simple, only add complexity as it's needed.
-* - Load sprite sheets (we'll want to be able to handle that for the general loading).
-*/
-
 #include "Graphics/spriteAnimation.h"
 
 #include "editorHub.h"
@@ -50,7 +19,7 @@
 #include "Utils/helpers.h"
 #include "Graphics/Platform/graphicsPlatform.h"
 
-static SpriteAnimation editorSpriteAnimation = { NULL, 10.0f, 5, true, NULL, NULL };
+static SpriteAnimation editorSpriteAnimation = { NULL, 10.0f, 5, true, NULL, -1 };
 static PlayingSpriteAnimation editorPlayingSprite = { &editorSpriteAnimation, 0.0f };
 
 static size_t selectedEvent = SIZE_MAX;
@@ -64,6 +33,8 @@ static bool imagesLoaded = false;
 
 static bool playingAnimation = false;
 static bool hitAnimationEnd = false;
+
+static char* currentFileName = NULL;
 
 static struct nk_colorf spriteBGColor = { 0.0f, 0.0f, 0.0f, 1.0f };
 
@@ -104,19 +75,24 @@ static struct nk_rect windowBounds = { 150.0f, 10.0f, 600.0f, 600.f };
 static int drawnSprite = -1;
 static Vector2 drawnOffset = { 0.0f, 0.0f };
 
-// TODO: get onion skinning working. will want to split it into previous and/or next image to display, along with a transparency amount to use
+static int* sbSpriteSheetImages = NULL;
 
-static int* sbLoadedImages = NULL;
+// TODO: get onion skinning working. will want to split it into previous and/or next image to display, along with a transparency amount to use
 
 static void spriteSheetChosen( const char* filePath )
 {
 	// attempt to load the new sprite sheet 
-	int* sbNewlyLoadedImages = editor_loadSpriteSheetFile( filePath );
+	int* sbNewlyLoadedImages = NULL;
+	int newPackageID = editor_loadSpriteSheetFile( filePath, &sbNewlyLoadedImages );
 	
-	if( sbNewlyLoadedImages == NULL ) return;
+	if( newPackageID < 0 ) {
+		hub_CreateDialog( "Error Loading Sprite Sheet", "There was an error loading the sprite sheet. Check error log for more details.", DT_ERROR, 1, "OK", NULL );
+		return;
+	}
 
 	// unload the old images and release the array
-	img_UnloadSpriteSheet( sbLoadedImages );
+	img_UnloadSpriteSheet( editorSpriteAnimation.spriteSheetPackageID );
+	sb_Release( sbSpriteSheetImages );
 	
 	// erase all image references in existing events
 	for(size_t i = 0; i < sb_Count( editorSpriteAnimation.sbEvents ); ++i) {
@@ -126,11 +102,12 @@ static void spriteSheetChosen( const char* filePath )
 	}
 	
 	// set the new data
-	sbLoadedImages = sbNewlyLoadedImages;
+	editorSpriteAnimation.spriteSheetPackageID = newPackageID;
 	mem_Release( editorSpriteAnimation.spriteSheetFile );
 	size_t pathLen = SDL_strlen( filePath ) + 1;
 	editorSpriteAnimation.spriteSheetFile = mem_Allocate( pathLen );
 	SDL_strlcpy( editorSpriteAnimation.spriteSheetFile, filePath, pathLen );
+	sbSpriteSheetImages = sbNewlyLoadedImages; 
 }
 
 static void chooseSpriteSheet( void )
@@ -207,7 +184,12 @@ static void saveCurrentAnimation( const char* filePath )
 	SDL_assert( filePath != NULL );
 	llog( LOG_DEBUG, "Saving out to %s...", filePath );
 
-	hub_CreateDialog( "Missing Implementation", "Saving not implemented yet.", DT_ERROR, 1, "OK", NULL );
+	if( !sprAnim_Save( filePath, &editorSpriteAnimation ) ) {
+		hub_CreateDialog( "Error Saving Animated Sprite", "Error saving animated sprite. Check error log for more details.", DT_ERROR, 1, "OK", NULL );
+	}
+
+	mem_Release( currentFileName );
+	currentFileName = createStringCopy( filePath );
 }
 
 static void loadCurrentAnimation( const char* filePath )
@@ -215,7 +197,17 @@ static void loadCurrentAnimation( const char* filePath )
 	SDL_assert( filePath != NULL );
 	llog( LOG_DEBUG, "Loading from %s...", filePath );
 
-	hub_CreateDialog( "Missing Implementation", "Loading not implemented yet.", DT_ERROR, 1, "OK", NULL );
+	if( !sprAnim_Load( filePath, &editorSpriteAnimation ) ) {
+		hub_CreateDialog( "Error Loading Animated Sprite", "Error loading animated sprite. Check error log for more details.", DT_ERROR, 1, "OK", NULL );
+		return;
+	}
+
+	if( ( editorSpriteAnimation.spriteSheetFile != NULL ) ) {
+		spriteSheetChosen( editorSpriteAnimation.spriteSheetFile );
+	}
+
+	mem_Release( currentFileName );
+	currentFileName = createStringCopy( filePath );
 }
 
 static void newAnimation( void )
@@ -237,6 +229,17 @@ static void loadUIImages( void )
 	stopNKImage = nk_xu_loadImage( "Images/uiicons/stop.png", NULL, NULL );
 }
 
+static void reprocessFrames( void )
+{
+	float timePassed = editorPlayingSprite.timePassed;
+	sprAnim_StartAnim( &editorPlayingSprite, &editorSpriteAnimation, &editorEventHandler );
+	// treat animation as non-looping for this, avoids issue with displaying the first frame when moving the scrubber all the way to the right
+	bool looping = editorSpriteAnimation.loops;
+	editorSpriteAnimation.loops = false;
+	sprAnim_ProcessAnim( &editorPlayingSprite, &editorEventHandler, timePassed );
+	editorSpriteAnimation.loops = looping;
+}
+
 void spriteAnimationEditor_Init( void )
 {
 	loadUIImages( );
@@ -249,9 +252,11 @@ void spriteAnimationEditor_Show( void )
 
 void spriteAnimationEditor_Hide( void )
 {
-	img_UnloadSpriteSheet( sbLoadedImages );
-	sbLoadedImages = NULL;
 	sprAnim_Clean( &editorSpriteAnimation );
+	sb_Release( sbSpriteSheetImages );
+	mem_Release( currentFileName );
+	currentFileName = NULL;
+	drawnSprite = -1;
 }
 
 static uint32_t* sbHeights = NULL;
@@ -338,19 +343,15 @@ static void displayEventData_SwitchImage( struct nk_context* ctx, AnimEvent* evt
 	// add unused
 	sb_Push( sbLoadedImageDisplays, newLoadedImageDisplay( "-- NOT SET --", SIZE_MAX ) );
 
-#define TEST_AND_PUSH_LOADED_IMAGE( id ) \
-	if(img_IsValidImage( ( id ) )) { \
-		if(id == evt->switchImg.imgID) { \
-			currentSelected = (int)sb_Count( sbLoadedImageDisplays ); \
-		} \
-		sb_Push( sbLoadedImageDisplays, newLoadedImageDisplay( img_HumanReadableID( ( id ) ), ( id ) ) ); \
+	for( size_t i = 0; i < sb_Count( sbSpriteSheetImages ); ++i ) {
+		int id = sbSpriteSheetImages[i];
+		if( img_IsValidImage( id ) ) {
+			if( id == evt->switchImg.imgID ) {
+				currentSelected = (int)sb_Count( sbLoadedImageDisplays );
+			}
+			sb_Push( sbLoadedImageDisplays, newLoadedImageDisplay( img_HumanReadableID( id ), id ) );
+		}
 	}
-
-	for( size_t i = 0; i < sb_Count( sbLoadedImages ); ++i ) {
-		TEST_AND_PUSH_LOADED_IMAGE( sbLoadedImages[i] );
-	}
-
-#undef TEST_AND_PUSH_LOADED_IMAGE
 	
 	int lastSelected = currentSelected;
 	nk_combobox_callback( ctx, switchImageComboxBoxItemGetter, NULL, &currentSelected, (int)sb_Count( sbLoadedImageDisplays ), 20, nk_vec2( 300.0f, 300.0f ) );
@@ -528,7 +529,7 @@ void spriteAnimationEditor_IMGUIProcess( void )
 
 			nk_layout_row_begin( ctx, NK_STATIC, 20, INT_MAX );
 			nk_layout_row_push( ctx, 50 );
-			if( nk_menu_begin_label( ctx, "File", NK_TEXT_ALIGN_LEFT | NK_TEXT_ALIGN_MIDDLE, nk_vec2( 120, 80 ) ) ) {
+			if( nk_menu_begin_label( ctx, "File", NK_TEXT_ALIGN_LEFT | NK_TEXT_ALIGN_MIDDLE, nk_vec2( 120, 100 ) ) ) {
 				
 				nk_layout_row_dynamic( ctx, 20, 1 );
 				if( nk_menu_item_label( ctx, "New", NK_TEXT_ALIGN_LEFT | NK_TEXT_ALIGN_MIDDLE ) ) {
@@ -539,7 +540,15 @@ void spriteAnimationEditor_IMGUIProcess( void )
 					editor_chooseLoadFileLocation( "Animated Sprite", "aspr", false, loadCurrentAnimation );
 				}
 
-				if( nk_menu_item_label( ctx, "Save...", NK_TEXT_ALIGN_LEFT | NK_TEXT_ALIGN_MIDDLE ) ) {
+				if( nk_menu_item_label( ctx, "Save", NK_TEXT_ALIGN_LEFT | NK_TEXT_ALIGN_MIDDLE ) ) {
+					if( currentFileName == NULL ) {
+						editor_chooseSaveFileLocation( "Animated Sprite", "aspr", saveCurrentAnimation );
+					} else {
+						saveCurrentAnimation( currentFileName );
+					}
+				}
+
+				if( nk_menu_item_label( ctx, "Save As...", NK_TEXT_ALIGN_LEFT | NK_TEXT_ALIGN_MIDDLE ) ) {
 					editor_chooseSaveFileLocation( "Animated Sprite", "aspr", saveCurrentAnimation );
 				}
 
@@ -706,9 +715,7 @@ void spriteAnimationEditor_IMGUIProcess( void )
 				if( selectedEvent != SIZE_MAX ) {
 					if( displayEventData( ctx, selectedEvent ) ) {
 						// update the display if there were any updates
-						float timePassed = editorPlayingSprite.timePassed;
-						editorPlayingSprite.timePassed = 0;
-						sprAnim_ProcessAnim( &editorPlayingSprite, &editorEventHandler, timePassed );
+						reprocessFrames( );
 					}
 				}
 
@@ -730,11 +737,11 @@ void spriteAnimationEditor_IMGUIProcess( void )
 				nk_layout_row_push( ctx, width );
 				float percentDone = editorPlayingSprite.timePassed / sprAnim_GetTotalTime( &editorSpriteAnimation );
 				if( nk_slider_float( ctx, 0.0f, &percentDone, 1.0f, 0.0001f ) ) {
-					// go through and process all the events until the frame it's currently in
-					float timePassed = percentDone * sprAnim_GetTotalTime( &editorSpriteAnimation );
 					playingAnimation = false;
-					editorPlayingSprite.timePassed = 0.0f;
-					sprAnim_ProcessAnim( &editorPlayingSprite, &editorEventHandler, timePassed );
+
+					// go through and process all the events until the frame it's currently in
+					editorPlayingSprite.timePassed = percentDone * sprAnim_GetTotalTime( &editorSpriteAnimation );
+					reprocessFrames( );
 				}
 
 				// draw the frame events as a grid

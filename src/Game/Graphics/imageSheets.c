@@ -20,6 +20,8 @@
 
 #include <stb_rect_pack.h>
 
+static const char* ioType = "sprite sheet";
+
 typedef struct {
 	Vector2* sbMins;
 	Vector2* sbMaxes;
@@ -27,6 +29,27 @@ typedef struct {
 	uint32_t numSpritesRead;
 	char imageFileName[256];
 } TempSpriteSheetData;
+
+typedef struct {
+	char* spriteSheetID;
+	int packageID;
+	int loadCount;
+} LoadedSpriteSheet;
+
+static LoadedSpriteSheet* sbLoadedSpriteSheets = NULL;
+
+static int findLoadedSpriteSheetAndIncrement( const char* fileName )
+{
+	for( size_t i = 0; i < sb_Count( sbLoadedSpriteSheets ); ++i ) {
+		if( SDL_strcmp( fileName, sbLoadedSpriteSheets[i].spriteSheetID ) == 0 ) {
+			sbLoadedSpriteSheets[i].loadCount += 1;
+			return sbLoadedSpriteSheets[i].packageID;
+		}
+	}
+
+	// not found
+	return -1;
+}
 
 static void cleanTempSpriteSheetData( TempSpriteSheetData* data )
 {
@@ -46,28 +69,18 @@ static bool loadSpriteSheetData( const char* fileName, TempSpriteSheetData** out
 	bool ret = false;
 
 	cmp_ctx_t cmp;
-	SDL_RWops* rwopsFile = openRWopsCMPFile( fileName, "r", &cmp );
+	SDL_RWops* rwopsFile = openRWopsCMPFile( fileName, "rb", &cmp );
 	if( rwopsFile == NULL ) goto clean_up;
 
-#define CMP_READ( val, read, desc ) \
-	if( !read( &cmp, &(val) ) ) { \
-		llog( LOG_ERROR, "Unable to read %s for sprite sheet: %s", (desc), cmp_strerror( &cmp ) ); \
-		goto clean_up; }
-
-#define CMP_READ_STR( val, bufferSize, desc ) \
-	if( !cmp_read_str( &cmp, (val), &(bufferSize) ) ) { \
-		llog( LOG_ERROR, "Unable to read %s for sprite sheet: %s", (desc), cmp_strerror( &cmp ) ); \
-		goto clean_up; }
-
 	int version;
-	CMP_READ( version, cmp_read_int, "version number" );
+	CMP_READ( version, cmp_read_int, ioType, "version number" );
 	if( version != 3 ) {
 		llog( LOG_ERROR, "Unknown version for sprite sheet %s", fileName );
 		goto clean_up;
 	}
 
 	uint32_t numGroups;
-	CMP_READ( numGroups, cmp_read_array, "group count" );
+	CMP_READ( numGroups, cmp_read_array, ioType, "group count" );
 	for( uint32_t i = 0; i < numGroups; ++i ) {
 		TempSpriteSheetData data;
 		data.sbMins = NULL;
@@ -75,19 +88,19 @@ static bool loadSpriteSheetData( const char* fileName, TempSpriteSheetData** out
 		data.sbIDs = NULL;
 
 		uint32_t imageFileNameSize = ARRAY_SIZE( data.imageFileName );
-		CMP_READ_STR( data.imageFileName, imageFileNameSize, "group image file" );
+		CMP_READ_STR( data.imageFileName, imageFileNameSize, ioType, "group image file" );
 
-		CMP_READ( data.numSpritesRead, cmp_read_array, "sprite count" );
+		CMP_READ( data.numSpritesRead, cmp_read_array, ioType, "sprite count" );
 		for( uint32_t a = 0; a < data.numSpritesRead; ++a ) {
 			char id[256];
 			int x, y, w, h;
 
 			uint32_t spriteIDSize = ARRAY_SIZE( id );
-			CMP_READ_STR( id, spriteIDSize, "sprite id" );
-			CMP_READ( x, cmp_read_int, "sprite x-coordinate" );
-			CMP_READ( y, cmp_read_int, "sprite y-coordinate" );
-			CMP_READ( w, cmp_read_int, "sprite width" );
-			CMP_READ( h, cmp_read_int, "sprite height" );
+			CMP_READ_STR( id, spriteIDSize, ioType, "sprite id" );
+			CMP_READ( x, cmp_read_int, ioType, "sprite x-coordinate" );
+			CMP_READ( y, cmp_read_int, ioType, "sprite y-coordinate" );
+			CMP_READ( w, cmp_read_int, ioType, "sprite width" );
+			CMP_READ( h, cmp_read_int, ioType, "sprite height" );
 
 			// copy the id and push it onto the data
 			char* idCopy = createStringCopy( id );
@@ -108,7 +121,10 @@ static bool loadSpriteSheetData( const char* fileName, TempSpriteSheetData** out
 
 clean_up:
 
-	SDL_RWclose( rwopsFile );
+	if( SDL_RWclose( rwopsFile ) < 0 ) {
+		llog( LOG_ERROR, "Error closing file %s: %s", fileName, SDL_GetError( ) );
+		ret = false;
+	}
 
 	if( !ret ) {
 		// we've failed but have some stuff to clean up
@@ -124,56 +140,89 @@ clean_up:
 // This opens up the sprite sheet file and loads all the images, putting the ids into imgOutArray. The returned array
 //  uses the stretchy buffer file, so you can use that to find the size, but you shouldn't do anything that modifies
 //   the size of it. imgOutArray is optional, if you don't pass it in you'll have to retrieve the images by id.
-// Returns the number of images loaded if it was successful, otherwise returns -1.
-int img_LoadSpriteSheet( const char* fileName, ShaderType shaderType, int** imgOutArray )
+// Returns the package id for the sprite sheet if it was successful, otherwise returns -1.
+int img_LoadSpriteSheet( const char* fileName, ShaderType shaderType, int** sbImgOutArray )
 {
-	TempSpriteSheetData* tempData = NULL;
+	bool done = false;
+	TempSpriteSheetData* sbTempData = NULL;
 
-	int totalImageCount = 0;
-	int packageID = -1;
+	int packageID = findLoadedSpriteSheetAndIncrement( fileName );
+	if( packageID >= 0 ) {
+		if( sbImgOutArray != NULL ) {
+			( *sbImgOutArray ) = img_GetPackageImages( packageID );
+		}
+		return packageID;
+	}
 
-	if( !loadSpriteSheetData( fileName, &tempData ) ) {
+	if( !loadSpriteSheetData( fileName, &sbTempData ) ) {
 		return -1;
 	}
 
-	for( size_t i = 0; i < sb_Count( tempData ); ++i ) {
+	for( size_t i = 0; i < sb_Count( sbTempData ); ++i ) {
 		int* outStart = NULL;
-		if( imgOutArray != NULL ) {
-			outStart = sb_Add( *imgOutArray, tempData[i].numSpritesRead );
+		if( sbImgOutArray != NULL ) {
+			outStart = sb_Add( *sbImgOutArray, sbTempData[i].numSpritesRead );
 		}
 
 		Texture texture;
-		if( gfxUtil_LoadTexture( tempData[i].imageFileName, &texture ) < 0 ) {
+		if( gfxUtil_LoadTexture( sbTempData[i].imageFileName, &texture ) < 0 ) {
 			llog( LOG_ERROR, "Unable to load texture for sprite sheet: %s", fileName );
-			totalImageCount = -1;
 			goto clean_up;
 		}
 
-		int* tempImgOutArray = NULL;
-		sb_Add( tempImgOutArray, tempData[i].numSpritesRead );
-		if( ( packageID = img_SplitTexture( &texture, tempData[i].numSpritesRead, shaderType, tempData[i].sbMins, tempData[i].sbMaxes, tempData[i].sbIDs, packageID, tempImgOutArray ) ) < 0 ) {
-			totalImageCount = -1;
+		int newPackageID = -1;
+		if( ( newPackageID = img_SplitTexture( &texture, sbTempData[i].numSpritesRead, shaderType, sbTempData[i].sbMins, sbTempData[i].sbMaxes, sbTempData[i].sbIDs, packageID, outStart ) ) < 0 ) {
 			llog( LOG_ERROR, "Problem splitting image for sprite sheet definition file: %s", fileName );
 			goto clean_up;
+		} else {
+			packageID = newPackageID;
 		}
-
-		totalImageCount += tempData[i].numSpritesRead;
-		if( outStart != NULL ) {
-			SDL_memcpy( outStart, tempImgOutArray, sizeof( int ) * sb_Count( tempImgOutArray ) );
-		}
-		sb_Release( tempImgOutArray );
 	}
+
+	LoadedSpriteSheet loadedSpriteSheet;
+	loadedSpriteSheet.spriteSheetID = createStringCopy( fileName );
+	loadedSpriteSheet.packageID = packageID;
+	loadedSpriteSheet.loadCount = 1;
+	sb_Push( sbLoadedSpriteSheets, loadedSpriteSheet );
+
+	done = true;
 
 clean_up:
-	if( totalImageCount < 0 ) {
+	if( !done ) {
 		// clean up invalid stuff
 		img_CleanPackage( packageID );
-		sb_Release( *imgOutArray );
+		if( sbImgOutArray != NULL ) {
+			sb_Release( *sbImgOutArray );
+		}
+		packageID = -1;
 	}
 
-	sb_Release( tempData );
+	sb_Release( sbTempData );
 
-	return totalImageCount;
+	return packageID;
+}
+
+// Unloads all the images associated with the package and marks the sprite sheet as unloaded.
+void img_UnloadSpriteSheet( int packageID )
+{
+	size_t idx = SIZE_MAX;
+	for( size_t i = 0; i < sb_Count( sbLoadedSpriteSheets ) && idx == SIZE_MAX; ++i ) {
+		if( sbLoadedSpriteSheets[i].packageID == packageID ) {
+			idx = i;
+		}
+	}
+
+	if( idx == SIZE_MAX ) {
+		llog( LOG_ERROR, "Sending in invalid packageID when unloading a sprite sheet." );
+		return;
+	}
+
+	sbLoadedSpriteSheets[idx].loadCount -= 1;
+	if( sbLoadedSpriteSheets[idx].loadCount <= 0 ) {
+		mem_Release( sbLoadedSpriteSheets[idx].spriteSheetID );
+		sb_Remove( sbLoadedSpriteSheets, idx );
+		img_CleanPackage( packageID );
+	}
 }
 
 void generateRects( SpriteSheetEntry* sbSpriteInfos, stbrp_rect** sbRects, int maxSize, int xPadding, int yPadding )
@@ -188,7 +237,7 @@ void generateRects( SpriteSheetEntry* sbSpriteInfos, stbrp_rect** sbRects, int m
 		stbrp_rect newRect;
 		newRect.w = img.width + xPadding;
 		newRect.h = img.height + yPadding;
-		newRect.id = (int)sb_Count( *sbRects );
+		newRect.id = (int)i;
 		newRect.was_packed = 0;
 
 		if( newRect.w > maxSize || newRect.h > maxSize ) {
@@ -226,41 +275,29 @@ static void insertImage( char* filePath, stbrp_rect* rect, uint8_t* imageData, i
 
 static bool saveSpriteSheetDefinition( const char* fileName, SpriteSheetEntry* entries, size_t numEntries, RectSet* rectSets, size_t numRectSets )
 {
-	SDL_assert( numEntries == numRectSets );
-
 	bool done = false;
 
 	cmp_ctx_t cmp;
-	SDL_RWops* rwops = openRWopsCMPFile( fileName, "w", &cmp );
+	SDL_RWops* rwops = openRWopsCMPFile( fileName, "wb", &cmp );
 	if( rwops == NULL ) {
 		goto clean_up;
 	}
 
-#define CMP_WRITE( val, write, desc ) \
-	if( !write( &cmp, (val) ) ) { \
-		llog( LOG_ERROR, "Unable to write %s for sprite sheet: %s", (desc), cmp_strerror( &cmp ) ); \
-		goto clean_up; }
-
-#define CMP_WRITE_STR( val, desc ) \
-	if( !cmp_write_str( &cmp, (val), (uint32_t)SDL_strlen((val)) ) ) { \
-		llog( LOG_ERROR, "Unable to write %s for sprite sheet: %s", (desc), cmp_strerror( &cmp ) ); \
-		goto clean_up; }
-
 	// write out version number
-	CMP_WRITE( 3, cmp_write_int, "version number" );
+	CMP_WRITE( 3, cmp_write_int, ioType, "version number" );
 
 	//  write out all the image names
 	uint32_t numImages = (uint32_t)numRectSets;
-	CMP_WRITE( numImages, cmp_write_array, "rect set array size" );
+	CMP_WRITE( numImages, cmp_write_array, ioType, "rect set array size" );
 	for( uint32_t i = 0; i < numImages; ++i ) {
 		RectSet* set = &( rectSets[i] );
 
-		CMP_WRITE_STR( set->fileName, "rect set image file name" );
+		CMP_WRITE_STR( set->fileName, ioType, "rect set image file name" );
 
 		// write out the entries for each sprite stored in this image
 		//  want to right out the id and rect
 		uint32_t numSprites = (uint32_t)sb_Count( set->sbRects );
-		CMP_WRITE( numSprites, cmp_write_array, "rect set sprite count" );
+		CMP_WRITE( numSprites, cmp_write_array, ioType, "rect set sprite count" );
 		for( uint32_t a = 0; a < numSprites; ++a ) {
 			stbrp_rect* rect = &( set->sbRects[a] );
 			char* id = SDL_strrchr( entries[rect->id].sbPath, '/' );
@@ -269,24 +306,21 @@ static bool saveSpriteSheetDefinition( const char* fileName, SpriteSheetEntry* e
 			} else {
 				++id; // advance past the '/'
 			}
-			CMP_WRITE_STR( id, "sprite id" );
+			CMP_WRITE_STR( id, ioType, "sprite id" );
 
-			CMP_WRITE( rect->x, cmp_write_int, "sprite x-coordinate" );
-			CMP_WRITE( rect->y, cmp_write_int, "sprite y-coordinate" );
-			CMP_WRITE( rect->w, cmp_write_int, "sprite width" );
-			CMP_WRITE( rect->h, cmp_write_int, "sprite height" );
+			CMP_WRITE( rect->x, cmp_write_int, ioType, "sprite x-coordinate" );
+			CMP_WRITE( rect->y, cmp_write_int, ioType, "sprite y-coordinate" );
+			CMP_WRITE( rect->w, cmp_write_int, ioType, "sprite width" );
+			CMP_WRITE( rect->h, cmp_write_int, ioType, "sprite height" );
 		}
 	}
-
-#undef CMP_WRITE
-#undef CMP_WRITE_STR
 
 	done = true;
 
 clean_up:
 
 	if( SDL_RWclose( rwops ) < 0 ) {
-		llog( LOG_ERROR, "Error flushing out file %s: %s", fileName, SDL_GetError( ) );
+		llog( LOG_ERROR, "Error closing file %s: %s", fileName, SDL_GetError( ) );
 		done = false;
 	}
 
@@ -297,26 +331,8 @@ clean_up:
 	return done;
 }
 
-// Takes in a list of file names and generates the sprite sheet and saves it out to fileName.
-bool img_SaveSpriteSheet( const char* fileName, SpriteSheetEntry* sbEntries, int maxSize, int xPadding, int yPadding )
+static RectSet* generateRectSets( stbrp_rect* sbBaseRects, int maxSize, int xPadding, int yPadding, int leftPadding, int topPadding )
 {
-	bool done = false;
-	SDL_RWops* rwops = NULL;
-
-	int leftPadding = xPadding / 2;
-	int topPadding = yPadding / 2;
-
-	// first create the layouts, we may have to use mulitple image files to fit everything
-	stbrp_rect* sbBaseRects = NULL;
-	generateRects( sbEntries, &sbBaseRects, maxSize, xPadding, yPadding );
-
-	if( sbBaseRects == NULL ) {
-		llog( LOG_ERROR, "No images found when trying to save sprite sheet." );
-		return false;
-	}
-
-	stbrp_context rpContext;
-
 	// create the set of rect sets that we'll use to define where things are stored in the image
 	//  we'll want to be able to use multiple images for one sprite sheet
 	//  use increasing powers of 2 to generate the size, alternate between increasing width and height
@@ -324,7 +340,8 @@ bool img_SaveSpriteSheet( const char* fileName, SpriteSheetEntry* sbEntries, int
 	//   as a valid set that will be it's own image, remove all of those from the current rect set and
 	//   continue
 	RectSet* sbRectSets = NULL;
-	
+
+	stbrp_context rpContext;
 	while( sb_Count( sbBaseRects ) > 0 ) {
 
 		// choose initial size, find largest on each dimension and then find the next highest power of two
@@ -372,6 +389,40 @@ bool img_SaveSpriteSheet( const char* fileName, SpriteSheetEntry* sbEntries, int
 		sb_Push( sbRectSets, newRectSet );
 	}
 
+	// adjust all the rectangles for padding
+	for( size_t i = 0; i < sb_Count( sbRectSets ); ++i ) {
+		RectSet* set = &( sbRectSets[i] );
+		for( size_t a = 0; a < sb_Count( set->sbRects ); ++a ) {
+			stbrp_rect* rect = &( set->sbRects[a] );
+			rect->x += leftPadding;
+			rect->y += topPadding;
+			rect->w -= xPadding;
+			rect->h -= yPadding;
+		}
+	}
+
+	return sbRectSets;
+}
+
+// Takes in a list of file names and generates the sprite sheet and saves it out to fileName.
+bool img_SaveSpriteSheet( const char* fileName, SpriteSheetEntry* sbEntries, int maxSize, int xPadding, int yPadding )
+{
+	bool done = false;
+
+	int leftPadding = xPadding / 2;
+	int topPadding = yPadding / 2;
+
+	// first create the layouts, we may have to use mulitple image files to fit everything
+	stbrp_rect* sbBaseRects = NULL;
+	generateRects( sbEntries, &sbBaseRects, maxSize, xPadding, yPadding );
+
+	if( sbBaseRects == NULL ) {
+		llog( LOG_ERROR, "No images found when trying to save sprite sheet." );
+		return false;
+	}
+
+	RectSet* sbRectSets = generateRectSets( sbBaseRects, maxSize, xPadding, yPadding, leftPadding, topPadding );
+
 	// for each RectSet create an image
 	for( size_t i = 0; i < sb_Count( sbRectSets ); ++i ) {
 		// add in length of underscore, .png, and terminator
@@ -393,27 +444,10 @@ bool img_SaveSpriteSheet( const char* fileName, SpriteSheetEntry* sbEntries, int
 		mem_Release( imageData );
 	}
 
-	// adjust all the rectangles for padding
-	for( size_t i = 0; i < sb_Count( sbRectSets ); ++i ) {
-		RectSet* set = &( sbRectSets[i] );
-		for( size_t a = 0; a < sb_Count( set->sbRects ); ++a ) {
-			stbrp_rect* rect = &( set->sbRects[a] );
-			rect->x += leftPadding;
-			rect->y += topPadding;
-			rect->w -= xPadding;
-			rect->h -= yPadding;
-		}
-	}
-
 	// now save out the sprite sheet definition
 	done = saveSpriteSheetDefinition( fileName, sbEntries, sb_Count( sbEntries ), sbRectSets, sb_Count( sbRectSets ) );
 
 clean_up:
-	if( SDL_RWclose( rwops ) < 0 ) {
-		llog( LOG_ERROR, "Error flushing out file %s: %s", fileName, SDL_GetError( ) );
-		done = false;
-	}
-
 	if( !done ) {
 		// something wrong happened, delete the files and let the user know
 		llog( LOG_ERROR, "Error creating sprite sheet, cleaning up invalid files." );
@@ -472,20 +506,6 @@ bool img_Save3x3( const char* fileName, const char* imageFileName, int width, in
 	return success;
 }
 
-// Cleans up all the images created from img_LoadSpriteSheet( ). The pointer passed in will be invalid after this is called.
-void img_UnloadSpriteSheet( int* imgArray )
-{
-	// free all the images
-	size_t length = sb_Count( imgArray );
-	for( size_t i = 0; i < length; ++i ) {
-		img_Clean( imgArray[i] );
-	}
-
-	// free the array
-	sb_Release( imgArray );
-}
-
-
 //****************************************************************************
 typedef struct {
 	const char* fileName;
@@ -500,6 +520,8 @@ typedef struct {
 
 static void bindSpriteSheetJob( void* data )
 {
+	bool done = false;
+
 	if( data == NULL ) {
 		llog( LOG_ERROR, "No data, unable to properly bind sprite sheet load" );
 		return;
@@ -517,17 +539,30 @@ static void bindSpriteSheetJob( void* data )
 			goto clean_up;
 		}
 
-		packageID = img_SplitTexture( &texture, loadData->sbTempSheetData[i].numSpritesRead, loadData->shaderType,
+		int newPackageID;
+		newPackageID = img_SplitTexture( &texture, loadData->sbTempSheetData[i].numSpritesRead, loadData->shaderType,
 			loadData->sbTempSheetData[i].sbMins, loadData->sbTempSheetData[i].sbMaxes, loadData->sbTempSheetData[i].sbIDs, packageID, NULL );
-		if( packageID == -1 ) {
+		if( newPackageID == -1 ) {
 			llog( LOG_DEBUG, "Unable to split texture for %s", loadData->fileName );
 			goto clean_up;
+		} else {
+			packageID = newPackageID;
+		}
+	}
+
+	ret = packageID;
+	done = true;
+
+clean_up:
+	if( !done ) {
+		// clean up invalid package
+		if( packageID >= 0 ) {
+			img_CleanPackage( packageID );
 		}
 	}
 
 	if( loadData->onLoadDone != NULL ) loadData->onLoadDone( ret );
 
-clean_up:
 	for( size_t i = 0; i < sb_Count( loadData->sbTempSheetData ); ++i ) {
 		cleanTempSpriteSheetData( &( loadData->sbTempSheetData[i] ) );
 		gfxUtil_ReleaseLoadedImage( &( loadData->sbLoadedImages[i] ) );
@@ -588,6 +623,12 @@ error:
 // assumes we'll be using img_GetExistingByID() to retrieve them after the load is done
 void img_ThreadedLoadSpriteSheet( const char* fileName, ShaderType shaderType, void (*onLoadDone)( int ) )
 {
+	int packageID = findLoadedSpriteSheetAndIncrement( fileName );
+	if( packageID >= 0 ) {
+		onLoadDone( packageID );
+		return;
+	}
+
 	ThreadedSpriteSheetLoadData* loadData = mem_Allocate( sizeof( ThreadedSpriteSheetLoadData ) );
 	if( loadData == NULL ) {
 		llog( LOG_ERROR, "Unable to allocated data storage in img_ThreadedLoadSpriteSheet" );

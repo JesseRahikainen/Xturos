@@ -718,8 +718,8 @@ int main( int argc, char** argv )
 	//GameState* startState = &bordersTestScreenState;
 	//GameState* startState = &hexTestScreenState;
 	//GameState* startState = &testBloomScreenState;
-	GameState* startState = &gameOfUrScreenState;
-	//GameState* startState = &testECPSScreenState;
+	//GameState* startState = &gameOfUrScreenState;
+	GameState* startState = &testECPSScreenState;
 	if( isEditorMode ) {
 		startState = &editorHubScreenState;
 	}

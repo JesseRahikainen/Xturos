@@ -427,7 +427,7 @@ bool ecps_SaveSerializedECPS( const char* fileName, SerializedECPS* serializedEC
 
 	// TODO: handle not overwriting an existing file if the writing fails
 	cmp_ctx_t cmp;
-	SDL_RWops* rwopsFile = openRWopsCMPFile( fileName, "w", &cmp );
+	SDL_RWops* rwopsFile = openRWopsCMPFile( fileName, "wb", &cmp );
 	if( rwopsFile == NULL ) {
 		return false;
 	}
@@ -520,7 +520,7 @@ bool ecps_LoadSerializedECPS( const char* fileName, SerializedECPS* serializedEC
 	ASSERT_AND_IF( serializedECPS->sbEntityInfos == NULL ) return false;
 
 	cmp_ctx_t cmp;
-	SDL_RWops* rwopsFile = openRWopsCMPFile( fileName, "r", &cmp );
+	SDL_RWops* rwopsFile = openRWopsCMPFile( fileName, "rb", &cmp );
 	if( rwopsFile == NULL ) {
 		return false;
 	}

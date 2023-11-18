@@ -52,4 +52,6 @@ uint8_t* gfxPlatform_GetScreenShotPixels( int width, int height );
 
 PlatformTexture gfxPlatform_GetDefaultPlatformTexture( void );
 
+uint8_t* gfxPlatform_GetPlatformSubTextureBytesRGBA( int xOffset, int yOffset, int width, int height, PlatformTexture* texture );
+
 #endif // inclusion guard

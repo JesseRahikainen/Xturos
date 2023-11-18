@@ -521,6 +521,12 @@ uint8_t* gfxPlatform_GetScreenShotPixels( int width, int height )
     return NULL;
 }
 
+uint8_t* gfxPlatform_GetPlatformSubTextureBytesRGBA( int xOffset, int yOffset, int width, int height, PlatformTexture* texture )
+{
+    SDL_assert( "Sub-texture pixel retrieval not implemented for Metal yet." );
+    return NULL;
+}
+
 PlatformTexture gfxPlatform_GetDefaultPlatformTexture( void )
 {
     PlatformTexture pt;
