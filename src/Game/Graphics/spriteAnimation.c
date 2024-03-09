@@ -279,8 +279,8 @@ bool sprAnim_Save( const char* fileName, SpriteAnimation* anim )
 {
 	bool done = false;
 
-	ASSERT_AND_IF( fileName != NULL ) return false;
-	ASSERT_AND_IF( anim != NULL ) return false;
+	ASSERT_AND_IF_NOT( fileName != NULL ) return false;
+	ASSERT_AND_IF_NOT( anim != NULL ) return false;
 
 	cmp_ctx_t cmp;
 	SDL_RWops* rwops = openRWopsCMPFile( fileName, "wb", &cmp );
@@ -289,41 +289,41 @@ bool sprAnim_Save( const char* fileName, SpriteAnimation* anim )
 	}
 
 	// write out all the base data first
-	CMP_WRITE( anim->fps, cmp_write_float, ioType, "fps" );
-	CMP_WRITE( anim->durationFrames, cmp_write_u32, ioType, "duration" );
-	CMP_WRITE( anim->loops, cmp_write_bool, ioType, "looping" );
-	CMP_WRITE_STR( anim->spriteSheetFile, ioType, "sprite sheet file name" );
+	CMP_WRITE( &cmp, anim->fps, cmp_write_float, ioType, "fps", goto clean_up );
+	CMP_WRITE( &cmp, anim->durationFrames, cmp_write_u32, ioType, "duration", goto clean_up );
+	CMP_WRITE( &cmp, anim->loops, cmp_write_bool, ioType, "looping", goto clean_up );
+	CMP_WRITE_STR( &cmp, anim->spriteSheetFile, ioType, "sprite sheet file name", goto clean_up );
 
 	uint32_t numEvents = (uint32_t)sb_Count( anim->sbEvents );
-	CMP_WRITE( numEvents, cmp_write_array, ioType, "event count" );
+	CMP_WRITE( &cmp, numEvents, cmp_write_array, ioType, "event count", goto clean_up );
 
 	for( size_t i = 0; i < sb_Count( anim->sbEvents ); ++i ) {
-		CMP_WRITE( anim->sbEvents[i].base.frame, cmp_write_u32, ioType, "event frame" );
+		CMP_WRITE( &cmp, anim->sbEvents[i].base.frame, cmp_write_u32, ioType, "event frame", goto clean_up );
 
 		uint32_t typeAsU32 = (uint32_t)anim->sbEvents[i].base.type;
-		CMP_WRITE( typeAsU32, cmp_write_u32, ioType, "event type" );
+		CMP_WRITE( &cmp, typeAsU32, cmp_write_u32, ioType, "event type", goto clean_up );
 
 		switch( anim->sbEvents[i].base.type ) {
 		case AET_SWITCH_IMAGE: {
 			const char* imgID = img_GetImgStringID( anim->sbEvents[i].switchImg.imgID );
-			CMP_WRITE_STR( imgID, ioType, "image id" );
-			CMP_WRITE( &( anim->sbEvents[i].switchImg.offset ), vec2_Serialize, ioType, "switch image offset" );
+			CMP_WRITE_STR( &cmp, imgID, ioType, "image id", goto clean_up );
+			CMP_WRITE( &cmp, &( anim->sbEvents[i].switchImg.offset ), vec2_Serialize, ioType, "switch image offset", goto clean_up );
 		} break;
 		case AET_SET_AAB_COLLIDER:
-			CMP_WRITE( anim->sbEvents[i].setAABCollider.colliderID, cmp_write_int, ioType, "AAB collider id" );
-			CMP_WRITE( anim->sbEvents[i].setAABCollider.centerX, cmp_write_float, ioType, "AAB center x" );
-			CMP_WRITE( anim->sbEvents[i].setAABCollider.centerY, cmp_write_float, ioType, "AAB center y" );
-			CMP_WRITE( anim->sbEvents[i].setAABCollider.width, cmp_write_float, ioType, "AAB width" );
-			CMP_WRITE( anim->sbEvents[i].setAABCollider.height, cmp_write_float, ioType, "AAB height" );
+			CMP_WRITE( &cmp, anim->sbEvents[i].setAABCollider.colliderID, cmp_write_int, ioType, "AAB collider id", goto clean_up );
+			CMP_WRITE( &cmp, anim->sbEvents[i].setAABCollider.centerX, cmp_write_float, ioType, "AAB center x", goto clean_up );
+			CMP_WRITE( &cmp, anim->sbEvents[i].setAABCollider.centerY, cmp_write_float, ioType, "AAB center y", goto clean_up );
+			CMP_WRITE( &cmp, anim->sbEvents[i].setAABCollider.width, cmp_write_float, ioType, "AAB width", goto clean_up );
+			CMP_WRITE( &cmp, anim->sbEvents[i].setAABCollider.height, cmp_write_float, ioType, "AAB height", goto clean_up );
 			break;
 		case AET_SET_CIRCLE_COLLIDER:
-			CMP_WRITE( anim->sbEvents[i].setCircleCollider.colliderID, cmp_write_int, ioType, "circle collider id" );
-			CMP_WRITE( anim->sbEvents[i].setCircleCollider.centerX, cmp_write_float, ioType, "circle collider center x" );
-			CMP_WRITE( anim->sbEvents[i].setCircleCollider.centerY, cmp_write_float, ioType, "circle collider center y" );
-			CMP_WRITE( anim->sbEvents[i].setCircleCollider.radius, cmp_write_float, ioType, "circle collider radius" );
+			CMP_WRITE( &cmp, anim->sbEvents[i].setCircleCollider.colliderID, cmp_write_int, ioType, "circle collider id", goto clean_up );
+			CMP_WRITE( &cmp, anim->sbEvents[i].setCircleCollider.centerX, cmp_write_float, ioType, "circle collider center x", goto clean_up );
+			CMP_WRITE( &cmp, anim->sbEvents[i].setCircleCollider.centerY, cmp_write_float, ioType, "circle collider center y", goto clean_up );
+			CMP_WRITE( &cmp, anim->sbEvents[i].setCircleCollider.radius, cmp_write_float, ioType, "circle collider radius", goto clean_up );
 			break;
 		case AET_DEACTIVATE_COLLIDER:
-			CMP_WRITE( anim->sbEvents[i].deactivateCollider.colliderID, cmp_write_int, ioType, "deactivate collider id" );
+			CMP_WRITE( &cmp, anim->sbEvents[i].deactivateCollider.colliderID, cmp_write_int, ioType, "deactivate collider id", goto clean_up );
 			break;
 		default:
 			llog( LOG_ERROR, "Unable to write unknown event for animation: %s", cmp_strerror( &cmp ) );
@@ -351,8 +351,8 @@ bool sprAnim_Load( const char* fileName, SpriteAnimation* anim )
 {
 	bool done = false;
 
-	ASSERT_AND_IF( fileName != NULL ) return false;
-	ASSERT_AND_IF( anim != NULL ) return false;
+	ASSERT_AND_IF_NOT( fileName != NULL ) return false;
+	ASSERT_AND_IF_NOT( anim != NULL ) return false;
 
 	cmp_ctx_t cmp;
 	SDL_RWops* rwops = openRWopsCMPFile( fileName, "rb", &cmp );
@@ -360,51 +360,51 @@ bool sprAnim_Load( const char* fileName, SpriteAnimation* anim )
 		return false;
 	}
 
-	CMP_READ( anim->fps, cmp_read_float, ioType, "fps" );
-	CMP_READ( anim->durationFrames, cmp_read_u32, ioType, "duration" );
-	CMP_READ( anim->loops, cmp_read_bool, ioType, "looping" );
+	CMP_READ( &cmp, anim->fps, cmp_read_float, ioType, "fps", goto clean_up );
+	CMP_READ( &cmp, anim->durationFrames, cmp_read_u32, ioType, "duration", goto clean_up );
+	CMP_READ( &cmp, anim->loops, cmp_read_bool, ioType, "looping", goto clean_up );
 
 	char fileNameBuffer[256];
 	uint32_t fileNameBufferSize = ARRAY_SIZE( fileNameBuffer );
-	CMP_READ_STR( fileNameBuffer, fileNameBufferSize, ioType, "sprite sheet file name" );
+	CMP_READ_STR( &cmp, fileNameBuffer, fileNameBufferSize, ioType, "sprite sheet file name", goto clean_up );
 	anim->spriteSheetFile = createStringCopy( fileNameBuffer );
 
 	uint32_t numEvents;
-	CMP_READ( numEvents, cmp_read_array, ioType, "event count" );
+	CMP_READ( &cmp, numEvents, cmp_read_array, ioType, "event count", goto clean_up );
 
 	for( uint32_t i = 0; i < numEvents; ++i ) {
 		AnimEvent newEvent;
 		SDL_memset( &newEvent, 0, sizeof( newEvent ) );
 
-		CMP_READ( newEvent.base.frame, cmp_read_u32, ioType, "event frame" );
+		CMP_READ( &cmp, newEvent.base.frame, cmp_read_u32, ioType, "event frame", goto clean_up );
 
 		uint32_t typeAsU32;
-		CMP_READ( typeAsU32, cmp_read_u32, ioType, "event type" );
+		CMP_READ( &cmp, typeAsU32, cmp_read_u32, ioType, "event type", goto clean_up );
 		newEvent.base.type = (AnimEventTypes)typeAsU32;
 
 		switch( newEvent.base.type ) {
 		case AET_SWITCH_IMAGE: {
 			char imageNameBuffer[256];
 			uint32_t imageNameBufferSize = ARRAY_SIZE( imageNameBuffer );
-			CMP_READ_STR( imageNameBuffer, imageNameBufferSize, ioType, "image id" );
+			CMP_READ_STR( &cmp, imageNameBuffer, imageNameBufferSize, ioType, "image id", goto clean_up );
 			newEvent.switchImg.frameName = createStringCopy( imageNameBuffer );
-			CMP_READ( newEvent.switchImg.offset, vec2_Deserialize, ioType, "switch image offset" );
+			CMP_READ( &cmp, newEvent.switchImg.offset, vec2_Deserialize, ioType, "switch image offset", goto clean_up );
 		} break;
 		case AET_SET_AAB_COLLIDER:
-			CMP_READ( newEvent.setAABCollider.colliderID, cmp_read_int, ioType, "AAB collider id" );
-			CMP_READ( newEvent.setAABCollider.centerX, cmp_read_float, ioType, "AAB center x" );
-			CMP_READ( newEvent.setAABCollider.centerY, cmp_read_float, ioType, "AAB center y" );
-			CMP_READ( newEvent.setAABCollider.width, cmp_read_float, ioType, "AAB width" );
-			CMP_READ( newEvent.setAABCollider.height, cmp_read_float, ioType, "AAB height" );
+			CMP_READ( &cmp, newEvent.setAABCollider.colliderID, cmp_read_int, ioType, "AAB collider id", goto clean_up );
+			CMP_READ( &cmp, newEvent.setAABCollider.centerX, cmp_read_float, ioType, "AAB center x", goto clean_up );
+			CMP_READ( &cmp, newEvent.setAABCollider.centerY, cmp_read_float, ioType, "AAB center y", goto clean_up );
+			CMP_READ( &cmp, newEvent.setAABCollider.width, cmp_read_float, ioType, "AAB width", goto clean_up );
+			CMP_READ( &cmp, newEvent.setAABCollider.height, cmp_read_float, ioType, "AAB height", goto clean_up );
 			break;
 		case AET_SET_CIRCLE_COLLIDER:
-			CMP_READ( newEvent.setCircleCollider.colliderID, cmp_read_int, ioType, "circle collider id" );
-			CMP_READ( newEvent.setCircleCollider.centerX, cmp_read_float, ioType, "circle collider center x" );
-			CMP_READ( newEvent.setCircleCollider.centerY, cmp_read_float, ioType, "circle collider center y" );
-			CMP_READ( newEvent.setCircleCollider.radius, cmp_read_float, ioType, "circle collider radius" );
+			CMP_READ( &cmp, newEvent.setCircleCollider.colliderID, cmp_read_int, ioType, "circle collider id", goto clean_up );
+			CMP_READ( &cmp, newEvent.setCircleCollider.centerX, cmp_read_float, ioType, "circle collider center x", goto clean_up );
+			CMP_READ( &cmp, newEvent.setCircleCollider.centerY, cmp_read_float, ioType, "circle collider center y", goto clean_up );
+			CMP_READ( &cmp, newEvent.setCircleCollider.radius, cmp_read_float, ioType, "circle collider radius", goto clean_up );
 			break;
 		case AET_DEACTIVATE_COLLIDER:
-			CMP_READ( newEvent.deactivateCollider.colliderID, cmp_read_int, ioType, "deactivate collider id" );
+			CMP_READ( &cmp, newEvent.deactivateCollider.colliderID, cmp_read_int, ioType, "deactivate collider id", goto clean_up );
 			break;
 		default:
 			llog( LOG_ERROR, "Unable to read unknown event for animation: %s", cmp_strerror( &cmp ) );

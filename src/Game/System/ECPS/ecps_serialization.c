@@ -40,7 +40,7 @@ void buffer_Set( ByteBuffer* buffer, void* data, size_t size )
 
 void buffer_Clean( ByteBuffer* buffer )
 {
-	assert( buffer != NULL );
+	SDL_assert( buffer != NULL );
 
 	free( buffer->data );
 	buffer->data = NULL;
@@ -50,8 +50,8 @@ void buffer_Clean( ByteBuffer* buffer )
 
 void buffer_Seek( ByteBuffer* buffer, size_t pos )
 {
-	assert( buffer != NULL );
-	assert( pos < buffer->size );
+	SDL_assert( buffer != NULL );
+	SDL_assert( pos < buffer->size );
 
 	buffer->pos = pos;
 }
@@ -217,9 +217,9 @@ static void generateSerializedComponents( const ECPS* ecps, SerializedEntityInfo
 
 void ecps_GenerateSerializedECPS( const ECPS* ecps, SerializedECPS* serializedECPS )
 {
-	ASSERT_AND_IF( ecps != NULL ) return;
-	ASSERT_AND_IF( serializedECPS != NULL ) return;
-	ASSERT_AND_IF( !ecps->isRunningProcess ) return;
+	ASSERT_AND_IF_NOT( ecps != NULL ) return;
+	ASSERT_AND_IF_NOT( serializedECPS != NULL ) return;
+	ASSERT_AND_IF_NOT( !ecps->isRunningProcess ) return;
 
 	serializedECPS->sbCompInfos = generateSerializedComponentInfo( ecps );
 	serializedECPS->sbEntityInfos = generateSerializedEntityInfo( ecps );
@@ -298,7 +298,7 @@ static bool deserializeEntityComponents( ECPS* ecps, SerializedEntityInfo* sbEnt
 				}
 			}
 
-			ASSERT_AND_IF( info.ecpsComponentID != INVALID_COMPONENT_ID ) return false;
+			ASSERT_AND_IF_NOT( info.ecpsComponentID != INVALID_COMPONENT_ID ) return false;
 
 			// add the component, then get back the data that has been allocated for it
 			//  sending in NULL as the data when it's expecting something will just zero it out
@@ -329,9 +329,9 @@ static bool deserializeEntityComponents( ECPS* ecps, SerializedEntityInfo* sbEnt
 
 void ecps_CreateEntitiesFromSerializedComponents( ECPS* ecps, SerializedECPS* serializedECPS )
 {
-	ASSERT_AND_IF( ecps != NULL ) return;
-	ASSERT_AND_IF( serializedECPS != NULL ) return;
-	ASSERT_AND_IF( !ecps->isRunningProcess ) return;
+	ASSERT_AND_IF_NOT( ecps != NULL ) return;
+	ASSERT_AND_IF_NOT( serializedECPS != NULL ) return;
+	ASSERT_AND_IF_NOT( !ecps->isRunningProcess ) return;
 
 	// make sure the components exist, mapping them from the ids to componentIDs
 	if( !deserializeMapComponentTypes( ecps, serializedECPS->sbCompInfos ) ) {
@@ -422,8 +422,8 @@ size_t serializationFileWriter( struct cmp_ctx_s* ctx, const void* data, size_t 
 // save and load to external files
 bool ecps_SaveSerializedECPS( const char* fileName, SerializedECPS* serializedECPS )
 {
-	ASSERT_AND_IF( fileName != NULL ) return false;
-	ASSERT_AND_IF( serializedECPS != NULL ) return false;
+	ASSERT_AND_IF_NOT( fileName != NULL ) return false;
+	ASSERT_AND_IF_NOT( serializedECPS != NULL ) return false;
 
 	// TODO: handle not overwriting an existing file if the writing fails
 	cmp_ctx_t cmp;
@@ -514,10 +514,10 @@ clean_up:
 
 bool ecps_LoadSerializedECPS( const char* fileName, SerializedECPS* serializedECPS )
 {
-	ASSERT_AND_IF( fileName != NULL ) return false;
-	ASSERT_AND_IF( serializedECPS != NULL ) return false;
-	ASSERT_AND_IF( serializedECPS->sbCompInfos == NULL ) return false;
-	ASSERT_AND_IF( serializedECPS->sbEntityInfos == NULL ) return false;
+	ASSERT_AND_IF_NOT( fileName != NULL ) return false;
+	ASSERT_AND_IF_NOT( serializedECPS != NULL ) return false;
+	ASSERT_AND_IF_NOT( serializedECPS->sbCompInfos == NULL ) return false;
+	ASSERT_AND_IF_NOT( serializedECPS->sbEntityInfos == NULL ) return false;
 
 	cmp_ctx_t cmp;
 	SDL_RWops* rwopsFile = openRWopsCMPFile( fileName, "rb", &cmp );

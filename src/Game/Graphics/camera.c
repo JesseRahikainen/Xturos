@@ -1,7 +1,6 @@
 #include "camera.h"
 
 #include <string.h>
-#include <assert.h>
 #include "System/platformLog.h"
 
 typedef struct {
@@ -126,7 +125,7 @@ void cam_SetCustomProjectionMatrix( int cam, Matrix4* mat )
 //  Returns <0 if there's a problem.
 int cam_SetState( int camera, Vector2 pos, float scale )
 {
-	assert( camera < NUM_CAMERAS );
+	SDL_assert( camera < NUM_CAMERAS );
 
 	cameras[camera].start.pos = pos;
 	cameras[camera].start.scale = scale;
@@ -141,7 +140,7 @@ int cam_SetState( int camera, Vector2 pos, float scale )
 //  Returns <0 if there's a problem.
 int cam_SetNextState( int camera, Vector2 pos, float scale )
 {
-	assert( camera < NUM_CAMERAS );
+	SDL_assert( camera < NUM_CAMERAS );
 
 	vec2_Scale( &pos, scale, &(cameras[camera].end.pos ) );
 	//cameras[camera].end.pos = pos;
@@ -154,7 +153,7 @@ int cam_SetNextState( int camera, Vector2 pos, float scale )
 //  Returns <0 if there's a problem
 int cam_SetNextOffset( int camera, Vector2 offset )
 {
-	assert( camera < NUM_CAMERAS );
+	SDL_assert( camera < NUM_CAMERAS );
 	vec2_Scale( &offset, cameras[camera].end.scale, &( cameras[camera].end.posOffset ) );
 	return 0;
 }
@@ -163,7 +162,7 @@ int cam_SetNextOffset( int camera, Vector2 offset )
 //  Returns <0 if there's a problem
 int cam_SetNextPos( int camera, Vector2 pos )
 {
-	assert( camera < NUM_CAMERAS );
+	SDL_assert( camera < NUM_CAMERAS );
 
 	vec2_Scale( &pos, cameras[camera].end.scale, &( cameras[camera].end.pos ) );
 	return 0;
@@ -173,7 +172,7 @@ int cam_SetNextPos( int camera, Vector2 pos )
 //  Returns <0 if there's a problem.
 int cam_MoveNextState( int camera, Vector2 delta, float scaleDelta )
 {
-	assert( camera < NUM_CAMERAS );
+	SDL_assert( camera < NUM_CAMERAS );
 	vec2_Add( &( cameras[camera].start.pos ), &delta, &( cameras[camera].end.pos ) );
 	cameras[camera].end.scale = cameras[camera].start.scale + scaleDelta;
 	if( cameras[camera].end.scale < 0.0f ) {
@@ -184,32 +183,32 @@ int cam_MoveNextState( int camera, Vector2 delta, float scaleDelta )
 
 int cam_GetCurrPos( int camera, Vector2* outPos )
 {
-	assert( outPos != NULL );
-	assert( camera < NUM_CAMERAS );
+	SDL_assert( outPos != NULL );
+	SDL_assert( camera < NUM_CAMERAS );
 	(*outPos) = cameras[camera].start.pos;
 	return 0;
 }
 
 int cam_GetNextPos( int camera, Vector2* outPos )
 {
-	assert( outPos != NULL );
-	assert( camera < NUM_CAMERAS );
+	SDL_assert( outPos != NULL );
+	SDL_assert( camera < NUM_CAMERAS );
 	(*outPos) = cameras[camera].end.pos;
 	return 0;
 }
 
 int cam_GetCurrScale( int camera, float* outScale )
 {
-	assert( outScale != NULL );
-	assert( camera < NUM_CAMERAS );
+	SDL_assert( outScale != NULL );
+	SDL_assert( camera < NUM_CAMERAS );
 	(*outScale) = cameras[camera].start.scale;
 	return 0;
 }
 
 int cam_GetNextScale( int camera, float* outScale )
 {
-	assert( outScale != NULL );
-	assert( camera < NUM_CAMERAS );
+	SDL_assert( outScale != NULL );
+	SDL_assert( camera < NUM_CAMERAS );
 	(*outScale) = cameras[camera].end.scale;
 	return 0;
 }
@@ -268,8 +267,8 @@ int cam_GetViewMatrix( int camera, Matrix4* out )
 //  Returns <0 if there's a problem.
 int cam_GetVPMatrix( int camera, Matrix4* out )
 {
-	assert( out != NULL );
-	assert( camera < NUM_CAMERAS );
+	SDL_assert( out != NULL );
+	SDL_assert( camera < NUM_CAMERAS );
 
 	if( !cameras[camera].isVPMatValid ) {
 		Vector2 pos;
@@ -304,8 +303,8 @@ int cam_GetVPMatrix( int camera, Matrix4* out )
 //  Returns <0 if there's a problem.
 int cam_GetInverseViewMatrix( int camera, Matrix4* out )
 {
-	assert( out != NULL );
-	assert( camera < NUM_CAMERAS );
+	SDL_assert( out != NULL );
+	SDL_assert( camera < NUM_CAMERAS );
 
 	if( !cameras[camera].isInvViewMatValid ) {
 		Matrix4 transTf, scaleTf;
@@ -334,9 +333,9 @@ int cam_GetInverseViewMatrix( int camera, Matrix4* out )
 
 int cam_ScreenPosToWorldPos( int camera, const Vector2* screenPos, Vector2* out )
 {
-	assert( screenPos != NULL );
-	assert( out != NULL );
-	assert( camera < NUM_CAMERAS );
+	SDL_assert( screenPos != NULL );
+	SDL_assert( out != NULL );
+	SDL_assert( camera < NUM_CAMERAS );
 
 	Matrix4 invView;
 	cam_GetInverseViewMatrix( camera, &invView );
@@ -352,7 +351,7 @@ int cam_ScreenPosToWorldPos( int camera, const Vector2* screenPos, Vector2* out 
 //  Returns <0 if there's a problem.
 int cam_TurnOnFlags( int camera, uint32_t flags )
 {
-	assert( camera < NUM_CAMERAS );
+	SDL_assert( camera < NUM_CAMERAS );
 	cameras[camera].renderFlags |= flags;
 	return 0;
 }
@@ -361,7 +360,7 @@ int cam_TurnOnFlags( int camera, uint32_t flags )
 //  Returns <0 if there's a problem.
 int cam_TurnOffFlags( int camera, uint32_t flags )
 {
-	assert( camera < NUM_CAMERAS );
+	SDL_assert( camera < NUM_CAMERAS );
 	cameras[camera].renderFlags &= ~flags;
 	return 0;
 }
@@ -370,7 +369,7 @@ int cam_TurnOffFlags( int camera, uint32_t flags )
 //  Returns <0 if there's a problem.
 int cam_SetFlags( int camera, uint32_t flags )
 {
-	assert( camera < NUM_CAMERAS );
+	SDL_assert( camera < NUM_CAMERAS );
 	cameras[camera].renderFlags = flags;
 	return 0;
 }
@@ -379,7 +378,7 @@ int cam_SetFlags( int camera, uint32_t flags )
 //  Returns 0 if there is something wrong with the index, also when no flags have been set.
 uint32_t cam_GetFlags( int camera )
 {
-	assert( camera < NUM_CAMERAS );
+	SDL_assert( camera < NUM_CAMERAS );
 	return cameras[camera].renderFlags;
 }
 

@@ -15,9 +15,15 @@ typedef enum {
     TF_RGBA
 } TextureFormat;
 
+typedef enum {
+    VS_NONE,
+    VS_INTERVAL,
+    VS_ADAPTIVE
+} VSync;
+
 // this header acts as an interface for the platform specific graphic functions
 
-bool gfxPlatform_Init( SDL_Window* window, int desiredRenderWidth, int desiredRenderHeight );
+bool gfxPlatform_Init( SDL_Window* window, int desiredRenderWidth, int desiredRenderHeight, VSync desiredVSync );
 
 int gfxPlatform_GetMaxSize( int desiredSize );
 

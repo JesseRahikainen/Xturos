@@ -237,7 +237,7 @@ void mixerCallback( void* userdata, Uint8* streamData, int len )
 
 int snd_LoadSample( const char* fileName, Uint8 desiredChannels, bool loops )
 {
-	assert( ( desiredChannels >= 1 ) && ( desiredChannels <= 2 ) );
+	SDL_assert( ( desiredChannels >= 1 ) && ( desiredChannels <= 2 ) );
 
 	int newIdx = -1;
 	for( int i = 0; ( i < ARRAY_SIZE( samples ) ) && ( newIdx < 0 ); ++i ) {
@@ -427,8 +427,8 @@ error:
 
 void snd_ThreadedLoadSample( const char* fileName, Uint8 desiredChannels, bool loops, int* outID, void (*onLoadDone)( int ) )
 {
-	assert( ( desiredChannels >= 1 ) && ( desiredChannels <= 2 ) );
-	assert( outID != NULL );
+	SDL_assert( ( desiredChannels >= 1 ) && ( desiredChannels <= 2 ) );
+	SDL_assert( outID != NULL );
 
 	(*outID) = -1;
 
@@ -452,7 +452,7 @@ void snd_ThreadedLoadSample( const char* fileName, Uint8 desiredChannels, bool l
 /* Sets up the SDL mixer. Returns 0 on success. */
 int snd_Init( unsigned int numGroups )
 {
-	assert( numGroups > 0 );
+	SDL_assert( numGroups > 0 );
 
 	// clear out the samples storage
 	SDL_memset( samples, 0, ARRAY_SIZE( samples ) * sizeof( samples[0] ) );
@@ -552,7 +552,7 @@ float snd_GetVolume( unsigned int group )
 {
     if( devID == 0 ) return 0.0f;
     
-	assert( group < sb_Count( sbSoundGroups ) );
+	SDL_assert( group < sb_Count( sbSoundGroups ) );
 
 	return sbSoundGroups[group].volume;
 }
@@ -561,8 +561,8 @@ void snd_SetVolume( float volume, unsigned int group )
 {
     if( devID == 0 ) return;
     
-	assert( group < sb_Count( sbSoundGroups ) );
-	assert( ( volume >= 0.0f ) && ( volume <= 1.0f ) );
+	SDL_assert( group < sb_Count( sbSoundGroups ) );
+	SDL_assert( ( volume >= 0.0f ) && ( volume <= 1.0f ) );
 
 	SDL_LockAudioDevice( devID ); {
 		sbSoundGroups[group].volume = volume;
@@ -595,8 +595,8 @@ EntityID snd_Play( int sampleID, float volume, float pitch, float pan, unsigned 
 		return INVALID_ENTITY_ID;
 	}
 
-	assert( group >= 0 );
-	assert( group < sb_Count( sbSoundGroups ) );
+	SDL_assert( group >= 0 );
+	SDL_assert( group < sb_Count( sbSoundGroups ) );
 
 	EntityID playingID = INVALID_ENTITY_ID;
 	SDL_LockAudioDevice( devID ); {
@@ -657,8 +657,8 @@ void snd_Stop( EntityID soundID )
 
 void snd_UnloadSample( int sampleID )
 {
-	assert( sampleID >= 0 );
-	assert( sampleID < MAX_SAMPLES );
+	SDL_assert( sampleID >= 0 );
+	SDL_assert( sampleID < MAX_SAMPLES );
 
 	if( samples[sampleID].data == NULL ) {
 		return;
@@ -681,8 +681,8 @@ void snd_UnloadSample( int sampleID )
 //***** Streaming
 int snd_LoadStreaming( const char* fileName, bool loops, unsigned int group )
 {
-	assert( group >= 0 );
-	assert( group < sb_Count( sbSoundGroups ) );
+	SDL_assert( group >= 0 );
+	SDL_assert( group < sb_Count( sbSoundGroups ) );
 
 	int newIdx = -1;
 	for( int i = 0; i < MAX_STREAMING_SOUNDS; ++i ) {
@@ -819,8 +819,8 @@ void snd_ThreadedLoadStreaming( const char* fileName, bool loops, unsigned int g
         return;
     }
     
-	assert( group >= 0 );
-	assert( group < sb_Count( sbSoundGroups ) );
+	SDL_assert( group >= 0 );
+	SDL_assert( group < sb_Count( sbSoundGroups ) );
 
 	(*outID) = -1;
 
@@ -861,7 +861,7 @@ void snd_PlayStreaming( int streamID, float volume, float pan, unsigned int star
 		return;
 	}
 
-	assert( ( streamID >= 0 ) && ( streamID < MAX_STREAMING_SOUNDS ) );
+	SDL_assert( ( streamID >= 0 ) && ( streamID < MAX_STREAMING_SOUNDS ) );
 
 	if( streamingSounds[streamID].playing ) {
 		return;
@@ -901,7 +901,7 @@ void snd_StopStreaming( int streamID )
 		return;
 	}
 
-	assert( ( streamID >= 0 ) && ( streamID < MAX_STREAMING_SOUNDS ) );
+	SDL_assert( ( streamID >= 0 ) && ( streamID < MAX_STREAMING_SOUNDS ) );
 	SDL_LockAudioDevice( devID ); {
 		streamingSounds[streamID].playing = false;
 		SDL_FreeAudioStream( streamingSounds[streamID].sdlStream );
@@ -933,7 +933,7 @@ bool snd_IsStreamPlaying( int streamID )
         return false;
     }
     
-	assert( ( streamID >= 0 ) && ( streamID < MAX_STREAMING_SOUNDS ) );
+	SDL_assert( ( streamID >= 0 ) && ( streamID < MAX_STREAMING_SOUNDS ) );
 	return streamingSounds[streamID].playing;
 }
 
@@ -943,7 +943,7 @@ void snd_ChangeStreamVolume( int streamID, float volume )
         return;
     }
     
-	assert( ( streamID >= 0 ) && ( streamID < MAX_STREAMING_SOUNDS ) );
+	SDL_assert( ( streamID >= 0 ) && ( streamID < MAX_STREAMING_SOUNDS ) );
 	SDL_LockAudioDevice( devID ); {
 		streamingSounds[streamID].volume = volume;
 	} SDL_UnlockAudioDevice( devID );
@@ -955,7 +955,7 @@ void snd_ChangeStreamPan( int streamID, float pan )
         return;
     }
     
-	assert( ( streamID >= 0 ) && ( streamID < MAX_STREAMING_SOUNDS ) );
+	SDL_assert( ( streamID >= 0 ) && ( streamID < MAX_STREAMING_SOUNDS ) );
 	SDL_LockAudioDevice( devID ); {
 		streamingSounds[streamID].pan = pan;
 	} SDL_UnlockAudioDevice( devID );
@@ -967,7 +967,7 @@ void snd_UnloadStream( int streamID )
         return;
     }
     
-	assert( ( streamID >= 0 ) && ( streamID < MAX_STREAMING_SOUNDS ) );
+	SDL_assert( ( streamID >= 0 ) && ( streamID < MAX_STREAMING_SOUNDS ) );
 	SDL_LockAudioDevice( devID ); {
 		streamingSounds[streamID].playing = false;
 		stb_vorbis_close( streamingSounds[streamID].access );

@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include <string.h>
-#include <assert.h>
+#include <SDL_assert.h>
 
 #include "Utils/stretchyBuffer.h"
 
@@ -90,7 +90,7 @@ static bool createProcessVA( ECPS* ecps,
 		if( !ecps_ct_IsComponentTypeValid( &( ecps->componentTypes ), compID ) ) {
 			llog( LOG_ERROR, "Invalid component type %i attempting to be used for process %s", compID, name );
 		}
-		assert( ecps_ct_IsComponentTypeValid( &( ecps->componentTypes ), compID ) );
+		SDL_assert( ecps_ct_IsComponentTypeValid( &( ecps->componentTypes ), compID ) );
 		ecps_cbf_SetFlagOn( &( outProcess->bitFlags ), compID );
 	}
 
@@ -192,7 +192,7 @@ static uint32_t createNewPackagedArray( ECPS* ecps,  const ComponentBitFlags* fl
 				}
 			}
 
-			assert( currentOffset <= INT32_MAX );
+			SDL_assert( currentOffset <= INT32_MAX );
 			newArray.structure.entries[i].offset = (int32_t)currentOffset;
 			currentOffset += ecps_ct_GetComponentTypeSize( &( ecps->componentTypes ), i );
 
@@ -221,7 +221,7 @@ static uint32_t createNewPackagedArray( ECPS* ecps,  const ComponentBitFlags* fl
 	sb_Push( ecps->componentData.sbComponentArrays, newArray );
 
 	size_t paIdx = sb_Count( ecps->componentData.sbComponentArrays ) - 1;
-	assert( paIdx <= UINT32_MAX );
+	SDL_assert( paIdx <= UINT32_MAX );
 	return (uint32_t)paIdx;
 }
 
@@ -252,7 +252,7 @@ static void removeEntityFromArray( ECPS* ecps, EntityID entityID )
 {
 	// find entity spot
 	uint32_t idx = idSet_GetIndex( entityID );
-	assert( idx < sb_Count( ecps->componentData.sbEntityDirectory ) );
+	SDL_assert( idx < sb_Count( ecps->componentData.sbEntityDirectory ) );
 	int32_t packedArrayIdx = ecps->componentData.sbEntityDirectory[idx].packedArrayIdx;
 	EntityDirectoryEntry* removedEDE = &( ecps->componentData.sbEntityDirectory[idx] );
 	uint8_t* entityToRemoveData = &( ecps->componentData.sbComponentArrays[packedArrayIdx].sbData[removedEDE->positionOffset] );
@@ -267,8 +267,8 @@ static void removeEntityFromArray( ECPS* ecps, EntityID entityID )
 // Sets up the ecps, ready to have components, processes, and entities created
 void ecps_StartInitialization( ECPS* ecps )
 {
-	assert( ecps != NULL );
-	assert( ecpsCurrID < UINT32_MAX && "Creating too many ecps systems" );
+	SDL_assert( ecps != NULL );
+	SDL_assert( ecpsCurrID < UINT32_MAX && "Creating too many ecps systems" );
 
 	ecps->isRunning = false;
 
@@ -296,7 +296,7 @@ void ecps_FinishInitialization( ECPS* ecps )
 // Clean up all the resources
 void ecps_CleanUp( ECPS* ecps )
 {
-	assert( ecps != NULL );
+	SDL_assert( ecps != NULL );
 
 	// need to call the clean up for each entity
 	// TODO: Specialize this out so we don't have to do any of the extra stuff associated with destroying all the entities
@@ -311,12 +311,12 @@ void ecps_CleanUp( ECPS* ecps )
 //  this can only be done before
 ComponentID ecps_AddComponentType( ECPS* ecps, const char* name, uint32_t version, size_t size, size_t align, CleanUpComponent cleanUp, VerifyComponent verify, SerializeComponent serialize, DeserializeComponent deserialize )
 {
-	assert( ecps != NULL );
+	SDL_assert( ecps != NULL );
 
 	// component types can only be added before we've started running
-	assert( !( ecps->isRunning ) );
-	assert( sb_Count( ecps->componentTypes.sbTypes ) < MAX_NUM_COMPONENT_TYPES );
-	assert( sb_Count( ecps->componentTypes.sbTypes ) < INVALID_COMPONENT_ID );
+	SDL_assert( !( ecps->isRunning ) );
+	SDL_assert( sb_Count( ecps->componentTypes.sbTypes ) < MAX_NUM_COMPONENT_TYPES );
+	SDL_assert( sb_Count( ecps->componentTypes.sbTypes ) < INVALID_COMPONENT_ID );
 
 	ComponentType newType;
 
@@ -337,7 +337,7 @@ ComponentID ecps_AddComponentType( ECPS* ecps, const char* name, uint32_t versio
 	// check to make sure the name is unique
 	for( size_t i = 0; i < sb_Count( ecps->componentTypes.sbTypes ); ++i ) {
 		bool isUnique = SDL_strcmp( newType.name, ecps->componentTypes.sbTypes[i].name ) != 0;
-		assert( isUnique );
+		SDL_assert( isUnique );
 	}
 #endif
 
@@ -352,8 +352,8 @@ bool ecps_CreateProcess( ECPS* ecps,
 	const char* name, PreProcFunc preProc, ProcFunc proc, PostProcFunc postProc,
 	Process* outProcess, size_t numComponents, ... )
 {
-	assert( ecps != NULL );
-	assert( outProcess != NULL );
+	SDL_assert( ecps != NULL );
+	SDL_assert( outProcess != NULL );
 
 	bool success = false;
 
@@ -369,7 +369,7 @@ bool ecps_CreateProcess( ECPS* ecps,
 //  or one off processes that you don't always need access to
 void ecps_RunCustomProcess( ECPS* ecps, PreProcFunc preProc, ProcFunc proc, PostProcFunc postProc, size_t numComponents, ... )
 {
-	assert( ecps != NULL );
+	SDL_assert( ecps != NULL );
 
 	// we'll create a temporary Process to use and just run it through ecps_RunProcess, hopefully won't cause any serious issues
 	Process tempProc;
@@ -391,13 +391,13 @@ void ecps_RunCustomProcess( ECPS* ecps, PreProcFunc preProc, ProcFunc proc, Post
 // run a process, must have been created with the associated entity-component-process system
 void ecps_RunProcess( ECPS* ecps, Process* process )
 {
-	assert( ecps != NULL );
-	assert( ecps->isRunning );
+	SDL_assert( ecps != NULL );
+	SDL_assert( ecps->isRunning );
 
 	size_t presize = sb_Count( ecps->sbCommandBuffer );
 
 	// verify the process is part of the entity-component-process system
-	assert( ( ecps->id ) == ( process->ecpsID ) );
+	SDL_assert( ( ecps->id ) == ( process->ecpsID ) );
 
 	// then run the process, looping through all the entities
 	if( process->preProc != NULL ) {
@@ -462,11 +462,11 @@ void ecps_RunProcess( ECPS* ecps, Process* process )
 				cmdBuffer = runRemoveComponentCommand( ecps, cmdBuffer );
 				break;
 			default:
-				assert( false && "Invalid command" );
+				SDL_assert( false && "Invalid command" );
 				break;
 			}
 			mem_Verify( );
-			assert( cmdBuffer <= ( bufferEnd + 1 ) );
+			SDL_assert( cmdBuffer <= ( bufferEnd + 1 ) );
 		}
 
 		sb_Clear( ecps->sbCommandBuffer );
@@ -484,7 +484,7 @@ static void createEntityVA( ECPS* ecps, EntityID entityID, size_t numComponents,
 		for( size_t i = 0; i < numComponents; ++i ) {
 			ComponentID compID = va_arg( list, ComponentID );
 			va_arg( list, void* );
-			//assert( ecps_ct_IsComponentTypeValid( &( ecps->componentTypes ), compID ) );
+			//SDL_assert( ecps_ct_IsComponentTypeValid( &( ecps->componentTypes ), compID ) );
 			if( ecps_ct_IsComponentTypeValid( &( ecps->componentTypes ), compID ) ) {
 				ecps_cbf_SetFlagOn( &entityBitFlags, compID );
 			} else {
@@ -526,7 +526,7 @@ static void createEntityVA( ECPS* ecps, EntityID entityID, size_t numComponents,
 
 static void pushCreateCommand( ECPS* ecps, EntityID entityID, size_t numComponents, va_list va )
 {
-	assert( numComponents <= UINT32_MAX );
+	SDL_assert( numComponents <= UINT32_MAX );
 
 	va_list list;
 
@@ -631,7 +631,7 @@ static uint8_t* runCreateCommand( ECPS* ecps, uint8_t* commandData )
 //  the returned id is 0 if the creation fails
 EntityID ecps_CreateEntity( ECPS* ecps, size_t numComponents, ... )
 {
-	assert( ecps != NULL );
+	SDL_assert( ecps != NULL );
 
 	EntityID entityID = idSet_ClaimID( &( ecps->idSet ) );
 	va_list list;
@@ -654,7 +654,7 @@ EntityID ecps_CreateEntity( ECPS* ecps, size_t numComponents, ... )
 // finds the entity with the given id
 bool ecps_GetEntityByID( const ECPS* ecps, EntityID entityID, Entity* outEntity )
 {
-	assert( ecps != NULL );
+	SDL_assert( ecps != NULL );
 
 	// get the packaged component array
 	uint32_t idx = idSet_GetIndex( entityID );
@@ -718,7 +718,7 @@ static int immediateAddComponentToEntity( ECPS* ecps, Entity* entity, ComponentI
 
 	int32_t fromPackedArrayIndex = directoryEntry->packedArrayIdx;
 	size_t fromCompArrayPos = directoryEntry->positionOffset;
-	assert( fromPackedArrayIndex >= 0 );
+	SDL_assert( fromPackedArrayIndex >= 0 );
 
 	fromData = &( ecps->componentData.sbComponentArrays[fromPackedArrayIndex].sbData[fromCompArrayPos] );
 	fromStructure = &( ecps->componentData.sbComponentArrays[fromPackedArrayIndex].structure );
@@ -819,8 +819,8 @@ static uint8_t* runAddComponentCommand( ECPS* ecps, uint8_t* commandData )
 //  returns whether the addition was a success or not
 int ecps_AddComponentToEntity( ECPS* ecps, Entity* entity, ComponentID componentID, void* data )
 {
-	assert( ecps != NULL );
-	assert( entity != NULL );
+	SDL_assert( ecps != NULL );
+	SDL_assert( entity != NULL );
 
 	if( !ecps_ct_IsComponentTypeValid( &( ecps->componentTypes ), componentID ) ) {
 		llog( LOG_DEBUG, "Attempting to add invalid component to entity." );
@@ -838,7 +838,7 @@ int ecps_AddComponentToEntity( ECPS* ecps, Entity* entity, ComponentID component
 // acts as ecps_AddComponentToEntity( ), but uses an entityID instead of an Entity structure
 int ecps_AddComponentToEntityByID( ECPS* ecps, EntityID entityID, ComponentID componentID, void* data )
 {
-	assert( ecps != NULL );
+	SDL_assert( ecps != NULL );
 
 	Entity entity;
 
@@ -882,7 +882,7 @@ static int immediateRemoveComponentFromEntity( ECPS* ecps, Entity* entity, Compo
 
 	int32_t fromPackedArrayIndex = directoryEntry->packedArrayIdx;
 	size_t fromCompArrayPos = directoryEntry->positionOffset;
-	assert( fromPackedArrayIndex >= 0 );
+	SDL_assert( fromPackedArrayIndex >= 0 );
 
 	fromData = &( ecps->componentData.sbComponentArrays[fromPackedArrayIndex].sbData[fromCompArrayPos] );
 	fromStructure = &( ecps->componentData.sbComponentArrays[fromPackedArrayIndex].structure );
@@ -895,6 +895,12 @@ static int immediateRemoveComponentFromEntity( ECPS* ecps, Entity* entity, Compo
 	// no reason to remove the entity
 	if( fromStructure->entries[componentID].offset < 0 ) {
 		return 0;
+	}
+
+	// get the data and do any necessary clean up
+	if( ecps->componentTypes.sbTypes[componentID].cleanUp != NULL ) {
+		void* compData = &( fromData[fromStructure->entries[componentID].offset] );
+		ecps->componentTypes.sbTypes[componentID].cleanUp( ecps, entity, compData, false );
 	}
 
 	// get from bit flags and generate new bit flags
@@ -911,12 +917,6 @@ static int immediateRemoveComponentFromEntity( ECPS* ecps, Entity* entity, Compo
 
 	toData = &( ecps->componentData.sbComponentArrays[toPackedArrayIndex].sbData[currOffset] );
 	toStructure = &( ecps->componentData.sbComponentArrays[toPackedArrayIndex].structure );
-
-	// get the data and do any necessary clean up
-	if( ecps->componentTypes.sbTypes[componentID].cleanUp != NULL ) {
-		void* compData = &( fromData[ fromStructure->entries[componentID].offset ] );
-		ecps->componentTypes.sbTypes[componentID].cleanUp( compData );
-	}
 
 	// copy over
 	entityCopy( ecps, fromData, fromStructure, toData, toStructure );
@@ -962,8 +962,8 @@ static uint8_t* runRemoveComponentCommand( ECPS* ecps, uint8_t* commandData )
 //  modifies the passed in Entity to match the new structure
 int ecps_RemoveComponentFromEntity( ECPS* ecps, Entity* entity, ComponentID componentID )
 {
-	assert( ecps != NULL );
-	assert( entity != NULL );
+	SDL_assert( ecps != NULL );
+	SDL_assert( entity != NULL );
 
 	if( ecps->isRunningProcess ) {
 		pushRemoveComponentCommand( ecps, entity, componentID );
@@ -975,7 +975,7 @@ int ecps_RemoveComponentFromEntity( ECPS* ecps, Entity* entity, ComponentID comp
 
 int ecps_RemoveComponentFromEntityByID( ECPS* ecps, EntityID entityID, ComponentID componentID )
 {
-	assert( ecps != NULL );
+	SDL_assert( ecps != NULL );
 
 	Entity entity;
 	if( !ecps_GetEntityByID( ecps, entityID, &entity ) ) {
@@ -987,14 +987,14 @@ int ecps_RemoveComponentFromEntityByID( ECPS* ecps, EntityID entityID, Component
 
 bool ecps_DoesEntityHaveComponent( const Entity* entity, ComponentID componentID )
 {
-	assert( entity != NULL );
+	SDL_assert( entity != NULL );
 
 	return ( entity->structure->entries[componentID].offset >= 0 );
 }
 
 bool ecps_DoesEntityHaveComponentByID( const ECPS* ecps, EntityID entityID, ComponentID componentID )
 {
-	assert( ecps != NULL );
+	SDL_assert( ecps != NULL );
 
 	Entity entity;
 	if( !ecps_GetEntityByID( ecps, entityID, &entity ) ) {
@@ -1008,8 +1008,8 @@ bool ecps_DoesEntityHaveComponentByID( const ECPS* ecps, EntityID entityID, Comp
 //  puts in NULL if the entity doesn't have that component
 bool ecps_GetComponentFromEntity( const Entity* entity, ComponentID componentID, void** outData )
 {
-	assert( entity != NULL );
-	assert( outData != NULL );
+	SDL_assert( entity != NULL );
+	SDL_assert( outData != NULL );
 
 	if( componentID == INVALID_COMPONENT_ID ) {
 		llog( LOG_ERROR, "Attempting to retrieve an invalid component type from entity %08X", entity->id );
@@ -1029,7 +1029,7 @@ bool ecps_GetComponentFromEntity( const Entity* entity, ComponentID componentID,
 
 bool ecps_GetComponentFromEntityByID( const ECPS* ecps, EntityID entityID, ComponentID componentID, void** outData )
 {
-	assert( ecps != NULL );
+	SDL_assert( ecps != NULL );
 
 	Entity entity;
 	if( !ecps_GetEntityByID( ecps, entityID, &entity ) ) {
@@ -1041,8 +1041,8 @@ bool ecps_GetComponentFromEntityByID( const ECPS* ecps, EntityID entityID, Compo
 
 bool ecps_GetEntityAndComponentByID( const ECPS* ecps, EntityID entityID, ComponentID componentID, Entity* outEntity, void** outData )
 {
-	assert( ecps != NULL );
-	assert( outEntity != NULL );
+	SDL_assert( ecps != NULL );
+	SDL_assert( outEntity != NULL );
 
 	if( !ecps_GetEntityByID( ecps, entityID, outEntity ) ) {
 		return false;
@@ -1051,7 +1051,7 @@ bool ecps_GetEntityAndComponentByID( const ECPS* ecps, EntityID entityID, Compon
 	return ecps_GetComponentFromEntity( outEntity, componentID, outData );
 }
 
-static void runCleanUpOnEntityComponents( ECPS* ecps, EntityID entityID )
+static void runCleanUpOnEntityComponents( ECPS* ecps, EntityID entityID, bool fullCleanUp )
 {
 	// go through all the components in the entity and run clean up code if necessary
 	//  get the structure for the entity
@@ -1063,13 +1063,18 @@ static void runCleanUpOnEntityComponents( ECPS* ecps, EntityID entityID )
 	//  get the data for the entity
 	uint8_t* data = ( pca.sbData ) + offset;
 
+	Entity entity;
+	entity.id = entityID;
+	entity.data = data;
+	entity.structure = &(pca.structure);
+
 	//  find all types that have a clean up and call them
 	for( uint32_t i = 0; i < MAX_NUM_COMPONENT_TYPES; ++i ) {
 		if( pca.structure.entries[i].offset < 0 ) continue; // not used so skip
 		if( ecps->componentTypes.sbTypes[i].cleanUp == NULL ) continue; // no cleanup necessary, skip
 
 		void* cleanUpData = (void*)( data + pca.structure.entries[i].offset );
-		ecps->componentTypes.sbTypes[i].cleanUp( cleanUpData );
+		ecps->componentTypes.sbTypes[i].cleanUp( ecps, &entity, cleanUpData, fullCleanUp );
 	}
 }
 
@@ -1081,7 +1086,7 @@ static void immediateDestroyEntity( ECPS* ecps, EntityID entityID )
 		return;
 	}
 	//  we have to loop through each component the entity contains, and if it has a clean up run it on the data
-	runCleanUpOnEntityComponents( ecps, entityID );
+	runCleanUpOnEntityComponents( ecps, entityID, false );
 
 	removeEntityFromArray( ecps, entityID );
 	idSet_ReleaseID( &( ecps->idSet ), entityID );
@@ -1109,13 +1114,13 @@ static uint8_t* runDestroyEntityCommand( ECPS* ecps, uint8_t* commandData )
 
 void ecps_DestroyEntity( ECPS* ecps, const Entity* entity )
 {
-	assert( entity != NULL );
+	SDL_assert( entity != NULL );
 	ecps_DestroyEntityByID( ecps, entity->id );
 }
 
 void ecps_DestroyEntityByID( ECPS* ecps, EntityID entityID )
 {
-	assert( ecps != NULL );
+	SDL_assert( ecps != NULL );
 
 	if( entityID == INVALID_ENTITY_ID ) return;
 
@@ -1128,13 +1133,13 @@ void ecps_DestroyEntityByID( ECPS* ecps, EntityID entityID )
 
 void ecps_DestroyAllEntities( ECPS* ecps )
 {
-	assert( ecps != NULL );
-	assert( !( ecps->isRunningProcess ) );
+	SDL_assert( ecps != NULL );
+	SDL_assert( !( ecps->isRunningProcess ) );
 
 	// go through each entity and run necessary clean up
-	//  TODO: we can speed this up by going directly through the data and not looping through the entities
+	//  TODO: we can speed this up by going directly through the data and not looping through the entities, but do we need to speed it up?
 	for( EntityID currID = idSet_GetFirstValidID( &( ecps->idSet ) ); currID != INVALID_ENTITY_ID; currID = idSet_GetNextValidID( &( ecps->idSet ), currID ) ) {
-		runCleanUpOnEntityComponents( ecps, currID );
+		runCleanUpOnEntityComponents( ecps, currID, true );
 	}
 
 	idSet_Clear( &( ecps->idSet ) );
@@ -1155,8 +1160,8 @@ void ecps_DestroyAllEntities( ECPS* ecps )
 
 SerializeComponent ecps_GetComponentSerializtionFunction( const ECPS* ecps, ComponentID componentID )
 {
-	assert( ecps != NULL );
-	assert( componentID < sb_Count( ecps->componentTypes.sbTypes ) );
+	SDL_assert( ecps != NULL );
+	SDL_assert( componentID < sb_Count( ecps->componentTypes.sbTypes ) );
 
 	if( componentID >= sb_Count( ecps->componentTypes.sbTypes ) ) {
 		return NULL;
@@ -1166,8 +1171,8 @@ SerializeComponent ecps_GetComponentSerializtionFunction( const ECPS* ecps, Comp
 
 DeserializeComponent ecps_GetComponentDeserializationFunction( const ECPS* ecps, ComponentID componentID )
 {
-	assert( ecps != NULL );
-	assert( componentID < sb_Count( ecps->componentTypes.sbTypes ) );
+	SDL_assert( ecps != NULL );
+	SDL_assert( componentID < sb_Count( ecps->componentTypes.sbTypes ) );
 
 	if( componentID >= sb_Count( ecps->componentTypes.sbTypes ) ) {
 		return NULL;
@@ -1243,7 +1248,7 @@ void ecps_DumpAllEntities( ECPS* ecps, const char* tag )
 		Entity entity;
 		
 		// we should always be able to find the entity
-		assert( ecps_GetEntityByID( ecps, id, &entity ) ); 
+		SDL_assert( ecps_GetEntityByID( ecps, id, &entity ) ); 
 
 		bool isFirst = true;
 		sb_Clear( sbTypeList );

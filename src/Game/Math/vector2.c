@@ -1,6 +1,5 @@
 #include "vector2.h"
 #include "mathUtil.h"
-#include <assert.h>
 #include <math.h>
 #include <string.h>
 #include <SDL_assert.h>
@@ -182,24 +181,6 @@ float vec2_RotationRadians( const Vector2* v )
 	SDL_assert( v != NULL );
 
 	float dir = atan2f( -v->y, -v->x ) - ( M_PI_F / 2.0f );
-	return dir;
-}
-
-Vector2* vec2_NormalFromSpineRot( float rotRad, Vector2* out )
-{
-	SDL_assert( out != NULL );
-
-	out->x = -sinf( rotRad );
-	out->y = -cosf( rotRad );
-
-	return out;
-}
-
-float vec2_SpineRotationRadians( const Vector2* v )
-{
-	assert( v != NULL );
-
-	float dir = atan2f( v->y, -v->x ) + ( M_PI_F / 2.0f );
 	return dir;
 }
 

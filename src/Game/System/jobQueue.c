@@ -2,7 +2,6 @@
 
 #include <stddef.h>
 #include <SDL.h>
-#include <assert.h>
 
 #include "System/platformLog.h"
 #include "Utils/stretchyBuffer.h"
@@ -45,7 +44,7 @@ static int jobThread( void* data )
 
 int jq_Initialize( uint8_t numThreads )
 {
-	assert( numThreads > 0 );
+	SDL_assert( numThreads > 0 );
 
 	sbThreadPool = NULL;
 	jobQueue.ringBuffer = NULL;

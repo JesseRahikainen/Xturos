@@ -547,7 +547,7 @@ enum STBVorbisError
 #ifndef STB_VORBIS_NO_CRT
 #include <stdlib.h>
 #include <string.h>
-#include <assert.h>
+#include <SDL_assert.h>
 #include <math.h>
 #if !(defined(__APPLE__) || defined(MACOSX) || defined(macintosh) || defined(Macintosh))
 //#include <malloc.h>
@@ -1032,7 +1032,7 @@ static int compute_codewords(Codebook *c, uint8 *len, int n, uint32 *values)
    memset(available, 0, sizeof(available));
    // find the first entry
    for (k=0; k < n; ++k) if (len[k] < NO_CODE) break;
-   if (k == n) { assert(c->sorted_entries == 0); return TRUE; }
+   if (k == n) { SDL_assert(c->sorted_entries == 0); return TRUE; }
    // add to the list
    add_entry(c, 0, k, m++, len[k], values);
    // add all available leaves
@@ -1050,17 +1050,17 @@ static int compute_codewords(Codebook *c, uint8 *len, int n, uint32 *values)
       // which is what the specification calls for)
       // note that this property, and the fact we can never have
       // more than one free leaf at a given level, isn't totally
-      // trivial to prove, but it seems true and the assert never
+      // trivial to prove, but it seems true and the SDL_assert never
       // fires, so!
       while (z > 0 && !available[z]) --z;
-      if (z == 0) { assert(0); return FALSE; }
+      if (z == 0) { SDL_assert(0); return FALSE; }
       res = available[z];
       available[z] = 0;
       add_entry(c, bit_reverse(res), i, m++, len[i], values);
       // propogate availability up the tree
       if (z != len[i]) {
          for (y=len[i]; y > z; --y) {
-            assert(available[y] == 0);
+            SDL_assert(available[y] == 0);
             available[y] = res + (1 << (32-y));
          }
       }
@@ -1107,7 +1107,7 @@ static int STBV_CDECL uint32_compare(const void *p, const void *q)
 
 static int include_in_sort(Codebook *c, uint8 len)
 {
-   if (c->sparse) { assert(len != NO_CODE); return TRUE; }
+   if (c->sparse) { SDL_assert(len != NO_CODE); return TRUE; }
    if (len == NO_CODE) return FALSE;
    if (len > STB_VORBIS_FAST_HUFFMAN_LENGTH) return TRUE;
    return FALSE;
@@ -1127,7 +1127,7 @@ static void compute_sorted_huffman(Codebook *c, uint8 *lengths, uint32 *values)
       for (i=0; i < c->entries; ++i)
          if (include_in_sort(c, lengths[i])) 
             c->sorted_codewords[k++] = bit_reverse(c->codewords[i]);
-      assert(k == c->sorted_entries);
+      SDL_assert(k == c->sorted_entries);
    } else {
       for (i=0; i < c->sorted_entries; ++i)
          c->sorted_codewords[i] = bit_reverse(c->codewords[i]);
@@ -1157,7 +1157,7 @@ static void compute_sorted_huffman(Codebook *c, uint8 *lengths, uint32 *values)
                n >>= 1;
             }
          }
-         assert(c->sorted_codewords[x] == code);
+         SDL_assert(c->sorted_codewords[x] == code);
          if (c->sparse) {
             c->sorted_values[x] = values[i];
             c->codeword_lengths[x] = (uint8)huff_len;
@@ -1182,8 +1182,8 @@ static int lookup1_values(int entries, int dim)
    int r = (int) floor(exp((float) log((float) entries) / dim));
    if ((int) floor(pow((float) r+1, dim)) <= entries)   // (int) cast for MinGW warning;
       ++r;                                              // floor() to avoid _ftol() when non-CRT
-   assert(pow((float) r+1, dim) > entries);
-   assert((int) floor(pow((float) r, dim)) <= entries); // (int),floor() as above
+   SDL_assert(pow((float) r+1, dim) > entries);
+   SDL_assert((int) floor(pow((float) r, dim)) <= entries); // (int),floor() as above
    return r;
 }
 
@@ -1495,7 +1495,7 @@ static int next_segment(vorb *f)
    }
    if (f->next_seg >= f->segment_count)
       f->next_seg = -1;
-   assert(f->bytes_in_seg == 0);
+   SDL_assert(f->bytes_in_seg == 0);
    f->bytes_in_seg = (uint8)len;
    return len;
 }
@@ -1509,7 +1509,7 @@ static int get8_packet_raw(vorb *f)
       if (f->last_seg) return EOP;
       else if (!next_segment(f)) return EOP;
    }
-   assert(f->bytes_in_seg > 0);
+   SDL_assert(f->bytes_in_seg > 0);
    --f->bytes_in_seg;
    ++f->packet_bytes;
    return get8(f);
@@ -1590,7 +1590,7 @@ static int codebook_decode_scalar_raw(vorb *f, Codebook *c)
    int i;
    prep_huffman(f);
 
-   assert(c->sorted_codewords || c->codewords);
+   SDL_assert(c->sorted_codewords || c->codewords);
    // cases to use binary search: sorted_codewords && !c->codewords
    //                             sorted_codewords && c->entries > 8
    if (c->entries > 8 ? c->sorted_codewords!=NULL : !c->codewords) {
@@ -1623,7 +1623,7 @@ static int codebook_decode_scalar_raw(vorb *f, Codebook *c)
    }
 
    // if small, linear search
-   assert(!c->sparse);
+   SDL_assert(!c->sparse);
    for (i=0; i < c->entries; ++i) {
       if (c->codeword_lengths[i] == NO_CODE) continue;
       if (c->codewords[i] == (f->acc & ((1 << c->codeword_lengths[i])-1))) {
@@ -1717,7 +1717,7 @@ static int codebook_decode_start(vorb *f, Codebook *c)
       error(f, VORBIS_invalid_stream);
    else {
       DECODE_VQ(z,f,c);
-      if (c->sparse) assert(z < c->sorted_entries);
+      if (c->sparse) SDL_assert(z < c->sorted_entries);
       if (z < 0) {  // check for EOP
          if (!f->bytes_in_seg)
             if (f->last_seg)
@@ -1811,7 +1811,7 @@ static int codebook_decode_deinterleave_repeat(vorb *f, Codebook *c, float **out
       float last = CODEBOOK_ELEMENT_BASE(c);
       DECODE_VQ(z,f,c);
       #ifndef STB_VORBIS_DIVIDES_IN_CODEBOOK
-      assert(!c->sparse || z < c->sorted_entries);
+      SDL_assert(!c->sparse || z < c->sorted_entries);
       #endif
       if (z < 0) {
          if (!f->bytes_in_seg)
@@ -2464,7 +2464,7 @@ static void imdct_step3_iter0_loop(int n, float *e, int i_off, int k_off, float 
    float *ee2 = ee0 + k_off;
    int i;
 
-   assert((n & 3) == 0);
+   SDL_assert((n & 3) == 0);
    for (i=(n>>2); i > 0; --i) {
       float k00_20, k01_21;
       k00_20  = ee0[ 0] - ee2[ 0];
@@ -2867,7 +2867,7 @@ static void inverse_mdct(float *buffer, int n, vorb *f, int blocktype)
 
 
    // data must be in buf2
-   assert(v == buf2);
+   SDL_assert(v == buf2);
 
    // step 7   (paper output is v, now v)
    // this is now in place
@@ -3053,7 +3053,7 @@ void inverse_mdct_naive(float *buffer, int n)
    // step 4
    for (i=0; i < n8; ++i) {
       int j = bit_reverse(i) >> (32-ld+3);
-      assert(j < n8);
+      SDL_assert(j < n8);
       if (i == j) {
          // paper bug: original code probably swapped in place; if copying,
          //            need to directly copy in this case
@@ -3114,7 +3114,7 @@ static float *get_window(vorb *f, int len)
    len <<= 1;
    if (len == f->blocksize_0) return f->window[0];
    if (len == f->blocksize_1) return f->window[1];
-   assert(0);
+   SDL_assert(0);
    return NULL;
 }
 
@@ -3189,7 +3189,7 @@ static int vorbis_decode_initial(vorb *f, int *p_left_start, int *p_left_end, in
    }
 
    if (f->alloc.alloc_buffer)
-      assert(f->alloc.alloc_buffer_length_in_bytes == f->temp_offset);
+      SDL_assert(f->alloc.alloc_buffer_length_in_bytes == f->temp_offset);
 
    i = get_bits(f, ilog(f->mode_count-1));
    if (i == EOP) return FALSE;
@@ -3336,7 +3336,7 @@ static int vorbis_decode_packet_rest(vorb *f, int *len, Mode *m, int left_start,
    // at this point we've decoded all floors
 
    if (f->alloc.alloc_buffer)
-      assert(f->alloc.alloc_buffer_length_in_bytes == f->temp_offset);
+      SDL_assert(f->alloc.alloc_buffer_length_in_bytes == f->temp_offset);
 
    // re-enable coupled channels if necessary
    memcpy(really_zero_channel, zero_channel, sizeof(really_zero_channel[0]) * f->channels);
@@ -3368,7 +3368,7 @@ static int vorbis_decode_packet_rest(vorb *f, int *len, Mode *m, int left_start,
    }
 
    if (f->alloc.alloc_buffer)
-      assert(f->alloc.alloc_buffer_length_in_bytes == f->temp_offset);
+      SDL_assert(f->alloc.alloc_buffer_length_in_bytes == f->temp_offset);
 
 // INVERSE COUPLING
    stb_prof(14);
@@ -3477,7 +3477,7 @@ static int vorbis_decode_packet_rest(vorb *f, int *len, Mode *m, int left_start,
       f->current_loc += (right_start - left_start);
 
    if (f->alloc.alloc_buffer)
-      assert(f->alloc.alloc_buffer_length_in_bytes == f->temp_offset);
+      SDL_assert(f->alloc.alloc_buffer_length_in_bytes == f->temp_offset);
    *len = right_end;  // ignore samples after the window goes to 0
    return TRUE;
 }
@@ -4128,7 +4128,7 @@ static int start_decoder(vorb *f)
    f->first_decode = TRUE;
 
    if (f->alloc.alloc_buffer) {
-      assert(f->temp_offset == f->alloc.alloc_buffer_length_in_bytes);
+      SDL_assert(f->temp_offset == f->alloc.alloc_buffer_length_in_bytes);
       // check if there's enough temp memory so we don't error later
       if (f->setup_offset + sizeof(*f) + f->temp_memory_required > (unsigned) f->temp_offset)
          return error(f, VORBIS_outofmem);
@@ -4569,7 +4569,7 @@ static int vorbis_analyze_page(stb_vorbis *f, ProbedPage *z)
 
    // parse the header
    getn(f, header, 27);
-   assert(header[0] == 'O' && header[1] == 'g' && header[2] == 'g' && header[3] == 'S');
+   SDL_assert(header[0] == 'O' && header[1] == 'g' && header[2] == 'g' && header[3] == 'S');
    getn(f, lacing, header[26]);
 
    // determine the length of the payload
@@ -4746,7 +4746,7 @@ static int vorbis_seek_frame_from_page(stb_vorbis *f, uint32 page_start, uint32 
       // (which means frame-2+1 total frames) then decode frame-1,
       // then leave frame pending
       frames_to_skip = frame - 1;
-      assert(frames_to_skip >= 0);
+      SDL_assert(frames_to_skip >= 0);
       data_to_skip = -1;      
    }
 
@@ -4777,8 +4777,8 @@ static int vorbis_seek_frame_from_page(stb_vorbis *f, uint32 page_start, uint32 
       if (target_sample != frame_start) {
          int n;
          stb_vorbis_get_frame_float(f, &n, NULL);
-         assert(target_sample > frame_start);
-         assert(f->channel_buffer_start + (int) (target_sample-frame_start) < f->channel_buffer_end);
+         SDL_assert(target_sample > frame_start);
+         SDL_assert(f->channel_buffer_start + (int) (target_sample-frame_start) < f->channel_buffer_end);
          f->channel_buffer_start += (target_sample - frame_start);
       }
    }
@@ -5215,7 +5215,7 @@ static void convert_channels_short_interleaved(int buf_c, short *buffer, int dat
    int i;
    check_endianness();
    if (buf_c != data_c && buf_c <= 2 && data_c <= 6) {
-      assert(buf_c == 2);
+      SDL_assert(buf_c == 2);
       for (i=0; i < buf_c; ++i)
          compute_stereo_samples(buffer, data_c, data, d_offset, len);
    } else {
@@ -5435,7 +5435,7 @@ int stb_vorbis_get_samples_float(stb_vorbis *f, int channels, float **buffer, in
     0.99996 - bracket #include <malloc.h> for macintosh compilation by Laurent Gomila
     0.99995 - use union instead of pointer-cast for fast-float-to-int to avoid alias-optimization problem
     0.99994 - change fast-float-to-int to work in single-precision FPU mode, remove endian-dependence
-    0.99993 - remove assert that fired on legal files with empty tables
+    0.99993 - remove SDL_assert that fired on legal files with empty tables
     0.99992 - rewind-to-start
     0.99991 - bugfix to stb_vorbis_get_samples_short by Bernhard Wodo
     0.9999 - (should have been 0.99990) fix no-CRT support, compiling as C++

@@ -2,7 +2,7 @@
 
 #include <stdlib.h>
 #include <math.h>
-#include <assert.h>
+#include <SDL_assert.h>
 #include <SDL.h>
 
 #include "Math/mathUtil.h"
@@ -137,7 +137,7 @@ int32_t rand_GetRangeS32( RandomGroup* rg, int32_t min, int32_t max )
 
 uint32_t rand_GetRangeU32( RandomGroup* rg, uint32_t min, uint32_t max )
 {
-	assert( min <= max );
+	SDL_assert( min <= max );
 	uint32_t range = ( max - min );
 	if( range <= 0 ) {
 		return min;
@@ -153,7 +153,7 @@ size_t rand_GetArrayEntry( RandomGroup* rg, size_t arraySize )
 
 size_t rand_GetArrayEntryInRange( RandomGroup* rg, size_t min, size_t max )
 {
-	assert( min <= max );
+	SDL_assert( min <= max );
 	size_t range = ( max - min );
 	if( range <= 0 ) {
 		return min;
@@ -164,7 +164,7 @@ size_t rand_GetArrayEntryInRange( RandomGroup* rg, size_t min, size_t max )
 
 Vector2* rand_PointInUnitCircle( RandomGroup* rg, Vector2* out )
 {
-	assert( out != NULL );
+	SDL_assert( out != NULL );
 
 	// todo: test this versus rejection sampling to see which is faster
 	float d = sqrtf( rand_GetNormalizedFloat( rg ) );
@@ -183,7 +183,7 @@ bool rand_Choice( RandomGroup* rg )
 
 void entropyRoll_Init( EntropyRoller* roller, RandomGroup* rg )
 {
-	assert( roller != NULL );
+	SDL_assert( roller != NULL );
 
 	roller->rg = rg;
 	roller->entropy = rand_GetNormalizedFloat( rg );
@@ -191,9 +191,9 @@ void entropyRoll_Init( EntropyRoller* roller, RandomGroup* rg )
 
 bool entropyRoll_Roll( EntropyRoller* roller, float chanceSuccess )
 {
-	assert( roller != NULL );
-	assert( chanceSuccess >= 0.0f );
-	assert( chanceSuccess <= 1.0f );
+	SDL_assert( roller != NULL );
+	SDL_assert( chanceSuccess >= 0.0f );
+	SDL_assert( chanceSuccess <= 1.0f );
 
 	if( chanceSuccess >= 1.0f ) {
 		return true;
@@ -213,7 +213,7 @@ bool entropyRoll_Roll( EntropyRoller* roller, float chanceSuccess )
 
 void infiniteListSelector_Init( InfiniteListSelector* selector, RandomGroup* rg, int invalidId )
 {
-	assert( selector != NULL );
+	SDL_assert( selector != NULL );
 
 	selector->chosenId = invalidId;
 	selector->rg = rg;
@@ -222,7 +222,7 @@ void infiniteListSelector_Init( InfiniteListSelector* selector, RandomGroup* rg,
 
 void infiniteListSelector_Choose( InfiniteListSelector* selector, int itemId, uint32_t itemWeight )
 {
-	assert( selector != NULL );
+	SDL_assert( selector != NULL );
 
 	if( itemWeight == 0 ) return;
 

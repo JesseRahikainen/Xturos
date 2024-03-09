@@ -5,6 +5,7 @@
 
 #include "Graphics/color.h"
 #include "Math/vector2.h"
+#include "Math/matrix3.h"
 
 typedef enum {
 	HORIZ_ALIGN_LEFT,
@@ -41,13 +42,16 @@ void txt_ThreadedLoadFont( const char* fileName, float pixelHeight, int* outFont
 // Frees up the font specified by fontID.
 void txt_UnloadFont( int fontID );
 
+// Calculates the final render size of the string.
+void txt_CalculateStringRenderSize( const char* utf8Str, int fontID, float desiredPixelSize, Vector2* outSize );
+
 // Draws a string on the screen. The base line is determined by pos.
 void txt_DisplayString( const char* utf8Str, Vector2 pos, Color clr, HorizTextAlignment hAlign, VertTextAlignment vAlign,
 	int fontID, int camFlags, int8_t depth, float desiredPixelSize );
 
 // Draws a string on the screen to an area. Splits up lines and such. If outCharPos is not equal to NULL it will
 //  grab the position of the character at storeCharPos and put it in there. Returns if outCharPos is valid.
-bool txt_DisplayTextArea( const uint8_t* utf8Str, Vector2 upperLeft, Vector2 size, Color clr,
+bool txt_DisplayTextArea( const uint8_t* utf8Str, const Matrix3* centerTf, Vector2 size, Color clr,
 	HorizTextAlignment hAlign, VertTextAlignment vAlign, int fontID, size_t storeCharPos, Vector2* outCharPos,
 	uint32_t camFlags, int8_t depth, float desiredPixelSize );
 

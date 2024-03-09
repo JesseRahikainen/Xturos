@@ -2,13 +2,16 @@
 
 #include <SDL_syswm.h>
 #include <stdlib.h>
-#include <assert.h>
+#include <SDL_assert.h>
 #include <math.h>
 #include <string.h>
 
 #include "camera.h"
 #include "Math/mathUtil.h"
 #include "Graphics/Platform/graphicsPlatform.h"
+#include "System/systems.h"
+#include "gameState.h"
+#include "System/gameTime.h"
 
 #include "images.h"
 #include "debugRendering.h"
@@ -72,7 +75,7 @@ int gfx_Init( SDL_Window* window, int desiredRenderWidth, int desiredRenderHeigh
 	currentTime = 0.0f;
 	endTime = 0.0f;
 
-	if( !gfxPlatform_Init( window, desiredRenderWidth, desiredRenderHeight ) ) {
+	if( !gfxPlatform_Init( window, desiredRenderWidth, desiredRenderHeight, VS_ADAPTIVE ) ) {
 		return -1;
 	}
 	
@@ -83,7 +86,7 @@ int gfx_Init( SDL_Window* window, int desiredRenderWidth, int desiredRenderHeigh
 	gfx_SetWindowSize( windowWidth, windowHeight );
 
 	// initialize everything else
-	if( img_Init( ) < 0 ) {
+	if( !img_Init( ) ) {
 		return -1;
 	}
 	llog( LOG_INFO, "Images initialized." );
@@ -174,8 +177,8 @@ void gfx_RenderResize( SDL_Window* window, int newRenderWidth, int newRenderHeig
 
 void gfx_GetWindowSize( int* outWidth, int* outHeight )
 {
-	assert( outWidth != NULL );
-	assert( outHeight != NULL );
+	SDL_assert( outWidth != NULL );
+	SDL_assert( outHeight != NULL );
 
 	(*outWidth) = windowRenderX1 - windowRenderX0;
 	(*outHeight) = windowRenderY1 - windowRenderY0;
@@ -186,8 +189,8 @@ Just gets the size.
 */
 void gfx_GetRenderSize( int* renderWidthOut, int* renderHeightOut )
 {
-	assert( renderWidthOut != NULL );
-	assert( renderHeightOut != NULL );
+	SDL_assert( renderWidthOut != NULL );
+	SDL_assert( renderHeightOut != NULL );
 
 	(*renderWidthOut) = renderWidth;
 	(*renderHeightOut) = renderHeight;
@@ -217,15 +220,17 @@ void gfx_SetWindowClearColor( Color newClearColor )
 /*
 Clears all the drawing instructions.
 */
-void gfx_ClearDrawCommands( float timeToEnd )
+void gfx_ClearDrawCommands( )
 {
 	debugRenderer_ClearVertices( );
-	img_ClearDrawInstructions( );
 
 	for( size_t i = 0; i < sb_Count( sbAdditionalClearFuncs ); ++i ) {
 		sbAdditionalClearFuncs[i]( );
 	}
-	
+}
+
+void gfx_SetDrawEndTime( float timeToEnd )
+{
 	endTime = timeToEnd;
 	currentTime = 0.0f;
 }
@@ -234,7 +239,8 @@ void gfx_MakeRenderCalls( float dt, float t )
 {
 	// draw all the stuff that routes through the triangle rendering
 	triRenderer_Clear( );
-	img_Render( t );
+	sys_Render( t );
+	gsm_Render( &globalFSM, t );
 
 	for( size_t i = 0; i < sb_Count( sbAdditionalDrawFuncs ); ++i ) {
 		sbAdditionalDrawFuncs[i]( t );
@@ -259,6 +265,7 @@ void gfx_Render( float dt )
 	float t;
 	currentTime += dt;
 	t = clamp( 0.0f, 1.0f, ( currentTime / endTime ) );
+	gt_SetRenderNormalizedTime( t );
 
 #if defined( __EMSCRIPTEN__ )
 	gfxPlatform_StaticSizeRender( dt, t, gameClearColor );

@@ -7,6 +7,7 @@ typedef struct {
 	SystemProcessFunc proc;
 	SystemDrawFunc draw;
 	SystemPhysicsTickFunc tick;
+	SystemRenderFunc render;
 } System;
 
 static System emptySystem = { NULL, NULL, NULL, NULL };
@@ -23,7 +24,7 @@ int systemInUse( int idx )
 			 ( systems[idx].tick != NULL ) );
 }
 
-int sys_Register( SystemProcessEventsFunc procEvents, SystemProcessFunc proc, SystemDrawFunc draw, SystemPhysicsTickFunc tick )
+int sys_Register( SystemProcessEventsFunc procEvents, SystemProcessFunc proc, SystemDrawFunc draw, SystemPhysicsTickFunc tick, SystemRenderFunc render )
 {
 	int idx = 0;
 	while( ( idx < MAX_SYSTEMS ) && systemInUse( idx ) ) {
@@ -38,6 +39,7 @@ int sys_Register( SystemProcessEventsFunc procEvents, SystemProcessFunc proc, Sy
 	systems[idx].proc = proc;
 	systems[idx].draw = draw;
 	systems[idx].tick = tick;
+	systems[idx].render = render;
 
 	return idx;
 }
@@ -90,6 +92,15 @@ void sys_PhysicsTick( float dt )
 	for( int i = 0; i < MAX_SYSTEMS; ++i ) {
 		if( systems[i].tick != NULL ) {
 			( *( systems[i].tick ) )( dt );
+		}
+	}
+}
+
+void sys_Render( float normTimeElapsed )
+{
+	for( int i = 0; i < MAX_SYSTEMS; ++i ) {
+		if( systems[i].render != NULL ) {
+			( *( systems[i].render ) )( normTimeElapsed );
 		}
 	}
 }

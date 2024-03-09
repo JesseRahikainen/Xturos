@@ -1,16 +1,16 @@
 #include "testSteeringScreen.h"
 
-#include "../Graphics/graphics.h"
-#include "../Graphics/images.h"
-#include "../Graphics/camera.h"
-#include "../Graphics/debugRendering.h"
-#include "../Graphics/imageSheets.h"
-#include "../Utils/stretchyBuffer.h"
-#include "../Input/input.h"
-#include "../System/random.h"
+#include "Graphics/graphics.h"
+#include "Graphics/images.h"
+#include "Graphics/camera.h"
+#include "Graphics/debugRendering.h"
+#include "Graphics/imageSheets.h"
+#include "Utils/stretchyBuffer.h"
+#include "Input/input.h"
+#include "System/random.h"
 
 #include <math.h>
-#include <assert.h>
+#include <SDL_assert.h>
 
 typedef struct {
 	Vector2 pos;
@@ -112,9 +112,9 @@ static void vehiclePhysics( float dt )
 //  For these we just return the desired velocity, the magnitude represents how much of their max speed they will want to use
 void steering_Seek( Vector2* pos, Vector2* target, Vector2* out )
 {
-	assert( pos != NULL );
-	assert( target != NULL );
-	assert( out != NULL );
+	SDL_assert( pos != NULL );
+	SDL_assert( target != NULL );
+	SDL_assert( out != NULL );
 
 	vec2_Subtract( target, pos, out );
 	vec2_Normalize( out );
@@ -122,9 +122,9 @@ void steering_Seek( Vector2* pos, Vector2* target, Vector2* out )
 
 void steering_Flee( Vector2* pos, Vector2* target, Vector2* out )
 {
-	assert( pos != NULL );
-	assert( target != NULL );
-	assert( out != NULL );
+	SDL_assert( pos != NULL );
+	SDL_assert( target != NULL );
+	SDL_assert( out != NULL );
 
 	vec2_Subtract( pos, target, out );
 	vec2_Normalize( out );
@@ -132,10 +132,10 @@ void steering_Flee( Vector2* pos, Vector2* target, Vector2* out )
 
 void steering_Arrive( Vector2* pos, Vector2* target, float innerRadius, float outerRadius, Vector2* out )
 {
-	assert( pos != NULL );
-	assert( target != NULL );
-	assert( out != NULL );
-	assert( innerRadius <= outerRadius );
+	SDL_assert( pos != NULL );
+	SDL_assert( target != NULL );
+	SDL_assert( out != NULL );
+	SDL_assert( innerRadius <= outerRadius );
 
 	vec2_Subtract( target, pos, out );
 	float dist = vec2_Normalize( out );
@@ -146,12 +146,12 @@ void steering_Arrive( Vector2* pos, Vector2* target, float innerRadius, float ou
 
 void steering_Wandering( Vector2* pos, Vector2* vel, Vector2* currWanderTarget, float radius, float offset, float displacement, Vector2* newWanderTargetOut, Vector2* desiredVelocityOut )
 {
-	assert( pos != NULL );
-	assert( vel != NULL );
-	assert( desiredVelocityOut != NULL );
-	assert( currWanderTarget != NULL );
-	assert( newWanderTargetOut != NULL );
-	assert( radius > 0.0f );
+	SDL_assert( pos != NULL );
+	SDL_assert( vel != NULL );
+	SDL_assert( desiredVelocityOut != NULL );
+	SDL_assert( currWanderTarget != NULL );
+	SDL_assert( newWanderTargetOut != NULL );
+	SDL_assert( radius > 0.0f );
 
 	// we'll use the circle method, we'll need a target that is stored as an offset from the current position
 

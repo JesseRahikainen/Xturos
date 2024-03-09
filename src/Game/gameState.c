@@ -1,6 +1,6 @@
 #include "gameState.h"
 
-#include <assert.h>
+#include <SDL_assert.h>
 
 #include "Utils/stretchyBuffer.h"
 
@@ -11,7 +11,7 @@ GameStateMachine globalFSM = { NULL };
 
 void gsm_EnterState( GameStateMachine* fsm, GameState* newState )
 {
-	assert( fsm );
+	SDL_assert( fsm );
 
 	gsm_PopState( fsm );
 	gsm_PushState( fsm, newState );
@@ -19,7 +19,7 @@ void gsm_EnterState( GameStateMachine* fsm, GameState* newState )
 
 void gsm_PushState( GameStateMachine* fsm, GameState* newState )
 {
-	assert( fsm );
+	SDL_assert( fsm );
 	
 	if( ( newState != NULL ) && ( newState->enter != NULL ) ) {
 		newState->enter( );
@@ -29,7 +29,7 @@ void gsm_PushState( GameStateMachine* fsm, GameState* newState )
 
 void gsm_PopState( GameStateMachine* fsm )
 {
-	assert( fsm );
+	SDL_assert( fsm );
 
 	if( sb_Count( fsm->sbStateStack ) > 0 ) {
 		GameState* state = sb_Pop( fsm->sbStateStack );
@@ -41,7 +41,7 @@ void gsm_PopState( GameStateMachine* fsm )
 
 void gsm_ProcessEvents( GameStateMachine* fsm, SDL_Event* e )
 {
-	assert( fsm );
+	SDL_assert( fsm );
 
 	GameState* state = sb_Last( fsm->sbStateStack );
 	if( ( state != NULL ) && ( state->processEvents != NULL ) ) {
@@ -51,7 +51,7 @@ void gsm_ProcessEvents( GameStateMachine* fsm, SDL_Event* e )
 
 void gsm_Process( GameStateMachine* fsm )
 {
-	assert( fsm );
+	SDL_assert( fsm );
 
 	GameState* state = sb_Last( fsm->sbStateStack );
 	if( ( state != NULL ) && ( state->process != NULL ) ) {
@@ -61,7 +61,7 @@ void gsm_Process( GameStateMachine* fsm )
 
 void gsm_Draw( GameStateMachine* fsm )
 {
-	assert( fsm );
+	SDL_assert( fsm );
 
 	// draw in reverse order
 	for( size_t i = 0; i < sb_Count( fsm->sbStateStack ); ++i ) {
@@ -74,10 +74,20 @@ void gsm_Draw( GameStateMachine* fsm )
 
 void gsm_PhysicsTick( GameStateMachine* fsm, float dt )
 {
-	assert( fsm );
+	SDL_assert( fsm );
 
 	GameState* state = sb_Last( fsm->sbStateStack );
 	if( ( state != NULL ) && ( state->physicsTick != NULL ) ) {
 		state->physicsTick( dt );
+	}
+}
+
+void gsm_Render( GameStateMachine* fsm, float normRenderTime )
+{
+	SDL_assert( fsm );
+
+	GameState* state = sb_Last( fsm->sbStateStack );
+	if( ( state != NULL ) && ( state->render != NULL ) ) {
+		state->render( normRenderTime );
 	}
 }

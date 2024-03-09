@@ -117,6 +117,29 @@ Matrix3* mat3_CreateTranslation( float fwd, float side, Matrix3* out )
 	return out;
 }
 
+Matrix3* mat3_CreateScale( float scale, Matrix3* out )
+{
+	SDL_assert( out != NULL );
+
+	memcpy( out, &IDENTITY_MATRIX_3, sizeof( Matrix3 ) );
+	out->m[0] = scale;
+	out->m[4] = scale;
+
+	return out;
+}
+
+Matrix3* mat3_CreateScaleV( const Vector2* scale, Matrix3* out )
+{
+	SDL_assert( scale != NULL );
+	SDL_assert( out != NULL );
+
+	memcpy( out, &IDENTITY_MATRIX_3, sizeof( Matrix3 ) );
+	out->m[0] = scale->x;
+	out->m[4] = scale->y;
+
+	return out;
+}
+
 Vector2* mat3_TransformVec2Dir( const Matrix3* m, const Vector2* v, Vector2* out )
 {
 	SDL_assert( m != NULL );
@@ -159,8 +182,8 @@ Matrix3* mat3_SetRotation( float rotDeg, Matrix3* out )
 {
 	SDL_assert( out != NULL );
 
-	float sinRot = sinf( DEG_TO_RAD( rotDeg ) );
-	float cosRot = cosf( DEG_TO_RAD( rotDeg ) );
+	float sinRot = SDL_sinf( DEG_TO_RAD( rotDeg ) );
+	float cosRot = SDL_cosf( DEG_TO_RAD( rotDeg ) );
 
 	out->m[0] = cosRot;
 	out->m[1] = sinRot;
@@ -177,14 +200,48 @@ Matrix3* mat3_SetRotation( float rotDeg, Matrix3* out )
 	return out;
 }
 
+float mat3_Determinant( const Matrix3* m )
+{
+	SDL_assert( m != NULL );
+	float det = ( m->m[0] * ( ( m->m[4] * m->m[8] ) - ( m->m[7] * m->m[5] ) ) ) -
+		( m->m[3] * ( ( m->m[1] * m->m[8] ) - ( m->m[7] * m->m[2] ) ) ) -
+		( m->m[6] * ( ( m->m[1] * m->m[5] ) - ( m->m[4] * m->m[2] ) ) );
+	return det;
+}
+
+void mat3_TransformDecompose( const Matrix3* m, Vector2* outPos, float* outRotRad, Vector2* outScale )
+{
+	SDL_assert( m != NULL );
+	SDL_assert( outPos != NULL );
+	SDL_assert( outRotRad != NULL );
+	SDL_assert( outScale != NULL );
+	SDL_assert( m->m[2] == 0.0f && m->m[5] == 0.0f && m->m[8] == 1.0f ); // is affine
+
+	// this doesn't handle skew
+	// given a 3x3 2d affine transform matrix
+	// [uc -vs x]
+	// [us  vc y]
+	// [ 0  0  1]
+	// were c = cos(r), s = sin(r), u = x scale, v = y scale, x = x pos, y = y pos
+
+	// pos is easy, just grab that column
+	outPos->x = m->m[6];
+	outPos->y = m->m[7];
+
+	// scale is the magnitude of each of the axises of the upper-left 2x2
+	outScale->x = SDL_sqrtf( ( m->m[0] * m->m[0] ) + ( m->m[1] * m->m[1] ) );
+	outScale->y = SDL_sqrtf( ( m->m[3] * m->m[3] ) + ( m->m[4] * m->m[4] ) );
+
+	// rotation
+	( *outRotRad ) = SDL_atan2f( m->m[1], m->m[0] );
+}
+
 bool mat3_Inverse( const Matrix3* m, Matrix3* out )
 {
 	SDL_assert( m != NULL );
 	SDL_assert( out != NULL );
 
-	float det = ( m->m[0] * ( ( m->m[4] * m->m[8] ) - ( m->m[7] * m->m[5] ) ) ) -
-		( m->m[3] * ( ( m->m[1] * m->m[8] ) - ( m->m[7] * m->m[2] ) ) ) -
-		( m->m[6] * ( ( m->m[1] * m->m[5] ) - ( m->m[4] * m->m[2] ) ) );
+	float det = mat3_Determinant( m );
 
 	if( FLT_EQ( det, FLOAT_TOLERANCE ) ) {
 		return false;
@@ -234,4 +291,71 @@ bool mat3_Deserialize( cmp_ctx_t* cmp, Matrix3* outMat )
 	}
 
 	return true;
+}
+
+Matrix3* mat3_CreateTransform( const Vector2* pos, float rotRad, const Vector2* scale, Matrix3* out )
+{
+	SDL_assert( out != NULL );
+	SDL_assert( pos != NULL );
+	SDL_assert( scale != NULL );
+
+	// rotation/scale
+	float sinRot = SDL_sinf( rotRad );
+	float cosRot = SDL_cosf( rotRad );
+
+	out->m[0] = cosRot * scale->x;
+	out->m[1] = sinRot * scale->x;
+	out->m[2] = 0.0f;
+
+	out->m[3] = -sinRot * scale->y;
+	out->m[4] = cosRot * scale->y;
+	out->m[5] = 0.0f;
+
+	// position
+	out->m[6] = pos->x;
+	out->m[7] = pos->y;
+	out->m[8] = 1.0f;
+
+	return out;
+}
+
+Matrix3* mat3_CreateRenderTransform( const Vector2* pos, float rotRad, const Vector2* offset, const Vector2* scale, Matrix3* out )
+{
+	SDL_assert( out != NULL );
+	SDL_assert( pos != NULL );
+	SDL_assert( offset != NULL );
+	SDL_assert( scale != NULL );
+
+	// this is the fully multiplied out multiplication of the position, scale, and rotation
+	// pos * rot * offset * scale
+	float sinRot = SDL_sinf( rotRad );
+	float cosRot = SDL_cosf( rotRad );
+
+	out->m[0] = cosRot * scale->x;
+	out->m[1] = sinRot * scale->x;
+	out->m[2] = 0.0f;
+
+	out->m[3] = -sinRot * scale->y;
+	out->m[4] = cosRot * scale->y;
+	out->m[5] = 0.0f;
+
+	out->m[6] = pos->x -( offset->y * sinRot ) + ( offset->x * cosRot );
+	out->m[7] = pos->y + ( offset->x * sinRot ) + ( offset->y * cosRot );
+	out->m[8] = 1.0f;
+
+	return out;
+}
+
+// For debugging.
+void mat3_Dump( Matrix3* m, const char* extra )
+{
+	SDL_assert( m != NULL );
+
+	if( extra != NULL ) {
+		llog( LOG_DEBUG, "%s", extra );
+	}
+	llog( LOG_DEBUG, "m4 = %7.3f %7.3f %7.3f\n           %7.3f %7.3f %7.3f\n           %7.3f %7.3f %7.3f\n           %7.3f %7.3f %7.3f",
+		m->m[0], m->m[3], m->m[6],
+		m->m[1], m->m[4], m->m[7],
+		m->m[2], m->m[5], m->m[8] );
 }

@@ -10,6 +10,7 @@
 #include "Math/matrix4.h"
 #include "System/memory.h"
 #include "Graphics/camera.h"
+#include "System/gameTime.h"
 
 static ShaderProgram shaderPrograms[NUM_SHADERS];
 
@@ -184,10 +185,11 @@ static void drawTriangles( uint32_t currCamera, TriangleList* triList, void( *on
 	uint32_t camFlags = 0;
 	int lastSetClippingArea = -1;
 	onStencilSwitch( lastSetClippingArea ); // reset stencil
-
+	
 	// we'll only be accessing the one vertex array
+	//  profiling can point to this being a BIG issue, looks to be related to v-sync, it's probably waiting for the sync to finish before doing anything
 	GL( glBindVertexArray( triList->platformTriList.VAO ) );
-
+	
 	do {
 		GLuint texture = triList->triangles[triIdx].texture.id;
 		GLuint extraTexture = triList->triangles[triIdx].extraTexture.id;

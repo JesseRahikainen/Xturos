@@ -2,9 +2,9 @@
 
 #include <string.h>
 #include <math.h>
-#include <assert.h>
 #include <stdlib.h>
 #include <float.h>
+#include <SDL_assert.h>
 
 #include "Graphics/debugRendering.h"
 #include "Math/vector2.h"
@@ -449,12 +449,12 @@ int LineSegmentvHalfSpace( Collider* primary, Collider* fixed, Vector2* outSepar
 bool collision_LineSegmentCollision( Vector2* l0p0, Vector2* l0p1, Vector2* l1p0, Vector2* l1p1, Vector2* outCollPos, float* outT )
 {
 	// https://stackoverflow.com/questions/563198/how-do-you-detect-where-two-line-segments-intersect
-	assert( l0p0 != NULL );
-	assert( l0p1 != NULL );
-	assert( l1p0 != NULL );
-	assert( l1p1 != NULL );
-	assert( outCollPos != NULL );
-	assert( outT != NULL );
+	SDL_assert( l0p0 != NULL );
+	SDL_assert( l0p1 != NULL );
+	SDL_assert( l1p0 != NULL );
+	SDL_assert( l1p1 != NULL );
+	SDL_assert( outCollPos != NULL );
+	SDL_assert( outT != NULL );
 	if( FLT_EQ( vec2_DistSqrd( l0p0, l0p1 ), 0.0f ) ) return false;
 	if( FLT_EQ( vec2_DistSqrd( l1p0, l1p1 ), 0.0f ) ) return false;
 
@@ -487,7 +487,7 @@ bool collision_LineSegmentCollision( Vector2* l0p0, Vector2* l0p1, Vector2* l1p0
 		if( FLT_EQ( diffDirCross, 0.0f ) ) {
 			// collinear, see if they overlap
 			float rDotr = vec2_DotProduct( &l0m, &l0m );
-			assert( !FLT_EQ( rDotr, 0.0f ) );
+			SDL_assert( !FLT_EQ( rDotr, 0.0f ) );
 			
 			float t0 = vec2_DotProduct( &diffl01p0, &l0m ) / rDotr;
 			float t1 = t0 + ( vec2_DotProduct( &l1m, &l0m ) / rDotr );
@@ -775,9 +775,9 @@ Helper function to create a half-space collider from a position and normal.
 */
 void collision_CalculateHalfSpace( const Vector2* pos, const Vector2* normal, Collider* outCollider )
 {
-	assert( outCollider != NULL );
-	assert( pos != NULL );
-	assert( normal != NULL );
+	SDL_assert( outCollider != NULL );
+	SDL_assert( pos != NULL );
+	SDL_assert( normal != NULL );
 
 	outCollider->type = CT_HALF_SPACE;
 	outCollider->halfSpace.normal = (*normal);
@@ -821,9 +821,9 @@ void collision_CollectionDebugDrawing( ColliderCollection collection, unsigned i
 
 bool collision_IsPointInsideComplexPolygon( Vector2* pos, Vector2* polygon, size_t numPts )
 {
-	assert( pos != NULL );
-	assert( polygon != NULL );
-	assert( numPts >= 3 );
+	SDL_assert( pos != NULL );
+	SDL_assert( polygon != NULL );
+	SDL_assert( numPts >= 3 );
 
 	// http://alienryderflex.com/polygon/
 

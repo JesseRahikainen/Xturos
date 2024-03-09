@@ -1,16 +1,16 @@
 #include "testECPSScreen.h"
 
-#include "../Graphics/graphics.h"
-#include "../Graphics/images.h"
-#include "../Graphics/camera.h"
-#include "../Graphics/debugRendering.h"
-#include "../Graphics/imageSheets.h"
-#include "../UI/text.h"
-#include "../System/platformLog.h"
-#include "../System/random.h"
-#include "../Utils/helpers.h"
+#include "Graphics/graphics.h"
+#include "Graphics/images.h"
+#include "Graphics/camera.h"
+#include "Graphics/debugRendering.h"
+#include "Graphics/imageSheets.h"
+#include "UI/text.h"
+#include "System/platformLog.h"
+#include "System/random.h"
+#include "Utils/helpers.h"
 
-#include "../System/ECPS/entityComponentProcessSystem.h"
+#include "System/ECPS/entityComponentProcessSystem.h"
 
 static int templateID[2];
 static int instanceID[2];
@@ -149,13 +149,6 @@ static void gameScreen_Process( void )
 
 static void gameScreen_Draw( void )
 {
-	//img_CreateDraw( spriteSheetImg, 1, pos[0], pos[0], 0 );
-	for( int i = 0; i < numImagesOnSheet; ++i ) {
-		img_CreateDraw( sbImageSheet[i], 1, pos[i], pos[i], 0 );
-	}
-
-	txt_DisplayString( "Testing stuff\nAnd even more stuff\nAnd once more", VEC2_ZERO, CLR_RED, HORIZ_ALIGN_LEFT, VERT_ALIGN_TOP, font, 1, 0, 128.0f );
-
 	debugRenderer_Circle( 1, VEC2_ZERO, 100.0f, CLR_RED );
 }
 
@@ -200,5 +193,14 @@ static void gameScreen_PhysicsTick( float dt )
 	ecps_RunProcess( &testECPS, &selfDestructProc );//*/
 }
 
+static void gameScreen_Render( float t )
+{
+	for( int i = 0; i < numImagesOnSheet; ++i ) {
+		img_Render_Pos( sbImageSheet[i], 1, 0, &pos[i] );
+	}
+
+	txt_DisplayString( "Testing stuff\nAnd even more stuff\nAnd once more", VEC2_ZERO, CLR_RED, HORIZ_ALIGN_LEFT, VERT_ALIGN_TOP, font, 1, 0, 128.0f );
+}
+
 GameState testECPSScreenState = { gameScreen_Enter, gameScreen_Exit, gameScreen_ProcessEvents,
-	gameScreen_Process, gameScreen_Draw, gameScreen_PhysicsTick };
+	gameScreen_Process, gameScreen_Draw, gameScreen_PhysicsTick, gameScreen_Render };

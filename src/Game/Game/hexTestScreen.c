@@ -1,15 +1,15 @@
 #include "hexTestScreen.h"
 
-#include "../Graphics/graphics.h"
-#include "../Graphics/images.h"
-#include "../Graphics/camera.h"
-#include "../Graphics/debugRendering.h"
-#include "../Graphics/imageSheets.h"
-#include "../Input/input.h"
-#include "../System/platformLog.h"
+#include "Graphics/graphics.h"
+#include "Graphics/images.h"
+#include "Graphics/camera.h"
+#include "Graphics/debugRendering.h"
+#include "Graphics/imageSheets.h"
+#include "Input/input.h"
+#include "System/platformLog.h"
 
-#include "../Utils/hexGrid.h"
-#include "../Utils/stretchyBuffer.h"
+#include "Utils/hexGrid.h"
+#include "Utils/stretchyBuffer.h"
 
 // just draw a 7x7 rectangular grid of hexes
 
@@ -147,6 +147,14 @@ static void hexTestScreen_Process( void )
 
 static void hexTestScreen_Draw( void )
 {
+	
+}
+
+static void hexTestScreen_PhysicsTick( float dt )
+{}
+
+static void hexTestScreen_Render( float t )
+{
 	for( int i = 0; i < ( GRID_WIDTH * GRID_HEIGHT ); ++i ) {
 		HexGridCoord c = hex_RectIndexToCoord( i, GRID_WIDTH, GRID_HEIGHT );
 		Vector2 pos = hex_Pointy_GridToPosition( ( 116.0f / 2.0f ), c );
@@ -156,7 +164,7 @@ static void hexTestScreen_Draw( void )
 		pos.x = (float)( (int)pos.x );
 		pos.y = (float)( (int)pos.y );
 
-		img_CreateDraw( hexMap[i], 1, pos, pos, 0 );
+		img_Render_Pos( hexMap[i], 1, 0, &pos );
 	}
 
 	Vector2 mousePos;
@@ -173,7 +181,7 @@ static void hexTestScreen_Draw( void )
 				if( hex_CoordInRect( sbList[i], GRID_WIDTH, GRID_HEIGHT ) ) {
 					Vector2 pos = hex_Pointy_GridToPosition( POINTY_SIZE, sbList[i] );
 					vec2_Add( &pos, &basePos, &pos );
-					img_CreateDraw( hexHiliteImg, 1, pos, pos, 1 );
+					img_Render_Pos( hexHiliteImg, 1, 1, &pos );
 				}
 			}
 
@@ -187,14 +195,11 @@ static void hexTestScreen_Draw( void )
 		if( hex_CoordInRect( sbLine[i], GRID_WIDTH, GRID_HEIGHT ) ) {
 			Vector2 pos = hex_Pointy_GridToPosition( POINTY_SIZE, sbLine[i] );
 			vec2_Add( &pos, &basePos, &pos );
-			img_CreateDraw( hexHiliteImg, 1, pos, pos, 1 );
+			img_Render_Pos( hexHiliteImg, 1, 1, &pos );
 		}
 	}
 	sb_Release( sbLine );
 }
 
-static void hexTestScreen_PhysicsTick( float dt )
-{}
-
 GameState hexTestScreenState = { hexTestScreen_Enter, hexTestScreen_Exit, hexTestScreen_ProcessEvents,
-	hexTestScreen_Process, hexTestScreen_Draw, hexTestScreen_PhysicsTick };
+	hexTestScreen_Process, hexTestScreen_Draw, hexTestScreen_PhysicsTick, hexTestScreen_Render };

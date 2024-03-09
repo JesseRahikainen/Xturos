@@ -3,7 +3,7 @@
 // TODO: Ability to cache string images
 
 #include <SDL_rwops.h>
-#include <assert.h>
+#include <SDL_assert.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <string.h>
@@ -51,6 +51,7 @@ typedef struct {
 } Glyph;
 
 static const uint32_t LINE_FEED = 0xA;
+static const uint32_t END_OF_STRING = 0;
 
 // used for when we want to modify a string but don't want to change what was passed in
 static uint32_t* sbStringCodepointBuffer = NULL;
@@ -214,7 +215,7 @@ int txt_LoadFont( const char* fileName, int pixelHeight )
 	stbtt_pack_context packContext;
 	int bmpWidth = 1024;
 	int bmpHeight = 1024;
-	bmpBuffer = mem_Allocate( sizeof( unsigned char ) * bmpWidth * bmpHeight ); // the 4 allows room for expansion
+	bmpBuffer = mem_Allocate( sizeof( unsigned char ) * bmpWidth * bmpHeight );
 	if( bmpBuffer == NULL ) {
 		newFont = -1;
 		llog( LOG_ERROR, "Unable to allocate bitmap memory for %s", fileName );
@@ -545,7 +546,7 @@ void txt_ThreadedLoadFont( const char* fileName, float pixelHeight, int* outFont
 
 void txt_UnloadFont( int fontID )
 {
-	assert( fontID >= 0 );
+	SDL_assert( fontID >= 0 );
 
 	sb_Release( fonts[fontID].glyphsBuffer );
 	fonts[fontID].glyphsBuffer = NULL;
@@ -670,11 +671,25 @@ void positionStringStartY( const uint8_t* str, int fontID, VertTextAlignment ali
 	}
 }
 
+void txt_CalculateStringRenderSize( const char* utf8Str, int fontID, float desiredPixelSize, Vector2* outSize )
+{
+	SDL_assert( outSize != NULL );
+
+	(*outSize) = VEC2_ZERO;
+
+	if( utf8Str == NULL ) return;
+	if( fontID < 0 ) return;
+
+	float scale = desiredPixelSize / fonts[fontID].baseSize;
+	outSize->w = calcStringRenderWidth( (const uint8_t*)utf8Str, fontID, scale );
+	outSize->h = calcRenderHeight( (const uint8_t*)utf8Str, fontID ) * scale;
+}
+
 // Draws a string on the screen. The base line is determined by pos.
 void txt_DisplayString( const char* utf8Str, Vector2 pos, Color clr, HorizTextAlignment hAlign, VertTextAlignment vAlign,
 	int fontID, int camFlags, int8_t depth, float desiredPixelSize )
 {
-	assert( utf8Str != NULL );
+	SDL_assert( utf8Str != NULL );
 
 	if( fontID < 0 ) return;
 
@@ -686,6 +701,7 @@ void txt_DisplayString( const char* utf8Str, Vector2 pos, Color clr, HorizTextAl
 	Vector2 currPos = pos;
 	positionStringStartX( str, fontID, hAlign, scale, &currPos );
 	positionStringStartY( str, fontID, vAlign, scale, &currPos );
+	Vector2 scaleVec = vec2( scale, scale );
 	uint32_t codepoint = 0;
 	do {
 		codepoint = getUTF8CodePoint( &str );
@@ -699,11 +715,11 @@ void txt_DisplayString( const char* utf8Str, Vector2 pos, Color clr, HorizTextAl
 		} else {
 			Glyph* glyph = getCodepointGlyph( fontID, codepoint );
 			if( glyph != NULL ) {
-				int drawID = img_CreateDraw( glyph->imageID, camFlags, currPos, currPos, depth );
-				img_SetDrawScale( drawID, scale, scale );
-				img_SetDrawColor( drawID, clr, clr );
-				//img_Draw_s_c( glyph->imageID, camFlags, currPos, currPos, scale, scale, clr, clr, depth );
-				//img_Draw_c( glyph->imageID, camFlags, currPos, currPos, clr, clr, depth );
+				Vector2 offset;
+				img_GetOffset( glyph->imageID, &offset );
+				Vector2 renderPos;
+				vec2_Add( &currPos, &offset, &renderPos );
+				img_Render_PosScaleVClr( glyph->imageID, camFlags, depth, &renderPos, &scaleVec, &clr );
 				currPos.x += glyph->advance * scale;
 			}
 		}
@@ -748,15 +764,17 @@ void convertOutToBuffer( const uint8_t* utf8Str )
 
 // Draws a string on the screen to an area. Splits up lines and such. If outCharPos is not equal to NULL it will
 //  grab the position of the character at storeCharPos and put it in there. Returns if outCharPos is valid.
-bool txt_DisplayTextArea( const uint8_t* utf8Str, Vector2 upperLeft, Vector2 size, Color clr,
+bool txt_DisplayTextArea( const uint8_t* utf8Str, const Matrix3* centerTf, Vector2 size, Color clr,
 	HorizTextAlignment hAlign, VertTextAlignment vAlign, int fontID, size_t storeCharPos, Vector2* outCharPos,
 	uint32_t camFlags, int8_t depth, float desiredPixelSize )
 {
-	assert( utf8Str != NULL );
+	SDL_assert( utf8Str != NULL );
 
 	if( fontID < 0 ) {
 		return false;
 	}
+
+	Vector2 upperLeft = vec2( -size.x / 2.0f, -size.y / 2.0f );
 
 	float scale = desiredPixelSize / fonts[fontID].baseSize;
 
@@ -800,7 +818,7 @@ bool txt_DisplayTextArea( const uint8_t* utf8Str, Vector2 upperLeft, Vector2 siz
 			charBufferPos = sb_Count( sbStringCodepointBuffer );
 		}
 
-		if( sbStringCodepointBuffer[i] != LINE_FEED ) {
+		if( sbStringCodepointBuffer[i] != LINE_FEED && sbStringCodepointBuffer[i] != END_OF_STRING ) {
 			Glyph* glyph = getCodepointGlyph( fontID, sbStringCodepointBuffer[i] );
 			currentLength += ( glyph->advance * scale );
 			
@@ -856,6 +874,14 @@ bool txt_DisplayTextArea( const uint8_t* utf8Str, Vector2 upperLeft, Vector2 siz
 		//renderPos.y += fonts[fontID].ascent - ( maxSize.y / 2.0f );
 		break;
 	}
+
+	Matrix3 characterTf;
+	mat3_CreateScale( scale, &characterTf );
+	ImageRenderInstruction inst = img_CreateDefaultRenderInstruction( );
+	inst.camFlags = camFlags;
+	inst.depth = depth;
+	inst.color = clr;
+	
 	positionCodepointsStartX( sbStringCodepointBuffer, fontID, hAlign, size.x, scale, &renderPos );
 	for( size_t i = 0; ( i < sb_Count( sbStringCodepointBuffer ) ) && ( sbStringCodepointBuffer[i] != 0 ); ++i ) {
 		if( sbStringCodepointBuffer[i] == LINE_FEED ) {
@@ -865,12 +891,16 @@ bool txt_DisplayTextArea( const uint8_t* utf8Str, Vector2 upperLeft, Vector2 siz
 			positionCodepointsStartX( &( sbStringCodepointBuffer[i+1] ), fontID, hAlign, size.x, scale, &renderPos );
 		} else {
 			Glyph* glyph = getCodepointGlyph( fontID, sbStringCodepointBuffer[i] );
-			if( glyph != NULL ) {
-				//img_Draw_c( glyph->imageID, camFlags, renderPos, renderPos, clr, clr, depth );
-				//img_Draw_s_c( glyph->imageID, camFlags, renderPos, renderPos, scale, scale, clr, clr, depth );
-				int drawID = img_CreateDraw( glyph->imageID, camFlags, renderPos, renderPos, depth );
-				img_SetDrawScale( drawID, scale, scale );
-				img_SetDrawColor( drawID, clr, clr );
+			if( glyph != NULL ) {			
+				// set the data for this character
+				inst.imgID = glyph->imageID;
+				Vector2 offset, finalPos;
+				img_GetOffset( inst.imgID, &offset );
+				vec2_Add( &renderPos, &offset, &finalPos );
+				mat3_SetPosition( &characterTf, &finalPos );
+				mat3_Multiply( centerTf, &characterTf, &(inst.mat) );
+				img_ImmediateRender( &inst );
+
 				renderPos.x += ( glyph->advance * scale );
 			}
 		}
@@ -1455,13 +1485,13 @@ clean_up:
 
 int txt_GetBaseSize( int fontID )
 {
-	assert( fontID >= 0 );
+	SDL_assert( fontID >= 0 );
 	return fonts[fontID].baseSize;
 }
 
 int txt_GetCharacterImage( int fontID, int c )
 {
-	assert( fontID >= 0 );
+	SDL_assert( fontID >= 0 );
 	Glyph* glyph = getCodepointGlyph( fontID, c );
 	return glyph->imageID;
 }

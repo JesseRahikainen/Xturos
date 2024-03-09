@@ -1,6 +1,6 @@
 #include "input.h"
 #include <float.h>
-#include <assert.h>
+#include <SDL_assert.h>
 #include "System/platformLog.h"
 
 /***** Key Binding *****/
@@ -392,7 +392,7 @@ Binds a function response when a swipe is made in a specific direction.
 int input_BindOnSwipe( Vector2 dir, KeyResponse response )
 {
 	vec2_Normalize( &dir );
-	assert( vec2_Mag( &dir ) > 0.01f );
+	SDL_assert( vec2_Mag( &dir ) > 0.01f );
 
 	for( int i = 0; i < MAX_BINDINGS; ++i ) {
 		if( swipeBindings[i].response == NULL ) {

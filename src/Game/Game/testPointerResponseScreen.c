@@ -1,21 +1,21 @@
 #include "testPointerResponseScreen.h"
 
-#include "../Graphics/graphics.h"
-#include "../Graphics/images.h"
-#include "../Graphics/camera.h"
-#include "../Graphics/debugRendering.h"
-#include "../Graphics/imageSheets.h"
+#include "Graphics/graphics.h"
+#include "Graphics/images.h"
+#include "Graphics/camera.h"
+#include "Graphics/debugRendering.h"
+#include "Graphics/imageSheets.h"
 
-#include "../System/ECPS/entityComponentProcessSystem.h"
+#include "System/ECPS/entityComponentProcessSystem.h"
 
-#include "../Components/generalComponents.h"
-#include "../Processes/generalProcesses.h"
+#include "DefaultECPS/generalComponents.h"
+#include "DefaultECPS/generalProcesses.h"
+#include "DefaultECPS/defaultECPS.h"
 
-#include "../System/platformLog.h"
+#include "System/platformLog.h"
 
-#include "../System/ECPS/ecps_trackedCallbacks.h"
+#include "System/ECPS/ecps_trackedCallbacks.h"
 
-static ECPS ecps;
 static int whiteImg;
 static Vector2 imgSize;
 
@@ -53,8 +53,8 @@ ADD_TRACKED_ECPS_CALLBACK( "TEST_ON_BUTTON_RELEASE", onButtonRelease );
 
 static void createTestButton( Vector2 position, Vector2 size )
 {
-	GCPosData pos;
-	pos.currPos = pos.futurePos = position;
+	Vector2 scale = vec2( size.x / imgSize.x, size.y / imgSize.y );
+	GCTransformData tf = gc_CreateTransformPosScale( position, scale );
 
 	GCColorData clr;
 	clr.currClr = clr.futureClr = CLR_WHITE;
@@ -73,20 +73,14 @@ static void createTestButton( Vector2 position, Vector2 size )
 	sprite.depth = 0;
 	sprite.img = whiteImg;
 
-	GCScaleData scale;
-	scale.currScale.x = size.x / imgSize.x;
-	scale.currScale.y = size.y / imgSize.y;
-	scale.futureScale = scale.currScale;
-
 	GCGroupIDData group;
 	group.groupID = 1;
 
-	ecps_CreateEntity( &ecps, 6,
-		gcPosCompID, &pos,
+	ecps_CreateEntity( &defaultECPS, 5,
+		gcTransformCompID, &tf,
 		gcClrCompID, &clr,
 		gcPointerResponseCompID, &ptr,
 		gcSpriteCompID, &sprite,
-		gcScaleCompID, &scale,
 		gcGroupIDCompID, &group );
 }
 
@@ -113,10 +107,10 @@ static void testPointerResponseScreen_Enter( void )
 	whiteImg = img_Load( "Images/white.png", ST_DEFAULT );
 	img_GetSize( whiteImg, &imgSize );
 
-	ecps_StartInitialization( &ecps ); {
+	/*ecps_StartInitialization( &ecps ); {
 		gc_Register( &ecps );
 		gp_RegisterProcesses( &ecps );
-	} ecps_FinishInitialization( &ecps );
+	} ecps_FinishInitialization( &ecps );//*/
 
 	createTestButton( vec2( 400.0f, 300.0f ), vec2( 100.0f, 100.0f ) );
 	createTestButton( vec2( 375.0f, 275.0f ), vec2( 100.0f, 100.0f ) );
@@ -127,18 +121,18 @@ static void testPointerResponseScreen_Enter( void )
 	SerializedECPS serializedECPS;
 	ecps_InitSerialized( &serializedECPS );
 
-	ecps_GenerateSerializedECPS( &ecps, &serializedECPS );
+	ecps_GenerateSerializedECPS( &defaultECPS, &serializedECPS );
 
 	// make sure the number of buttons is correct
-	ecps_RunCustomProcess( &ecps, countButtonsStart, countButtons, NULL, 1, gcGroupIDCompID );
-	assert( buttonCount == 4 );
+	ecps_RunCustomProcess( &defaultECPS, countButtonsStart, countButtons, NULL, 1, gcGroupIDCompID );
+	SDL_assert( buttonCount == 4 );
 
 	// destroy all buttons
-	gp_DeleteAllOfGroup( &ecps, 1 );
+	gp_DeleteAllOfGroup( &defaultECPS, 1 );
 
 	// make sure the number of buttons is correct
-	ecps_RunCustomProcess( &ecps, countButtonsStart, countButtons, NULL, 1, gcGroupIDCompID );
-	assert( buttonCount == 0 );
+	ecps_RunCustomProcess( &defaultECPS, countButtonsStart, countButtons, NULL, 1, gcGroupIDCompID );
+	SDL_assert( buttonCount == 0 );
 
 	// try saving out and loading in
 	ecps_SaveSerializedECPS( "test.pkg", &serializedECPS );
@@ -152,14 +146,14 @@ static void testPointerResponseScreen_Enter( void )
 	createTestButton( vec2( 125.0f, 225.0f ), vec2( 100.0f, 100.0f ) );
 
 	// deserialize the buttons
-	ecps_CreateEntitiesFromSerializedComponents( &ecps, &serializedECPS );
+	ecps_CreateEntitiesFromSerializedComponents( &defaultECPS, &serializedECPS );
 	
 	// clean up
 	ecps_CleanSerialized( &serializedECPS );
 
 	// make sure the number of buttons is correct
-	ecps_RunCustomProcess( &ecps, countButtonsStart, countButtons, NULL, 1, gcGroupIDCompID );
-	assert( buttonCount == 8 );//*/
+	ecps_RunCustomProcess( &defaultECPS, countButtonsStart, countButtons, NULL, 1, gcGroupIDCompID );
+	SDL_assert( buttonCount == 8 );//*/
 }
 
 static void testPointerResponseScreen_Exit( void )
@@ -168,17 +162,17 @@ static void testPointerResponseScreen_Exit( void )
 
 static void testPointerResponseScreen_ProcessEvents( SDL_Event* e )
 {
-	gp_PointerResponseEventHandler( e );
+	//gp_PointerResponseEventHandler( e );
 }
 
 static void testPointerResponseScreen_Process( void )
 {
-	ecps_RunProcess( &ecps, &gpPointerResponseProc );
+	//ecps_RunProcess( &ecps, &gpPointerResponseProc );
 }
 
 static void testPointerResponseScreen_Draw( void )
 {
-	ecps_RunProcess( &ecps, &gpRenderProc );
+	//ecps_RunProcess( &ecps, &gpRenderProc );
 }
 
 static void testPointerResponseScreen_PhysicsTick( float dt )

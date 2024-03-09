@@ -1,7 +1,7 @@
 #include "hexGrid.h"
 
 #include <math.h>
-#include <assert.h>
+#include <SDL_assert.h>
 
 #include "stretchyBuffer.h"
 #include "../Math/mathUtil.h"
@@ -11,9 +11,9 @@
 
 static HexGridCoord* add( HexGridCoord* lhs, HexGridCoord* rhs, HexGridCoord* out )
 {
-	assert( lhs != NULL );
-	assert( rhs != NULL );
-	assert( out != NULL );
+	SDL_assert( lhs != NULL );
+	SDL_assert( rhs != NULL );
+	SDL_assert( out != NULL );
 
 	out->q = lhs->q + rhs->q;
 	out->r = lhs->r + rhs->r;
@@ -23,9 +23,9 @@ static HexGridCoord* add( HexGridCoord* lhs, HexGridCoord* rhs, HexGridCoord* ou
 
 static HexGridCoord* subtract( HexGridCoord* lhs, HexGridCoord* rhs, HexGridCoord* out )
 {
-	assert( lhs != NULL );
-	assert( rhs != NULL );
-	assert( out != NULL );
+	SDL_assert( lhs != NULL );
+	SDL_assert( rhs != NULL );
+	SDL_assert( out != NULL );
 
 	out->q = lhs->q - rhs->q;
 	out->r = lhs->r - rhs->r;
@@ -132,8 +132,8 @@ static HexGridCoord neighborOffets[] = {
 // You can use the HexDirection_Flat and HexDirection_Pointy enumerations to more easily access the one you want
 HexGridCoord hex_GetNeighbor( HexGridCoord baseCoord, int neighbor )
 {
-	assert( neighbor >= 0 );
-	assert( neighbor < 6 );
+	SDL_assert( neighbor >= 0 );
+	SDL_assert( neighbor < 6 );
 
 	baseCoord.q += neighborOffets[neighbor].q;
 	baseCoord.r += neighborOffets[neighbor].r;
@@ -151,8 +151,8 @@ int32_t hex_Distance( HexGridCoord from, HexGridCoord to )
 // Get all hex coords within range steps of base and put them into the stretchy buffer sbOutList
 void hex_AllInRange( HexGridCoord base, int32_t range, HexGridCoord** sbOutList )
 {
-	assert( sbOutList != NULL );
-	assert( range >= 0 );
+	SDL_assert( sbOutList != NULL );
+	SDL_assert( range >= 0 );
 
 	sb_Clear( *sbOutList );
 
@@ -182,7 +182,7 @@ static HexGridCoord hexLerp( HexGridCoord from, HexGridCoord to, float t )
 // Get all hex coords along a line between two hex coords and put them into the stretchy buffer sbOutList
 void hex_AllInLine( HexGridCoord start, HexGridCoord end, HexGridCoord** sbOutList )
 {
-	assert( sbOutList != NULL );
+	SDL_assert( sbOutList != NULL );
 
 	int32_t dist = hex_Distance( start, end );
 
@@ -196,8 +196,8 @@ void hex_AllInLine( HexGridCoord start, HexGridCoord end, HexGridCoord** sbOutLi
 // Get all hex coords that are a certain range from the center, where range > 0, and puts them into the stretchy buffer sbOutList
 void hex_Ring( HexGridCoord center, int32_t range, HexGridCoord** sbOutList )
 {
-	assert( sbOutList != NULL );
-	assert( range > 0 );
+	SDL_assert( sbOutList != NULL );
+	SDL_assert( range > 0 );
 
 	// grab a direction and scale it by range, use the neighbors array
 	//  start at neighbor 4 as that works best when starting with getting neighbor 0 in loop below
@@ -238,11 +238,10 @@ example
 	30 31 32 33 34 35
 	*/
 
-//#error get test rendering screen up and working, just render a 7x7 rectangle
 bool hex_CoordInRect( HexGridCoord coord, int32_t width, int32_t height )
 {
-	assert( width > 0 );
-	assert( height > 0 );
+	SDL_assert( width > 0 );
+	SDL_assert( height > 0 );
 
 	if( ( coord.r < 0 ) || ( coord.r >= height ) ) return false;
 
@@ -256,8 +255,8 @@ bool hex_CoordInRect( HexGridCoord coord, int32_t width, int32_t height )
 
 uint32_t hex_CoordToRectIndex( HexGridCoord coord, int32_t width, int32_t height )
 {
-	assert( width > 0 );
-	assert( height > 0 );
+	SDL_assert( width > 0 );
+	SDL_assert( height > 0 );
 
 	int qAdjustment = coord.r / 2;
 	int adjQ = coord.q + qAdjustment;
@@ -267,8 +266,8 @@ uint32_t hex_CoordToRectIndex( HexGridCoord coord, int32_t width, int32_t height
 
 HexGridCoord hex_RectIndexToCoord( uint32_t index, int32_t width, int32_t height )
 {
-	assert( width > 0 );
-	assert( height > 0 );
+	SDL_assert( width > 0 );
+	SDL_assert( height > 0 );
 
 	HexGridCoord coord;
 

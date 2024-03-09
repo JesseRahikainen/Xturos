@@ -76,18 +76,6 @@
     <Filter Include="Header Files\System\ECPS">
       <UniqueIdentifier>{5d46147a-c1d1-4d71-860d-63f8f432a042}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\Components">
-      <UniqueIdentifier>{119e7b3c-b962-4b30-85d3-9898f61f3d4a}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\Processes">
-      <UniqueIdentifier>{4822f748-13da-42fc-bdc4-4e07f76dfff7}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\Processes">
-      <UniqueIdentifier>{019a6174-b869-4c9d-89b2-b0af03fe5784}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\Components">
-      <UniqueIdentifier>{506d8916-5270-4d8f-be61-9f5a185da4a8}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Header Files\Graphics\Platform">
       <UniqueIdentifier>{7e7fab48-5b2e-48db-95c5-ffa3917f298b}</UniqueIdentifier>
     </Filter>
@@ -99,18 +87,6 @@
     </Filter>
     <Filter Include="Source Files\IMGUI\Platform">
       <UniqueIdentifier>{9e6af113-3652-438c-b9bf-6fc9ab1f9f7a}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\Game\Components">
-      <UniqueIdentifier>{7b563d7f-ea48-41b8-a435-9ee7c8215e43}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\Game\Components">
-      <UniqueIdentifier>{62afd20d-24cc-4a9a-98d2-c160dd48a580}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\Game\Processes">
-      <UniqueIdentifier>{a58a0d4e-98f4-433e-beb0-716ff30e1479}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\Game\Processes">
-      <UniqueIdentifier>{e21ec9fd-276e-48ea-8b49-7ae996c2b27f}</UniqueIdentifier>
     </Filter>
     <Filter Include="Header Files\Game\TestScreens">
       <UniqueIdentifier>{c682fc19-12f7-4b32-b8e8-f6a892ccb4dc}</UniqueIdentifier>
@@ -132,6 +108,12 @@
     </Filter>
     <Filter Include="Source Files\Editors">
       <UniqueIdentifier>{e8a326dc-4592-4514-a7bf-b322063d1a91}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\DefaultECPS">
+      <UniqueIdentifier>{04828c19-8603-41cc-9d54-aef498ccae0d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\DefaultECPS">
+      <UniqueIdentifier>{6636dc93-ce79-4876-848e-69edad023ac1}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -204,9 +186,6 @@
     <ClInclude Include="..\..\src\Game\Utils\helpers.h">
       <Filter>Header Files\Utils</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\Game\UI\button.h">
-      <Filter>Header Files\UI</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\Game\UI\checkBox.h">
       <Filter>Header Files\UI</Filter>
     </ClInclude>
@@ -263,12 +242,6 @@
     </ClInclude>
     <ClInclude Include="..\..\src\Game\Utils\idSet.h">
       <Filter>Header Files\Utils</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Game\Components\generalComponents.h">
-      <Filter>Header Files\Components</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Game\Processes\generalProcesses.h">
-      <Filter>Header Files\Processes</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Game\Graphics\geomTrail.h">
       <Filter>Header Files\Graphics</Filter>
@@ -333,12 +306,6 @@
     <ClInclude Include="..\..\src\Game\Graphics\spriteAnimation.h">
       <Filter>Header Files\Graphics</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\Game\Game\gameComponents.h">
-      <Filter>Header Files\Game\Components</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Game\Game\gameProcesses.h">
-      <Filter>Header Files\Game\Processes</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\Game\Game\bordersTestScreen.h">
       <Filter>Header Files\Game\TestScreens</Filter>
     </ClInclude>
@@ -349,9 +316,6 @@
       <Filter>Header Files\Game\TestScreens</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Game\Game\hexTestScreen.h">
-      <Filter>Header Files\Game\TestScreens</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Game\Game\labels.h">
       <Filter>Header Files\Game\TestScreens</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Game\Game\testAStarScreen.h">
@@ -395,6 +359,21 @@
     </ClInclude>
     <ClInclude Include="..\..\src\Game\Editors\3x3Editor.h">
       <Filter>Header Files\Editors</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Game\Game\testMountingState.h">
+      <Filter>Header Files\Game\States</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Game\DefaultECPS\defaultECPS.h">
+      <Filter>Header Files\DefaultECPS</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Game\DefaultECPS\generalComponents.h">
+      <Filter>Header Files\DefaultECPS</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Game\DefaultECPS\generalProcesses.h">
+      <Filter>Header Files\DefaultECPS</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Game\UI\uiEntities.h">
+      <Filter>Header Files\UI</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -464,9 +443,6 @@
     <ClCompile Include="..\..\src\Game\Utils\cfgFile.c">
       <Filter>Source Files\Utils</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\Game\UI\button.c">
-      <Filter>Source Files\UI</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\Game\UI\checkBox.c">
       <Filter>Source Files\UI</Filter>
     </ClCompile>
@@ -517,12 +493,6 @@
     </ClCompile>
     <ClCompile Include="..\..\src\Game\Utils\idSet.c">
       <Filter>Source Files\Utils</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\Game\Components\generalComponents.c">
-      <Filter>Source Files\Components</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\Game\Processes\generalProcesses.c">
-      <Filter>Source Files\Processes</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\Game\Graphics\geomTrail.c">
       <Filter>Source Files\Graphics</Filter>
@@ -581,12 +551,6 @@
     <ClCompile Include="..\..\src\Game\Graphics\spriteAnimation.c">
       <Filter>Source Files\Graphics</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\Game\Game\gameComponents.c">
-      <Filter>Source Files\Game\Components</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\Game\Game\gameProcesses.c">
-      <Filter>Source Files\Game\Processes</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\Game\Game\testSteeringScreen.c">
       <Filter>Source Files\Game\TestScreens</Filter>
     </ClCompile>
@@ -600,9 +564,6 @@
       <Filter>Source Files\Game\TestScreens</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\Game\Game\hexTestScreen.c">
-      <Filter>Source Files\Game\TestScreens</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\Game\Game\labels.c">
       <Filter>Source Files\Game\TestScreens</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\Game\Game\testAStarScreen.c">
@@ -643,6 +604,21 @@
     </ClCompile>
     <ClCompile Include="..\..\src\Game\Editors\3x3Editor.c">
       <Filter>Source Files\Editors</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Game\Game\testMountingState.c">
+      <Filter>Source Files\Game\States</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Game\DefaultECPS\defaultECPS.c">
+      <Filter>Source Files\DefaultECPS</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Game\DefaultECPS\generalComponents.c">
+      <Filter>Source Files\DefaultECPS</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Game\DefaultECPS\generalProcesses.c">
+      <Filter>Source Files\DefaultECPS</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Game\UI\uiEntities.c">
+      <Filter>Source Files\UI</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

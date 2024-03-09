@@ -186,9 +186,9 @@ static size_t rwopsFileWriter( struct cmp_ctx_s* ctx, const void* data, size_t c
 
 SDL_RWops* openRWopsCMPFile( const char* filePath, const char* mode, cmp_ctx_t* cmpCtx )
 {
-	ASSERT_AND_IF( filePath != NULL ) return NULL;
-	ASSERT_AND_IF( mode != NULL ) return NULL;
-	ASSERT_AND_IF( cmpCtx != NULL ) return NULL;
+	ASSERT_AND_IF_NOT( filePath != NULL ) return NULL;
+	ASSERT_AND_IF_NOT( mode != NULL ) return NULL;
+	ASSERT_AND_IF_NOT( cmpCtx != NULL ) return NULL;
 
 	// TODO: handle not overwriting an existing file if the writing fails
 	SDL_RWops* rwopsFile = SDL_RWFromFile( filePath, mode );

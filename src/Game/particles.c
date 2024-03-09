@@ -61,17 +61,18 @@ void physicsTick( float dt )
 	}
 }
 
-void draw( void )
+void draw( float t )
 {
 	for( int i = 0; i <= lastParticle; ++i ) {
-		int drawID = img_CreateDraw( particles[i].image, particles[i].camFlags,
-			particles[i].currRenderPos, particles[i].futureRenderPos, particles[i].depth );
-		img_SetDrawScale( drawID, particles[i].currScale, particles[i].futureScale );
-		img_SetDrawRotation( drawID, particles[i].rotRad, particles[i].rotRad );
 
-		particles[i].currRenderPos = particles[i].futureRenderPos;
-		particles[i].currColor = particles[i].futureColor;
-		particles[i].currScale = particles[i].futureScale;
+		Vector2 pos;
+		vec2_Lerp( &( particles[i].currRenderPos ), &( particles[i].futureRenderPos ), t, &pos );
+
+		float scale = lerp( particles[i].currScale, particles[i].futureScale, t );
+		Color clr;
+		clr_Lerp( &( particles[i].currColor ), &( particles[i].futureColor ), t, &clr );
+
+		img_Render_PosRotScaleClr( particles[i].image, particles[i].camFlags, particles[i].depth, &pos, particles[i].rotRad, scale, &clr );
 	}
 }
 
@@ -79,7 +80,7 @@ int particles_Init( void )
 {
 	lastParticle = -1;
 
-	systemID = sys_Register( NULL, NULL, draw, physicsTick );
+	systemID = sys_Register( NULL, NULL, NULL, physicsTick, draw );
 
 	return systemID;
 }

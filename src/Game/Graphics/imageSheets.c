@@ -63,8 +63,8 @@ static void cleanTempSpriteSheetData( TempSpriteSheetData* data )
 
 static bool loadSpriteSheetData( const char* fileName, TempSpriteSheetData** outSBData )
 {
-	assert( fileName != NULL );
-	assert( outSBData != NULL );
+	SDL_assert( fileName != NULL );
+	SDL_assert( outSBData != NULL );
 
 	bool ret = false;
 
@@ -73,14 +73,14 @@ static bool loadSpriteSheetData( const char* fileName, TempSpriteSheetData** out
 	if( rwopsFile == NULL ) goto clean_up;
 
 	int version;
-	CMP_READ( version, cmp_read_int, ioType, "version number" );
+	CMP_READ( &cmp, version, cmp_read_int, ioType, "version number", goto clean_up );
 	if( version != 3 ) {
 		llog( LOG_ERROR, "Unknown version for sprite sheet %s", fileName );
 		goto clean_up;
 	}
 
 	uint32_t numGroups;
-	CMP_READ( numGroups, cmp_read_array, ioType, "group count" );
+	CMP_READ( &cmp, numGroups, cmp_read_array, ioType, "group count", goto clean_up );
 	for( uint32_t i = 0; i < numGroups; ++i ) {
 		TempSpriteSheetData data;
 		data.sbMins = NULL;
@@ -88,19 +88,19 @@ static bool loadSpriteSheetData( const char* fileName, TempSpriteSheetData** out
 		data.sbIDs = NULL;
 
 		uint32_t imageFileNameSize = ARRAY_SIZE( data.imageFileName );
-		CMP_READ_STR( data.imageFileName, imageFileNameSize, ioType, "group image file" );
+		CMP_READ_STR( &cmp, data.imageFileName, imageFileNameSize, ioType, "group image file", goto clean_up );
 
-		CMP_READ( data.numSpritesRead, cmp_read_array, ioType, "sprite count" );
+		CMP_READ( &cmp, data.numSpritesRead, cmp_read_array, ioType, "sprite count", goto clean_up );
 		for( uint32_t a = 0; a < data.numSpritesRead; ++a ) {
 			char id[256];
 			int x, y, w, h;
 
 			uint32_t spriteIDSize = ARRAY_SIZE( id );
-			CMP_READ_STR( id, spriteIDSize, ioType, "sprite id" );
-			CMP_READ( x, cmp_read_int, ioType, "sprite x-coordinate" );
-			CMP_READ( y, cmp_read_int, ioType, "sprite y-coordinate" );
-			CMP_READ( w, cmp_read_int, ioType, "sprite width" );
-			CMP_READ( h, cmp_read_int, ioType, "sprite height" );
+			CMP_READ_STR( &cmp, id, spriteIDSize, ioType, "sprite id", goto clean_up );
+			CMP_READ( &cmp, x, cmp_read_int, ioType, "sprite x-coordinate", goto clean_up );
+			CMP_READ( &cmp, y, cmp_read_int, ioType, "sprite y-coordinate", goto clean_up );
+			CMP_READ( &cmp, w, cmp_read_int, ioType, "sprite width", goto clean_up );
+			CMP_READ( &cmp, h, cmp_read_int, ioType, "sprite height", goto clean_up );
 
 			// copy the id and push it onto the data
 			char* idCopy = createStringCopy( id );
@@ -121,7 +121,7 @@ static bool loadSpriteSheetData( const char* fileName, TempSpriteSheetData** out
 
 clean_up:
 
-	if( SDL_RWclose( rwopsFile ) < 0 ) {
+	if( ( rwopsFile != NULL ) && ( SDL_RWclose( rwopsFile ) < 0 ) ) {
 		llog( LOG_ERROR, "Error closing file %s: %s", fileName, SDL_GetError( ) );
 		ret = false;
 	}
@@ -284,20 +284,20 @@ static bool saveSpriteSheetDefinition( const char* fileName, SpriteSheetEntry* e
 	}
 
 	// write out version number
-	CMP_WRITE( 3, cmp_write_int, ioType, "version number" );
+	CMP_WRITE( &cmp, 3, cmp_write_int, ioType, "version number", goto clean_up );
 
 	//  write out all the image names
 	uint32_t numImages = (uint32_t)numRectSets;
-	CMP_WRITE( numImages, cmp_write_array, ioType, "rect set array size" );
+	CMP_WRITE( &cmp, numImages, cmp_write_array, ioType, "rect set array size", goto clean_up );
 	for( uint32_t i = 0; i < numImages; ++i ) {
 		RectSet* set = &( rectSets[i] );
 
-		CMP_WRITE_STR( set->fileName, ioType, "rect set image file name" );
+		CMP_WRITE_STR( &cmp, set->fileName, ioType, "rect set image file name", goto clean_up );
 
 		// write out the entries for each sprite stored in this image
 		//  want to right out the id and rect
 		uint32_t numSprites = (uint32_t)sb_Count( set->sbRects );
-		CMP_WRITE( numSprites, cmp_write_array, ioType, "rect set sprite count" );
+		CMP_WRITE( &cmp, numSprites, cmp_write_array, ioType, "rect set sprite count", goto clean_up );
 		for( uint32_t a = 0; a < numSprites; ++a ) {
 			stbrp_rect* rect = &( set->sbRects[a] );
 			char* id = SDL_strrchr( entries[rect->id].sbPath, '/' );
@@ -306,12 +306,12 @@ static bool saveSpriteSheetDefinition( const char* fileName, SpriteSheetEntry* e
 			} else {
 				++id; // advance past the '/'
 			}
-			CMP_WRITE_STR( id, ioType, "sprite id" );
+			CMP_WRITE_STR( &cmp, id, ioType, "sprite id", goto clean_up );
 
-			CMP_WRITE( rect->x, cmp_write_int, ioType, "sprite x-coordinate" );
-			CMP_WRITE( rect->y, cmp_write_int, ioType, "sprite y-coordinate" );
-			CMP_WRITE( rect->w, cmp_write_int, ioType, "sprite width" );
-			CMP_WRITE( rect->h, cmp_write_int, ioType, "sprite height" );
+			CMP_WRITE( &cmp, rect->x, cmp_write_int, ioType, "sprite x-coordinate", goto clean_up );
+			CMP_WRITE( &cmp, rect->y, cmp_write_int, ioType, "sprite y-coordinate", goto clean_up );
+			CMP_WRITE( &cmp, rect->w, cmp_write_int, ioType, "sprite width", goto clean_up );
+			CMP_WRITE( &cmp, rect->h, cmp_write_int, ioType, "sprite height", goto clean_up );
 		}
 	}
 

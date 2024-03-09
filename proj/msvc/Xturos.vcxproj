@@ -175,7 +175,7 @@
       </PrecompiledHeader>
       <WarningLevel>Level4</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;OPENGL_GFX;_DEBUG;_CONSOLE;_LIB;GLEW_STATIC;THREAD_SUPPORT;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;OPENGL_GFX;_DEBUG;_CONSOLE;_LIB;GLEW_STATIC;THREAD_SUPPORT;DEBUG_GL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <TreatWarningAsError>true</TreatWarningAsError>
       <ExceptionHandling>false</ExceptionHandling>
@@ -288,7 +288,7 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>WIN32;OPENGL_GFX;NDEBUG;_CONSOLE;GLEW_STATIC;_LIB;THREAD_SUPPORT;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;OPENGL_GFX;NDEBUG;_CONSOLE;GLEW_STATIC;_LIB;THREAD_SUPPORT;DEBUG_GL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <TreatWarningAsError>true</TreatWarningAsError>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <DisableSpecificWarnings>4100;4189;4201;4996;4127;4756;6385;6386;26451;6255;6385;26451;4456;4457</DisableSpecificWarnings>
@@ -310,7 +310,9 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\Game\collisionDetection.h" />
-    <ClInclude Include="..\..\src\Game\Components\generalComponents.h" />
+    <ClInclude Include="..\..\src\Game\DefaultECPS\defaultECPS.h" />
+    <ClInclude Include="..\..\src\Game\DefaultECPS\generalComponents.h" />
+    <ClInclude Include="..\..\src\Game\DefaultECPS\generalProcesses.h" />
     <ClInclude Include="..\..\src\Game\Editors\3x3Editor.h" />
     <ClInclude Include="..\..\src\Game\Editors\editorHelpers.h" />
     <ClInclude Include="..\..\src\Game\Editors\editorHub.h" />
@@ -318,15 +320,15 @@
     <ClInclude Include="..\..\src\Game\Editors\spriteSheetEditor.h" />
     <ClInclude Include="..\..\src\Game\gameState.h" />
     <ClInclude Include="..\..\src\Game\Game\bordersTestScreen.h" />
-    <ClInclude Include="..\..\src\Game\Game\gameComponents.h" />
     <ClInclude Include="..\..\src\Game\Game\gameOfUrScreen.h" />
-    <ClInclude Include="..\..\src\Game\Game\gameProcesses.h" />
     <ClInclude Include="..\..\src\Game\Game\testECPSScreen.h" />
     <ClInclude Include="..\..\src\Game\Game\hexTestScreen.h" />
-    <ClInclude Include="..\..\src\Game\Game\labels.h" />
     <ClInclude Include="..\..\src\Game\Game\testAStarScreen.h" />
     <ClInclude Include="..\..\src\Game\Game\testBloomScreen.h" />
     <ClInclude Include="..\..\src\Game\Game\testJobQueueScreen.h" />
+    <ClInclude Include="..\..\src\Game\Game\testMountingState.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
+    </ClInclude>
     <ClInclude Include="..\..\src\Game\Game\testPointerResponseScreen.h" />
     <ClInclude Include="..\..\src\Game\Game\testSoundsScreen.h" />
     <ClInclude Include="..\..\src\Game\Game\testSteeringScreen.h" />
@@ -364,7 +366,6 @@
     <ClInclude Include="..\..\src\Game\Others\gl_core.h" />
     <ClInclude Include="..\..\src\Game\Others\nuklear.h" />
     <ClInclude Include="..\..\src\Game\particles.h" />
-    <ClInclude Include="..\..\src\Game\Processes\generalProcesses.h" />
     <ClInclude Include="..\..\src\Game\sound.h" />
     <ClInclude Include="..\..\src\Game\System\ECPS\ecps_componentBitFlags.h" />
     <ClInclude Include="..\..\src\Game\System\ECPS\ecps_componentTypes.h" />
@@ -383,9 +384,9 @@
     <ClInclude Include="..\..\src\Game\System\random.h" />
     <ClInclude Include="..\..\src\Game\System\systems.h" />
     <ClInclude Include="..\..\src\Game\tween.h" />
-    <ClInclude Include="..\..\src\Game\UI\button.h" />
     <ClInclude Include="..\..\src\Game\UI\checkBox.h" />
     <ClInclude Include="..\..\src\Game\UI\text.h" />
+    <ClInclude Include="..\..\src\Game\UI\uiEntities.h" />
     <ClInclude Include="..\..\src\Game\Utils\aStar.h" />
     <ClInclude Include="..\..\src\Game\Utils\cfgFile.h" />
     <ClInclude Include="..\..\src\Game\Utils\hashMap.h" />
@@ -399,7 +400,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\Game\collisionDetection.c" />
-    <ClCompile Include="..\..\src\Game\Components\generalComponents.c" />
+    <ClCompile Include="..\..\src\Game\DefaultECPS\defaultECPS.c" />
+    <ClCompile Include="..\..\src\Game\DefaultECPS\generalComponents.c" />
+    <ClCompile Include="..\..\src\Game\DefaultECPS\generalProcesses.c" />
     <ClCompile Include="..\..\src\Game\Editors\3x3Editor.c" />
     <ClCompile Include="..\..\src\Game\Editors\editorHelpers.c" />
     <ClCompile Include="..\..\src\Game\Editors\editorHub.c" />
@@ -407,15 +410,15 @@
     <ClCompile Include="..\..\src\Game\Editors\spriteSheetEditor.c" />
     <ClCompile Include="..\..\src\Game\gameState.c" />
     <ClCompile Include="..\..\src\Game\Game\bordersTestScreen.c" />
-    <ClCompile Include="..\..\src\Game\Game\gameComponents.c" />
     <ClCompile Include="..\..\src\Game\Game\gameOfUrScreen.c" />
-    <ClCompile Include="..\..\src\Game\Game\gameProcesses.c" />
     <ClCompile Include="..\..\src\Game\Game\testECPSScreen.c" />
     <ClCompile Include="..\..\src\Game\Game\hexTestScreen.c" />
-    <ClCompile Include="..\..\src\Game\Game\labels.c" />
     <ClCompile Include="..\..\src\Game\Game\testAStarScreen.c" />
     <ClCompile Include="..\..\src\Game\Game\testBloomScreen.c" />
     <ClCompile Include="..\..\src\Game\Game\testJobQueueScreen.c" />
+    <ClCompile Include="..\..\src\Game\Game\testMountingState.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="..\..\src\Game\Game\testPointerResponseScreen.c" />
     <ClCompile Include="..\..\src\Game\Game\testSoundsScreen.c" />
     <ClCompile Include="..\..\src\Game\Game\testSteeringScreen.c" />
@@ -457,7 +460,6 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="..\..\src\Game\particles.c" />
-    <ClCompile Include="..\..\src\Game\Processes\generalProcesses.c" />
     <ClCompile Include="..\..\src\Game\sound.c" />
     <ClCompile Include="..\..\src\Game\System\ECPS\ecps_componentBitFlags.c" />
     <ClCompile Include="..\..\src\Game\System\ECPS\ecps_componentTypes.c" />
@@ -474,9 +476,9 @@
     <ClCompile Include="..\..\src\Game\System\random.c" />
     <ClCompile Include="..\..\src\Game\System\systems.c" />
     <ClCompile Include="..\..\src\Game\tween.c" />
-    <ClCompile Include="..\..\src\Game\UI\button.c" />
     <ClCompile Include="..\..\src\Game\UI\checkBox.c" />
     <ClCompile Include="..\..\src\Game\UI\text.c" />
+    <ClCompile Include="..\..\src\Game\UI\uiEntities.c" />
     <ClCompile Include="..\..\src\Game\Utils\aStar.c" />
     <ClCompile Include="..\..\src\Game\Utils\cfgFile.c" />
     <ClCompile Include="..\..\src\Game\Utils\hashMap.c" />

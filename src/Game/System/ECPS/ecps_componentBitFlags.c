@@ -1,12 +1,12 @@
 #include "ecps_componentBitFlags.h"
 
 #include <stdlib.h>
-#include <assert.h>
+#include <SDL_assert.h>
 
 void ecps_cbf_SetFlagOn( ComponentBitFlags* flags, uint32_t flagToSet )
 {
-	assert( flags != NULL );
-	assert( flagToSet < MAX_NUM_COMPONENT_TYPES );
+	SDL_assert( flags != NULL );
+	SDL_assert( flagToSet < MAX_NUM_COMPONENT_TYPES );
 
 	uint32_t idx = flagToSet / 32;
 	uint32_t idxBit = flagToSet - ( idx * 32 );
@@ -16,8 +16,8 @@ void ecps_cbf_SetFlagOn( ComponentBitFlags* flags, uint32_t flagToSet )
 
 void ecps_cbf_SetFlagOff( ComponentBitFlags* flags, uint32_t flagToUnset )
 {
-	assert( flags != NULL );
-	assert( flagToUnset < MAX_NUM_COMPONENT_TYPES );
+	SDL_assert( flags != NULL );
+	SDL_assert( flagToUnset < MAX_NUM_COMPONENT_TYPES );
 
 	uint32_t idx = flagToUnset / 32;
 	uint32_t idxBit = flagToUnset - ( idx * 32 );
@@ -27,8 +27,8 @@ void ecps_cbf_SetFlagOff( ComponentBitFlags* flags, uint32_t flagToUnset )
 
 bool ecps_cbf_IsFlagOn( const ComponentBitFlags* flags, uint32_t flagToTest )
 {
-	assert( flags != NULL );
-	assert( flagToTest < MAX_NUM_COMPONENT_TYPES );
+	SDL_assert( flags != NULL );
+	SDL_assert( flagToTest < MAX_NUM_COMPONENT_TYPES );
 
 	uint32_t idx = flagToTest / 32;
 	uint32_t idxBit = flagToTest - ( idx * 32 );
@@ -38,8 +38,8 @@ bool ecps_cbf_IsFlagOn( const ComponentBitFlags* flags, uint32_t flagToTest )
 
 bool ecps_cbf_CompareExact( const ComponentBitFlags* test, const ComponentBitFlags* against )
 {
-	assert( test != NULL );
-	assert( against != NULL );
+	SDL_assert( test != NULL );
+	SDL_assert( against != NULL );
 
 	for( int i = 0; i < FLAGS_ARRAY_SIZE; ++i ) {
 		if( test->bits[i] != against->bits[i] ) {
@@ -52,8 +52,8 @@ bool ecps_cbf_CompareExact( const ComponentBitFlags* test, const ComponentBitFla
 
 bool ecps_cbf_CompareContains( const ComponentBitFlags* test, const ComponentBitFlags* against )
 {
-	assert( test != NULL );
-	assert( against != NULL );
+	SDL_assert( test != NULL );
+	SDL_assert( against != NULL );
 
 	for( int i = 0; i < FLAGS_ARRAY_SIZE; ++i ) {
 		if( ( test->bits[i] & against->bits[i] ) != test->bits[i] ) {

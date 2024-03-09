@@ -47,9 +47,25 @@ typedef struct {
 	SerializedEntityInfo* sbEntityInfos;
 } SerializedECPS;
 
+typedef struct {
+	int32_t offset;
+} PackageStructureEntry;
+
+typedef struct {
+	PackageStructureEntry entries[MAX_NUM_COMPONENT_TYPES];
+} PackageStructure;
+
+typedef struct {
+	EntityID id;
+	void* data;
+	const PackageStructure* structure;
+} Entity;
+
+typedef struct ECPS ECPS;
+
 // component callbacks
 typedef int ( *VerifyComponent )( EntityID entityID );
-typedef void ( *CleanUpComponent )( void* data );
+typedef void ( *CleanUpComponent )( ECPS* ecps, const Entity* entity, void* compData, bool fullCleanUp ); // fullCleanUp is true when every entity is being destroyed
 typedef bool ( *SerializeComponent )( cmp_ctx_t* cmp, void* data, SerializedEntityInfo* sbEntityInfo );
 typedef bool ( *DeserializeComponent )( cmp_ctx_t* cmp, void* outData, SerializedEntityInfo* sbEntityInfo );
 
@@ -77,14 +93,6 @@ typedef struct {
 } ComponentTypeCollection;
 
 typedef struct {
-	int32_t offset;
-} PackageStructureEntry;
-
-typedef struct {
-	PackageStructureEntry entries[MAX_NUM_COMPONENT_TYPES];
-} PackageStructure;
-
-typedef struct {
 	size_t entitySize;
 	size_t firstAlign;
 	PackageStructure structure;
@@ -110,7 +118,7 @@ typedef struct {
 	PackagedComponentArray* sbComponentArrays;	// structure information and the entity data
 } ComponentData;
 
-typedef struct {
+struct ECPS {
 	ComponentData componentData;
 	ComponentTypeCollection componentTypes;
 	bool isRunning;
@@ -118,13 +126,7 @@ typedef struct {
 	IDSet idSet;
 	uint8_t* sbCommandBuffer;
 	bool isRunningProcess;
-} ECPS;
-
-typedef struct {
-	EntityID id;
-	void* data;
-	const PackageStructure* structure;
-} Entity;
+};
 
 typedef void (*PreProcFunc)( ECPS* ecps );
 typedef void (*ProcFunc)( ECPS* ecps, const Entity* entity );

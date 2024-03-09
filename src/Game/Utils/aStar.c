@@ -1,6 +1,6 @@
 #include "aStar.h"
 
-#include <assert.h>
+#include <SDL_assert.h>
 #include <float.h>
 #include <math.h>
 
@@ -19,8 +19,8 @@ void aStar_CreateSearchState( void* graph, size_t nodeCount, int startNodeID, in
 	AStar_CostFunc moveCost, AStar_CostFunc heuristic, AStar_GetNextNeighborFunc nextNeighbor,
 	AStarSearchState* outState )
 {
-	assert( outState != NULL );
-	assert( nextNeighbor != NULL );
+	SDL_assert( outState != NULL );
+	SDL_assert( nextNeighbor != NULL );
 
 	outState->graph = graph;
 	outState->moveCost = ( moveCost == NULL ) ? defaultCost : moveCost;
@@ -103,7 +103,7 @@ bool aStar_ProcessPath( AStarSearchState* state, int numSteps, int** sbOutPaths 
 					float newCost = state->sbPath[front.loc].cost + state->moveCost( state->graph, front.loc, neighbor );
 					// no set check because we're initializing the values to FLT_MAX
 					if( newCost < state->sbPath[neighbor].cost ) {
-						assert( neighbor < (int)sb_Count( state->sbPath ) );
+						SDL_assert( neighbor < (int)sb_Count( state->sbPath ) );
 
 						state->sbPath[neighbor].cost = newCost;
 						state->sbPath[neighbor].from = front.loc;

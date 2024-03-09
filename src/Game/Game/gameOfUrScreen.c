@@ -1,31 +1,35 @@
 #include "gameOfUrScreen.h"
 
 #include <stdint.h>
-#include <assert.h>
+#include <SDL_assert.h>
 #include <stdbool.h>
 #include <math.h>
 #include <time.h>
 
-#include "../Graphics/graphics.h"
-#include "../Graphics/images.h"
-#include "../Graphics/camera.h"
-#include "../Graphics/debugRendering.h"
-#include "../Graphics/imageSheets.h"
-#include "../UI/text.h"
-#include "../Input/input.h"
-#include "../System/platformLog.h"
+#include "Graphics/graphics.h"
+#include "Graphics/images.h"
+#include "Graphics/camera.h"
+#include "Graphics/debugRendering.h"
+#include "Graphics/imageSheets.h"
+#include "UI/text.h"
+#include "Input/input.h"
+#include "System/platformLog.h"
+#include "DefaultECPS/generalProcesses.h"
 
-#include "../Utils/helpers.h"
-#include "../Utils/stretchyBuffer.h"
-#include "../System/random.h"
+#include "Utils/helpers.h"
+#include "Utils/stretchyBuffer.h"
+#include "System/random.h"
 
-#include "../UI/button.h"
+#include "UI/uiEntities.h"
 
-#include "../gameState.h"
+#include "gameState.h"
 
-#include "labels.h"
+#include "System/jobQueue.h"
 
-#include "../System/jobQueue.h"
+#include "DefaultECPS/defaultECPS.h"
+
+#define BUTTON_GROUP_ID 1
+#define LABEL_GROUP_ID 2
 
 // https://www.youtube.com/watch?v=WZskjLq040I
 //  basic rules:
@@ -162,9 +166,9 @@ static int8_t rollDice( void )
 
 void ur_applyMove( BoardState* oldState, Move* move, BoardState* newStateOut )
 {
-	assert( oldState != NULL );
-	assert( move != NULL );
-	assert( newStateOut != NULL );
+	SDL_assert( oldState != NULL );
+	SDL_assert( move != NULL );
+	SDL_assert( newStateOut != NULL );
 
 	memcpy( newStateOut, oldState, sizeof( BoardState ) );
 
@@ -201,7 +205,7 @@ void ur_applyMove( BoardState* oldState, Move* move, BoardState* newStateOut )
 
 int ur_getCurrentPlayer( BoardState* state )
 {
-	assert( state != NULL );
+	SDL_assert( state != NULL );
 
 	return state->currPlayer;
 }
@@ -277,8 +281,8 @@ void getPieceMoveList( BoardState* state, Move** sbMoveList_Out )
 // puts the moves into sbMoveList_Out
 void ur_getPossibleMoveList( BoardState* state, Move** sbMoveList_Out )
 {
-	assert( state != NULL );
-	assert( sbMoveList_Out != NULL );
+	SDL_assert( state != NULL );
+	SDL_assert( sbMoveList_Out != NULL );
 
 	if( state->roll < 0 ) {
 		getRollMoveList( state, sbMoveList_Out );
@@ -290,7 +294,7 @@ void ur_getPossibleMoveList( BoardState* state, Move** sbMoveList_Out )
 // returns either 0 or 1 if there is a winner, -1 if there isn't
 int ur_getWinner( BoardState* state )
 {
-	assert( state != NULL );
+	SDL_assert( state != NULL );
 
 	int winner = -1;
 	int count[2] = { 0, 0 };
@@ -345,6 +349,7 @@ static void start_ProcessEvents( SDL_Event* e );
 static void start_Process( void );
 static void start_Draw( void );
 static void start_PhysicsTick( float dt );
+static void start_Render( float t );
 
 static void humanChooseMove_Enter( void );
 static void humanChooseMove_Exit( void );
@@ -352,6 +357,7 @@ static void humanChooseMove_ProcessEvents( SDL_Event* e );
 static void humanChooseMove_Process( void );
 static void humanChooseMove_Draw( void );
 static void humanChooseMove_PhysicsTick( float dt );
+static void humanChooseMove_Render( float t );
 
 static void aiChooseMove_Enter( void );
 static void aiChooseMove_Exit( void );
@@ -359,6 +365,7 @@ static void aiChooseMove_ProcessEvents( SDL_Event* e );
 static void aiChooseMove_Process( void );
 static void aiChooseMove_Draw( void );
 static void aiChooseMove_PhysicsTick( float dt );
+static void aiChooseMove_Render( float t );
 
 static void animate_Enter( void );
 static void animate_Exit( void );
@@ -366,15 +373,16 @@ static void animate_ProcessEvents( SDL_Event* e );
 static void animate_Process( void );
 static void animate_Draw( void );
 static void animate_PhysicsTick( float dt );
+static void animate_Render( float t );
 
 static GameState startState = { start_Enter, start_Exit, start_ProcessEvents,
-	start_Process, start_Draw, start_PhysicsTick };
+	start_Process, start_Draw, start_PhysicsTick, start_Render };
 static GameState humanChooseMoveState = { humanChooseMove_Enter, humanChooseMove_Exit, humanChooseMove_ProcessEvents,
-	humanChooseMove_Process, humanChooseMove_Draw, humanChooseMove_PhysicsTick };
+	humanChooseMove_Process, humanChooseMove_Draw, humanChooseMove_PhysicsTick, humanChooseMove_Render };
 static GameState aiChooseMoveState = { aiChooseMove_Enter, aiChooseMove_Exit, aiChooseMove_ProcessEvents,
-	aiChooseMove_Process, aiChooseMove_Draw, aiChooseMove_PhysicsTick };
+	aiChooseMove_Process, aiChooseMove_Draw, aiChooseMove_PhysicsTick, aiChooseMove_Render };
 static GameState animateState = { animate_Enter, animate_Exit, animate_ProcessEvents,
-	animate_Process, animate_Draw, animate_PhysicsTick };
+	animate_Process, animate_Draw, animate_PhysicsTick, animate_Render };
 
 static GameStateMachine gameSM;
 
@@ -422,6 +430,11 @@ static Vector2 boardPositions[20] = {
 
 static void drawPieces( void )
 {
+	ImageRenderInstruction iri = img_CreateDefaultRenderInstruction( );
+	iri.imgID = pieceImg;
+	iri.camFlags = 1;
+	iri.depth = 100;
+
 	for( int p = 0; p < 2; ++p ) {
 		float penDraw = 0.0f;
 		for( int i = 0; i < 7; ++i ) {
@@ -435,9 +448,9 @@ static void drawPieces( void )
 				pos = vec2( -20.0f, -20.0f ); // just draw it off the screen
 			}
 
-
-			int draw = img_CreateDraw( pieceImg, 1, pos, pos, 100 );
-			img_SetDrawColor( draw, playerClrs[p], playerClrs[p] );
+			iri.color = playerClrs[p];
+			mat3_CreateRenderTransform( &pos, 0.0f, &VEC2_ZERO, &VEC2_ONE, &( iri.mat ) );
+			img_ImmediateRender( &iri );
 		}
 	}
 }
@@ -455,8 +468,6 @@ static void gameOfUrState_Enter( void )
 	cam_TurnOnFlags( 0, 1 );
 
 	gfx_SetClearColor( CLR_BLACK );
-
-	btn_Init( );
 
 	boardImg = img_Load( "Images/ur_board_labeled.png", ST_DEFAULT );
 	pieceImg = img_Load( "Images/piece.png", ST_DEFAULT );
@@ -477,7 +488,7 @@ static void gameOfUrState_Enter( void )
 
 static void gameOfUrState_Exit( void )
 {
-	btn_CleanUp( );
+	gp_DeleteAllOfGroup( &defaultECPS, BUTTON_GROUP_ID );
 }
 
 static void gameOfUrState_ProcessEvents( SDL_Event* e )
@@ -492,10 +503,7 @@ static void gameOfUrState_Process( void )
 
 static void gameOfUrState_Draw( void )
 {
-	int draw = img_CreateDraw( boardImg, 1, vec2( 300.0f, 150.0f ), vec2( 300.0f, 150.0f ), 0 );
-	drawPieces( );
 	gsm_Draw( &gameSM );
-	drawLabels( );
 }
 
 static void gameOfUrState_PhysicsTick( float dt )
@@ -503,16 +511,28 @@ static void gameOfUrState_PhysicsTick( float dt )
 	gsm_PhysicsTick( &gameSM, dt );
 }
 
+static void gameOfUrState_Render( float t )
+{
+	Vector2 boardPos = { { 300.0f, 150.0f } };
+	img_Render_Pos( boardImg, 1, 0, &boardPos );
+
+	drawPieces( );
+	gsm_Render( &gameSM, t );
+}
+
 GameState gameOfUrScreenState = { gameOfUrState_Enter, gameOfUrState_Exit, gameOfUrState_ProcessEvents,
-	gameOfUrState_Process, gameOfUrState_Draw, gameOfUrState_PhysicsTick };
+	gameOfUrState_Process, gameOfUrState_Draw, gameOfUrState_PhysicsTick, gameOfUrState_Render };
 
 static void createTurnLabel( )
 {
+	EntityID label;
 	if( currBoardState.currPlayer == 0 ) {
-		createLabel( "Turn: White", vec2( 400.0f, 270.0f ), CLR_WHITE, HORIZ_ALIGN_CENTER, VERT_ALIGN_TOP, font, 24.0f, 1, 10 );
+		label = createLabel( &defaultECPS, "Turn: White", vec2( 400.0f, 270.0f ), CLR_WHITE, HORIZ_ALIGN_CENTER, VERT_ALIGN_TOP, font, 24.0f, 1, 10 );
 	} else {
-		createLabel( "Turn: Black", vec2( 400.0f, 270.0f ), CLR_WHITE, HORIZ_ALIGN_CENTER, VERT_ALIGN_TOP, font, 24.0f, 1, 10 );
+		label = createLabel( &defaultECPS, "Turn: Black", vec2( 400.0f, 270.0f ), CLR_WHITE, HORIZ_ALIGN_CENTER, VERT_ALIGN_TOP, font, 24.0f, 1, 10 );
 	}
+
+	gp_AddGroupIDToEntityAndChildren( &defaultECPS, label, LABEL_GROUP_ID );
 }
 
 static void createRollLabel( )
@@ -520,7 +540,8 @@ static void createRollLabel( )
 	if( currBoardState.roll >= 0 ) {
 		char strBuffer[64];
 		SDL_snprintf( strBuffer, 64, "Rolled a %i", currBoardState.roll );
-		createLabel( strBuffer, vec2( 400.0f, 300.0f ), CLR_WHITE, HORIZ_ALIGN_CENTER, VERT_ALIGN_TOP, font, 24.0f, 1, 10 );
+		EntityID label = createLabel( &defaultECPS, strBuffer, vec2( 400.0f, 300.0f ), CLR_WHITE, HORIZ_ALIGN_CENTER, VERT_ALIGN_TOP, font, 24.0f, 1, 10 );
+		gp_AddGroupIDToEntityAndChildren( &defaultECPS, label, LABEL_GROUP_ID );
 	}
 }
 
@@ -542,28 +563,28 @@ static void chooseMoveState( void )
 	}
 }
 
-static void pressStart_HumanVsHuman( int id )
+static void pressStart_HumanVsHuman( ECPS* ecps, Entity* btn )
 {
 	playerTypes[0] = PT_HUMAN;
 	playerTypes[1] = PT_HUMAN;
 	chooseMoveState( );
 }
 
-static void pressStart_HumanVsComputer( int id )
+static void pressStart_HumanVsComputer( ECPS* ecps, Entity* btn )
 {
 	playerTypes[0] = PT_HUMAN;
 	playerTypes[1] = PT_AI;
 	chooseMoveState( );
 }
 
-static void pressStart_ComputerVsHuman( int id )
+static void pressStart_ComputerVsHuman( ECPS* ecps, Entity* btn )
 {
 	playerTypes[0] = PT_AI;
 	playerTypes[1] = PT_HUMAN;
 	chooseMoveState( );
 }
 
-static void pressStart_ComputerVsComputer( int id )
+static void pressStart_ComputerVsComputer( ECPS* ecps, Entity* btn )
 {
 	playerTypes[0] = PT_AI;
 	playerTypes[1] = PT_AI;
@@ -574,35 +595,37 @@ static void start_Enter( void )
 {
 	currBoardState = initialBoardState( );
 
+	EntityID label;
 	if( lastWinner == 0 ) {
-		createLabel( "Winner: Player 1", vec2( 275.0f, 40.0f ), CLR_WHITE, HORIZ_ALIGN_LEFT, VERT_ALIGN_BASE_LINE, font, 12.0f, 1, 0 );
+		label = createLabel( &defaultECPS, "Winner: Player 1", vec2( 275.0f, 40.0f ), CLR_WHITE, HORIZ_ALIGN_LEFT, VERT_ALIGN_BASE_LINE, font, 24.0f, 1, 0 );
 	} else if( lastWinner == 1 ) {
-		createLabel( "Winner: Player 2", vec2( 275.0f, 40.0f ), CLR_WHITE, HORIZ_ALIGN_LEFT, VERT_ALIGN_BASE_LINE, font, 12.0f, 1, 0 );
+		label = createLabel( &defaultECPS, "Winner: Player 2", vec2( 275.0f, 40.0f ), CLR_WHITE, HORIZ_ALIGN_LEFT, VERT_ALIGN_BASE_LINE, font, 24.0f, 1, 0 );
 	} else {
-		createLabel( "Winner: None", vec2( 275.0f, 40.0f ), CLR_WHITE, HORIZ_ALIGN_LEFT, VERT_ALIGN_BASE_LINE, font, 24.0f, 1, 0 );
+		label = createLabel( &defaultECPS, "Winner: None", vec2( 275.0f, 40.0f ), CLR_WHITE, HORIZ_ALIGN_LEFT, VERT_ALIGN_BASE_LINE, font, 24.0f, 1, 0 );
 	}
+	gp_AddGroupIDToEntityAndChildren( &defaultECPS, label, LABEL_GROUP_ID );
 
-	btn_Create( vec2( 500.0f, 280.0f ), vec2( 200.0f, 40.0f ), vec2( 200.0f, 40.0f ),
-		"Start HvH", font, 24.0f, CLR_WHITE, VEC2_ZERO, NULL, -1, CLR_WHITE, 1, 0,
-		pressStart_HumanVsHuman, NULL );
+	EntityID button = button_CreateTextButton( &defaultECPS, vec2( 500.0f, 280.0f ), vec2( 200.0f, 40.0f ), "Start HvH",
+		font, 24.0f, CLR_WHITE, VEC2_ZERO, 1, 0, pressStart_HumanVsHuman, NULL );
+	gp_AddGroupIDToEntityAndChildren( &defaultECPS, button, BUTTON_GROUP_ID );
 
-	btn_Create( vec2( 500.0f, 320.0f ), vec2( 200.0f, 40.0f ), vec2( 200.0f, 40.0f ),
-		"Start HvC", font, 24.0f, CLR_WHITE, VEC2_ZERO, NULL, -1, CLR_WHITE, 1, 0,
-		pressStart_HumanVsComputer, NULL );
+	button = button_CreateTextButton( &defaultECPS, vec2( 500.0f, 320.0f ), vec2( 200.0f, 40.0f ), "Start HvC",
+		font, 24.0f, CLR_WHITE, VEC2_ZERO, 1, 0, pressStart_HumanVsComputer, NULL );
+	gp_AddGroupIDToEntityAndChildren( &defaultECPS, button, BUTTON_GROUP_ID );
 
-	btn_Create( vec2( 500.0f, 360.0f ), vec2( 200.0f, 40.0f ), vec2( 200.0f, 40.0f ),
-		"Start CvH", font, 24.0f, CLR_WHITE, VEC2_ZERO, NULL, -1, CLR_WHITE, 1, 0,
-		pressStart_ComputerVsHuman, NULL );
+	button = button_CreateTextButton( &defaultECPS, vec2( 500.0f, 360.0f ), vec2( 200.0f, 40.0f ), "Start CvH",
+		font, 24.0f, CLR_WHITE, VEC2_ZERO, 1, 0, pressStart_ComputerVsHuman, NULL );
+	gp_AddGroupIDToEntityAndChildren( &defaultECPS, button, BUTTON_GROUP_ID );
 
-	btn_Create( vec2( 500.0f, 400.0f ), vec2( 200.0f, 40.0f ), vec2( 200.0f, 40.0f ),
-		"Start CvC", font, 24.0f, CLR_WHITE, VEC2_ZERO, NULL, -1, CLR_WHITE, 1, 0,
-		pressStart_ComputerVsComputer, NULL );
+	button = button_CreateTextButton( &defaultECPS, vec2( 500.0f, 400.0f ), vec2( 200.0f, 40.0f ), "Start CvC",
+		font, 24.0f, CLR_WHITE, VEC2_ZERO, 1, 0, pressStart_ComputerVsComputer, NULL );
+	gp_AddGroupIDToEntityAndChildren( &defaultECPS, button, BUTTON_GROUP_ID );
 }
 
 static void start_Exit( void )
 {
-	destroyAllLabels( );
-	btn_DestroyAll( );
+	gp_DeleteAllOfGroup( &defaultECPS, LABEL_GROUP_ID );
+	gp_DeleteAllOfGroup( &defaultECPS, BUTTON_GROUP_ID );
 }
 
 static void start_ProcessEvents( SDL_Event* e )
@@ -617,13 +640,21 @@ static void start_Draw( void )
 static void start_PhysicsTick( float dt )
 {}
 
+static void start_Render( float t )
+{
+	debugRenderer_Circle( 1, vec2( 400.0f, 40.0f ), 10.0f, CLR_BLUE );
+
+	debugRenderer_Circle( 1, vec2( 400.0f, 40.0f ), 10.0f, CLR_BLUE );
+}
+
 //****************************************************
 // human choose move state
 static Move* sbHumanMoveList = NULL;
-static int* matchingMoveList = NULL;
+static EntityID* matchingMoveList = NULL;
 
-static void pressedButton( int id )
+static void pressedButton( ECPS* ecps, Entity* btn )
 {
+	EntityID id = btn->id;
 	for( size_t i = 0; i < sb_Count( sbHumanMoveList ); ++i ) {
 		if( id == matchingMoveList[i] ) {
 			// execute move
@@ -648,25 +679,27 @@ static void humanChooseMove_Enter( void )
 	for( size_t i = 0; i < sb_Count( sbHumanMoveList ); ++i ) {
 		switch( sbHumanMoveList[i].type ) {
 		case MT_SKIP:
-			matchingMoveList[i] = btn_Create( basePos, buttonSize, buttonSize, "Skip", font, 24.0f, CLR_BLACK, VEC2_ZERO, buttonImg, -1, CLR_WHITE, 1, 10, pressedButton, NULL );
+			//matchingMoveList[i] = btn_Create( basePos, buttonSize, buttonSize, "Skip", font, 24.0f, CLR_BLACK, VEC2_ZERO, buttonImg, -1, CLR_WHITE, 1, 10, pressedButton, NULL );
+			matchingMoveList[i] = button_Create3x3Button( &defaultECPS, basePos, buttonSize, "Skip", font, 24.0f, CLR_BLACK, VEC2_ZERO, buttonImg, CLR_WHITE, 1, 0, pressedButton, NULL );
 			break;
 		case MT_ROLL:
-			matchingMoveList[i] = btn_Create( basePos, buttonSize, buttonSize, "Roll", font, 24.0f, CLR_BLACK, VEC2_ZERO, buttonImg, -1, CLR_WHITE, 1, 10, pressedButton, NULL );
+			//matchingMoveList[i] = btn_Create( basePos, buttonSize, buttonSize, "Roll", font, 24.0f, CLR_BLACK, VEC2_ZERO, buttonImg, -1, CLR_WHITE, 1, 10, pressedButton, NULL );
+			matchingMoveList[i] = button_Create3x3Button( &defaultECPS, basePos, buttonSize, "Roll", font, 24.0f, CLR_BLACK, VEC2_ZERO, buttonImg, CLR_WHITE, 1, 0, pressedButton, NULL );
 			break;
 		case MT_PIECE:
 		{
 			int8_t currPos = currBoardState.pieces[sbHumanMoveList[i].piece.player][sbHumanMoveList[i].piece.piece];
 			if( currPos < 0 ) {
 				// create button over the penned pieces
-				matchingMoveList[i] = btn_Create( basePenButtonPos[sbHumanMoveList[i].piece.player], humanInputButtonSize, humanInputButtonSize,
-					NULL, -1, 0.0f, CLR_BLACK, VEC2_ZERO, NULL, hiliteImg, CLR_WHITE, 1, 10, pressedButton, NULL );
+				matchingMoveList[i] = button_CreateEmpty( &defaultECPS, basePenButtonPos[sbHumanMoveList[i].piece.player], humanInputButtonSize, 10, pressedButton, NULL );
 			} else {
 				// create button over the corresponding piece
-				matchingMoveList[i] = btn_Create( boardPositions[currPos], humanInputButtonSize, humanInputButtonSize,
-					NULL, -1, 0.0f, CLR_BLACK, VEC2_ZERO, NULL, hiliteImg, CLR_WHITE, 1, 10, pressedButton, NULL );
+				matchingMoveList[i] = button_CreateEmpty( &defaultECPS, boardPositions[currPos], humanInputButtonSize, 10, pressedButton, NULL );
 			}
 		} break;
 		}
+
+		gp_AddGroupIDToEntityAndChildren( &defaultECPS, matchingMoveList[i], BUTTON_GROUP_ID );
 
 		if( i != 3 ) {
 			basePos.y += buttonSize.y + padding.y;
@@ -683,8 +716,8 @@ static void humanChooseMove_Enter( void )
 static void humanChooseMove_Exit( void )
 {
 	mem_Release( matchingMoveList );
-	btn_DestroyAll( );
-	destroyAllLabels( );
+	gp_DeleteAllOfGroup( &defaultECPS, BUTTON_GROUP_ID );
+	gp_DeleteAllOfGroup( &defaultECPS, LABEL_GROUP_ID );
 }
 
 static void humanChooseMove_ProcessEvents( SDL_Event* e )
@@ -698,6 +731,9 @@ static void humanChooseMove_Draw( void )
 }
 
 static void humanChooseMove_PhysicsTick( float dt )
+{}
+
+static void humanChooseMove_Render( float t )
 {}
 
 
@@ -714,7 +750,7 @@ static void aiChooseMove_Enter( void )
 
 static void aiChooseMove_Exit( void )
 {
-	destroyAllLabels( );
+	gp_DeleteAllOfGroup( &defaultECPS, LABEL_GROUP_ID );
 }
 
 static void aiChooseMove_ProcessEvents( SDL_Event* e )
@@ -731,35 +767,32 @@ static void aiChooseMove_Process( void )
 }
 
 static void aiChooseMove_Draw( void )
+{}
+
+static void aiChooseMove_PhysicsTick( float dt )
+{}
+
+static void aiChooseMove_Render( float t )
 {
 	Vector2 basePos = vec2( 100.0f, 350.0f );
-	img_CreateDraw( headProfileImg, 1, basePos, basePos, 100 );
+	img_Render_Pos( headProfileImg, 1, 100, &basePos );
 
 	Vector2 gearOffset = vec2( 10.0f, -20.0f );
 	Vector2 gearPos;
 	vec2_Add( &basePos, &gearOffset, &gearPos );
-	float newRot = gearRot + 0.1f;
-
-	int draw = img_CreateDraw( gearImg, 1, gearPos, gearPos, 101 );
-	img_SetDrawColor( draw, CLR_BLACK, CLR_BLACK );
-	img_SetDrawRotation( draw, gearRot, newRot );
-	gearRot = newRot;
+	gearRot += 0.1f;
+	img_Render_PosRotClr( gearImg, 1, 100, &basePos, gearRot, &CLR_BLACK );
 
 	Vector2 progressOffset = vec2( 0.0f, 75.0f );
 	Vector2 progressPos;
 	vec2_Add( &basePos, &progressOffset, &progressPos );
 
-	draw = img_CreateDraw( whiteBoxImg, 1, progressPos, progressPos, 101 );
-	img_SetDrawScaleV( draw, vec2( 3.5f, 0.5f ), vec2( 3.5f, 0.5f ) );
-	img_SetDrawColor( draw, CLR_DARK_GREY, CLR_DARK_GREY );
+	Vector2 barScale = vec2( 3.5f, 0.5 );
+	img_Render_PosScaleVClr( whiteBoxImg, 1, 101, &progressPos, &barScale, &CLR_DARK_GREY );
 
-	draw = img_CreateDraw( whiteBoxImg, 1, progressPos, progressPos, 102 );
-	img_SetDrawScaleV( draw, vec2( 3.5f * amtAIDone, 0.5f ), vec2( 3.5f * amtAIDone, 0.5f ) );
-	img_SetDrawColor( draw, CLR_WHITE, CLR_WHITE );
+	barScale.x *= amtAIDone;
+	img_Render_PosScaleVClr( whiteBoxImg, 1, 101, &progressPos, &barScale, &CLR_WHITE );
 }
-
-static void aiChooseMove_PhysicsTick( float dt )
-{}
 
 
 //****************************************************
@@ -789,7 +822,7 @@ static void animate_Enter( void )
 
 static void animate_Exit( void )
 {
-	destroyAllLabels( );
+	gp_DeleteAllOfGroup( &defaultECPS, LABEL_GROUP_ID );
 }
 
 static void animate_ProcessEvents( SDL_Event* e )
@@ -819,4 +852,9 @@ static void animate_PhysicsTick( float dt )
 	if( timePassed >= 0.75f ) {
 		animateDone = true;
 	}
+}
+
+static void animate_Render( float t )
+{
+
 }

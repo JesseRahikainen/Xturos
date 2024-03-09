@@ -10,6 +10,8 @@
 
 #include "System/platformLog.h"
 
+// TODO: Need queued and immediate modes
+
 #define NUM_CIRC_VERTS 64//8
 
 static DebugVertex debugBuffer[MAX_DEBUG_VERTS];

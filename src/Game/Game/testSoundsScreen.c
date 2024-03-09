@@ -7,19 +7,21 @@
 #include "Graphics/imageSheets.h"
 #include "UI/text.h"
 #include "sound.h"
-#include "UI/button.h"
+#include "UI/uiEntities.h"
+#include "DefaultECPS/defaultECPS.h"
+#include "DefaultECPS/generalProcesses.h"
 
 int testSnd = -1;
 int testStrm = -1;
 
 int font = -1;
 
-void PlaySound( int id )
+void PlaySound( ECPS* ecps, Entity* btn )
 {
 	snd_Play( testSnd, 1.0f, 1.0f, 0.0f, 0 );
 }
 
-void ToggleStream( int id )
+void ToggleStream( ECPS* ecps, Entity* btn )
 {
 	if( snd_IsStreamPlaying( testStrm ) ) {
 		snd_StopStreaming( testStrm );
@@ -27,6 +29,8 @@ void ToggleStream( int id )
 		snd_PlayStreaming( testStrm, 1.0f, 0.0f, 0 );
 	}
 }
+
+#define BUTTON_GROUP 1
 
 static void testSoundsScreen_Enter( void )
 {
@@ -40,19 +44,18 @@ static void testSoundsScreen_Enter( void )
 
 	font = txt_LoadFont( "Fonts/Aileron-Regular.otf", 32 );
 
-	btn_Create( vec2( 100.0f, 100.0f ), vec2( 100.0f, 100.0f ), vec2( 100.0f, 100.0f ),
-		"Play Sound", font, 32.0f, CLR_BLUE, VEC2_ZERO, NULL, -1, CLR_WHITE, 1, 0, NULL, PlaySound );
+	EntityID playButton = button_CreateTextButton( &defaultECPS, vec2( 100.0f, 100.0f ), vec2( 100.0f, 100.0f ), "Play Sound",
+		font, 32.0f, CLR_BLUE, VEC2_ZERO, 1, 0, NULL, PlaySound );
+	gp_AddGroupIDToEntityAndChildren( &defaultECPS, playButton, BUTTON_GROUP );
 
-	btn_Create( vec2( 400.0f, 100.0f ), vec2( 100.0f, 100.0f ), vec2( 100.0f, 100.0f ),
-		"Stream", font, 32.0f, CLR_BLUE, VEC2_ZERO, NULL, -1, CLR_WHITE, 1, 0, NULL, ToggleStream );
-
-	btn_Init( );
+	EntityID streamButton = button_CreateTextButton( &defaultECPS, vec2( 400.0f, 100.0f ), vec2( 100.0f, 100.0f ), "Stream",
+		font, 32.0f, CLR_BLUE, VEC2_ZERO, 1, 0, NULL, ToggleStream );
+	gp_AddGroupIDToEntityAndChildren( &defaultECPS, streamButton, BUTTON_GROUP );
 }
 
 static void testSoundsScreen_Exit( void )
 {
-	btn_CleanUp( );
-
+	gp_DeleteAllOfGroup( &defaultECPS, BUTTON_GROUP );
 	snd_UnloadSample( testSnd );
 	snd_UnloadStream( testStrm );
 }

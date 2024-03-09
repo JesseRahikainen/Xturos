@@ -46,7 +46,9 @@ void gfx_SetWindowClearColor( Color newClearColor );
 /*
 Clears all the drawing instructions.
 */
-void gfx_ClearDrawCommands( float endTime );
+void gfx_ClearDrawCommands( void );
+
+void gfx_SetDrawEndTime( float timeToEnd );
 
 /*
 Goes through everything in the render buffer and does the actual rendering.

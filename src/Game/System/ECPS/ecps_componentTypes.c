@@ -16,7 +16,7 @@ uint32_t sharedComponent_ID;
 // TODO: Why is this here when we're doing the same things in entityComponentProcessSystem.c?
 ComponentID ecps_ct_AddType( ComponentTypeCollection* ctc, const char* name, uint32_t version, size_t size, size_t align, CleanUpComponent cleanUp, VerifyComponent verify )
 {
-	assert( sb_Count( ctc->sbTypes ) < MAX_NUM_COMPONENT_TYPES );
+	SDL_assert( sb_Count( ctc->sbTypes ) < MAX_NUM_COMPONENT_TYPES );
 
 	ComponentType newType;
 
@@ -50,7 +50,7 @@ void ecps_ct_Init( ComponentTypeCollection* ctc )
 // helper function to create bit flag sets
 void ecps_ct_CreateBitFlagsVA( ComponentBitFlags* outFlags, int numComponents, va_list list )
 {
-	assert( outFlags != NULL );
+	SDL_assert( outFlags != NULL );
 
 	memset( outFlags, 0, sizeof( ComponentBitFlags ) );
 	for( int i = 0; i < numComponents; ++i ) {
@@ -79,14 +79,14 @@ size_t ecps_ct_ComponentTypeCount( ComponentTypeCollection* ctc )
 
 size_t ecps_ct_GetComponentTypeSize( ComponentTypeCollection* ctc, size_t idx )
 {
-	assert( idx < sb_Count( ctc->sbTypes ) );
+	SDL_assert( idx < sb_Count( ctc->sbTypes ) );
 
 	return ctc->sbTypes[idx].size;
 }
 
 size_t ecps_ct_GetComponentTypeAlign( ComponentTypeCollection* ctc, size_t idx )
 {
-	assert( idx < sb_Count( ctc->sbTypes ) );
+	SDL_assert( idx < sb_Count( ctc->sbTypes ) );
 
 	return ctc->sbTypes[idx].align;
 }

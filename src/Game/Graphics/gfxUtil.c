@@ -1,7 +1,7 @@
 #include "gfxUtil.h"
 
 #include <SDL_endian.h>
-
+#include <SDL_assert.h>
 
 // gets sbt_image.h to use our custom memory allocation
 #include <stdlib.h>
@@ -11,6 +11,7 @@
 #define malloc(size) mem_Allocate(size)
 #define STB_IMAGE_IMPLEMENTATION
 #define STBI_FAILURE_USERMSG
+#define STBI_ASSERT(x) SDL_assert(x)
 #pragma warning( push )
 #pragma warning( disable : 4244 )
 #include <stb_image.h>
@@ -42,7 +43,7 @@
 // Clean up anything that was created in a loaded image.
 void gfxUtil_ReleaseLoadedImage( LoadedImage* image )
 {
-	assert( image != NULL );
+	SDL_assert( image != NULL );
 
 	stbi_image_free( image->data );
 }
@@ -179,9 +180,9 @@ clean_up:
 //  Returns >= 0 on success, < 0 on failure.
 int gfxUtil_CreateTextureFromRGBABitmap( uint8_t* data, int width, int height, Texture* outTexture )
 {
-	assert( data != NULL );
-	assert( width > 0 );
-	assert( height > 0 );
+	SDL_assert( data != NULL );
+	SDL_assert( width > 0 );
+	SDL_assert( height > 0 );
 
 	int returnCode = 0;
 
@@ -209,9 +210,9 @@ clean_up:
 //  Returns >= 0 on success, < 0 on failure.
 int gfxUtil_CreateTextureFromAlphaBitmap( uint8_t* data, int width, int height, Texture* outTexture )
 {
-	assert( data != NULL );
-	assert( width > 0 );
-	assert( height > 0 );
+	SDL_assert( data != NULL );
+	SDL_assert( width > 0 );
+	SDL_assert( height > 0 );
 
 	int returnCode = 0;
 

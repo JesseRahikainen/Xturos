@@ -38,10 +38,18 @@ void mat3_SetColumn( Matrix3* m, int column, const Vector3* col );
 Vector3* mat3_GetColumn( const Matrix3* m, int column, Vector3* out );
 Vector2* mat3_GetColumn_2( const Matrix3* m, int column, Vector2* out );
 void mat3_SetPosition( Matrix3* m, const Vector2* pos );
-Vector2* mat3_GetPosition( const Matrix3* m, Vector2* out ); 
+Vector2* mat3_GetPosition( const Matrix3* m, Vector2* out );
 Matrix3* mat3_SetRotation( float rot, Matrix3* out );
+float mat3_Determinant( const Matrix3* m );
+
+void mat3_TransformDecompose( const Matrix3* m, Vector2* outPos, float* outRotRad, Vector2* outScale );
+
+Matrix3* mat3_CreateTransform( const Vector2* pos, float rotRad, const Vector2* scale, Matrix3* out );
+Matrix3* mat3_CreateRenderTransform( const Vector2* pos, float rotRad, const Vector2* offset, const Vector2* scale, Matrix3* out );
 
 Matrix3* mat3_CreateTranslation( float fwd, float side, Matrix3* out );
+Matrix3* mat3_CreateScale( float scale, Matrix3* out );
+Matrix3* mat3_CreateScaleV( const Vector2* scale, Matrix3* out );
 
 Vector2* mat3_TransformVec2Dir( const Matrix3* m, const Vector2* v, Vector2* out );
 Vector2* mat3_TransformVec2Pos( const Matrix3* m, const Vector2* v, Vector2* out );
@@ -51,5 +59,7 @@ bool mat3_Inverse( const Matrix3* m, Matrix3* out );
 
 bool mat3_Serialize( cmp_ctx_t* cmp, const Matrix3* vec );
 bool mat3_Deserialize( cmp_ctx_t* cmp, Matrix3* outVec );
+
+void mat3_Dump( Matrix3* m, const char* extra );
 
 #endif /* inclusion guard */

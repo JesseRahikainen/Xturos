@@ -33,7 +33,7 @@ void sequence_CleanUp( Sequence* seq )
 // returns if the sequence has run it's course
 bool sequence_Run( Sequence* sequence, float dt )
 {
-	assert( sequence != NULL );
+	SDL_assert( sequence != NULL );
 
 	sequence->timeLeft -= dt;
 	while( ( sequence->timeLeft <= 0.0f ) && ( sequence->currStep < sb_Count( sequence->sbSteps ) ) ) {

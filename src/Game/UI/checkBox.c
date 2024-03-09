@@ -15,6 +15,8 @@
 #define MAX_CHECK_BOXES 32
 #define TEXT_LEN 32
 
+// TODO: move this over to using the ECPS, probably just a bit of a specialization of buttons
+
 enum CheckBoxState { CBS_NORMAL, CBS_FOCUSED, CBS_CLICKED };
 
 typedef struct {
@@ -47,6 +49,8 @@ static int checkBoxSystem;
 
 static void draw( void )
 {
+	SDL_assert( false && "Need to move this over to the ECPS." );
+#if 0
 	for( int i = 0; i < MAX_CHECK_BOXES; ++i ) {
 		if( !checkBoxes[i].inUse ) {
 			continue;
@@ -73,10 +77,13 @@ static void draw( void )
 								checkBoxes[i].fontID, checkBoxes[i].camFlags, checkBoxes[i].depth, (float)txt_GetBaseSize( checkBoxes[i].fontID ) );
 		}
 	}
+#endif
 }
 
 static void process( void )
 {
+	SDL_assert( false && "Need to move this over to the ECPS." );
+#if 0
 	int i;
 	Vector3 mousePos;
 	Vector3 transMousePos = { 0.0f, 0.0f, 0.0f };
@@ -128,33 +135,43 @@ static void process( void )
 			}
 		}
 	}
+#endif
 }
 
 static void processEvents( SDL_Event* sdlEvent )
 {
+	SDL_assert( false && "Need to move this over to the ECPS." );
+#if 0
 	if( ( sdlEvent->type == SDL_MOUSEBUTTONDOWN ) && ( sdlEvent->button.button == SDL_BUTTON_LEFT ) ) {
 		mouseDown = 1;
 	} else if( ( sdlEvent->type == SDL_MOUSEBUTTONUP ) && ( sdlEvent->button.button == SDL_BUTTON_LEFT ) ) {
 		mouseDown = 0;
 	}
+#endif
 }
 
 /* Call this before trying to use any check boxes. */
 void chkBox_Init( )
 {
+	SDL_assert( false && "Need to move this over to the ECPS." );
+#if 0
 	memset( checkBoxes, 0, sizeof( checkBoxes ) );
 	mouseDown = 0;
 
 	if( checkBoxSystem != -1 ) {
-		checkBoxSystem = sys_Register( processEvents, process, draw, NULL );
+		checkBoxSystem = sys_Register( processEvents, process, draw, NULL, NULL );
 	}
+#endif
 }
 
 void chkBox_CleanUp( )
 {
+	SDL_assert( false && "Need to move this over to the ECPS." );
+#if 0
 	chkBox_DestroyAll( );
 	sys_UnRegister( checkBoxSystem );
 	checkBoxSystem = -1;
+#endif
 }
 
 /*
@@ -163,6 +180,8 @@ Creates a button. All image ids must be valid.
 int chkBox_Create( Vector2 position, Vector2 size, const char* text, int fontID, int normalImg, int checkMarkImg,
 	unsigned int camFlags, char depth, CheckBoxResponse response )
 {
+	SDL_assert( false && "Need to move this over to the ECPS." );
+#if 0
 	int newIdx = 0;
 	while( ( newIdx < MAX_CHECK_BOXES ) && ( checkBoxes[newIdx].inUse == 1 ) ) {
 		++newIdx;
@@ -200,23 +219,33 @@ int chkBox_Create( Vector2 position, Vector2 size, const char* text, int fontID,
 	checkBoxes[newIdx].inUse = 1;
 
 	return newIdx;
+#endif
+	return -1;
 }
 
 void chkBox_Destroy( int idx )
 {
+	SDL_assert( false && "Need to move this over to the ECPS." );
+#if 0
 	if( ( idx < 0 ) || ( idx >= MAX_CHECK_BOXES ) ) {
 		return;
 	}
 	checkBoxes[idx].inUse = 0;
+#endif
 }
 
 void chkBox_DestroyAll( void )
 {
+	SDL_assert( false && "Need to move this over to the ECPS." );
+#if 0
 	memset( checkBoxes, 0, sizeof( checkBoxes ) );
+#endif
 }
 
 bool chkBox_IsChecked( int id )
 {
+	SDL_assert( false && "Need to move this over to the ECPS." );
+#if 0
 	if( ( id < 0 ) || ( id >= MAX_CHECK_BOXES ) ) {
 		return -1;
 	}
@@ -226,10 +255,14 @@ bool chkBox_IsChecked( int id )
 	}
 
 	return checkBoxes[id].isChecked;
+#endif
+	return false;
 }
 
 void chkBox_SetChecked( int id, bool val, bool respond )
 {
+	SDL_assert( false && "Need to move this over to the ECPS." );
+#if 0
 	if( ( id < 0 ) || ( id >= MAX_CHECK_BOXES ) ) return;
 	if( !checkBoxes[id].inUse ) return;
 
@@ -237,4 +270,5 @@ void chkBox_SetChecked( int id, bool val, bool respond )
 	if( respond && ( checkBoxes[id].response != NULL ) ) {
 		checkBoxes[id].response( val );
 	}
+#endif
 }

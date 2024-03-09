@@ -13,11 +13,13 @@
 
 #include "System/platformLog.h"
 
-#include "UI/button.h"
+#include "UI/uiEntities.h"
 
 #include "System/jobQueue.h"
 
 #include "sound.h"
+
+#include "DefaultECPS/defaultECPS.h"
 
 static int font;
 static int whiteImg;
@@ -92,39 +94,39 @@ static void addHundredJobs( void* data )
 	}
 }
 
-static void createJob( int btnID )
+static void createJob( ECPS* ecps, Entity* btn )
 {
 	jq_AddJob( testJob, NULL );
 }
 
-static void createTenJobs( int btnID )
+static void createTenJobs( ECPS* ecps, Entity* btn )
 {
 	//jq_AddJob( addTenJobs, NULL );
 	addTenJobs( NULL );
 }
 
-static void createHundredJobs( int btnID )
+static void createHundredJobs( ECPS* ecps, Entity* btn )
 {
 	//jq_AddJob( addHundredJobs, NULL );
 	addHundredJobs( NULL );
 }
 
-static void createDelayedLoadTest( int btnID )
+static void createDelayedLoadTest( ECPS* ecps, Entity* btn )
 {
 	jq_AddJob( delayedLoadTest, NULL );
 }
 
-static void createDelayedFontLoadTest( int btnID )
+static void createDelayedFontLoadTest( ECPS* ecps, Entity* btn )
 {
 	jq_AddJob( delayedFontLoadTest, NULL );
 }
 
-static void createDelayedSoundLoadTest( int btnID )
+static void createDelayedSoundLoadTest( ECPS* ecps, Entity* btn )
 {
 	jq_AddJob( delayedSoundLoadTest, NULL );
 }
 
-static void testSoundPlay( int btnID )
+static void testSoundPlay( ECPS* ecps, Entity* btn )
 {
 	if( testSound >= 0 ) {
 		snd_Play( testSound, 0.5f, 1.0f, 0.0f, 0 );
@@ -175,7 +177,7 @@ static void testConsumer( void* data )
 	printf( "Consumer done.\n" );
 }
 
-static void testProduceConsumer( int btnID )
+static void testProduceConsumer( ECPS* ecps, Entity* btn )
 {
 	if( prodConsActive ) return;
 
@@ -204,43 +206,39 @@ static void testJobQueueScreen_Enter( void )
 
 	jq_Initialize( 8 );
 
-	btn_Init( );
-
 	font = txt_LoadFont( "Fonts/Aileron-Regular.otf", 12 );
 
 	//testFont = txt_LoadFont( "Fonts/kenpixel.ttf", 24.0f );
 
 	whiteImg = img_Load( "Images/white.png", ST_DEFAULT );
 
-	btn_Create( vec2( 50.0f, 50.0f ), vec2( 50.0f, 50.0f ), vec2( 60.0f, 60.0f ), "Create Job", 
-		font, 12.0f, CLR_WHITE, VEC2_ZERO, NULL, whiteImg, CLR_BLUE, 1, 0, createJob, NULL );
+	button_CreateImageButton( &defaultECPS, vec2( 50.0f, 50.0f ), vec2( 50.0f, 50.0f ), vec2( 60.0f, 60.0f ), "Create Job", 
+		font, 12.0f, CLR_WHITE, VEC2_ZERO, whiteImg, CLR_BLUE, 1, 0, createJob, NULL );
 
-	btn_Create( vec2( 150.0f, 50.0f ), vec2( 50.0f, 50.0f ), vec2( 60.0f, 60.0f ), "Create 10\nJobs", 
-		font, 12.0f, CLR_WHITE, VEC2_ZERO, NULL, whiteImg, CLR_BLUE, 1, 0, createTenJobs, NULL );
+	button_CreateImageButton( &defaultECPS, vec2( 150.0f, 50.0f ), vec2( 50.0f, 50.0f ), vec2( 60.0f, 60.0f ), "Create 10\nJobs",
+		font, 12.0f, CLR_WHITE, VEC2_ZERO, whiteImg, CLR_BLUE, 1, 0, createTenJobs, NULL );
 
-	btn_Create( vec2( 250.0f, 50.0f ), vec2( 50.0f, 50.0f ), vec2( 60.0f, 60.0f ), "Create 100\nJobs", 
-		font, 12.0f, CLR_WHITE, VEC2_ZERO, NULL, whiteImg, CLR_BLUE, 1, 0, createHundredJobs, NULL );
+	button_CreateImageButton( &defaultECPS, vec2( 250.0f, 50.0f ), vec2( 50.0f, 50.0f ), vec2( 60.0f, 60.0f ), "Create 100\nJobs",
+		font, 12.0f, CLR_WHITE, VEC2_ZERO, whiteImg, CLR_BLUE, 1, 0, createHundredJobs, NULL );
 
-	btn_Create( vec2( 350.0f, 50.0f ), vec2( 50.0f, 50.0f ), vec2( 60.0f, 60.0f ), "Test Img\nLoad", 
-		font, 12.0f, CLR_WHITE, VEC2_ZERO, NULL, whiteImg, CLR_BLUE, 1, 0, createDelayedLoadTest, NULL );
+	button_CreateImageButton( &defaultECPS, vec2( 350.0f, 50.0f ), vec2( 50.0f, 50.0f ), vec2( 60.0f, 60.0f ), "Test Img\nLoad",
+		font, 12.0f, CLR_WHITE, VEC2_ZERO, whiteImg, CLR_BLUE, 1, 0, createDelayedLoadTest, NULL );
 
-	btn_Create( vec2( 450.0f, 50.0f ), vec2( 50.0f, 50.0f ), vec2( 60.0f, 60.0f ), "Test Font\nLoad", 
-		font, 12.0f, CLR_WHITE, VEC2_ZERO, NULL, whiteImg, CLR_BLUE, 1, 0, createDelayedFontLoadTest, NULL );
+	button_CreateImageButton( &defaultECPS, vec2( 450.0f, 50.0f ), vec2( 50.0f, 50.0f ), vec2( 60.0f, 60.0f ), "Test Font\nLoad",
+		font, 12.0f, CLR_WHITE, VEC2_ZERO, whiteImg, CLR_BLUE, 1, 0, createDelayedFontLoadTest, NULL );
 
-	btn_Create( vec2( 550.0f, 50.0f ), vec2( 50.0f, 50.0f ), vec2( 60.0f, 60.0f ), "Test Snd\nLoad",
-		font, 12.0f, CLR_WHITE, VEC2_ZERO, NULL, whiteImg, CLR_BLUE, 1, 0 , createDelayedSoundLoadTest, NULL );
+	button_CreateImageButton( &defaultECPS, vec2( 550.0f, 50.0f ), vec2( 50.0f, 50.0f ), vec2( 60.0f, 60.0f ), "Test Snd\nLoad",
+		font, 12.0f, CLR_WHITE, VEC2_ZERO, whiteImg, CLR_BLUE, 1, 0 , createDelayedSoundLoadTest, NULL );
 
-	btn_Create( vec2( 50.0f, 150.0f ), vec2( 50.0f, 50.0f ), vec2( 60.0f, 60.0f ), "Test Snd\nPlay",
-		font, 12.0f, CLR_WHITE, VEC2_ZERO, NULL, whiteImg, CLR_BLUE, 1, 0 , testSoundPlay, NULL );
+	button_CreateImageButton( &defaultECPS, vec2( 50.0f, 150.0f ), vec2( 50.0f, 50.0f ), vec2( 60.0f, 60.0f ), "Test Snd\nPlay",
+		font, 12.0f, CLR_WHITE, VEC2_ZERO, whiteImg, CLR_BLUE, 1, 0 , testSoundPlay, NULL );
 
-	btn_Create( vec2( 150.0f, 150.0f ), vec2( 50.0f, 50.0f ), vec2( 60.0f, 60.0f ), "Test\nProd/Cons",
-		font, 12.0f, CLR_WHITE, VEC2_ZERO, NULL, whiteImg, CLR_BLUE, 1, 0, testProduceConsumer, NULL );
+	button_CreateImageButton( &defaultECPS, vec2( 150.0f, 150.0f ), vec2( 50.0f, 50.0f ), vec2( 60.0f, 60.0f ), "Test\nProd/Cons",
+		font, 12.0f, CLR_WHITE, VEC2_ZERO, whiteImg, CLR_BLUE, 1, 0, testProduceConsumer, NULL );
 }
 
 static void testJobQueueScreen_Exit( void )
 {
-	btn_CleanUp( );
-
 	txt_UnloadFont( font );
 	img_Clean( whiteImg );
 }
@@ -255,12 +253,20 @@ static void testJobQueueScreen_Process( void )
 
 static void testJobQueueScreen_Draw( void )
 {
+
+}
+
+static void testJobQueueScreen_PhysicsTick( float dt )
+{
+}
+
+static void testJobQueueScreen_Render( float t )
+{
 	if( img_IsValidImage( testImg ) ) {
-		img_CreateDraw( testImg, 1, vec2( 400.0f, 400.0f ), vec2( 400.0f, 400.0f ), 0 );
+		Vector2 pos = vec2( 400.0f, 400.0f );
+		img_Render_Pos( testImg, 1, 0, &pos );
 	}
 
-//#error the string is being displayed all garbled
-	//const char* testString = "Testing some string stuff.\nSeeing if it works.";
 	const char* testString = "ABCDEFGHIJKLMNOPQRSTUVWXYZ\nabcdefghijklmnopqrstuvwxyz\nTest Test Test   ";
 	txt_DisplayString( testString, vec2( 200.0f, 450.0f ), CLR_CYAN,
 		HORIZ_ALIGN_LEFT, VERT_ALIGN_TOP, testFont, 1, 0, 12.0f );
@@ -269,9 +275,5 @@ static void testJobQueueScreen_Draw( void )
 		HORIZ_ALIGN_LEFT, VERT_ALIGN_TOP, font, 1, 0, 12.0f );
 }
 
-static void testJobQueueScreen_PhysicsTick( float dt )
-{
-}
-
 GameState testJobQueueScreenState = { testJobQueueScreen_Enter, testJobQueueScreen_Exit, testJobQueueScreen_ProcessEvents,
-	testJobQueueScreen_Process, testJobQueueScreen_Draw, testJobQueueScreen_PhysicsTick };
+	testJobQueueScreen_Process, testJobQueueScreen_Draw, testJobQueueScreen_PhysicsTick, testJobQueueScreen_Render };

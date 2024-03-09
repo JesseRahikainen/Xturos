@@ -12,6 +12,7 @@
 #include "System/platformLog.h"
 #include "System/memory.h"
 #include "IMGUI/nuklearWrapper.h"
+#include "System/gameTime.h"
 
 #include "Graphics/graphics.h"
 
@@ -72,7 +73,7 @@ static int generateFBO( int renderWidth, int renderHeight, GLuint* fboOut, GLuin
 	return 0;
 }
 
-bool gfxPlatform_Init( SDL_Window* window, int desiredRenderWidth, int desiredRenderHeight )
+bool gfxPlatform_Init( SDL_Window* window, int desiredRenderWidth, int desiredRenderHeight, VSync desiredVSync )
 {
 	// setup opengl
 	glContext = SDL_GL_CreateContext( window );
@@ -90,6 +91,31 @@ bool gfxPlatform_Init( SDL_Window* window, int desiredRenderWidth, int desiredRe
 	llog( LOG_INFO, "OpenGL initialized." );
 
 	// use v-sync, avoid tearing
+	switch( desiredVSync ) {
+	case VS_ADAPTIVE:
+		// attempt to set adaptive, fall back to interval if it fails
+		if( SDL_GL_SetSwapInterval( -1 ) < 0 ) {
+			llog( LOG_ERROR, "Unable to set vsync to adaptive, attempting to fall back to interval." );
+			if( SDL_GL_SetSwapInterval( 1 ) < 0 ) {
+				llog( LOG_ERROR, "Unable to set vsync to interval." );
+			}
+		}
+		break;
+	case VS_INTERVAL:
+		if( SDL_GL_SetSwapInterval( 1 ) < 0 ) {
+			llog( LOG_ERROR, "Unable to set vsync to interval." );
+		}
+		break;
+	case VS_NONE:
+		if( SDL_GL_SetSwapInterval( 0 ) < 0 ) {
+			llog( LOG_ERROR, "Unable to disable vsync." );
+		}
+		break;
+	default:
+		SDL_assert( false && "Invalid vsync option. Seting to VS_NONE." );
+		SDL_GL_SetSwapInterval( 0 );
+		break;
+	}
 	if( SDL_GL_SetSwapInterval( 1 ) < 0 ) {
 		llog( LOG_INFO, "Unable to set vertical retrace swap: %s", SDL_GetError( ) );
 		
@@ -170,14 +196,13 @@ void gfxPlatform_DynamicSizeRender( float dt, float t, int renderWidth, int rend
 			GL_COLOR_BUFFER_BIT,
 			GL_LINEAR ) );
 	GL( glBindFramebuffer( GL_READ_FRAMEBUFFER, defaultFBO ) );
-
-    
+	
     // iOS: need to make sure the framebuffer and colorbuffer objects in the SysWMInfo are correctly bound
     //  framebuffer should already be bound with the defaultFBO command above
 #ifdef __IPHONEOS__
     GL( glBindRenderbuffer( GL_RENDERBUFFER, defaultColorRBO ) );
 #endif
-    
+
 	// editor and debugging ui stuff
 	nk_xu_render( &editorIMGUI );
 

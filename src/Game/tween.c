@@ -1,4 +1,4 @@
-#include <assert.h>
+#include <SDL_assert.h>
 #include <SDL_stdinc.h>
 #include "tween.h"
 #include "Math/mathUtil.h"
@@ -12,7 +12,7 @@ static float twoPi = 6.283185307179586476925286766559f;
 /* Sets the values for the tween. If no ease function is set it treats it as linear. */
 void setTween( Tween* tween, float start, float end, float duration, float(*easeFunc)(float) )
 {
-	assert( tween );
+	SDL_assert( tween );
 
 	tween->start = start;
 	tween->end = end;
@@ -27,7 +27,7 @@ void setTween( Tween* tween, float start, float end, float duration, float(*ease
 /* Resets everything for the tween. */
 void resetTween( Tween* tween )
 {
-	assert( tween );
+	SDL_assert( tween );
 
 	tween->current = tween->start;
 	tween->elapsed = 0.0f;
@@ -37,7 +37,7 @@ void resetTween( Tween* tween )
 /* Resets everything in the tween but swaps the start end end values. */
 void resetAndReverseTween( Tween* tween )
 {
-	assert( tween );
+	SDL_assert( tween );
 
 	float temp = tween->start;
 	tween->start = tween->end;
@@ -50,7 +50,7 @@ void resetAndReverseTween( Tween* tween )
 bool processTween( Tween* tween, float delta )
 {
 	float t;
-	assert( tween );
+	SDL_assert( tween );
 
 	bool isDone = false;
 

@@ -1,7 +1,7 @@
 #ifndef STRETCH_BUFFER_H
 #define STRETCH_BUFFER_H
 
-#include <assert.h>
+#include <SDL_assert.h>
 #include <stdint.h>
 #include <string.h>
 #include "System/memory.h"
@@ -66,7 +66,7 @@ static void* sb__GrowData( void* p, size_t increment, size_t itemSize, const cha
 		np[0] = newCount;
 		return np+2;
 	} else {
-		assert( "Error allocating stretchy array." );
+		SDL_assert( "Error allocating stretchy array." );
 		return p;
 	}
 }

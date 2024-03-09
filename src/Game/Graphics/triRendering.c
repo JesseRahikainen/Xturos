@@ -10,6 +10,7 @@
 #include "System/platformLog.h"
 #include "Math/mathUtil.h"
 #include "System/memory.h"
+#include "System/gameTime.h"
 
 
 /*

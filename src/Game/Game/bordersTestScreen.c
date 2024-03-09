@@ -2,15 +2,15 @@
 
 #include <stdbool.h>
 
-#include "../Graphics/graphics.h"
-#include "../Graphics/images.h"
-#include "../Graphics/camera.h"
-#include "../Graphics/debugRendering.h"
-#include "../Graphics/imageSheets.h"
-#include "../System/platformLog.h"
-#include "../Utils/stretchyBuffer.h"
-#include "../Input/input.h"
-#include "../Utils/helpers.h"
+#include "Graphics/graphics.h"
+#include "Graphics/images.h"
+#include "Graphics/camera.h"
+#include "Graphics/debugRendering.h"
+#include "Graphics/imageSheets.h"
+#include "System/platformLog.h"
+#include "Utils/stretchyBuffer.h"
+#include "Input/input.h"
+#include "Utils/helpers.h"
 
 // Have wanted this multiple times for LD but always decided it would take too long to implement.
 //  So here's an example to work from in the future.
@@ -459,15 +459,7 @@ static void bordersTestScreen_Process( void )
 
 static void bordersTestScreen_Draw( void )
 {
-	for( int y = 0; y < MAP_HEIGHT; ++y ) {
-		for( int x = 0; x < MAP_WIDTH; ++x ) {
-			int i = MAP_COORD_TO_IDX( x, y );
-			Vector2 pos = vec2( x * SPRITE_WIDTH, y * SPRITE_HEIGHT );
-			img_CreateDraw( spriteMap[i], 1, pos, pos, 0 );
-		}
-	}
-
-	img_CreateDraw( highlightImg, 1, highlightPos, highlightPos, 1 );
+	
 }
 
 static void bordersTestScreen_PhysicsTick( float dt )
@@ -483,5 +475,18 @@ static void bordersTestScreen_PhysicsTick( float dt )
 	zoomDelta = 0.0f;
 }
 
+static void bordersTestScreen_Render( float t )
+{
+	for( int y = 0; y < MAP_HEIGHT; ++y ) {
+		for( int x = 0; x < MAP_WIDTH; ++x ) {
+			int i = MAP_COORD_TO_IDX( x, y );
+			Vector2 pos = vec2( x * SPRITE_WIDTH, y * SPRITE_HEIGHT );
+			img_Render_Pos( spriteMap[i], 1, 0, &pos );
+		}
+	}
+
+	img_Render_Pos( highlightImg, 1, 0, &highlightPos );
+}
+
 GameState bordersTestScreenState = { bordersTestScreen_Enter, bordersTestScreen_Exit, bordersTestScreen_ProcessEvents,
-	bordersTestScreen_Process, bordersTestScreen_Draw, bordersTestScreen_PhysicsTick };
+	bordersTestScreen_Process, bordersTestScreen_Draw, bordersTestScreen_PhysicsTick, bordersTestScreen_Render };

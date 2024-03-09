@@ -12,6 +12,7 @@
 #include "UI/text.h"
 #include "Utils/helpers.h"
 #include "Input/input.h"
+#include "System/platformLog.h"
 
 #include "Utils/stretchyBuffer.h"
 
@@ -89,9 +90,7 @@ static void drawMap( void )
 	int mouseIdx = mapPosToIdx( mousePos );
 	if( mouseIdx >= 0 ) {
 		Vector2 pos = mapIdxToPos( mouseIdx );
-		//img_Draw_c( hiliteImg, 1, pos, pos, CLR_WHITE, CLR_WHITE, 10 );
-		int drawID = img_CreateDraw( hiliteImg, 1, pos, pos, 10 );
-		img_SetDrawColor( drawID, CLR_WHITE, CLR_WHITE );
+		img_Render_PosClr( hiliteImg, 1, 10, &pos, &CLR_WHITE );
 	}
 
 	for( int i = 0; i < ARRAY_SIZE( map ); ++i ) {
@@ -110,30 +109,22 @@ static void drawMap( void )
 			break;
 		}
 
-		//img_Draw_c( tileImg, 1, pos, pos, clr, clr, 0 );
-		int drawID = img_CreateDraw( tileImg, 1, pos, pos, 0 );
-		img_SetDrawColor( drawID, clr, clr );
+		img_Render_PosClr( tileImg, 1, 0, &pos, &clr );
 	}
 
 	if( startIdx >= 0 ) {
 		Vector2 pos = mapIdxToPos( startIdx );
-		//img_Draw_c( tileMarkerImg, 1, pos, pos, CLR_GREEN, CLR_GREEN, 5 );
-		int drawID = img_CreateDraw( tileMarkerImg, 1, pos, pos, 5 );
-		img_SetDrawColor( drawID, CLR_GREEN, CLR_GREEN );
+		img_Render_PosClr( tileMarkerImg, 1, 5, &pos, &CLR_GREEN );
 	}
 
 	if( exitIdx >= 0 ) {
 		Vector2 pos = mapIdxToPos( exitIdx );
-		//img_Draw_c( tileMarkerImg, 1, pos, pos, CLR_RED, CLR_RED, 5 );
-		int drawID = img_CreateDraw( tileMarkerImg, 1, pos, pos, 5 );
-		img_SetDrawColor( drawID, CLR_RED, CLR_RED );
+		img_Render_PosClr( tileMarkerImg, 1, 5, &pos, &CLR_RED );
 	}
 
 	for( size_t i = 0; i < sb_Count( sbPath ); ++i ) {
 		Vector2 pos = mapIdxToPos( sbPath[i] );
-		//img_Draw_c( pathMarkerImg, 1, pos, pos, CLR_BLUE, CLR_BLUE, 3 );
-		int drawID = img_CreateDraw( pathMarkerImg, 1, pos, pos, 3 );
-		img_SetDrawColor( drawID, CLR_BLUE, CLR_BLUE );
+		img_Render_PosClr( tileMarkerImg, 1, 5, &pos, &CLR_BLUE );
 	}
 }
 
@@ -315,6 +306,15 @@ static void testAStarScreen_Enter( void )
 
 	mouseOver = -1;
 
+	llog( LOG_DEBUG, "Controls:" );
+	llog( LOG_DEBUG, " z - Set start" );
+	llog( LOG_DEBUG, " x - Set end" );
+	llog( LOG_DEBUG, " q - Set open" );
+	llog( LOG_DEBUG, " w - Set sticky" );
+	llog( LOG_DEBUG, " e - Set closed" );
+	llog( LOG_DEBUG, " a - Generate maze" );
+	llog( LOG_DEBUG, " s - Reset and search" );
+
 	input_BindOnKeyPress( SDLK_z, setCurrentStart );
 	input_BindOnKeyPress( SDLK_x, setCurrentEnd );
 	input_BindOnKeyPress( SDLK_q, setCurrentOpen );
@@ -350,12 +350,16 @@ static void testAStarScreen_Process( void )
 
 static void testAStarScreen_Draw( void )
 {
-	drawMap( );
 }
 
 static void testAStarScreen_PhysicsTick( float dt )
 {
 }
 
+static void testAStarScreen_Render( float t )
+{
+	drawMap( );
+}
+
 GameState testAStarScreenState = { testAStarScreen_Enter, testAStarScreen_Exit, testAStarScreen_ProcessEvents,
-	testAStarScreen_Process, testAStarScreen_Draw, testAStarScreen_PhysicsTick };
+	testAStarScreen_Process, testAStarScreen_Draw, testAStarScreen_PhysicsTick, testAStarScreen_Render };

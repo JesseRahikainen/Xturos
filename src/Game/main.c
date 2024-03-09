@@ -6,7 +6,6 @@
 #include <stdlib.h>
 #include <SDL_main.h>
 #include <SDL.h>
-#include <assert.h>
 
 #include <time.h>
 
@@ -40,6 +39,7 @@
 #include "Game/hexTestScreen.h"
 #include "Game/testBloomScreen.h"
 #include "Game/gameOfUrScreen.h"
+#include "Game/testMountingState.h"
 
 #include "System/memory.h"
 #include "System/systems.h"
@@ -52,6 +52,7 @@
 
 #include "System/jobQueue.h"
 #include "Utils/helpers.h"
+#include "DefaultECPS/defaultECPS.h"
 
 // 540 x 960
 
@@ -375,6 +376,8 @@ int initEverything( void )
 
 	jq_Initialize( 2 );
 
+	defaultECPS_Setup( );
+
 	return 0;
 }
 
@@ -573,106 +576,156 @@ void mainLoop( void* v )
 	int numPhysicsProcesses;
 	float renderDelta;
 
-	Uint64 mainTimer = gt_StartTimer( );
-    
-#if defined( __EMSCRIPTEN__ )
-	if( !running ) {
-		emscripten_cancel_main_loop( );
-	}
+#if defined( PROFILING_ENABLED )
+	float procTimerSec = 0.0f;
+	float physicsTimerSec = 0.0f;
+	float drawTimerSec = 0.0f;
+	float mainJobsTimerSec = 0.0f;
+	float renderTimerSec = 0.0f;
+	float flipTimerSec = 0.0f;
 #endif
 
-	currTicks = SDL_GetPerformanceCounter( );
-	tickDelta = currTicks - lastTicks;
-	lastTicks = currTicks;
+#if defined( PROFILING_ENABLED )
+	Uint64 mainTimer = gt_StartTimer( );
+#endif
+	{
 
-	Uint64 procTimer = gt_StartTimer( );
-	if( !focused ) {
-		processEvents( 1 );
-		return;
+#if defined( __EMSCRIPTEN__ )
+		if( !running ) {
+			emscripten_cancel_main_loop( );
+		}
+#endif
+
+		currTicks = SDL_GetPerformanceCounter( );
+		tickDelta = currTicks - lastTicks;
+		lastTicks = currTicks;
+
+#if defined( PROFILING_ENABLED )
+		Uint64 procTimer = gt_StartTimer( );
+#endif
+		{
+			if( !focused ) {
+				processEvents( 1 );
+				return;
+			}
+
+			if( paused ) {
+				tickDelta = 0;
+			}
+
+			physicsTickAcc += tickDelta;
+
+			// process input
+			if( skipEvents <= 0 ) {
+				processEvents( 0 );
+			} else {
+				--skipEvents;
+			}
+
+			// handle per frame update
+			sys_Process( );
+			gsm_Process( &globalFSM );
+		}
+#if defined( PROFILING_ENABLED )
+		procTimerSec = gt_StopTimer( procTimer );
+#endif
+
+#if defined( PROFILING_ENABLED )
+		Uint64 physicsTimer = gt_StartTimer( );
+#endif
+		{
+			// process movement, collision, and other things that require a delta time
+			numPhysicsProcesses = 0;
+			while( physicsTickAcc > PHYSICS_TICK ) {
+				if( numPhysicsProcesses == 0 ) {
+					// before we do any actual physics update any data we're using to the new frame
+					gfx_ClearDrawCommands( );
+				}
+
+				sys_PhysicsTick( PHYSICS_DT );
+				gsm_PhysicsTick( &globalFSM, PHYSICS_DT );
+				physicsTickAcc -= PHYSICS_TICK;
+				++numPhysicsProcesses;
+			}
+		}
+#if defined( PROFILING_ENABLED )
+		physicsTimerSec = gt_StopTimer( physicsTimer );
+#endif
+
+		// TODO: Figure out all the bugs that will happen because of this
+		//  as of right now it's only used for taking screenshots of the same
+		//  scene at different resolutions, not meant for actual in play use
+		if( forceDraw && numPhysicsProcesses == 0 ) {
+			numPhysicsProcesses = 1;
+		}
+
+#if defined( PROFILING_ENABLED )
+		Uint64 drawTimer = gt_StartTimer( );
+#endif
+		{
+			// drawing
+			if( numPhysicsProcesses > 0 ) {
+				// set the new draw positions
+				renderDelta = PHYSICS_DT * (float)numPhysicsProcesses;
+				gfx_SetDrawEndTime( renderDelta );
+				cam_FinalizeStates( renderDelta );
+
+				// set up drawing for everything
+				sys_Draw( );
+				gsm_Draw( &globalFSM );
+			}
+		}
+#if defined( PROFILING_ENABLED )
+		drawTimerSec = gt_StopTimer( drawTimer );
+#endif
+
+#if defined( PROFILING_ENABLED )
+		Uint64 mainJobsTimer = gt_StartTimer( );
+#endif
+		{
+			// process all the jobs we need the main thread for, using this reduces the need for synchronization
+			jq_ProcessMainThreadJobs( );
+		}
+#if defined( PROFILING_ENABLED )
+		mainJobsTimerSec = gt_StopTimer( mainJobsTimer );
+#endif
+
+		float dt = 0.0f;
+#if defined( PROFILING_ENABLED )
+		Uint64 renderTimer = gt_StartTimer( );
+#endif
+		{
+			// do the actual rendering for this frame
+			dt = (float)tickDelta / (float)SDL_GetPerformanceFrequency( );
+			gt_SetRenderTimeDelta( dt );
+			cam_Update( dt );
+			gfx_Render( dt );
+		}
+#if defined( PROFILING_ENABLED )
+		renderTimerSec = gt_StopTimer( renderTimer );
+#endif
+
+#if defined( PROFILING_ENABLED )
+		Uint64 flipTimer = gt_StartTimer( );
+#endif
+		{
+			gfx_Swap( window );
+		}
+#if defined( PROFILING_ENABLED )
+		flipTimerSec = gt_StopTimer( flipTimer );
+#endif
 	}
-
-	if( paused ) {
-		tickDelta = 0;
-	}
-
-	physicsTickAcc += tickDelta;
-
-	// process input
-	if( skipEvents <= 0 ) {
-		processEvents( 0 );
-	} else {
-		--skipEvents;
-	}
-    
-	// handle per frame update
-    sys_Process( );
-    gsm_Process( &globalFSM );
-	float procTimerSec = gt_StopTimer( procTimer );
-
-	Uint64 physicsTimer = gt_StartTimer( );
-	// process movement, collision, and other things that require a delta time
-    numPhysicsProcesses = 0;
-	while( physicsTickAcc > PHYSICS_TICK ) {
-		sys_PhysicsTick( PHYSICS_DT );
-		gsm_PhysicsTick( &globalFSM, PHYSICS_DT );
-		physicsTickAcc -= PHYSICS_TICK;
-		++numPhysicsProcesses;
-	}
-	float physicsTimerSec = gt_StopTimer( physicsTimer );
-
-	// TODO: Figure out all the bugs that will happen because of this
-	//  as of right now it's only used for taking screenshots of the same
-	//  scene at different resolutions, not meant for actual in play use
-	if( forceDraw && numPhysicsProcesses == 0 ) {
-		numPhysicsProcesses = 1;
-	}
-
-	Uint64 drawTimer = gt_StartTimer( );
-	// drawing
-    if( numPhysicsProcesses > 0 ) {
-		// set the new draw positions
-		renderDelta = PHYSICS_DT * (float)numPhysicsProcesses;
-		gfx_ClearDrawCommands( renderDelta );
-		cam_FinalizeStates( renderDelta );
-
-		// set up drawing for everything
-		sys_Draw( );
-		gsm_Draw( &globalFSM );
-	}
-	float drawTimerSec = gt_StopTimer( drawTimer );
-
-	Uint64 mainJobsTimer = gt_StartTimer( );
-	// process all the jobs we need the main thread for, using this reduces the need for synchronization
-	jq_ProcessMainThreadJobs( );
-	float mainJobsTimerSec = gt_StopTimer( mainJobsTimer );
-
-	Uint64 renderTimer = gt_StartTimer( );
-	// do the actual rendering for this frame
-	float dt = (float)tickDelta / (float)SDL_GetPerformanceFrequency( ); //(float)tickDelta / 1000.0f;
-	gt_SetRenderTimeDelta( dt );
-	cam_Update( dt );
-	gfx_Render( dt );
-    
-	float renderTimerSec = gt_StopTimer( renderTimer );
-	//llog( LOG_DEBUG, "FPS: %f", ( 1.0f / dt ) );
-
-	Uint64 flipTimer = gt_StartTimer( );
-    
-    gfx_Swap( window );
-    
-	//float flipTimerSec = gt_StopTimer( flipTimer );
-
-/*	if( dt >= 0.02f ) {
-		llog( LOG_INFO, "!!! dt: %f", dt );
-	} else {
-		llog( LOG_INFO, "dt: %f", dt );
-	}//*/
-
+#if defined( PROFILING_ENABLED )
 	float mainTimerSec = gt_StopTimer( mainTimer );
 
-	//int priority = ( mainTimerSec >= 0.15f ) ? LOG_WARN : LOG_INFO;
-	//llog( priority, "%smain: %.4f - proc: %.4f  phys: %.4f  draw: %.4f  jobs: %.4f  rndr: %.4f  flip: %.4f", ( mainTimerSec >= 0.02f ) ? "!!! " : "", mainTimerSec, procTimerSec, physicsTimerSec, drawTimerSec, mainJobsTimerSec, renderTimerSec, flipTimerSec );
-	//llog( priority, "%smain: %.4f", ( mainTimerSec >= 0.02f ) ? "!!! " : "", mainTimerSec );
+	int priority = LOG_INFO;
+	if( mainTimerSec >= 0.04f ) {
+		priority = LOG_WARN;
+	}
+	llog( LOG_WARN, "%sframeTime: %f - proc: %f, physics: %f, draw: %f, mainJobs: %f, render: %f, flip: %f",
+		priority == LOG_WARN ? "!!! " : "",
+		mainTimerSec, procTimerSec, physicsTimerSec, drawTimerSec, mainJobsTimerSec, renderTimerSec, flipTimerSec );
+#endif
 }
 
 int main( int argc, char** argv )
@@ -685,13 +738,12 @@ int main( int argc, char** argv )
 			canResize = true;
 		}
 	}
-/*#ifdef _DEBUG
+
+#ifdef _DEBUG
 	SDL_LogSetAllPriority( SDL_LOG_PRIORITY_VERBOSE );
 #else
 	SDL_LogSetAllPriority( SDL_LOG_PRIORITY_WARN );
-#endif//*/
-
-	SDL_LogSetAllPriority( SDL_LOG_PRIORITY_VERBOSE );
+#endif
 
 	if( initEverything( ) < 0 ) {
 		return 1;
@@ -718,10 +770,11 @@ int main( int argc, char** argv )
 	//GameState* startState = &bordersTestScreenState;
 	//GameState* startState = &hexTestScreenState;
 	//GameState* startState = &testBloomScreenState;
-	//GameState* startState = &gameOfUrScreenState;
-	GameState* startState = &testECPSScreenState;
+	GameState* startState = &gameOfUrScreenState;
+	//GameState* startState = &testECPSScreenState;
+	//GameState* startState = &testMountingState;
 	if( isEditorMode ) {
-		startState = &editorHubScreenState;
+		//startState = &editorHubScreenState;
 	}
 	gsm_EnterState( &globalFSM, startState );
 
