@@ -243,7 +243,7 @@ void sprAnim_ProcessAnim( PlayingSpriteAnimation* playingAnim, AnimEventHandler*
 
 	// new frame can be past last frame, if we're not looping then we don't want to treat it as the new frame
 	if( !playingAnim->animation->loops ) {
-		newFrame = MAX( playingAnim->animation->durationFrames - 1, newFrame );
+		newFrame = MIN( playingAnim->animation->durationFrames - 1, newFrame );
 	}
 
 	for( uint32_t f = prevFrame + 1; f <= newFrame; ++f ) {

@@ -106,7 +106,6 @@ int img_FirstValidID( void );
 int img_NextValidID( int id );
 
 // Get the human readable id for the image.
-const char* img_HumanReadableID( int id );
 const char* img_GetImgStringID( int imgID );
 
 // **************************************************************************************************************************************************************

@@ -412,6 +412,24 @@ void fitRatioInsideRect( float ratio, Vector2* fitterMins, Vector2* fitterMaxes,
 	}
 }
 
+float exponentialSmoothing( float current, float target, float speed, float dt )
+{
+	return current + ( target - current ) * ( 1.0f - SDL_expf( -speed * dt ) );
+}
+
+Vector2* exponentialSmoothingV2( const Vector2* current, const Vector2* target, float speed, float dt, Vector2* out )
+{
+	SDL_assert( current != NULL );
+	SDL_assert( target != NULL );
+	SDL_assert( out != NULL );
+
+	float scalar = ( 1.0f - SDL_expf( -speed * dt ) );
+	vec2_Subtract( target, current, out );
+	vec2_Scale( out, scalar, out );
+
+	return out;
+}
+
 /*void envelopRect( float ratio, Vector2* fitterMins, Vector2* fitterMaxes, Vector2* outMins, Vector2* outMaxes )
 {
 	SDL_assert( fitterMins != NULL );

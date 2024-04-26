@@ -75,4 +75,7 @@ void fitRatioInsideSpace( float ratio, Vector2* fitterSize, Vector2* outSize );
 // given a ratio, finds the coordinates that will create a rectangle that fits inside another rectangle
 void fitRatioInsideRect( float ratio, Vector2* fitterMins, Vector2* fitterMaxes, Vector2* outMins, Vector2* outMaxes );
 
+float exponentialSmoothing( float current, float target, float speed, float dt );
+Vector2* exponentialSmoothingV2( const Vector2* current, const Vector2* target, float speed, float dt, Vector2* out );
+
 #endif // inclusion guard

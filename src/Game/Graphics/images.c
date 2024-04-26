@@ -783,10 +783,8 @@ int img_SetSDFAlphaMap( int colorIdx, int alphaIdx )
 
 const char* img_GetImgStringID( int imgID )
 {
-	if( images[imgID].flags & IMGFLAG_IN_USE ) {
-		return images[imgID].id;
-	}
-	return NULL;
+	if( !img_IsValidImage( imgID ) ) return NULL;
+	return images[imgID].id;
 }
 
 static void createRenderTransform( Vector2* pos, Vector2* scale, float rot,  Vector2* offset, Matrix4* out )
@@ -842,13 +840,6 @@ int img_NextValidID( int id )
 	}
 
 	return -1;
-}
-
-// Get the human readable id for the image.
-const char* img_HumanReadableID( int id )
-{
-	if( !img_IsValidImage( id ) ) return NULL;
-	return images[id].id;
 }
 
 ImageRenderInstruction img_CreateDefaultRenderInstruction( void )

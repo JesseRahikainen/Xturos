@@ -111,6 +111,8 @@ Vector3* vec3_CrossProd( const Vector3* v1, const Vector3* v2, Vector3* out )
 	SDL_assert( v1 != NULL );
 	SDL_assert( v2 != NULL );
 	SDL_assert( out != NULL );
+	SDL_assert( v1 != out );
+	SDL_assert( v2 != out );
 
 	out->v[0] = ( v1->v[1] * v2->v[2] ) - ( v1->v[2] * v2->v[1] );
 	out->v[1] = ( v1->v[2] * v2->v[0] ) - ( v1->v[0] * v2->v[2] );

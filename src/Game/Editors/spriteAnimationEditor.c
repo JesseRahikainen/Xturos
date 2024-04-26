@@ -77,7 +77,28 @@ static Vector2 drawnOffset = { 0.0f, 0.0f };
 
 static int* sbSpriteSheetImages = NULL;
 
+typedef struct {
+	const char* name;
+	int imageId;
+} LoadedImageDisplay;
+
+static LoadedImageDisplay* sbLoadedImageDisplays = NULL;
+
 // TODO: get onion skinning working. will want to split it into previous and/or next image to display, along with a transparency amount to use
+
+static void unloadCurrentSpriteSheet( )
+{
+	// unload the old images and release the array
+	img_UnloadSpriteSheet( editorSpriteAnimation.spriteSheetPackageID );
+	sb_Release( sbSpriteSheetImages );
+	
+	// erase all image references in existing events
+	for( size_t i = 0; i < sb_Count( editorSpriteAnimation.sbEvents ); ++i ) {
+		if( editorSpriteAnimation.sbEvents[i].base.type == AET_SWITCH_IMAGE ) {
+			editorSpriteAnimation.sbEvents[i].switchImg.imgID = INVALID_IMAGE_ID;
+		}
+	}
+}
 
 static void spriteSheetChosen( const char* filePath )
 {
@@ -90,16 +111,7 @@ static void spriteSheetChosen( const char* filePath )
 		return;
 	}
 
-	// unload the old images and release the array
-	img_UnloadSpriteSheet( editorSpriteAnimation.spriteSheetPackageID );
-	sb_Release( sbSpriteSheetImages );
-	
-	// erase all image references in existing events
-	for(size_t i = 0; i < sb_Count( editorSpriteAnimation.sbEvents ); ++i) {
-		if(editorSpriteAnimation.sbEvents[i].base.type == AET_SWITCH_IMAGE) {
-			editorSpriteAnimation.sbEvents[i].switchImg.imgID = INVALID_IMAGE_ID;
-		}
-	}
+	unloadCurrentSpriteSheet( );
 	
 	// set the new data
 	editorSpriteAnimation.spriteSheetPackageID = newPackageID;
@@ -192,10 +204,24 @@ static void saveCurrentAnimation( const char* filePath )
 	currentFileName = createStringCopy( filePath );
 }
 
+static void reprocessFrames( void )
+{
+	float timePassed = editorPlayingSprite.timePassed;
+	sprAnim_StartAnim( &editorPlayingSprite, &editorSpriteAnimation, &editorEventHandler );
+	// treat animation as non-looping for this, avoids issue with displaying the first frame when moving the scrubber all the way to the right
+	bool looping = editorSpriteAnimation.loops;
+	editorSpriteAnimation.loops = false;
+	sprAnim_ProcessAnim( &editorPlayingSprite, &editorEventHandler, timePassed );
+	editorSpriteAnimation.loops = looping;
+}
+
 static void loadCurrentAnimation( const char* filePath )
 {
+	size_t qwer = sb_Count( sbLoadedImageDisplays );
 	SDL_assert( filePath != NULL );
 	llog( LOG_DEBUG, "Loading from %s...", filePath );
+
+	sprAnim_Clean( &editorSpriteAnimation );
 
 	if( !sprAnim_Load( filePath, &editorSpriteAnimation ) ) {
 		hub_CreateDialog( "Error Loading Animated Sprite", "Error loading animated sprite. Check error log for more details.", DT_ERROR, 1, "OK", NULL );
@@ -206,8 +232,18 @@ static void loadCurrentAnimation( const char* filePath )
 		spriteSheetChosen( editorSpriteAnimation.spriteSheetFile );
 	}
 
+	// hook up the images
+	size_t asdf = sb_Count( editorSpriteAnimation.sbEvents );
+	for( size_t i = 0; i < sb_Count( editorSpriteAnimation.sbEvents ); ++i ) {
+		if( editorSpriteAnimation.sbEvents[i].base.type == AET_SWITCH_IMAGE ) {
+			editorSpriteAnimation.sbEvents[i].switchImg.imgID = img_GetExistingByID( editorSpriteAnimation.sbEvents[i].switchImg.frameName );
+		}
+	}
+
 	mem_Release( currentFileName );
 	currentFileName = createStringCopy( filePath );
+
+	reprocessFrames( );
 }
 
 static void newAnimation( void )
@@ -227,17 +263,6 @@ static void loadUIImages( void )
 	playNKImage = nk_xu_loadImage( "Images/uiicons/forward.png", NULL, NULL );
 	pauseNKImage = nk_xu_loadImage( "Images/uiicons/pause.png", NULL, NULL );
 	stopNKImage = nk_xu_loadImage( "Images/uiicons/stop.png", NULL, NULL );
-}
-
-static void reprocessFrames( void )
-{
-	float timePassed = editorPlayingSprite.timePassed;
-	sprAnim_StartAnim( &editorPlayingSprite, &editorSpriteAnimation, &editorEventHandler );
-	// treat animation as non-looping for this, avoids issue with displaying the first frame when moving the scrubber all the way to the right
-	bool looping = editorSpriteAnimation.loops;
-	editorSpriteAnimation.loops = false;
-	sprAnim_ProcessAnim( &editorPlayingSprite, &editorEventHandler, timePassed );
-	editorSpriteAnimation.loops = looping;
 }
 
 void spriteAnimationEditor_Init( void )
@@ -302,13 +327,6 @@ static void addDefaultEvent( uint32_t frame )
 	selectedEvent = sb_Count( editorSpriteAnimation.sbEvents ) - 1;
 }
 
-typedef struct {
-	const char* name;
-	int imageId;
-} LoadedImageDisplay;
-
-static LoadedImageDisplay* sbLoadedImageDisplays = NULL;
-
 static void switchImageComboxBoxItemGetter( void* data, int id, const char** outText )
 {
 	*outText = sbLoadedImageDisplays[id].name;
@@ -349,7 +367,7 @@ static void displayEventData_SwitchImage( struct nk_context* ctx, AnimEvent* evt
 			if( id == evt->switchImg.imgID ) {
 				currentSelected = (int)sb_Count( sbLoadedImageDisplays );
 			}
-			sb_Push( sbLoadedImageDisplays, newLoadedImageDisplay( img_HumanReadableID( id ), id ) );
+			sb_Push( sbLoadedImageDisplays, newLoadedImageDisplay( img_GetImgStringID( id ), id ) );
 		}
 	}
 	

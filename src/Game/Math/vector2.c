@@ -204,6 +204,7 @@ Vector2* vec2_PerpRight( const Vector2* v, Vector2* out )
 {
 	SDL_assert( v != NULL );
 	SDL_assert( out != NULL );
+	SDL_assert( v != out );
 
 	out->x = -( v->y );
 	out->y = v->x;
@@ -215,6 +216,7 @@ Vector2* vec2_PerpLeft( const Vector2* v, Vector2* out )
 {
 	SDL_assert( v != NULL );
 	SDL_assert( out != NULL );
+	SDL_assert( v != out );
 
 	out->x = v->y;
 	out->y = -( v->x );
