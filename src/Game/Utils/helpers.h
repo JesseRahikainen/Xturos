@@ -45,7 +45,11 @@ char* createStretchyStringCopy( const char* str );
 // does a null test on str and returns 0 if it's NULL
 size_t strlenNullTest( const char* str );
 
+// useful when wanting to test and early out if the test fails
 #define ASSERT_AND_IF_NOT( x ) SDL_assert( x ); if( !( x ) )
+
+// useful when wanting to test and do something if the test passes
+#define ASSERT_AND_IF( x ) SDL_assert( x ); if( ( x ) )
 
 char* extractFileName( const char* filePath );
 

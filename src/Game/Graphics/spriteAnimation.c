@@ -174,6 +174,12 @@ void sprAnim_Clean( SpriteAnimation* anim )
 {
 	mem_Release( anim->spriteSheetFile );
 	anim->spriteSheetFile = NULL;
+	for( size_t i = 0; i < sb_Count( anim->sbEvents ); ++i ) {
+		if( anim->sbEvents[i].base.type == AET_SWITCH_IMAGE ) {
+			mem_Release( anim->sbEvents[i].switchImg.frameName );
+			anim->sbEvents[i].switchImg.frameName = NULL;
+		}
+	}
 	sb_Release( anim->sbEvents );
 	img_UnloadSpriteSheet( anim->spriteSheetPackageID );
 	anim->spriteSheetPackageID = -1;

@@ -28,7 +28,7 @@ typedef struct {
 
 typedef struct {
 	AnimEvent_Base base;
-	char* frameName; //#error need to do some shit with this to ensure we're not leaking memory, probably need the heirarchical memory to do this safely
+	char* frameName;
 	int imgID;
 	Vector2 offset;
 } AnimEvent_SwitchImage;

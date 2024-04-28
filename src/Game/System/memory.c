@@ -8,6 +8,7 @@
 #include <stdbool.h>
 
 #include "platformLog.h"
+#include "Utils/helpers.h"
 
 /*
 If we know the initial address is aligned, and the address for the data is aligned, and the size is aligned
@@ -56,6 +57,11 @@ typedef struct MemoryBlockHeader {
 
 	uint32_t flags;
 	size_t size; // the amount of memory this block stores
+
+	// hierarchical pointers
+	struct MemoryBlockHeader* parent;
+	struct MemoryBlockHeader* firstChild;
+	struct MemoryBlockHeader* nextSibling;
 
 	// last file and line in that file that modified this block
 #ifdef LOG_MEMORY_ALLOCATIONS
@@ -243,6 +249,30 @@ static MemoryBlockHeader* condenseMemoryBlocks( MemoryBlockHeader* start, const 
 	return start;
 }
 
+void static internal_DetachFromParent( MemoryBlockHeader* childHeader )
+{
+	if( childHeader->parent == NULL ) return;
+
+	// remove from linked list in parent
+	MemoryBlockHeader* siblingHeader = childHeader->parent->firstChild;
+
+	// if this is the first child the parent should point to the next sibling instead
+	if( childHeader->parent->firstChild == childHeader ) {
+		childHeader->parent->firstChild = childHeader->nextSibling;
+	}
+
+	while( siblingHeader != NULL ) {
+		if( siblingHeader->nextSibling == childHeader ) {
+			siblingHeader->nextSibling = childHeader->nextSibling;
+			break;
+		}
+		siblingHeader = siblingHeader->nextSibling;
+	}
+
+	childHeader->nextSibling = NULL;
+	childHeader->parent = NULL;
+}
+
 static MemoryBlockHeader* createNewBlock( void* start, MemoryBlockHeader* prev, MemoryBlockHeader* next, size_t size, const char* fileName, int line )
 {
 	MemoryBlockHeader* header = (MemoryBlockHeader*)start;
@@ -251,6 +281,10 @@ static MemoryBlockHeader* createNewBlock( void* start, MemoryBlockHeader* prev, 
 	header->postGuardValue = GUARD_VALUE;
 	header->flags = 0;
 	header->size = size;
+
+	header->parent = NULL;
+	header->firstChild = NULL;
+	header->nextSibling = NULL;
 
 	if( prev != NULL ) {
 		prev->next = header;
@@ -316,15 +350,53 @@ static void* growBlock( MemoryBlockHeader* header, size_t newSize, const char* f
 		// attempt to allocate some new memory
 		// if we get some then copy the memory over, release the old block,
 		//  and return the pointer to the beginning of the new block of data
+		//  if the allocation fails the old memory isn't cleaned up and this will return NULL
 		result = mem_Allocate_Data( newSize, fileName, line );
 		if( result != NULL ) {
+			// adjust the parent/child pointers, general use case is no parents or children, so make those fastest
+			if( header->parent != NULL ) {
+				MemoryBlockHeader* newBlockHeader = findMemoryBlock( result, true );
+
+				// point new header to the old parent
+				newBlockHeader->parent = header->parent;
+				
+				// adjust sibling pointers
+				newBlockHeader->nextSibling = header->nextSibling;
+				MemoryBlockHeader* sibling = header->parent->firstChild;
+				while( sibling != NULL ) {
+					if( sibling->nextSibling == header ) {
+						sibling->nextSibling = newBlockHeader;
+						break;
+					}
+				}
+
+				if( newBlockHeader->parent->firstChild == header ) {
+					newBlockHeader->parent->firstChild = newBlockHeader;
+				}
+			}
+
+			if( header->firstChild != NULL ) {
+				// change the parent pointer of all the children and the first child of the new header
+				MemoryBlockHeader* newBlockHeader = findMemoryBlock( result, true );
+
+				newBlockHeader->firstChild = header->firstChild;
+
+				MemoryBlockHeader* child = newBlockHeader->firstChild;
+				while( child != NULL ) {
+					child->parent = newBlockHeader;
+					child = child->nextSibling;
+				}
+			}
+
 			memcpy( result, (void*)( (uintptr_t)header + MEMORY_HEADER_SIZE ), header->size );
 			mem_Release( (void*)( (uintptr_t)header + MEMORY_HEADER_SIZE ) );
 		}
 	}
 
-	logWatchedMemoryAddressChange( (MemoryBlockHeader*)( (uint8_t*)result - MEMORY_HEADER_SIZE ), "growBlock", NULL );
-	setMemoryBlockInfo( (MemoryBlockHeader*)( (uint8_t*)result - MEMORY_HEADER_SIZE ), fileName, line, "Grow" );
+	if( result != NULL ) {
+		logWatchedMemoryAddressChange( (MemoryBlockHeader*)( (uint8_t*)result - MEMORY_HEADER_SIZE ), "growBlock", NULL );
+		setMemoryBlockInfo( (MemoryBlockHeader*)( (uint8_t*)result - MEMORY_HEADER_SIZE ), fileName, line, "Grow" );
+	}
 	return result;
 }
 
@@ -466,15 +538,26 @@ static void internal_release_Data( void* memory, const char* fileName, const int
 #ifdef TEST_EVERY_CHANGE
 	mem_Verify( );
 #endif
-	SDL_assert( memoryBlock.memory != NULL );
+	ASSERT_AND_IF_NOT( memoryBlock.memory != NULL ) return;
 
-	if( memory == NULL ) {
-		return;
+	MemoryBlockHeader* header = (MemoryBlockHeader*)( (uintptr_t)memory - MEMORY_HEADER_SIZE );
+
+	// release child blocks as well
+	if( header->firstChild != NULL ) {
+		MemoryBlockHeader* child = header->firstChild;
+		while( child != NULL ) {
+			MemoryBlockHeader* next = child->nextSibling;
+			void* childMemory = (void*)( (uintptr_t)child + MEMORY_HEADER_SIZE );
+			internal_release_Data( childMemory, fileName, line );
+			child = next;
+		}
 	}
-	
+
+	// detach from parent block
+	internal_DetachFromParent( header );
+
 	// set the associated block as not in use, and merge with nearby blocks if they're
 	//  not in use
-	MemoryBlockHeader* header = (MemoryBlockHeader*)( (uintptr_t)memory - MEMORY_HEADER_SIZE );
 	logWatchedMemoryAddressChange( header, "mem_Release_Data", NULL );
 	header->flags &= ~IN_USE_FLAG;
 
@@ -734,6 +817,147 @@ void mem_UnWatchAddress( void* ptr )
 	} unlockMemoryMutex( );
 }
 
+bool mem_IsAllocatedMemory( void* ptr )
+{
+	bool isAllocated = false;
+	lockMemoryMutex( ); {
+		isAllocated = ( ptr != NULL ) && findMemoryBlock( ptr, true ) != NULL;
+	} unlockMemoryMutex( );
+	return isAllocated;
+}
+
+bool mem_Attach( void* parent, void* child )
+{
+	bool success = false;
+	lockMemoryMutex( ); {
+		MemoryBlockHeader* parentHeader = findMemoryBlock( parent, true );
+		MemoryBlockHeader* childHeader = findMemoryBlock( child, true );
+
+		ASSERT_AND_IF_NOT( parentHeader != NULL ) return false;
+		ASSERT_AND_IF_NOT( childHeader != NULL ) return false;
+
+		// detach before attempting to reattach
+		if( childHeader->parent != NULL ) {
+			internal_DetachFromParent( childHeader );
+		}
+
+		// make sure the parent isn't a descendant of child, make sure this remains a tree
+		MemoryBlockHeader* searchHeader = parentHeader;
+		bool isDescendant = false;
+		while( searchHeader != NULL && !isDescendant) {
+			if( searchHeader->parent == childHeader ) {
+				isDescendant = true;
+			} else {
+				searchHeader = searchHeader->parent;
+			}
+		}
+
+		if( !isDescendant ) {
+			success = true;
+			childHeader->parent = parentHeader;
+			childHeader->nextSibling = NULL;
+
+			// set as sibling in chain
+			if( parentHeader->firstChild == NULL ) {
+				parentHeader->firstChild = childHeader;
+			} else {
+				MemoryBlockHeader* childChain = parentHeader->firstChild;
+				while( childChain->nextSibling != NULL ) {
+					childChain = childChain->nextSibling;
+				}
+				childChain->nextSibling = childHeader;
+			}
+		}
+	} unlockMemoryMutex( );
+	return success;
+}
+
+void mem_DetachFromParent( void* child )
+{
+	lockMemoryMutex( ); {
+		MemoryBlockHeader* childHeader = findMemoryBlock( child, true );
+		ASSERT_AND_IF_NOT( childHeader != NULL ) return;
+		internal_DetachFromParent( childHeader );
+	} unlockMemoryMutex( );
+}
+
+void mem_DetachAllChildren( void* parent )
+{
+	lockMemoryMutex( ); {
+		MemoryBlockHeader* parentHeader = findMemoryBlock( parent, true );
+		MemoryBlockHeader* childHeader = parentHeader->firstChild;
+
+		while( childHeader != NULL ) {
+			MemoryBlockHeader* nextChild = childHeader->nextSibling;
+			childHeader->parent = NULL;
+			childHeader->nextSibling = NULL;
+			
+			childHeader = nextChild;
+		}
+		parentHeader->firstChild = NULL;
+	} unlockMemoryMutex( );
+}
+
+static void hierachicalTest( uint32_t detachFlags, uint32_t resizeFlags )
+{
+	SDL_assert( mem_Init( 32 * 1024 ) == 0 ); {
+		// set up
+		void* pointers[13];
+		bool shouldBeReleased[13];
+		uint32_t detachFlags = 0; // bits positions are indices that should be detached
+		uint32_t resizeFlags = 0; // bits positions are indices that should be increased to 200 bytes
+
+		for( size_t i = 0; i < ARRAY_SIZE( pointers ); ++i ) {
+			pointers[i] = mem_Allocate( 100 );
+		}
+		// junk data for when testing expanding the final pointer
+		mem_Allocate( 100 );
+
+		// attach all the children
+		for( size_t i = 0; i < ARRAY_SIZE( pointers ); ++i ) {
+			shouldBeReleased[i] = true;
+			for( size_t a = 0; a < 3; ++a ) {
+				size_t childIdx = ( i * 3 ) + a + 1;
+				if( childIdx >= ARRAY_SIZE( pointers ) ) continue;
+				mem_Attach( pointers[i], pointers[childIdx] );
+			}
+		}
+
+		// possibly increase size of allocation
+		for( size_t i = 0; i < ARRAY_SIZE( pointers ); ++i ) {
+			if( ( resizeFlags & ( 1 << i ) ) == 0 ) continue;
+
+			void* newData = mem_Resize( pointers[i], 200 );
+			ASSERT_AND_IF( newData != NULL )
+			{
+				pointers[i] = newData;
+			}
+		}
+
+		// detach any combination of children, mark them as not deleted
+		for( size_t i = 0; i < ARRAY_SIZE( pointers ); ++i ) {
+			if( i == 0 ) continue; // root will have no parent
+			if( ( detachFlags & ( 1 << i ) ) == 0 ) continue;
+
+			mem_DetachFromParent( pointers[i] );
+
+			// mark all descendants as not deleted
+			shouldBeReleased[i] = false;
+			for( size_t a = 0; a < 3; ++a ) {
+				size_t childIdx = ( i * 3 ) + a + 1;
+				if( childIdx >= ARRAY_SIZE( pointers ) ) continue;
+				shouldBeReleased[childIdx] = false;
+			}
+		}
+
+		// delete the root pointer and check if the expected children are deleted
+		mem_Release( pointers[0] );
+		for( size_t i = 0; i < ARRAY_SIZE( pointers ); ++i ) {
+			SDL_assert( mem_IsAllocatedMemory( pointers[i] ) == !shouldBeReleased[i] );
+		}
+	} mem_CleanUp( );
+}
+
 void mem_RunTests( void )
 {
 	void* oldMemoryBlock = memoryBlock.memory;
@@ -744,6 +968,7 @@ void mem_RunTests( void )
 	uint8_t* backup;
 
 	// test basic allocation and release
+	llog( LOG_INFO, "Test basic allocation and release..." );
 	SDL_assert( mem_Init( 32 * 1024 ) == 0 ); {
 		testOne = (uint8_t*)mem_Allocate( 100 );
 		SDL_assert( testOne != NULL );
@@ -752,8 +977,10 @@ void mem_RunTests( void )
 		mem_Release( testOne );
 		mem_Verify( );
 	} mem_CleanUp( );
+	llog( LOG_INFO, "Test done." );
 
 	// test multiple allocations and releases
+	llog( LOG_INFO, "Test multiple allocations and releases..." );
 	SDL_assert( mem_Init( 32 * 1024 ) == 0 ); {
 		testOne = (uint8_t*)mem_Allocate( 100 );
 		SDL_assert( testOne != NULL );
@@ -769,8 +996,10 @@ void mem_RunTests( void )
 		mem_Release( testOne );
 		mem_Verify( );
 	} mem_CleanUp( );
+	llog( LOG_INFO, "Test done." );
 
 	// test basic resize
+	llog( LOG_INFO, "Test basic resize..." );
 	SDL_assert( mem_Init( 32 * 1024 ) == 0 ); {
 		testOne = (uint8_t*)mem_Allocate( 1000 );
 		SDL_assert( testOne != NULL );
@@ -784,8 +1013,10 @@ void mem_RunTests( void )
 		SDL_assert( testOne != NULL );
 		mem_Verify( );
 	} mem_CleanUp( );
+	llog( LOG_INFO, "Test done." );
 
 	// test resize grow with enough open space in next block to allocate data, and enough data to create new header
+	llog( LOG_INFO, "Test resize grow with enough open space in next block to allocate data, and enough data to create new header..." );
 	SDL_assert( mem_Init( 32 * 1024 ) == 0 ); {
 		testOne = (uint8_t*)mem_Allocate( 100 );
 		SDL_assert( testOne != NULL );
@@ -808,8 +1039,10 @@ void mem_RunTests( void )
 		SDL_assert( testOne == backup );
 		mem_Verify( );
 	} mem_CleanUp( );
+	llog( LOG_INFO, "Test done." );
 
 	// test resize grow with enough open space in next block to allocate data, and not enough space to create new header
+	llog( LOG_INFO, "Test resize grow with enough open space in next block to allocate data, and not enough space to create new header..." );
 	SDL_assert( mem_Init( 32 * 1024 ) == 0 ); {
 		testOne = (uint8_t*)mem_Allocate( 100 );
 		SDL_assert( testOne != NULL );
@@ -832,8 +1065,10 @@ void mem_RunTests( void )
 		SDL_assert( testOne == backup );
 		mem_Verify( );
 	} mem_CleanUp( );
+	llog( LOG_INFO, "Test done." );
 
 	// test resize grow without enough open space in next block to allocate data
+	llog( LOG_INFO, "Test resize grow without enough open space in next block to allocate data..." );
 	SDL_assert( mem_Init( 32 * 1024 ) == 0 ); {
 		testOne = (uint8_t*)mem_Allocate( 100 );
 		SDL_assert( testOne != NULL );
@@ -856,8 +1091,10 @@ void mem_RunTests( void )
 		SDL_assert( testOne != backup );
 		mem_Verify( );
 	} mem_CleanUp( );
+	llog( LOG_INFO, "Test done." );
 
 	// test resize shrink where there is enough open space after to create new block
+	llog( LOG_INFO, "Test resize shrink where there is enough open space after to create new block..." );
 	SDL_assert( mem_Init( 32 * 1024 ) == 0 ); {
 		testOne = (uint8_t*)mem_Allocate( 100 + MEMORY_HEADER_SIZE + MIN_ALLOC_SIZE );
 		mem_Verify( );
@@ -872,8 +1109,10 @@ void mem_RunTests( void )
 		mem_Verify( );
 
 	} mem_CleanUp( );
+	llog( LOG_INFO, "Test done." );
 
 	// test resize shrink where there is not enough open space after to create new block
+	llog( LOG_INFO, "Test resize shrink where there is not enough open space after to create new block..." );
 	SDL_assert( mem_Init( 32 * 1024 ) == 0 ); {
 		testOne = (uint8_t*)mem_Allocate( 100 );
 		mem_Verify( );
@@ -887,6 +1126,115 @@ void mem_RunTests( void )
 		SDL_assert( testOne == backup );
 		mem_Verify( );
 	} mem_CleanUp( );
+	llog( LOG_INFO, "Test done." );
+
+	// test parent deallocation also deallocating children
+	{
+		// make sure a child is released when it's parent is released
+		llog( LOG_INFO, "Test that child is released when it's parent is released..." );
+		SDL_assert( mem_Init( 32 * 1024 ) == 0 ); {
+			uint8_t* parent = (uint8_t*)mem_Allocate( 100 );
+			uint8_t* child = (uint8_t*)mem_Allocate( 100 );
+			bool isParentAllocated = mem_IsAllocatedMemory( parent );
+			bool isChildAllocated = mem_IsAllocatedMemory( child );
+			SDL_assert( isParentAllocated );
+			SDL_assert( isChildAllocated );
+			mem_Verify( );
+			mem_Attach( parent, child );
+			mem_Release( parent );
+			mem_Verify( );
+			isParentAllocated = mem_IsAllocatedMemory( parent );
+			isChildAllocated = mem_IsAllocatedMemory( child );
+			SDL_assert( !isParentAllocated );
+			SDL_assert( !isChildAllocated );
+		} mem_CleanUp( );
+		llog( LOG_INFO, "Test done." );
+
+		// make sure a memory block that is parented then un-parented is not released when the parent is released
+		llog( LOG_INFO, "Test that a memory block that is parented then un-parented is not released when the parent is released..." );
+		SDL_assert( mem_Init( 32 * 1024 ) == 0 ); {
+			uint8_t* parent = (uint8_t*)mem_Allocate( 100 );
+			uint8_t* child = (uint8_t*)mem_Allocate( 100 );
+			bool isParentAllocated = mem_IsAllocatedMemory( parent );
+			bool isChildAllocated = mem_IsAllocatedMemory( child );
+			SDL_assert( isParentAllocated );
+			SDL_assert( isChildAllocated );
+			mem_Attach( parent, child );
+			mem_Verify( );
+			mem_DetachFromParent( child );
+			mem_Verify( );
+			mem_Release( parent );
+			mem_Verify( );
+			isParentAllocated = mem_IsAllocatedMemory( parent );
+			isChildAllocated = mem_IsAllocatedMemory( child );
+			SDL_assert( !isParentAllocated );
+			SDL_assert( isChildAllocated );
+		} mem_CleanUp( );
+		llog( LOG_INFO, "Test done." );
+
+		// make sure a child that is parented to a reallocated parent that is moved is released correctly
+		llog( LOG_INFO, "Test that a child that is parented to a reallocated parent that is moved is released correctly..." );
+		SDL_assert( mem_Init( 32 * 1024 ) == 0 ); {
+			uint8_t* parent = (uint8_t*)mem_Allocate( 100 );
+			uint8_t* child = (uint8_t*)mem_Allocate( 100 );
+			bool isParentAllocated = mem_IsAllocatedMemory( parent );
+			bool isChildAllocated = mem_IsAllocatedMemory( child );
+			SDL_assert( isParentAllocated );
+			SDL_assert( isChildAllocated );
+			mem_Attach( parent, child );
+			mem_Verify( );
+			parent = (uint8_t*)mem_Resize( parent, 1024 );
+			mem_Release( parent );
+			mem_Verify( );
+			isParentAllocated = mem_IsAllocatedMemory( parent );
+			isChildAllocated = mem_IsAllocatedMemory( child );
+			SDL_assert( !isParentAllocated );
+			SDL_assert( !isChildAllocated );
+		} mem_CleanUp( );
+		llog( LOG_INFO, "Test done." );
+
+		// make sure you can't create loops
+		llog( LOG_INFO, "Test that you can't recreate loops..." );
+		SDL_assert( mem_Init( 32 * 1024 ) == 0 ); {
+			uint8_t* parent = (uint8_t*)mem_Allocate( 100 );
+			uint8_t* child = (uint8_t*)mem_Allocate( 100 );
+			uint8_t* grandChild = (uint8_t*)mem_Allocate( 100 );
+
+			bool isParentAllocated = mem_IsAllocatedMemory( parent );
+			bool isChildAllocated = mem_IsAllocatedMemory( child );
+			bool isGrandChildAllocated = mem_IsAllocatedMemory( child );
+			SDL_assert( isParentAllocated );
+			SDL_assert( isChildAllocated );
+			SDL_assert( isGrandChildAllocated );
+
+			mem_Attach( parent, child );
+			mem_Verify( );
+			mem_Attach( child, grandChild );
+			mem_Verify( );
+			bool shouldFail = mem_Attach( grandChild, parent ); // this should fail
+			SDL_assert( !shouldFail );
+			mem_Verify( );
+			
+			MemoryBlockHeader* grandChildHeader = findMemoryBlock( grandChild, true );
+			MemoryBlockHeader* parentHeader = findMemoryBlock( parent, true );
+			SDL_assert( grandChildHeader != NULL );
+			SDL_assert( grandChildHeader->firstChild == NULL );
+			SDL_assert( parentHeader->parent == NULL );
+		} mem_CleanUp( );
+		llog( LOG_INFO, "Test done." );
+
+		// test deleting any of them and making sure the appropriate ones are also deleted
+		// test removing any parent/child relationship and making sure the appropriate ones are deleted
+		llog( LOG_INFO, "Test various configurations of detaching and resizing..." );
+		const uint32_t MAX_FLAGS = 0b00000000000000000001111111111111;
+		for( uint32_t detachFlags = 0; detachFlags <= MAX_FLAGS; ++detachFlags ) {
+			for( uint32_t resizeFlags = 0; resizeFlags <= MAX_FLAGS; ++resizeFlags ) {
+				llog( LOG_INFO, "  Testing with detach = 0x%x and resize = 0x%x", detachFlags, resizeFlags );
+				hierachicalTest( detachFlags, resizeFlags );
+			}
+		}
+		llog( LOG_INFO, "Test done." );
+	}
 
 	// restore old memory block
 	memoryBlock.memory = oldMemoryBlock;
