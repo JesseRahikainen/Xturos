@@ -45,6 +45,7 @@
 #include "System/systems.h"
 #include "System/platformLog.h"
 #include "System/random.h"
+#include "System/luaInterface.h"
 
 #include "Graphics/debugRendering.h"
 #include "Graphics/Platform/OpenGL/glPlatform.h"
@@ -120,6 +121,7 @@ int getWindowRefreshRate( SDL_Window* w )
 
 void cleanUp( void )
 {
+	xLua_ShutDown( );
 	jq_ShutDown( );
 	gfx_ShutDown( );
 	snd_CleanUp( );
@@ -375,6 +377,12 @@ int initEverything( void )
 	rand_Seed( NULL, (uint32_t)time( NULL ) );
 
 	jq_Initialize( 2 );
+
+	if( !xLua_Init( ) ) {
+		llog( LOG_ERROR, "Unable to intialize Lua" );
+		return -1;
+	}
+	llog( LOG_INFO, "Lua initialized" );
 
 	defaultECPS_Setup( );
 

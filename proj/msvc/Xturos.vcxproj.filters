@@ -115,6 +115,12 @@
     <Filter Include="Source Files\DefaultECPS">
       <UniqueIdentifier>{6636dc93-ce79-4876-848e-69edad023ac1}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Others\lua">
+      <UniqueIdentifier>{194dee00-c1e1-4d1d-a763-bc4cbae3e771}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Others\lua">
+      <UniqueIdentifier>{da400377-ad33-445c-86ca-5bf1951c5bf4}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\Game\Graphics\graphics.h">
@@ -375,6 +381,90 @@
     <ClInclude Include="..\..\src\Game\UI\uiEntities.h">
       <Filter>Header Files\UI</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\Game\Others\lua-5.4.3\lapi.h">
+      <Filter>Header Files\Others\lua</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Game\Others\lua-5.4.3\lauxlib.h">
+      <Filter>Header Files\Others\lua</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Game\Others\lua-5.4.3\lcode.h">
+      <Filter>Header Files\Others\lua</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Game\Others\lua-5.4.3\lctype.h">
+      <Filter>Header Files\Others\lua</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Game\Others\lua-5.4.3\ldebug.h">
+      <Filter>Header Files\Others\lua</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Game\Others\lua-5.4.3\ldo.h">
+      <Filter>Header Files\Others\lua</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Game\Others\lua-5.4.3\lfunc.h">
+      <Filter>Header Files\Others\lua</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Game\Others\lua-5.4.3\lgc.h">
+      <Filter>Header Files\Others\lua</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Game\Others\lua-5.4.3\ljumptab.h">
+      <Filter>Header Files\Others\lua</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Game\Others\lua-5.4.3\llex.h">
+      <Filter>Header Files\Others\lua</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Game\Others\lua-5.4.3\llimits.h">
+      <Filter>Header Files\Others\lua</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Game\Others\lua-5.4.3\lmem.h">
+      <Filter>Header Files\Others\lua</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Game\Others\lua-5.4.3\lobject.h">
+      <Filter>Header Files\Others\lua</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Game\Others\lua-5.4.3\lopcodes.h">
+      <Filter>Header Files\Others\lua</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Game\Others\lua-5.4.3\lopnames.h">
+      <Filter>Header Files\Others\lua</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Game\Others\lua-5.4.3\lparser.h">
+      <Filter>Header Files\Others\lua</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Game\Others\lua-5.4.3\lprefix.h">
+      <Filter>Header Files\Others\lua</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Game\Others\lua-5.4.3\lstate.h">
+      <Filter>Header Files\Others\lua</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Game\Others\lua-5.4.3\lstring.h">
+      <Filter>Header Files\Others\lua</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Game\Others\lua-5.4.3\ltable.h">
+      <Filter>Header Files\Others\lua</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Game\Others\lua-5.4.3\ltm.h">
+      <Filter>Header Files\Others\lua</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Game\Others\lua-5.4.3\lua.h">
+      <Filter>Header Files\Others\lua</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Game\Others\lua-5.4.3\luaconf.h">
+      <Filter>Header Files\Others\lua</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Game\Others\lua-5.4.3\lualib.h">
+      <Filter>Header Files\Others\lua</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Game\Others\lua-5.4.3\lundump.h">
+      <Filter>Header Files\Others\lua</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Game\Others\lua-5.4.3\lvm.h">
+      <Filter>Header Files\Others\lua</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Game\Others\lua-5.4.3\lzio.h">
+      <Filter>Header Files\Others\lua</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Game\System\luaInterface.h">
+      <Filter>Header Files\System</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\Game\Graphics\graphics.c">
@@ -619,6 +709,111 @@
     </ClCompile>
     <ClCompile Include="..\..\src\Game\UI\uiEntities.c">
       <Filter>Source Files\UI</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Game\Others\lua-5.4.3\lapi.c">
+      <Filter>Source Files\Others\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Game\Others\lua-5.4.3\lauxlib.c">
+      <Filter>Source Files\Others\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Game\Others\lua-5.4.3\lbaselib.c">
+      <Filter>Source Files\Others\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Game\Others\lua-5.4.3\lcode.c">
+      <Filter>Source Files\Others\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Game\Others\lua-5.4.3\lcorolib.c">
+      <Filter>Source Files\Others\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Game\Others\lua-5.4.3\lctype.c">
+      <Filter>Source Files\Others\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Game\Others\lua-5.4.3\ldblib.c">
+      <Filter>Source Files\Others\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Game\Others\lua-5.4.3\ldebug.c">
+      <Filter>Source Files\Others\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Game\Others\lua-5.4.3\ldo.c">
+      <Filter>Source Files\Others\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Game\Others\lua-5.4.3\ldump.c">
+      <Filter>Source Files\Others\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Game\Others\lua-5.4.3\lfunc.c">
+      <Filter>Source Files\Others\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Game\Others\lua-5.4.3\lgc.c">
+      <Filter>Source Files\Others\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Game\Others\lua-5.4.3\linit.c">
+      <Filter>Source Files\Others\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Game\Others\lua-5.4.3\liolib.c">
+      <Filter>Source Files\Others\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Game\Others\lua-5.4.3\llex.c">
+      <Filter>Source Files\Others\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Game\Others\lua-5.4.3\lmathlib.c">
+      <Filter>Source Files\Others\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Game\Others\lua-5.4.3\lmem.c">
+      <Filter>Source Files\Others\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Game\Others\lua-5.4.3\loadlib.c">
+      <Filter>Source Files\Others\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Game\Others\lua-5.4.3\lobject.c">
+      <Filter>Source Files\Others\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Game\Others\lua-5.4.3\lopcodes.c">
+      <Filter>Source Files\Others\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Game\Others\lua-5.4.3\loslib.c">
+      <Filter>Source Files\Others\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Game\Others\lua-5.4.3\lparser.c">
+      <Filter>Source Files\Others\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Game\Others\lua-5.4.3\lstate.c">
+      <Filter>Source Files\Others\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Game\Others\lua-5.4.3\lstring.c">
+      <Filter>Source Files\Others\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Game\Others\lua-5.4.3\lstrlib.c">
+      <Filter>Source Files\Others\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Game\Others\lua-5.4.3\ltable.c">
+      <Filter>Source Files\Others\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Game\Others\lua-5.4.3\ltablib.c">
+      <Filter>Source Files\Others\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Game\Others\lua-5.4.3\ltm.c">
+      <Filter>Source Files\Others\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Game\Others\lua-5.4.3\lua.c">
+      <Filter>Source Files\Others\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Game\Others\lua-5.4.3\luac.c">
+      <Filter>Source Files\Others\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Game\Others\lua-5.4.3\lundump.c">
+      <Filter>Source Files\Others\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Game\Others\lua-5.4.3\lutf8lib.c">
+      <Filter>Source Files\Others\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Game\Others\lua-5.4.3\lvm.c">
+      <Filter>Source Files\Others\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Game\Others\lua-5.4.3\lzio.c">
+      <Filter>Source Files\Others\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Game\System\luaInterface.c">
+      <Filter>Source Files\System</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
