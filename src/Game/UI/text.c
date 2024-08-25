@@ -718,7 +718,7 @@ void txt_DisplayString( const char* utf8Str, Vector2 pos, Color clr, HorizTextAl
 				Vector2 offset;
 				img_GetOffset( glyph->imageID, &offset );
 				Vector2 renderPos;
-				vec2_Add( &currPos, &offset, &renderPos );
+				vec2_AddScaled( &currPos, &offset, scale, &renderPos );
 				img_Render_PosScaleVClr( glyph->imageID, camFlags, depth, &renderPos, &scaleVec, &clr );
 				currPos.x += glyph->advance * scale;
 			}
@@ -863,15 +863,13 @@ bool txt_DisplayTextArea( const uint8_t* utf8Str, const Matrix3* centerTf, Vecto
 	switch( vAlign ) {
 	case VERT_ALIGN_BASE_LINE:
 	case VERT_ALIGN_TOP:
-		//renderPos.y += fonts[fontID].descent + fonts[fontID].nextLineDescent;
-		renderPos.y = ( upperLeft.y + fonts[fontID].descent + fonts[fontID].nextLineDescent ) * scale;
+		renderPos.y = upperLeft.y + ( fonts[fontID].descent + fonts[fontID].nextLineDescent ) * scale;
 		break;
 	case VERT_ALIGN_CENTER:
 		renderPos.y = upperLeft.y + ( size.y / 2.0f ) - ( maxSize.y / 2.0f ) + ( fonts[fontID].ascent * scale );
 		break;
 	case VERT_ALIGN_BOTTOM:
 		renderPos.y = ( upperLeft.y + size.y ) - maxSize.y + ( ( fonts[fontID].nextLineDescent + fonts[fontID].descent ) * scale );
-		//renderPos.y += fonts[fontID].ascent - ( maxSize.y / 2.0f );
 		break;
 	}
 
@@ -896,7 +894,7 @@ bool txt_DisplayTextArea( const uint8_t* utf8Str, const Matrix3* centerTf, Vecto
 				inst.imgID = glyph->imageID;
 				Vector2 offset, finalPos;
 				img_GetOffset( inst.imgID, &offset );
-				vec2_Add( &renderPos, &offset, &finalPos );
+				vec2_AddScaled( &renderPos, &offset, scale, &finalPos );
 				mat3_SetPosition( &characterTf, &finalPos );
 				mat3_Multiply( centerTf, &characterTf, &(inst.mat) );
 				img_ImmediateRender( &inst );
@@ -1048,6 +1046,7 @@ static bool saveSDFFont( const char* fileName,
 		llog( LOG_ERROR, "Error creating png for file: %s", fileName );
 		goto clean_up;
 	}
+	
 	CHECK_WRITE( SDL_WriteBE64( rwopsFile, (Uint64)sb_Count( sbSaveImageData ) ), "writing out image size", 1 );
 	CHECK_WRITE( SDL_RWwrite( rwopsFile, sbSaveImageData, sizeof( uint8_t ), sb_Count( sbSaveImageData ) ), "writing out image", sb_Count( sbSaveImageData ) );
 
