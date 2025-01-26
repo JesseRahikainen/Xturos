@@ -36,7 +36,9 @@ static bool hitAnimationEnd = false;
 
 static char* currentFileName = NULL;
 
-static struct nk_colorf spriteBGColor = { 0.0f, 0.0f, 0.0f, 1.0f };
+static float spriteScale = 1.0f;
+
+static struct nk_colorf spriteBGColor = { 0.25f, 0.25f, 0.25f, 1.0f };
 
 #define FLOAT_MIN -1000000.0f
 #define FLOAT_MAX 1000000.0f
@@ -519,8 +521,8 @@ static void drawCurrentImage( struct nk_command_buffer* buffer )
 	int textureHeight;
 	gfxPlatform_GetPlatformTextureSize( &texture, &textureWidth, &textureHeight );
 
-	float clipCenterX = buffer->clip.x + ( buffer->clip.w / 2.0f ) - ( size.w / 2.0f ) + drawnOffset.x;
-	float clipCenterY = buffer->clip.y + ( buffer->clip.h / 2.0f ) - ( size.h / 2.0f ) + drawnOffset.y;
+	float clipCenterX = buffer->clip.x + ( buffer->clip.w / 2.0f ) - ( size.w / 2.0f * spriteScale ) + drawnOffset.x;
+	float clipCenterY = buffer->clip.y + ( buffer->clip.h / 2.0f ) - ( size.h / 2.0f * spriteScale ) + drawnOffset.y;
 
 	Vector2 uvMin, uvMax;
 	img_GetUVCoordinates( drawnSprite, &uvMin, &uvMax );
@@ -530,7 +532,7 @@ static void drawCurrentImage( struct nk_command_buffer* buffer )
 	struct nk_rect subImageRect = nk_rect( subImageMin.x, subImageMin.y, subImageMax.x - subImageMin.x, subImageMax.y - subImageMin.y );
 	struct nk_image image = nk_subimage_id( drawnSprite, (nk_ushort)textureWidth, (nk_ushort)textureHeight, subImageRect );
 	
-	struct nk_rect drawRect = nk_rect( clipCenterX, clipCenterY, size.x, size.y );
+	struct nk_rect drawRect = nk_rect( clipCenterX, clipCenterY, size.x * spriteScale, size.y * spriteScale );
 
 	nk_draw_image( buffer, drawRect, &image, nk_rgb( 255, 255, 255 ) );
 }
@@ -631,6 +633,21 @@ void spriteAnimationEditor_IMGUIProcess( void )
 
 				if( nk_tree_push( ctx, NK_TREE_TAB, "Config", NK_MINIMIZED ) ) {
 					// general configuration stuff
+
+					// sprite scale
+					nk_layout_row_begin( ctx, NK_DYNAMIC, 20, 1 );
+					nk_layout_row_push( ctx, 1.0f );
+					nk_labelf( ctx, NK_TEXT_ALIGN_LEFT | NK_TEXT_ALIGN_MIDDLE, "Sprite Draw Scale: %.2f", spriteScale );
+
+					nk_layout_row_begin( ctx, NK_DYNAMIC, 20, 1 );
+					nk_layout_row_push( ctx, 1.0f );
+					nk_slider_float( ctx, 0.1f, &spriteScale, 3.0f, 0.01f );
+
+					nk_layout_row_begin( ctx, NK_DYNAMIC, 20, 1 );
+					nk_layout_row_push( ctx, 1.0f );
+					if( nk_button_label( ctx, "Reset Scale" ) ) {
+						spriteScale = 1.0f;
+					}
 
 					// background color
 					nk_layout_row_begin( ctx, NK_DYNAMIC, 20, 1 );

@@ -16,6 +16,7 @@
 #include "Utils/helpers.h"
 #include "Utils/cfgFile.h"
 #include "System/jobQueue.h"
+#include "Utils/hashMap.h"
 
 #define MAX_SAMPLES 256
 #define MAX_PLAYING_SOUNDS 32
@@ -61,7 +62,11 @@ typedef struct {
 
 	bool readDone;
 	SDL_AudioStream* sdlStream; // does all the conversion automatically
+
+	unsigned int timesLoaded;
 } StreamingSound;
+
+HashMap streamingSoundHashMap;
 
 static Uint8 workingSilence = 0;
 static SDL_AudioDeviceID devID = 0;
@@ -460,6 +465,7 @@ int snd_Init( unsigned int numGroups )
 		streamingSounds[i].access = NULL;
 		streamingSounds[i].sdlStream = NULL;
 		streamingSounds[i].playing = false;
+		streamingSounds[i].timesLoaded = 0;
 	}
 
 	SDL_AudioSpec desired;
@@ -470,6 +476,8 @@ int snd_Init( unsigned int numGroups )
 	desired.samples = AUDIO_SAMPLES;
 	desired.callback = mixerCallback;
 	desired.userdata = NULL;
+
+	hashMap_Init( &streamingSoundHashMap, MAX_STREAMING_SOUNDS, NULL );
 
 	if( idSet_Init( &playingIDSet, MAX_PLAYING_SOUNDS ) != 0 ) {
 		llog( LOG_CRITICAL, "Failed to create playing sounds id set."  );
@@ -684,6 +692,13 @@ int snd_LoadStreaming( const char* fileName, bool loops, unsigned int group )
 	SDL_assert( group >= 0 );
 	SDL_assert( group < sb_Count( sbSoundGroups ) );
 
+	int foundValue;
+	if( hashMap_Find( &streamingSoundHashMap, fileName, &foundValue ) ) {
+		// this file is already loaded
+		streamingSounds[foundValue].timesLoaded++;
+		return foundValue;
+	}
+
 	int newIdx = -1;
 	for( int i = 0; i < MAX_STREAMING_SOUNDS; ++i ) {
 		if( streamingSounds[i].access == NULL ) {
@@ -708,11 +723,14 @@ int snd_LoadStreaming( const char* fileName, bool loops, unsigned int group )
 	streamingSounds[newIdx].loops = loops;
 	streamingSounds[newIdx].loopPoint = 0;
 	streamingSounds[newIdx].group = group;
+	streamingSounds[newIdx].timesLoaded = 1;
 
 	streamingSounds[newIdx].channels = (Uint8)( streamingSounds[newIdx].access->channels );
 	if( streamingSounds[newIdx].channels > 2 ) {
 		streamingSounds[newIdx].channels = 2;
 	}
+
+	hashMap_Set( &streamingSoundHashMap, fileName, newIdx );
 
 	return newIdx;
 }
@@ -968,11 +986,15 @@ void snd_UnloadStream( int streamID )
     }
     
 	SDL_assert( ( streamID >= 0 ) && ( streamID < MAX_STREAMING_SOUNDS ) );
-	SDL_LockAudioDevice( devID ); {
-		streamingSounds[streamID].playing = false;
-		stb_vorbis_close( streamingSounds[streamID].access );
-		streamingSounds[streamID].access = NULL;
-		SDL_FreeAudioStream( streamingSounds[streamID].sdlStream );
-		streamingSounds[streamID].sdlStream = NULL;
-	} SDL_UnlockAudioDevice( devID );
+	if( streamingSounds[streamID].timesLoaded >= 1 ) {
+		--streamingSounds[streamID].timesLoaded;
+		SDL_LockAudioDevice( devID ); {
+			streamingSounds[streamID].playing = false;
+			stb_vorbis_close( streamingSounds[streamID].access );
+			streamingSounds[streamID].access = NULL;
+			SDL_FreeAudioStream( streamingSounds[streamID].sdlStream );
+			streamingSounds[streamID].sdlStream = NULL;
+			hashMap_RemoveFirstByValue( &streamingSoundHashMap, streamID );
+		} SDL_UnlockAudioDevice( devID );
+	}
 }

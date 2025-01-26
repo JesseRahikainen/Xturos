@@ -347,6 +347,21 @@ ComponentID ecps_AddComponentType( ECPS* ecps, const char* name, uint32_t versio
 	return id;
 }
 
+// returns the size of the component type, returns if the component type exists
+bool ecps_GetComponentTypeSize( ECPS* ecps, ComponentID id, size_t* outSize )
+{
+	SDL_assert( ecps != NULL );
+	SDL_assert( outSize != NULL );
+
+	if( ecps_ct_IsComponentTypeValid( &( ecps->componentTypes ), id ) ) {
+		(*outSize) = ecps_ct_GetComponentTypeSize( &( ecps->componentTypes ), id );
+		return true;
+	}
+
+	(*outSize) = 0;
+	return false;
+}
+
 // this attempts to set up a process to be used by the passed in ecps
 bool ecps_CreateProcess( ECPS* ecps,
 	const char* name, PreProcFunc preProc, ProcFunc proc, PostProcFunc postProc,
@@ -391,6 +406,7 @@ void ecps_RunCustomProcess( ECPS* ecps, PreProcFunc preProc, ProcFunc proc, Post
 // run a process, must have been created with the associated entity-component-process system
 void ecps_RunProcess( ECPS* ecps, Process* process )
 {
+	// TODO: do we want to be able to schedule a process to be run if it's in the middle of another process?
 	SDL_assert( ecps != NULL );
 	SDL_assert( ecps->isRunning );
 
@@ -509,15 +525,17 @@ static void createEntityVA( ECPS* ecps, EntityID entityID, size_t numComponents,
 		for( size_t i = 0; i < numComponents; ++i ) {
 			ComponentID compID = va_arg( list, ComponentID );
 			void* compData = va_arg( list, void* );
-			size_t compSize = ecps->componentTypes.sbTypes[compID].size;
-			
-			if( compSize > 0 ) {
-				if( compData != NULL ) {
-					// have data, copy it
-					memcpy( &( baseData[ecps->componentData.sbComponentArrays[pcaIdx].structure.entries[compID].offset] ), compData, compSize );
-				} else {
-					// no data, zero it out
-					memset( &( baseData[ecps->componentData.sbComponentArrays[pcaIdx].structure.entries[compID].offset] ), 0, compSize );
+			if( ecps_ct_IsComponentTypeValid( &( ecps->componentTypes ), compID ) ) {
+				size_t compSize = ecps->componentTypes.sbTypes[compID].size;
+
+				if( compSize > 0 ) {
+					if( compData != NULL ) {
+						// have data, copy it
+						memcpy( &( baseData[ecps->componentData.sbComponentArrays[pcaIdx].structure.entries[compID].offset] ), compData, compSize );
+					} else {
+						// no data, zero it out
+						memset( &( baseData[ecps->componentData.sbComponentArrays[pcaIdx].structure.entries[compID].offset] ), 0, compSize );
+					}
 				}
 			}
 		}
@@ -729,9 +747,15 @@ static int immediateAddComponentToEntity( ECPS* ecps, Entity* entity, ComponentI
 	}
 
 	size_t currOffset = 0;
-	// if the entity already has that component, then don't bother adding it
+	// if the entity already has that component, then don't bother adding it, might need some clean up since we're going to overwrite the existing data
 	if( fromStructure->entries[componentID].offset >= 0 ) {
 		currOffset = fromCompArrayPos;
+
+		if( ecps->componentTypes.sbTypes[componentID].cleanUp != NULL ) {
+			void* compData = &( fromData[fromStructure->entries[componentID].offset] );
+			ecps->componentTypes.sbTypes[componentID].cleanUp( ecps, entity, compData, false );
+			SDL_memset( compData, 0, ecps->componentTypes.sbTypes[componentID].size );
+		}
 
 		entity->structure = fromStructure;
 		entity->data = fromData;
@@ -780,11 +804,11 @@ static int immediateAddComponentToEntity( ECPS* ecps, Entity* entity, ComponentI
 	return 0;
 }
 
-static void pushAddComponentCommand( ECPS* ecps, const Entity* entity, ComponentID componentID, void* data )
+static void pushAddComponentCommandByID( ECPS* ecps, EntityID entityID, ComponentID componentID, void* data )
 {
 	AddComponentCommand cmd;
 	cmd.cmd = CMD_ADD_COMPONENT;
-	cmd.id = entity->id;
+	cmd.id = entityID;
 	cmd.compID = componentID;
 
 	size_t compSize = ecps->componentTypes.sbTypes[componentID].size;
@@ -795,6 +819,11 @@ static void pushAddComponentCommand( ECPS* ecps, const Entity* entity, Component
 	memcpy( cmdData, &cmd, sizeof( AddComponentCommand ) );
 	cmdData += sizeof( AddComponentCommand );
 	memcpy( cmdData, data, compSize );
+}
+
+static void pushAddComponentCommand( ECPS* ecps, const Entity* entity, ComponentID componentID, void* data )
+{
+	pushAddComponentCommandByID( ecps, entity->id, componentID, data );
 }
 
 // returns the point in the command buffer after the add component command
@@ -840,13 +869,18 @@ int ecps_AddComponentToEntityByID( ECPS* ecps, EntityID entityID, ComponentID co
 {
 	SDL_assert( ecps != NULL );
 
-	Entity entity;
+	if( ecps->isRunningProcess ) {
+		pushAddComponentCommandByID( ecps, entityID, componentID, data );
+		return 0;
+	} else {
+		Entity entity;
 
-	if( !ecps_GetEntityByID( ecps, entityID, &entity ) ) {
-		return -4;
+		if( !ecps_GetEntityByID( ecps, entityID, &entity ) ) {
+			return -4;
+		}
+
+		return ecps_AddComponentToEntity( ecps, &entity, componentID, data );
 	}
-
-	return ecps_AddComponentToEntity( ecps, &entity, componentID, data );
 }
 
 static int immediateRemoveComponentFromEntity( ECPS* ecps, Entity* entity, ComponentID componentID )

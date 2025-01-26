@@ -17,6 +17,7 @@
 bool xLua_GetNextInt( lua_State* ls, int* p, int* out, int* errorOut, const char* name );
 bool xLua_GetNextString( lua_State* ls, int* p, const char** out, int* errorOut, const char* name );
 bool xLua_GetNextFloat( lua_State* ls, int* p, float* out, int* errorOut, const char* name );
+bool xLua_GetNextBool( lua_State* ls, int* p, bool* out, int* errorOut, const char* name );
 
 int xLua_DoCall( int narg, int nres );
 bool xLua_GetGlobalFunc( const char* funcName );
@@ -45,5 +46,11 @@ lua_State* xLua_GetState( void );
 
 // just dump the stack out to the log
 void xLua_StackDump( void );
+
+// helpers for retrieving variables when a lua is calling a c function
+#define LUA_GET_INT(ls, var, p, error) int var = 0; xLua_GetNextInt( ls, &p, &(var), &error, #var );
+#define LUA_GET_FLOAT(ls, var, p, error) float var = 0.0f; xLua_GetNextFloat( ls, &p, &(var), &error, #var );
+#define LUA_GET_STRING(ls, var, p, error) const char* var = NULL; xLua_GetNextString( ls, &p, &(var), &error, #var );
+#define LUA_GET_BOOL(ls, var, p, error) bool var = false; xLua_GetNextBool( ls, &p, &(var), &error, #var );
 
 #endif // inclusion guard

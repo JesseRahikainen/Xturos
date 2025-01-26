@@ -28,18 +28,21 @@ Binds a function response when a key is pressed down.
  Returns < 0 if there was a problem binding the key.
 */
 int input_BindOnKeyPress( SDL_Keycode code, KeyResponse response );
+int input_BindScriptOnKeyPress( SDL_Keycode code, const char* func );
 
 /*
 Binds a function response when a key is released.
  Returns < 0 if there was a problem binding the key.
 */
 int input_BindOnKeyRelease( SDL_Keycode code, KeyResponse response );
+int input_BindScriptOnKeyRelease( SDL_Keycode code, const char* func );
 
 /*
 Binds function response when a key is pressed and released.
  Returns < 0 if there was a problem binding the key.
 */
 int input_BindOnKey( SDL_Keycode code, KeyResponse onPressResponse, KeyResponse onReleaseResponse );
+int input_BindScriptOnKey( SDL_Keycode code, const char* onPressFunc, const char* onReleaseFunc );
 
 /*
 Gets the code associated with response function. Puts them into the keyCodes array (which should be no larger than maxKeyCodes).
@@ -90,12 +93,14 @@ Binds a function response when a key is pressed down.
  Returns < 0 if there was a problem binding the key.
 */
 int input_BindOnMouseButtonPress( Uint8 button, KeyResponse response );
+int input_BindScriptOnMouseButtonPress( Uint8 button, const char* response );
 
 /*
 Binds a function response when a key is released.
  Returns < 0 if there was a problem binding the key.
 */
 int input_BindOnMouseButtonRelease( Uint8 button, KeyResponse response );
+int input_BindScriptOnMouseButtonRelease( Uint8 button, const char* response );
 
 
 /***** Gesture Recognition *****/

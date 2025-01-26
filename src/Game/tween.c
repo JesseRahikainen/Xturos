@@ -327,3 +327,10 @@ float easeFullSinWave( float t )
 	return ( SDL_sinf( t * M_TWO_PI_F ) + 1.0f ) / 2.0f;
 }
 ADD_TRACKED_TWEEN_FUNC( "easeFullSinWave", easeFullSinWave );
+
+// goes from 0, up to 1, then back down to 0
+float easeArc( float t )
+{
+	return ( -4.0f * ( t * t ) ) + ( 4.0f * t );
+}
+ADD_TRACKED_TWEEN_FUNC( "easeArc", easeArc );

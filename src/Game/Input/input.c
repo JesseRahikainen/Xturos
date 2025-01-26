@@ -2,17 +2,38 @@
 #include <float.h>
 #include <SDL_assert.h>
 #include "System/platformLog.h"
+#include "System/shared.h"
+#include "System/luaInterface.h"
+#include "System/memory.h"
 
 /***** Key Binding *****/
 
+#define SCRIPT_FUNC_NAME_MAX_LEN 64
+
+typedef struct {
+	CallbackType type;
+	KeyResponse response;
+} SourceResponse;
+
+typedef struct {
+	CallbackType type;
+	char response[SCRIPT_FUNC_NAME_MAX_LEN];
+} ScriptResponse;
+
+typedef union {
+	CallbackType type;
+	SourceResponse sourceResponse;
+	ScriptResponse scriptResponse;
+} Response;
+
 typedef struct {
 	SDL_Keycode code;
-	KeyResponse response;
+	Response response;
 } KeyBindings;
 
 typedef struct {
 	Uint8 button;
-	KeyResponse response;
+	Response response;
 } MouseButtonBindings;
 
 #define MAX_BINDINGS 32
@@ -23,14 +44,33 @@ static KeyBindings keyUpBindings[MAX_BINDINGS];
 static MouseButtonBindings mouseButtonDownBindings[MAX_BINDINGS];
 static MouseButtonBindings mouseButtonUpBindings[MAX_BINDINGS];
 
+static void runResponse( Response* response )
+{
+	SDL_assert( response != NULL );
+
+	if( response->type == CBT_SOURCE ) {
+		if( response->sourceResponse.response != NULL ) response->sourceResponse.response( );
+	} else if( response->type == CBT_LUA ) {
+		if( response->scriptResponse.response[0] != 0 ) xLua_CallLuaFunction( response->scriptResponse.response, "" );
+	} else {
+		llog( LOG_ERROR, "Unknown callback type." );
+	}
+}
+
+static void clearResponse( Response* response )
+{
+	SDL_assert( response != NULL );
+	response->type = CBT_NONE;
+}
+
 /*
 Clears all the current key bindings.
 */
 void input_ClearAllKeyBinds( void )
 {
 	for( int i = 0; i < MAX_BINDINGS; ++i ) {
-		keyDownBindings[i].response = NULL;
-		keyUpBindings[i].response = NULL;
+		clearResponse( &keyDownBindings[i].response );
+		clearResponse( &keyUpBindings[i].response );
 	}
 }
 
@@ -41,10 +81,10 @@ void input_ClearKeyBinds( SDL_Keycode code )
 {
 	for( int i = 0; i < MAX_BINDINGS; ++i ) {
 		if( keyDownBindings[i].code == code ) {
-			keyDownBindings[i].response = NULL;
+			clearResponse( &keyDownBindings[i].response );
 		}
 		if( keyUpBindings[i].code == code ) {
-			keyUpBindings[i].response = NULL;
+			clearResponse( &keyUpBindings[i].response );
 		}
 	}
 }
@@ -55,11 +95,12 @@ Clears all key bindings associated with the passed in response function.
 void input_ClearKeyResponse( KeyResponse response )
 {
 	for( int i = 0; i < MAX_BINDINGS; ++i ) {
-		if( keyDownBindings[i].response == response ) {
-			keyDownBindings[i].response = NULL;
+		if( ( keyDownBindings[i].response.type == CBT_SOURCE ) && ( keyDownBindings[i].response.sourceResponse.response == response ) ) {
+			clearResponse( &keyDownBindings[i].response );
 		}
-		if( keyUpBindings[i].response == response ) {
-			keyUpBindings[i].response = NULL;
+
+		if( ( keyUpBindings[i].response.type == CBT_SOURCE ) && ( keyUpBindings[i].response.sourceResponse.response == response ) ) {
+			clearResponse( &keyUpBindings[i].response );
 		}
 	}
 }
@@ -68,7 +109,7 @@ void input_ClearKeyResponse( KeyResponse response )
 Finds the first unused binding in the list.
  Return < 0 if we don't find a spot.
 */
-int bindToList( SDL_Keycode code, KeyResponse response, KeyBindings* bindingsList )
+static int bindToList( SDL_Keycode code, KeyResponse response, KeyBindings* bindingsList )
 {
 	if( response == NULL ) {
 		llog( LOG_DEBUG, "Attempting to bind a key with a NULL response." );
@@ -76,7 +117,7 @@ int bindToList( SDL_Keycode code, KeyResponse response, KeyBindings* bindingsLis
 	}
 
 	int idx;
-	for( idx = 0; ( idx < MAX_BINDINGS ) && ( bindingsList[idx].response != NULL ); ++idx )
+	for( idx = 0; ( idx < MAX_BINDINGS ) && ( bindingsList[idx].response.type != CBT_NONE ); ++idx )
 		;
 
 	if( idx >= MAX_BINDINGS ) {
@@ -85,7 +126,37 @@ int bindToList( SDL_Keycode code, KeyResponse response, KeyBindings* bindingsLis
 	}
 
 	bindingsList[idx].code = code;
-	bindingsList[idx].response = response;
+	bindingsList[idx].response.type = CBT_SOURCE;
+	bindingsList[idx].response.sourceResponse.response = response;
+
+	return 0;
+}
+
+static int bindScriptToList( SDL_Keycode code, const char* response, KeyBindings* bindingsList )
+{
+	size_t responseLen = SDL_strlen( response );
+	if( responseLen == 0 ) {
+		llog( LOG_DEBUG, "Attempting to bind a key with no script response." );
+		return -1;
+	}
+
+	if( responseLen >= SCRIPT_FUNC_NAME_MAX_LEN ) {
+		llog( LOG_DEBUG, "Attempting to bind a key with a script reponse name that is too long." );
+		return -1;
+	}
+
+	int idx;
+	for( idx = 0; ( idx < MAX_BINDINGS ) && ( bindingsList[idx].response.type != CBT_NONE ); ++idx )
+		;
+
+	if( idx >= MAX_BINDINGS ) {
+		llog( LOG_DEBUG, "Key binding list full, increase size of bind list." );
+		return -1;
+	}
+
+	bindingsList[idx].code = code;
+	bindingsList[idx].response.type = CBT_LUA;
+	SDL_strlcpy( bindingsList[idx].response.scriptResponse.response, response, SCRIPT_FUNC_NAME_MAX_LEN );
 
 	return 0;
 }
@@ -102,12 +173,30 @@ int input_BindOnKeyPress( SDL_Keycode code, KeyResponse response )
 	return 0;
 }
 
+int input_BindScriptOnKeyPress( SDL_Keycode code, const char* func )
+{
+	if( bindScriptToList( code, func, keyDownBindings ) < 0 ) {
+		return -1;
+	}
+
+	return 0;
+}
+
 /*
 Binds a function response when a key is released.
 */
 int input_BindOnKeyRelease( SDL_Keycode code, KeyResponse response )
 {
 	if( bindToList( code, response, keyUpBindings ) < 0 ) {
+		return -1;
+	}
+
+	return 0;
+}
+
+int input_BindScriptOnKeyRelease( SDL_Keycode code, const char* func )
+{
+	if( bindScriptToList( code, func, keyUpBindings ) < 0 ) {
 		return -1;
 	}
 
@@ -136,6 +225,24 @@ int input_BindOnKey( SDL_Keycode code, KeyResponse onPressResponse, KeyResponse 
 	return 0;
 }
 
+int input_BindScriptOnKey( SDL_Keycode code, const char* onPressFunc, const char* onReleaseFunc )
+{
+	int onPress = 0;
+	if( SDL_strlen( onPressFunc ) > 0 ) {
+		onPress = input_BindScriptOnKeyPress( code, onPressFunc );
+	}
+
+	int onRelease = 0;
+	if( SDL_strlen( onReleaseFunc ) > 0 ) {
+		onRelease = input_BindScriptOnKeyRelease( code, onReleaseFunc );
+	}
+
+	if( ( onPress < 0 ) || ( onRelease < 0 ) ) {
+		return -1;
+	}
+	return 0;
+}
+
 /*
 Gets the code associated with response function. Puts them into the keyCodes array (which should be no larger than maxKeyCodes).
  The rest of the array is filled with SDLK_UNKNOWN.
@@ -145,7 +252,7 @@ void getKeyBindings( KeyResponse response, SDL_Keycode* keyCodes, int maxKeyCode
 	int keyCodeIdx = 0;
 
 	for( int i = 0; ( i < MAX_BINDINGS ) && ( keyCodeIdx < maxKeyCodes ); ++i ) {
-		if( bindingList[i].response == response ) {
+		if( ( bindingList[i].response.type == CBT_SOURCE ) && ( bindingList[i].response.sourceResponse.response == response ) ) {
 			keyCodes[keyCodeIdx] = bindingList[i].code;
 			++keyCodeIdx;
 		}
@@ -172,8 +279,8 @@ Handles a key event.
 void handleKeyEvent( SDL_Keycode code, KeyBindings* bindingsList )
 {
 	for( int i = 0; i < MAX_BINDINGS; ++i ) {
-		if( ( bindingsList[i].code == code ) && ( bindingsList[i].response != NULL ) ) {
-			bindingsList[i].response( );
+		if( ( bindingsList[i].code == code ) && ( bindingsList[i].response.type != CBT_NONE ) ) {
+			runResponse( &bindingsList[i].response );
 		}
 	}
 }
@@ -257,8 +364,8 @@ Clears all current mouse button bindings.
 void input_ClearAllMouseButtonBinds( void )
 {
 	for( int i = 0; i < MAX_BINDINGS; ++i ) {
-		mouseButtonDownBindings[i].response = NULL;
-		mouseButtonUpBindings[i].response = NULL;
+		clearResponse( &mouseButtonDownBindings[i].response );
+		clearResponse( &mouseButtonUpBindings[i].response );
 	}
 }
 
@@ -269,10 +376,10 @@ void input_ClearMouseButtonBinds( Uint8 button )
 {
 	for( int i = 0; i < MAX_BINDINGS; ++i ) {
 		if( mouseButtonDownBindings[i].button == button ) {
-			mouseButtonDownBindings[i].response = NULL;
+			clearResponse( &mouseButtonDownBindings[i].response );
 		}
 		if( mouseButtonUpBindings[i].button == button ) {
-			mouseButtonUpBindings[i].response = NULL;
+			clearResponse( &mouseButtonUpBindings[i].response );
 		}
 	}
 }
@@ -283,11 +390,11 @@ Clears all mouse button bindsings associated with the passed in response.
 void input_ClearMouseButtonReponse( KeyResponse response )
 {
 	for( int i = 0; i < MAX_BINDINGS; ++i ) {
-		if( mouseButtonDownBindings[i].response == response ) {
-			mouseButtonDownBindings[i].response = NULL;
+		if( ( mouseButtonDownBindings[i].response.type == CBT_SOURCE ) && ( mouseButtonDownBindings[i].response.sourceResponse.response == response ) ) {
+			clearResponse( &mouseButtonDownBindings[i].response );
 		}
-		if( mouseButtonUpBindings[i].response == response ) {
-			mouseButtonUpBindings[i].response = NULL;
+		if( ( mouseButtonUpBindings[i].response.type == CBT_SOURCE ) && ( mouseButtonUpBindings[i].response.sourceResponse.response == response ) ) {
+			clearResponse( &mouseButtonUpBindings[i].response );
 		}
 	}
 }
@@ -296,7 +403,7 @@ void input_ClearMouseButtonReponse( KeyResponse response )
 Finds the first unused binding in the list.
  Return < 0 if we don't find a spot.
 */
-int bindToMouseList( Uint8 button, KeyResponse response, MouseButtonBindings* bindingsList )
+static int bindToMouseList( Uint8 button, KeyResponse response, MouseButtonBindings* bindingsList )
 {
 	if( response == NULL ) {
 		llog( LOG_DEBUG, "Attempting to bind a mouse button with a NULL response." );
@@ -304,7 +411,7 @@ int bindToMouseList( Uint8 button, KeyResponse response, MouseButtonBindings* bi
 	}
 
 	int idx;
-	for( idx = 0; ( idx < MAX_BINDINGS ) && ( bindingsList[idx].response != NULL ); ++idx )
+	for( idx = 0; ( idx < MAX_BINDINGS ) && ( bindingsList[idx].response.type != CBT_NONE ); ++idx )
 		;
 
 	if( idx >= MAX_BINDINGS ) {
@@ -313,7 +420,37 @@ int bindToMouseList( Uint8 button, KeyResponse response, MouseButtonBindings* bi
 	}
 
 	bindingsList[idx].button = button;
-	bindingsList[idx].response = response;
+	bindingsList[idx].response.type = CBT_SOURCE;
+	bindingsList[idx].response.sourceResponse.response = response;
+
+	return 0;
+}
+
+static int bindScriptToMouseList( Uint8 button, const char* response, MouseButtonBindings* bindingsList )
+{
+	size_t responseLen = SDL_strlen( response );
+	if( responseLen == 0 ) {
+		llog( LOG_DEBUG, "Attempting to bind a script to mouse button with no reponse." );
+		return -1;
+	}
+
+	if( responseLen >= SCRIPT_FUNC_NAME_MAX_LEN ) {
+		llog( LOG_DEBUG, "Attempting to bind a script to mouse button with a reponse with too long a name." );
+		return -1;
+	}
+
+	int idx;
+	for( idx = 0; ( idx < MAX_BINDINGS ) && ( bindingsList[idx].response.type != CBT_NONE ); ++idx )
+		;
+
+	if( idx >= MAX_BINDINGS ) {
+		llog( LOG_DEBUG, "Mouse button binding list full, increase size of bind list." );
+		return -1;
+	}
+
+	bindingsList[idx].button = button;
+	bindingsList[idx].response.type = CBT_LUA;
+	SDL_strlcpy( bindingsList[idx].response.scriptResponse.response, response, SCRIPT_FUNC_NAME_MAX_LEN );
 
 	return 0;
 }
@@ -327,6 +464,11 @@ int input_BindOnMouseButtonPress( Uint8 button, KeyResponse response )
 	return bindToMouseList( button, response, mouseButtonDownBindings );
 }
 
+int input_BindScriptOnMouseButtonPress( Uint8 button, const char* response )
+{
+	return bindScriptToMouseList( button, response, mouseButtonDownBindings );
+}
+
 /*
 Binds a function response when a key is released.
  Returns < 0 if there was a problem binding the key.
@@ -334,6 +476,11 @@ Binds a function response when a key is released.
 int input_BindOnMouseButtonRelease( Uint8 button, KeyResponse response )
 {
 	return bindToMouseList( button, response, mouseButtonUpBindings );
+}
+
+int input_BindScriptOnMouseButtonRelease( Uint8 button, const char* response )
+{
+	return bindScriptToMouseList( button, response, mouseButtonUpBindings );
 }
 
 static void processMouseMovementEvent( SDL_Event* e )
@@ -358,8 +505,8 @@ Handles a mouse button event.
 void handleMouseButtonEvent( Uint8 button, MouseButtonBindings* bindingsList )
 {
 	for( int i = 0; i < MAX_BINDINGS; ++i ) {
-		if( ( bindingsList[i].button == button ) && ( bindingsList[i].response != NULL ) ) {
-			bindingsList[i].response( );
+		if( ( bindingsList[i].button == button ) && ( bindingsList[i].response.type != CBT_NONE ) ) {
+			runResponse( &bindingsList[i].response );
 		}
 	}
 }

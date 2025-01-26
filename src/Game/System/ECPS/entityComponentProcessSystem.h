@@ -19,6 +19,9 @@ void ecps_CleanUp( ECPS* ecps );
 //  this can only be done before
 ComponentID ecps_AddComponentType( ECPS* ecps, const char* name, uint32_t version, size_t size, size_t align, CleanUpComponent cleanUp, VerifyComponent verify, SerializeComponent serialize, DeserializeComponent deserialize );
 
+// returns the size of the component type, returns if the component type exists
+bool ecps_GetComponentTypeSize( ECPS* ecps, ComponentID id, size_t* outSize );
+
 // this attempts to set up a process to be used by the passed in ecps
 bool ecps_CreateProcess( ECPS* ecps,
 	const char* name, PreProcFunc preProc, ProcFunc proc, PostProcFunc postProc,
@@ -41,6 +44,9 @@ EntityID ecps_CreateEntity( ECPS* ecps, size_t numComponents, ... );
 
 // finds the entity with the given id
 bool ecps_GetEntityByID( const ECPS* ecps, EntityID entityID, Entity* outEntity );
+
+// TODO: add a replaceComponent set of functions that will grab a component if it currently exists and replace all the data in it with
+//			what is passed in, or add it if it doesn't exist, is basically a remove followed by and add of the same type
 
 // adds a component to the specified entity
 //  if the entity already has this component this acts like an expensive ecps_GetComponentFromEntity( )

@@ -46,8 +46,8 @@ jump for the delete. Just need to align the size of the header.
 
 // debug flags
 //#define TEST_CLEAR_VALUES
-//#define LOG_MEMORY_ALLOCATIONS
-//#define TEST_EVERY_CHANGE
+#define LOG_MEMORY_ALLOCATIONS
+#define TEST_EVERY_CHANGE
 
 typedef struct MemoryBlockHeader {
 	uint32_t guardValue;
@@ -539,6 +539,8 @@ static void internal_release_Data( void* memory, const char* fileName, const int
 	mem_Verify( );
 #endif
 	ASSERT_AND_IF_NOT( memoryBlock.memory != NULL ) return;
+
+	if( memory == NULL ) return;
 
 	MemoryBlockHeader* header = (MemoryBlockHeader*)( (uintptr_t)memory - MEMORY_HEADER_SIZE );
 

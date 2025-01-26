@@ -121,6 +121,9 @@
     <Filter Include="Source Files\Others\lua">
       <UniqueIdentifier>{da400377-ad33-445c-86ca-5bf1951c5bf4}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Script Files">
+      <UniqueIdentifier>{441c5fdf-20f7-4e9d-94ec-2239e717d155}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\Game\Graphics\graphics.h">
@@ -465,6 +468,9 @@
     <ClInclude Include="..\..\src\Game\System\luaInterface.h">
       <Filter>Header Files\System</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\Game\System\shared.h">
+      <Filter>Header Files\System</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\Game\Graphics\graphics.c">
@@ -797,9 +803,6 @@
     <ClCompile Include="..\..\src\Game\Others\lua-5.4.3\lua.c">
       <Filter>Source Files\Others\lua</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\Game\Others\lua-5.4.3\luac.c">
-      <Filter>Source Files\Others\lua</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\Game\Others\lua-5.4.3\lundump.c">
       <Filter>Source Files\Others\lua</Filter>
     </ClCompile>
@@ -833,6 +836,9 @@
   <ItemGroup>
     <None Include="..\..\src\ProjectToolScripts\addNewState.ps1">
       <Filter>_ProjectToolScripts</Filter>
+    </None>
+    <None Include="..\..\bin\data\Scripts\main.lua">
+      <Filter>Script Files</Filter>
     </None>
   </ItemGroup>
 </Project>

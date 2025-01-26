@@ -182,6 +182,7 @@
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <DisableSpecificWarnings>4100;4189;4201;4996;4127;4756;6385;6386;26451;6255;6385;26451;4456;4457</DisableSpecificWarnings>
       <PreprocessToFile>false</PreprocessToFile>
+      <LanguageStandard>stdcpp14</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -235,6 +236,7 @@
       <TreatWarningAsError>true</TreatWarningAsError>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <DisableSpecificWarnings>4100;4189;4201;4996;4127;4756;6385;6386;26451;6255;6385;26451;4456;4457</DisableSpecificWarnings>
+      <LanguageStandard>stdcpp14</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -292,6 +294,7 @@
       <TreatWarningAsError>true</TreatWarningAsError>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <DisableSpecificWarnings>4100;4189;4201;4996;4127;4756;6385;6386;26451;6255;6385;26451;4456;4457</DisableSpecificWarnings>
+      <LanguageStandard>stdcpp14</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -394,6 +397,7 @@
     <ClInclude Include="..\..\src\Game\Others\nuklear.h" />
     <ClInclude Include="..\..\src\Game\particles.h" />
     <ClInclude Include="..\..\src\Game\sound.h" />
+    <ClInclude Include="..\..\src\Game\System\shared.h" />
     <ClInclude Include="..\..\src\Game\System\ECPS\ecps_componentBitFlags.h" />
     <ClInclude Include="..\..\src\Game\System\ECPS\ecps_componentTypes.h" />
     <ClInclude Include="..\..\src\Game\System\ECPS\ecps_dataTypes.h" />
@@ -711,14 +715,6 @@
       <WarningLevel Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">TurnOffAllWarnings</WarningLevel>
       <TreatWarningAsError Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">false</TreatWarningAsError>
     </ClCompile>
-    <ClCompile Include="..\..\src\Game\Others\lua-5.4.3\luac.c">
-      <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">TurnOffAllWarnings</WarningLevel>
-      <TreatWarningAsError Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</TreatWarningAsError>
-      <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">TurnOffAllWarnings</WarningLevel>
-      <TreatWarningAsError Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</TreatWarningAsError>
-      <WarningLevel Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">TurnOffAllWarnings</WarningLevel>
-      <TreatWarningAsError Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">false</TreatWarningAsError>
-    </ClCompile>
     <ClCompile Include="..\..\src\Game\Others\lua-5.4.3\lundump.c">
       <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">TurnOffAllWarnings</WarningLevel>
       <TreatWarningAsError Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</TreatWarningAsError>
@@ -801,6 +797,7 @@
     <Text Include="..\..\todo.txt" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="..\..\bin\data\Scripts\main.lua" />
     <None Include="..\..\src\ProjectToolScripts\addNewState.ps1" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

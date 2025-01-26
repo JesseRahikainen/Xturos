@@ -14,6 +14,7 @@
 #include "System/gameTime.h"
 
 #include "images.h"
+#include "spriteAnimation.h"
 #include "debugRendering.h"
 #include "triRendering.h"
 
@@ -100,6 +101,11 @@ int gfx_Init( SDL_Window* window, int desiredRenderWidth, int desiredRenderHeigh
 		return -1;
 	}
 	llog( LOG_INFO, "Triangle renderer initialized." );
+
+	if( !sprAnim_Init( ) ) {
+		return -1;
+	}
+	llog( LOG_INFO, "Sprite animations initialized." );
     
 	gameClearColor = CLR_MAGENTA;
     

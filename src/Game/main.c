@@ -55,8 +55,6 @@
 #include "Utils/helpers.h"
 #include "DefaultECPS/defaultECPS.h"
 
-// 540 x 960
-
 #define DESIRED_WORLD_WIDTH 800
 #define DESIRED_WORLD_HEIGHT 600
 
@@ -385,6 +383,10 @@ int initEverything( void )
 	llog( LOG_INFO, "Lua initialized" );
 
 	defaultECPS_Setup( );
+
+	input_ClearAllKeyBinds( );
+	input_ClearAllMouseButtonBinds( );
+	input_ClearAllSwipeBinds( );
 
 	return 0;
 }
@@ -730,7 +732,7 @@ void mainLoop( void* v )
 	if( mainTimerSec >= 0.04f ) {
 		priority = LOG_WARN;
 	}
-	llog( LOG_WARN, "%sframeTime: %f - proc: %f, physics: %f, draw: %f, mainJobs: %f, render: %f, flip: %f",
+	llog( priority, "%sframeTime: %f - proc: %f, physics: %f, draw: %f, mainJobs: %f, render: %f, flip: %f",
 		priority == LOG_WARN ? "!!! " : "",
 		mainTimerSec, procTimerSec, physicsTimerSec, drawTimerSec, mainJobsTimerSec, renderTimerSec, flipTimerSec );
 #endif
@@ -778,11 +780,11 @@ int main( int argc, char** argv )
 	//GameState* startState = &bordersTestScreenState;
 	//GameState* startState = &hexTestScreenState;
 	//GameState* startState = &testBloomScreenState;
-	GameState* startState = &gameOfUrScreenState;
+	//GameState* startState = &gameOfUrScreenState;
 	//GameState* startState = &testECPSScreenState;
-	//GameState* startState = &testMountingState;
+	GameState* startState = &testMountingState;
 	if( isEditorMode ) {
-		startState = &editorHubScreenState;
+		//startState = &editorHubScreenState;
 	}
 	gsm_EnterState( &globalFSM, startState );
 

@@ -470,7 +470,7 @@ int findUnusedPackage( void )
 {
 	int packageID = 0;
 	for( int i = 0; i < MAX_IMAGES; ++i ) {
-		if( ( images[i].flags & IMGFLAG_IN_USE ) && ( images[i].packageID <= packageID ) ) {
+		if( ( images[i].flags & IMGFLAG_IN_USE ) && ( images[i].packageID >= packageID ) ) {
 			packageID = images[i].packageID + 1;
 		}
 	}

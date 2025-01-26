@@ -79,6 +79,7 @@ typedef struct {
 	bool loops;
 	AnimEvent* sbEvents; // TODO: Sort by frame.
 	int spriteSheetPackageID;
+	int loadCount;
 } SpriteAnimation;
 
 // Helpers for creating events to add to the animation.
@@ -112,6 +113,9 @@ bool sprAnim_Save( const char* fileName, SpriteAnimation* anim );
 //  call sprAnim_LoadAssociatedData after this to load the sprite sheets and set the image ids
 bool sprAnim_Load( const char* fileName, SpriteAnimation* anim );
 
+// loads from an external file and all the sprite sheets as well
+bool sprAnim_FullLoad( const char* fileName, SpriteAnimation* anim );
+
 //************************************
 // Playing animation.
 typedef struct {
@@ -122,5 +126,16 @@ typedef struct {
 void sprAnim_StartAnim( PlayingSpriteAnimation* playingAnim, SpriteAnimation* anim, AnimEventHandler* handler );
 void sprAnim_ProcessAnim( PlayingSpriteAnimation* playingAnim, AnimEventHandler* handler, float dt );
 uint32_t sprAnim_GetCurrentFrame( PlayingSpriteAnimation* playingAnim );
+
+//************************************
+// treating the animation as a resource, allowing us to better manage it and access it from script
+bool sprAnim_Init( void );
+int sprAnim_LoadAsResource( const char* fileName );
+SpriteAnimation* sprAnim_GetFromID( int id );
+int sprAnim_GetAsID( SpriteAnimation* sprAnim );
+void sprAnim_UnloadFromID( int id );
+
+// for right now we'll assume playing animations will be handled primarily by the ecps, will just need to start the playing
+int sprAnim_StartAnimFromID( PlayingSpriteAnimation* playingAnim, int animID, AnimEventHandler* handler );
 
 #endif // inclusion guard

@@ -144,6 +144,7 @@ SpriteAnimation spriteAnimation( )
 	newAnim.spriteSheetPackageID = -1;
 	newAnim.spriteSheetFile = NULL;
 	newAnim.loops = false;
+	newAnim.loadCount = 0;
 	return newAnim;
 }
 
@@ -441,4 +442,99 @@ clean_up:
 		sb_Release( anim->sbEvents );
 	}
 	return done;
+}
+
+bool sprAnim_FullLoad( const char* fileName, SpriteAnimation* anim )
+{
+	if( !sprAnim_Load( fileName, anim ) ) {
+		return false;
+	}
+
+	return sprAnim_LoadAssociatedData( anim );
+}
+
+//************************************
+// treating the animation as a resource, allowing us to better manage it and access it from script
+
+#include "Utils/hashMap.h"
+
+static HashMap loadedAnimHashMap;
+static SpriteAnimation* sbLoadedAnims;
+
+bool sprAnim_Init( void )
+{
+	// need to clear out some things and initialize some data here
+	hashMap_Init( &loadedAnimHashMap, 32, NULL );
+	sbLoadedAnims = NULL;
+
+	return true;
+}
+
+int sprAnim_LoadAsResource( const char* fileName )
+{
+	int id = -1;
+	// check to see if it's already loaded, if it is then just return the already loaded id and increment the count
+	if( hashMap_Find( &loadedAnimHashMap, fileName, &id ) ) {
+		++sbLoadedAnims[id].loadCount;
+		return id;
+	}
+
+	// see if there are any open spots
+	for( size_t i = 0; ( id == -1 ) && ( i < sb_Count( sbLoadedAnims ) ); ++i ) {
+		if( sbLoadedAnims[i].loadCount <= 0 ) {
+			id = (int)i;
+		}
+	}
+
+	if( id == -1 ) {
+		id = (int)sb_Count( sbLoadedAnims );
+		sb_Add( sbLoadedAnims, 1 );
+		sbLoadedAnims[id] = spriteAnimation( );
+	}
+
+	sprAnim_FullLoad( fileName, &( sbLoadedAnims[id] ) );
+	hashMap_Set( &loadedAnimHashMap, fileName, id );
+	sbLoadedAnims[id].loadCount = 1;
+
+	return id;
+}
+
+SpriteAnimation* sprAnim_GetFromID( int id )
+{
+	// get the loaded animation
+	if( ( id >= sb_Count( sbLoadedAnims ) ) || ( sbLoadedAnims[id].loadCount <= 0 ) ) {
+		return NULL;
+	}
+
+	return &( sbLoadedAnims[id] );
+}
+
+int sprAnim_GetAsID( SpriteAnimation* sprAnim )
+{
+	// todo: find a better way to do this
+	ASSERT_AND_IF( sprAnim == NULL ) {
+		return 0xFFFFFFFF;
+	}
+
+	for( size_t i = 0; i < sb_Count( sbLoadedAnims ); ++i ) {
+		if( sprAnim == &( sbLoadedAnims[i] ) ) {
+			return (int)i;
+		}
+	}
+
+	return 0xFFFFFFFF;
+}
+
+void sprAnim_UnloadFromID( int id )
+{
+	// decrement the load count, if it's zero then unload it
+	SpriteAnimation* anim = sprAnim_GetFromID( id );
+
+	if( anim == NULL ) return;
+	--anim->loadCount;
+
+	if( anim->loadCount <= 0 ) {
+		sprAnim_Clean( anim );
+		hashMap_RemoveFirstByValue( &loadedAnimHashMap, id );
+	}
 }

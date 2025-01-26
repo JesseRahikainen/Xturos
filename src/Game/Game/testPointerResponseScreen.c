@@ -59,14 +59,16 @@ static void createTestButton( Vector2 position, Vector2 size )
 	GCColorData clr;
 	clr.currClr = clr.futureClr = CLR_WHITE;
 
-	GCPointerResponseData ptr;
+	GCPointerCollisionData ptr;
 	ptr.camFlags = 1;
 	vec2_Scale( &size, 0.5f, &(ptr.collisionHalfDim ) );
-	ptr.leaveResponse = onButtonLeave;
-	ptr.overResponse = onButtonOver;
-	ptr.pressResponse = onButtonPress;
-	ptr.releaseResponse = onButtonRelease;
 	ptr.priority = 1;
+
+	GCPointerResponseData response;
+	response.leaveResponse = createSourceCallback( onButtonLeave );
+	response.overResponse = createSourceCallback( onButtonOver );
+	response.pressResponse = createSourceCallback( onButtonPress );
+	response.releaseResponse = createSourceCallback( onButtonRelease );
 
 	GCSpriteData sprite;
 	sprite.camFlags = 1;
@@ -76,10 +78,11 @@ static void createTestButton( Vector2 position, Vector2 size )
 	GCGroupIDData group;
 	group.groupID = 1;
 
-	ecps_CreateEntity( &defaultECPS, 5,
+	ecps_CreateEntity( &defaultECPS, 6,
 		gcTransformCompID, &tf,
 		gcClrCompID, &clr,
-		gcPointerResponseCompID, &ptr,
+		gcPointerCollisionCompID, &ptr,
+		gcPointerResponseCompID, &response,
 		gcSpriteCompID, &sprite,
 		gcGroupIDCompID, &group );
 }
