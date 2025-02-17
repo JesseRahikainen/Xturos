@@ -213,15 +213,15 @@ static int testMountingState_Enter( void )
 	}
 
 	// set up input
-	input_BindOnKey( SDLK_w, pressUp, releaseUp );
-	input_BindOnKey( SDLK_s, pressDown, releaseDown );
-	input_BindOnKey( SDLK_a, pressLeft, releaseLeft );
-	input_BindOnKey( SDLK_d, pressRight, releaseRight );
-	input_BindOnKey( SDLK_q, pressWiddershins, releaseWiddershins );
-	input_BindOnKey( SDLK_e, pressDeosil, releaseDeosil );
-	input_BindOnKey( SDLK_o, pressBinding, releaseBinding );
-	input_BindOnKey( SDLK_p, pressDrop, NULL );
-	input_BindOnKey( SDLK_r, pressReset, NULL );
+	input_BindOnKey( SDLK_W, pressUp, releaseUp );
+	input_BindOnKey( SDLK_S, pressDown, releaseDown );
+	input_BindOnKey( SDLK_A, pressLeft, releaseLeft );
+	input_BindOnKey( SDLK_D, pressRight, releaseRight );
+	input_BindOnKey( SDLK_Q, pressWiddershins, releaseWiddershins );
+	input_BindOnKey( SDLK_E, pressDeosil, releaseDeosil );
+	input_BindOnKey( SDLK_O, pressBinding, releaseBinding );
+	input_BindOnKey( SDLK_P, pressDrop, NULL );
+	input_BindOnKey( SDLK_R, pressReset, NULL );
 	input_BindOnKey( SDLK_EQUALS, pressScaleUp, releaseScaleUp );
 	input_BindOnKey( SDLK_MINUS, pressScaleDown, releaseScaleDown );
 

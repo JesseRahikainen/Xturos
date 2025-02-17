@@ -1,6 +1,6 @@
 #include "spriteSheetEditor.h"
 
-#include <SDL.h>
+#include <SDL3/SDL.h>
 #include <limits.h>
 #include <stdbool.h>
 
@@ -24,11 +24,11 @@ static int xPadding = 2;
 static int yPadding = 2;
 static int maxSize = 4096;
 
-static void addFileEntry( const char* sbPath )
+static void addFileEntry( const char* path )
 {
 	char* sbPathCopy = NULL;
-	sb_Add( sbPathCopy, sb_Count( sbPath ) );
-	SDL_memcpy( sbPathCopy, sbPath, sizeof( sbPath[0] ) * sb_Count( sbPath ) );
+	sb_Add( sbPathCopy, SDL_strlen( path ) + 1 );
+	SDL_memcpy( sbPathCopy, path, sizeof( path[0] ) * ( SDL_strlen( path ) + 1 ) );
 
 	SpriteSheetEntry newEntry;
 	newEntry.sbPath = sbPathCopy;
@@ -50,32 +50,33 @@ static void createNewSpriteSheet( void )
 
 static void saveSpriteSheetSetup( const char* filePath )
 {
-	SDL_RWops* rwops = SDL_RWFromFile( filePath, "w" );
+	SDL_IOStream* ioStream = SDL_IOFromFile( filePath, "w" );
 
-	if( rwops == NULL ) {
+	if( ioStream == NULL ) {
 		hub_CreateDialog( "Save Setup Error", SDL_GetError( ), DT_ERROR, 1, "OK", NULL );
 		return;
 	}
 
 	// simple text based file, will just be a list of files
 	for( size_t i = 0; i < sb_Count( sbEntries ); ++i ) {
-		size_t numWritten = SDL_RWwrite( rwops, sbEntries[i].sbPath, sizeof( sbEntries[i].sbPath[0] ), sb_Count( sbEntries[i].sbPath ) );
-		if( numWritten != sb_Count( sbEntries[i].sbPath ) ) {
+		size_t size = sizeof( sbEntries[i].sbPath[0] ) * sb_Count( sbEntries[i].sbPath );
+		size_t numWritten = SDL_WriteIO( ioStream, sbEntries[i].sbPath, size );
+		if( numWritten != size ) {
 			hub_CreateDialog( "Save Setup Error", SDL_GetError( ), DT_ERROR, 1, "OK", NULL );
 			goto clean_up;
 		}
 	}
 
 clean_up:
-	SDL_RWclose( rwops );
+	SDL_CloseIO( ioStream );
 }
 
 static void loadSpriteSheetSetup( const char* filePath )
 {
 	clearEntryList( );
 
-	SDL_RWops* rwops = SDL_RWFromFile( filePath, "r" );
-	if( rwops == NULL ) {
+	SDL_IOStream* ioStream = SDL_IOFromFile( filePath, "r" );
+	if( ioStream == NULL ) {
 		hub_CreateDialog( "Load Setup Error", SDL_GetError( ), DT_ERROR, 1, "OK", NULL );
 		return;
 	}
@@ -84,7 +85,8 @@ static void loadSpriteSheetSetup( const char* filePath )
 	char* sbCurrString = NULL;
 	sb_Reserve( sbCurrString, 512 );
 
-	size_t amtRead = SDL_RWread( rwops, buffer, sizeof( buffer[0] ), ARRAY_SIZE( buffer ) );
+	
+	size_t amtRead = SDL_ReadIO( ioStream, buffer, sizeof( buffer[0] ) * ARRAY_SIZE( buffer ) );
 	while( amtRead > 0 ) {
 
 		// find the next null and add the resulting string to the buffer
@@ -98,7 +100,7 @@ static void loadSpriteSheetSetup( const char* filePath )
 			}
 		}
 
-		amtRead = SDL_RWread( rwops, buffer, sizeof( buffer[0] ), ARRAY_SIZE( buffer ) );
+		amtRead = SDL_ReadIO( ioStream, buffer, sizeof( buffer[0] ) * ARRAY_SIZE( buffer ) );
 	}
 
 	const char* error = SDL_GetError( );
@@ -107,7 +109,7 @@ static void loadSpriteSheetSetup( const char* filePath )
 	}
 
 	sb_Release( sbCurrString );
-	SDL_RWclose( rwops );
+	SDL_CloseIO( ioStream );
 }
 
 static void exportSpriteSheet( const char* filePath )

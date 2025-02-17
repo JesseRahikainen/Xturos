@@ -1,7 +1,7 @@
 #ifndef STRETCH_BUFFER_H
 #define STRETCH_BUFFER_H
 
-#include <SDL_assert.h>
+#include <SDL3/SDL_assert.h>
 #include <stdint.h>
 #include <string.h>
 #include "System/memory.h"

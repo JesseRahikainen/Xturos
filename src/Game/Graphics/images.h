@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-#include <SDL.h>
+#include <SDL3/SDL.h>
 #include "Math/vector2.h"
 #include "color.h"
 #include "triRendering.h"

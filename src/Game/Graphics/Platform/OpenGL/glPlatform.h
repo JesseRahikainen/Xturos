@@ -2,7 +2,7 @@
 #ifndef GL_PLATFORM
 #define GL_PLATFORM
 
-#include <SDL_video.h>
+#include <SDL3/SDL_video.h>
 
 /*
 Handles the platform specific OpenGL stuff.
@@ -173,7 +173,7 @@ Handles the platform specific OpenGL stuff.
 
 #elif defined( WIN32 )
 #include "Others/gl_core.h"
-#include <SDL_opengl.h>
+#include <SDL3/SDL_opengl.h>
 
 #define PROFILE SDL_GL_CONTEXT_PROFILE_CORE
 

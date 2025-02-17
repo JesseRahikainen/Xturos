@@ -4,7 +4,7 @@
 #include <math.h>
 #include <stdlib.h>
 #include <float.h>
-#include <SDL_assert.h>
+#include <SDL3/SDL_assert.h>
 
 #include "Graphics/debugRendering.h"
 #include "Math/vector2.h"

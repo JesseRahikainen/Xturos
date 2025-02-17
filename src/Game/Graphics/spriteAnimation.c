@@ -290,8 +290,8 @@ bool sprAnim_Save( const char* fileName, SpriteAnimation* anim )
 	ASSERT_AND_IF_NOT( anim != NULL ) return false;
 
 	cmp_ctx_t cmp;
-	SDL_RWops* rwops = openRWopsCMPFile( fileName, "wb", &cmp );
-	if( rwops == NULL ) {
+	SDL_IOStream* ioStream = openRWopsCMPFile( fileName, "wb", &cmp );
+	if( ioStream == NULL ) {
 		return false;
 	}
 
@@ -341,8 +341,7 @@ bool sprAnim_Save( const char* fileName, SpriteAnimation* anim )
 	done = true;
 
 clean_up:
-
-	if( SDL_RWclose( rwops ) < 0 ) {
+	if( !SDL_CloseIO( ioStream ) ) {
 		llog( LOG_ERROR, "Error closing file %s: %s", fileName, SDL_GetError( ) );
 		done = false;
 	}
@@ -362,8 +361,8 @@ bool sprAnim_Load( const char* fileName, SpriteAnimation* anim )
 	ASSERT_AND_IF_NOT( anim != NULL ) return false;
 
 	cmp_ctx_t cmp;
-	SDL_RWops* rwops = openRWopsCMPFile( fileName, "rb", &cmp );
-	if( rwops == NULL ) {
+	SDL_IOStream* ioStream = openRWopsCMPFile( fileName, "rb", &cmp );
+	if( ioStream == NULL ) {
 		return false;
 	}
 
@@ -424,8 +423,7 @@ bool sprAnim_Load( const char* fileName, SpriteAnimation* anim )
 	done = true;
 
 clean_up:
-
-	if( SDL_RWclose( rwops ) < 0 ) {
+	if( !SDL_CloseIO( ioStream ) ) {
 		llog( LOG_ERROR, "Error closing file %s: %s", fileName, SDL_GetError( ) );
 		done = false;
 	}

@@ -1,6 +1,6 @@
 #include "generalComponents.h"
 
-#include <SDL_assert.h>
+#include <SDL3/SDL_assert.h>
 #include "Utils/helpers.h"
 #include "System/platformLog.h"
 #include "System/ECPS/ecps_serialization.h"

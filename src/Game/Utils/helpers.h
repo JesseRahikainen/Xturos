@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <stddef.h>
 
-#include <SDL.h>
+#include <SDL3/SDL.h>
 
 #include "Others/cmp.h"
 
@@ -59,7 +59,7 @@ char* extractFileName( const char* filePath );
 char* wideCharToUTF8SB( const wchar_t* wideStr );
 #endif
 
-SDL_RWops* openRWopsCMPFile( const char* filePath, const char* mode, cmp_ctx_t * cmpCtx );
+SDL_IOStream* openRWopsCMPFile( const char* filePath, const char* mode, cmp_ctx_t * cmpCtx );
 
 #define CMP_WRITE( cmpPtr, val, write, type, desc, onFail ) \
 	if( !write( (cmpPtr), (val) ) ) { \

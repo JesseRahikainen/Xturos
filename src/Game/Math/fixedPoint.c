@@ -1,7 +1,7 @@
 #include "fixedPoint.h"
 
 #include <math.h>
-#include <SDL_assert.h>
+#include <SDL3/SDL_assert.h>
 
 #include "System/platformLog.h"
 

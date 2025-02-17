@@ -1,7 +1,7 @@
 #include "gameOfUrScreen.h"
 
 #include <stdint.h>
-#include <SDL_assert.h>
+#include <SDL3/SDL_assert.h>
 #include <stdbool.h>
 #include <math.h>
 #include <time.h>

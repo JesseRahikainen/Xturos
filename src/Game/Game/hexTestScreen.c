@@ -131,8 +131,8 @@ static void hexTestScreen_Enter( void )
 	input_BindOnMouseButtonPress( SDL_BUTTON_LEFT, onMouseClick );
 	input_BindOnKeyPress( SDLK_EQUALS, increaseRadius );
 	input_BindOnKeyPress( SDLK_MINUS, decreaseRadius );
-	input_BindOnKeyPress( SDLK_q, setLineStart );
-	input_BindOnKeyPress( SDLK_w, setLineEnd );
+	input_BindOnKeyPress( SDLK_Q, setLineStart );
+	input_BindOnKeyPress( SDLK_W, setLineEnd );
 }
 
 static void hexTestScreen_Exit( void )

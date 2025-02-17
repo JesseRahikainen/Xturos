@@ -2,8 +2,7 @@
 
 // TODO: Ability to cache string images
 
-#include <SDL_rwops.h>
-#include <SDL_assert.h>
+#include <SDL3/SDL.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <string.h>
@@ -148,6 +147,7 @@ int txt_LoadFont( const char* fileName, int pixelHeight )
 	Vector2* maxes = NULL;
 	int* retIDs;
 	Glyph* glyphStorage = NULL; // temporary storage, used to reduce memory fragmentation
+	SDL_IOStream* ioStream = NULL;
 
 	// find an unused font ID
 	newFont = findUnusedFontID( );
@@ -183,14 +183,14 @@ int txt_LoadFont( const char* fileName, int pixelHeight )
 		goto clean_up;
 	}
 
-	SDL_RWops* rwopsFile = SDL_RWFromFile( fileName, "r" );
-	if( rwopsFile == NULL ) {
+	ioStream = SDL_IOFromFile( fileName, "r" );
+	if( ioStream == NULL ) {
 		llog( LOG_ERROR, "Error opening font file %s", fileName );
 		newFont = -1;
 		goto clean_up;
 	}
 
-	size_t numRead = SDL_RWread( rwopsFile, (void*)buffer, sizeof( uint8_t ), bufferSize );
+	size_t numRead = SDL_ReadIO( ioStream, (void*)buffer, sizeof( uint8_t ) * bufferSize );
 	if( numRead >= bufferSize ) {
 		llog( LOG_ERROR, "Too much data read in from file %s", fileName );
 		newFont = -1;
@@ -288,6 +288,7 @@ int txt_LoadFont( const char* fileName, int pixelHeight )
 
 	// TODO: get a way to do this with fewer temporary allocations
 clean_up:
+	SDL_CloseIO( ioStream );
 	mem_Release( buffer );
 	mem_Release( bmpBuffer );
 	mem_Release( fontPackRange.chardata_for_range );
@@ -432,7 +433,7 @@ clean_up:
 static void loadFontTask( void* data )
 {
 	uint8_t* buffer = NULL;
-	SDL_RWops* rwopsFile = NULL;
+	SDL_IOStream* ioStream = NULL;
 
 	if( data == NULL ) {
 		return;
@@ -448,13 +449,13 @@ static void loadFontTask( void* data )
 		goto failure;
 	}
 
-	rwopsFile = SDL_RWFromFile( fontData->fileName, "r" );
-	if( rwopsFile == NULL ) {
+	ioStream = SDL_IOFromFile( fontData->fileName, "r" );
+	if( ioStream == NULL ) {
 		llog( LOG_ERROR, "Error opening font file %s", fontData->fileName );
 		goto failure;
 	}
 
-	size_t numRead = SDL_RWread( rwopsFile, (void*)buffer, sizeof( uint8_t ), bufferSize );
+	size_t numRead = SDL_ReadIO( ioStream, (void*)buffer, sizeof( uint8_t ) * bufferSize );
 	if( numRead >= bufferSize ) {
 		llog( LOG_ERROR, "Too much data read in from file %s", fontData->fileName );
 		goto clean_up;
@@ -507,7 +508,7 @@ failure:
 
 clean_up:
 	mem_Release( buffer );
-	SDL_RWclose( rwopsFile );
+	SDL_CloseIO( ioStream );
 }
 
 // Loads the font at file name on a seperate thread. Uses a height of pixelHeight.
@@ -998,45 +999,45 @@ static bool saveSDFFont( const char* fileName,
 	strcpy( fontFileName, fileName );
 	strcat( fontFileName, sdfFontExtension );
 
-	SDL_RWops* rwopsFile = SDL_RWFromFile( fontFileName, "w" );
-	if( rwopsFile == NULL ) {
+	SDL_IOStream* ioStream = SDL_IOFromFile( fontFileName, "w" );
+	if( ioStream == NULL ) {
 		llog( LOG_WARN, "Unable to open sdf font for %s: %s", fileName, SDL_GetError( ) );
 		goto clean_up;
 	}
 
 	// write out the font data
-	CHECK_WRITE( SDL_WriteBE32( rwopsFile, *(Uint32*)( &descent ) ), "writing out descent", 1 );
-	CHECK_WRITE( SDL_WriteBE32( rwopsFile, *(Uint32*)( &linegap ) ), "writing out line gap", 1 );
-	CHECK_WRITE( SDL_WriteBE32( rwopsFile, *(Uint32*)( &ascent ) ), "writing out ascent", 1 );
-	CHECK_WRITE( SDL_WriteBE32( rwopsFile, *(Uint32*)( &baseSize ) ), "writing out base size", 1 );
+	CHECK_WRITE( SDL_WriteU32BE( ioStream, *(Uint32*)( &descent ) ), "writing out descent", 1 );
+	CHECK_WRITE( SDL_WriteU32BE( ioStream, *(Uint32*)( &linegap ) ), "writing out line gap", 1 );
+	CHECK_WRITE( SDL_WriteU32BE( ioStream, *(Uint32*)( &ascent ) ), "writing out ascent", 1 );
+	CHECK_WRITE( SDL_WriteU32BE( ioStream, *(Uint32*)( &baseSize ) ), "writing out base size", 1 );
 
 	// write out the glyphs
-	CHECK_WRITE( SDL_WriteBE64( rwopsFile, (Uint64)sb_Count( sbGlyphs ) ), "writing out glyph count", 1 );
+	CHECK_WRITE( SDL_WriteU64BE( ioStream, (Uint64)sb_Count( sbGlyphs ) ), "writing out glyph count", 1 );
 	for( size_t i = 0; i < sb_Count( sbGlyphs ); ++i ) {
-		CHECK_WRITE( SDL_WriteBE32( rwopsFile, *(Uint32*)( &( sbGlyphs[i].codepoint ) ) ), "writing out glyph codepoint", 1 );
+		CHECK_WRITE( SDL_WriteU32BE( ioStream, *(Uint32*)( &( sbGlyphs[i].codepoint ) ) ), "writing out glyph codepoint", 1 );
 
 		int32_t advance = (int32_t)sbGlyphs[i].advance;
-		CHECK_WRITE( SDL_WriteBE32( rwopsFile, *(Uint32*)( &advance ) ), "writing out glyph advance", 1 );
+		CHECK_WRITE( SDL_WriteU32BE( ioStream, *(Uint32*)( &advance ) ), "writing out glyph advance", 1 );
 
 		// the mins and maxes are stored as floats but should still be integer values
 		uint32_t minX = (uint32_t)mins[i].x;
-		CHECK_WRITE( SDL_WriteBE32( rwopsFile, *(Uint32*)( &minX ) ), "writing out glyph min x", 1 );
+		CHECK_WRITE( SDL_WriteU32BE( ioStream, *(Uint32*)( &minX ) ), "writing out glyph min x", 1 );
 
 		uint32_t minY = (uint32_t)mins[i].y;
-		CHECK_WRITE( SDL_WriteBE32( rwopsFile, *(Uint32*)( &minY ) ), "writing out glyph min y", 1 );
+		CHECK_WRITE( SDL_WriteU32BE( ioStream, *(Uint32*)( &minY ) ), "writing out glyph min y", 1 );
 
 		uint32_t maxX = (uint32_t)maxes[i].x;
-		CHECK_WRITE( SDL_WriteBE32( rwopsFile, *(Uint32*)( &maxX ) ), "writing out glyph max x", 1 );
+		CHECK_WRITE( SDL_WriteU32BE( ioStream, *(Uint32*)( &maxX ) ), "writing out glyph max x", 1 );
 
 		uint32_t maxY = (uint32_t)maxes[i].y;
-		CHECK_WRITE( SDL_WriteBE32( rwopsFile, *(Uint32*)( &maxY ) ), "writing out glyph max y", 1 );
+		CHECK_WRITE( SDL_WriteU32BE( ioStream, *(Uint32*)( &maxY ) ), "writing out glyph max y", 1 );
 
 		// offsets should be either whole numbers or half, so we'll store it as doubled so we only need to store integer values
 		int32_t offsetX = (int32_t)( offsets[i].x * 2.0f );
-		CHECK_WRITE( SDL_WriteBE32( rwopsFile, *(Uint32*)( &offsetX ) ), "writing out glyph offset x", 1 );
+		CHECK_WRITE( SDL_WriteU32BE( ioStream, *(Uint32*)( &offsetX ) ), "writing out glyph offset x", 1 );
 
 		int32_t offsetY = (int32_t)( offsets[i].y * 2.0f );
-		CHECK_WRITE( SDL_WriteBE32( rwopsFile, *(Uint32*)( &offsetY ) ), "writing out glyph offset y", 1 );
+		CHECK_WRITE( SDL_WriteU32BE( ioStream, *(Uint32*)( &offsetY ) ), "writing out glyph offset y", 1 );
 	}
 
 	// write out the image
@@ -1047,8 +1048,8 @@ static bool saveSDFFont( const char* fileName,
 		goto clean_up;
 	}
 	
-	CHECK_WRITE( SDL_WriteBE64( rwopsFile, (Uint64)sb_Count( sbSaveImageData ) ), "writing out image size", 1 );
-	CHECK_WRITE( SDL_RWwrite( rwopsFile, sbSaveImageData, sizeof( uint8_t ), sb_Count( sbSaveImageData ) ), "writing out image", sb_Count( sbSaveImageData ) );
+	CHECK_WRITE( SDL_WriteU64BE( ioStream, (Uint64)sb_Count( sbSaveImageData ) ), "writing out image size", 1 );
+	CHECK_WRITE( SDL_WriteIO( ioStream, sbSaveImageData, sizeof( uint8_t ) * sb_Count( sbSaveImageData ) ), "writing out image", sb_Count( sbSaveImageData ) );
 
 	// for testing out issues with images
 	//stbi_write_png( "test.png", image->width, image->height, image->comp, image->data, 0 );
@@ -1061,9 +1062,7 @@ clean_up:
 
 	mem_Release( fontFileName );
 
-	if( rwopsFile != NULL ) {
-		SDL_RWclose( rwopsFile );
-	}
+	SDL_CloseIO( ioStream );
 
 	llog( LOG_INFO, "Done writing out sdf font for %s, %s", fileName, succeeded ? "succeeded" : "failed" );
 
@@ -1095,8 +1094,8 @@ static int loadSDFFont( const char* fileName )
 	strcpy( fontFileName, fileName );
 	strcat( fontFileName, sdfFontExtension );
 
-	SDL_RWops* rwopsFile = SDL_RWFromFile( fontFileName, "r" );
-	if( rwopsFile == NULL ) {
+	SDL_IOStream* ioStream = SDL_IOFromFile( fontFileName, "r" );
+	if( ioStream == NULL ) {
 		llog( LOG_WARN, "Unable to open sdf font for %s", fileName );
 		return -1;
 	}
@@ -1106,23 +1105,27 @@ static int loadSDFFont( const char* fileName )
 	int32_t lineGap;
 	int32_t ascent;
 	int32_t baseSize;
-	Uint32 readInt;
 
-	readInt = SDL_ReadBE32( rwopsFile );
-	descent = *(int32_t*)( &readInt );
+#define CHECK_READ( r, rt, o, ot, d ) \
+	do { \
+		rt read; \
+		if( !r( ioStream, &read ) ) { \
+			llog( LOG_ERROR, "Error %s for file %s: %s", d, fileName, SDL_GetError( ) ); \
+			goto clean_up; \
+		} else { \
+			o = *(ot*)( &read ); \
+		} \
+	} while( 0 );
 
-	readInt = SDL_ReadBE32( rwopsFile );
-	lineGap = *(int32_t*)( &readInt );
-
-	readInt = SDL_ReadBE32( rwopsFile );
-	ascent = *(int32_t*)( &readInt );
-
-	readInt = SDL_ReadBE32( rwopsFile );
-	baseSize = *(int32_t*)( &readInt );
+	CHECK_READ( SDL_ReadU32BE, Uint32, descent, int32_t, "reading descent" );
+	CHECK_READ( SDL_ReadU32BE, Uint32, lineGap, int32_t, "reading lineGap" );
+	CHECK_READ( SDL_ReadU32BE, Uint32, ascent, int32_t, "reading ascent" );
+	CHECK_READ( SDL_ReadU32BE, Uint32, baseSize, int32_t, "reading base size" );
 
 	float scale = (float)baseSize / ( (float)ascent - (float)descent );
 
-	size_t numGlyphs = (size_t)SDL_ReadBE64( rwopsFile );
+	size_t numGlyphs;
+	CHECK_READ( SDL_ReadU64BE, Uint64, numGlyphs, size_t, "reading glyph count" );
 	sb_Add( sbGlyphs, numGlyphs );
 	mins = mem_Allocate( sizeof( Vector2 ) * numGlyphs );
 	maxes = mem_Allocate( sizeof( Vector2 ) * numGlyphs );
@@ -1149,43 +1152,38 @@ static int loadSDFFont( const char* fileName )
 	}
 
 	for( size_t i = 0; i < numGlyphs; ++i ) {
-		readInt = SDL_ReadBE32( rwopsFile );
-		sbGlyphs[i].codepoint = *(int32_t*)(&readInt);
+		CHECK_READ( SDL_ReadU32BE, Uint32, sbGlyphs[i].codepoint, int32_t, "reading glyph codepoint" );
 
-		readInt = SDL_ReadBE32( rwopsFile );
-		sbGlyphs[i].advance = (float)( *(int32_t*)(&readInt) ) * scale;
-
-		readInt = SDL_ReadBE32( rwopsFile );
-		mins[i].x = (float)( *(int32_t*)(&readInt) );
-
-		readInt = SDL_ReadBE32( rwopsFile );
-		mins[i].y = (float)( *(int32_t*)(&readInt) );
-
-		readInt = SDL_ReadBE32( rwopsFile );
-		maxes[i].x = (float)( *(int32_t*)(&readInt) );
-
-		readInt = SDL_ReadBE32( rwopsFile );
-		maxes[i].y = (float)( *(int32_t*)(&readInt) );
-
-		readInt = SDL_ReadBE32( rwopsFile );
-		offsets[i].x = (float)( *(int32_t*)(&readInt) ) / 2.0f;
-
-		readInt = SDL_ReadBE32( rwopsFile );
-		offsets[i].y = (float)( *(int32_t*)(&readInt) ) / 2.0f;
+		int32_t temp;
+		CHECK_READ( SDL_ReadU32BE, Uint32, temp, int32_t, "reading glyph advance" );
+		sbGlyphs[i].advance = (float)temp;
+		CHECK_READ( SDL_ReadU32BE, Uint32, temp, int32_t, "reading glyph min x" );
+		mins[i].x = (float)temp;
+		CHECK_READ( SDL_ReadU32BE, Uint32, temp, int32_t, "reading glyph min y" );
+		mins[i].y = (float)temp;
+		CHECK_READ( SDL_ReadU32BE, Uint32, temp, int32_t, "reading glyph maxes x" );
+		maxes[i].x = (float)temp;
+		CHECK_READ( SDL_ReadU32BE, Uint32, temp, int32_t, "reading glyph maxes y" );
+		maxes[i].y = (float)temp;
+		CHECK_READ( SDL_ReadU32BE, Uint32, temp, int32_t, "reading glyph offsets x" );
+		offsets[i].x = ( (float)temp ) / 2.0f;
+		CHECK_READ( SDL_ReadU32BE, Uint32, temp, int32_t, "reading glyph offsets y" );
+		offsets[i].y = ( (float)temp ) / 2.0f;
 	}
 
-	size_t pngDataSize = (size_t)SDL_ReadBE64( rwopsFile );
+	size_t pngDataSize;
+	CHECK_READ( SDL_ReadU64BE, Uint64, pngDataSize, size_t, "image data size" );
 	pngBuffer = mem_Allocate( pngDataSize );
 	size_t readTotal = 0;
 	size_t amtRead = 1;
 	uint8_t* bufferPos = pngBuffer;
 	while( ( readTotal < pngDataSize ) && ( amtRead > 0 ) ) {
-		amtRead = SDL_RWread( rwopsFile, bufferPos, sizeof( uint8_t ), ( pngDataSize - readTotal ) );
+		amtRead = SDL_ReadIO( ioStream, bufferPos, sizeof( uint8_t ) * ( pngDataSize - readTotal ) );
 		readTotal += amtRead;
 		bufferPos += amtRead;
 	}
-	SDL_RWclose( rwopsFile );
-	rwopsFile = NULL;
+	SDL_CloseIO( ioStream );
+	ioStream = NULL;
 
 	if( readTotal != pngDataSize ) {
 		llog( LOG_ERROR, "Unable to read png data for font %s", fileName );
@@ -1235,9 +1233,7 @@ clean_up:
 	mem_Release( pngBuffer );
 	mem_Release( fontFileName );
 
-	if( rwopsFile != NULL ) {
-		SDL_RWclose( rwopsFile );
-	}
+	SDL_CloseIO( ioStream );
 
 	mem_Release( mins );
 	mem_Release( maxes );
@@ -1247,6 +1243,8 @@ clean_up:
 	}
 
 	return fontID;
+
+#undef CHECK_READ
 }
 
 // Creates a font that's rendered out as a signed distance field. Will also attempt to save a version of this font that
@@ -1314,10 +1312,10 @@ int txt_CreateSDFFont( const char* fileName )
 	buffer = mem_Allocate( bufferSize * sizeof( uint8_t ) ); // megabyte sized buffer, should never load a file larger than this
 	CHECK_POINTER( buffer, "Error allocating font data buffer" );
 
-	SDL_RWops* rwopsFile = SDL_RWFromFile( fileName, "r" );
-	CHECK_POINTER( rwopsFile, "Error opening file" );
+	SDL_IOStream* ioStream = SDL_IOFromFile( fileName, "r" );
+	CHECK_POINTER( ioStream, "Error opening file" );
 
-	size_t numRead = SDL_RWread( rwopsFile, (void*)buffer, sizeof( uint8_t ), bufferSize );
+	size_t numRead = SDL_ReadIO( ioStream, (void*)buffer, sizeof( uint8_t ) * bufferSize );
 	if( numRead >= bufferSize ) {
 		OUT_ERROR( "Too much data read in from file" );
 	}

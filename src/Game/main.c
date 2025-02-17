@@ -4,8 +4,8 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <SDL_main.h>
-#include <SDL.h>
+#include <SDL3/SDL_main.h>
+#include <SDL3/SDL.h>
 
 #include <time.h>
 
@@ -77,7 +77,7 @@ static bool forceDraw;
 static Uint64 lastTicks;
 static Uint64 physicsTickAcc;
 static SDL_Window* window;
-static SDL_RWops* logFile;
+static SDL_IOStream* logFile;
 static const char* windowName = "Xturos";
 static bool canResize;
 static bool isEditorMode;
@@ -97,14 +97,14 @@ static AvailableResolution resolutions[] = {
 	{ 1080, 1920 },
 };
 
-int getWindowRefreshRate( SDL_Window* w )
+float getWindowRefreshRate( SDL_Window* w )
 {
-	SDL_DisplayMode mode;
-	if( SDL_GetWindowDisplayMode( w, &mode ) != 0 ) {
+	const SDL_DisplayMode* mode = SDL_GetWindowFullscreenMode( w );
+	if( mode == NULL ) {
 		return DEFAULT_REFRESH_RATE;
 	}
 
-	if( mode.refresh_rate == 0 ) {
+	if( mode->refresh_rate == 0 ) {
 		return DEFAULT_REFRESH_RATE;
 	}
 
@@ -114,7 +114,7 @@ int getWindowRefreshRate( SDL_Window* w )
 	//SDL_GetWindowSize( w, &ww, &wh );
 	//llog( LOG_DEBUG, "ww: %i  wh: %i", ww, wh );
 
-	return mode.refresh_rate;
+	return mode->refresh_rate;
 }
 
 void cleanUp( void )
@@ -124,7 +124,7 @@ void cleanUp( void )
 	gfx_ShutDown( );
 	snd_CleanUp( );
 	if( logFile != NULL ) {
-		SDL_RWclose( logFile );
+		SDL_CloseIO( logFile );
 	}
 	mem_CleanUp( );
     
@@ -138,15 +138,15 @@ void cleanUp( void )
 void logOutput( void* userData, int category, SDL_LogPriority priority, const char* message )
 {
 	size_t strLen = SDL_strlen( message );
-	SDL_RWwrite( logFile, message, 1, strLen );
+	SDL_WriteIO( logFile, message, strLen );
 #if defined( WIN32 )
-	SDL_RWwrite( logFile, "\r\n", 1, 2 );
+	SDL_WriteIO( logFile, "\r\n", 2 );
 #elif defined( __ANDROID__ )
-	SDL_RWwrite( logFile, "\n", 1, 1 );
+	SDL_WriteIO( logFile, "\n", 1 );
 #elif defined( __EMSCRIPTEN__ )
-	SDL_RWwrite( logFile, "\n", 1, 1 );
+	SDL_WriteIO( logFile, "\n", 1 );
 #elif defined( __IPHONEOS__ )
-    SDL_RWwrite( logFile, "\n", 1, 1 );
+	SDL_WriteIO( logFile, "\n", 1 );
 #else
 	#warning "NO END OF LINE DEFINED FOR THIS PLATFORM!"
 #endif
@@ -197,21 +197,28 @@ int initEverything( void )
 	BUILD_BUG_ON( sizeof( float ) != 4 );
 	BUILD_BUG_ON( sizeof( double ) != 8 );
 
-#ifndef _DEBUG
-	logFile = SDL_RWFromFile( "log.txt", "w" );
-	if( logFile != NULL ) {
-		SDL_LogSetOutputFunction( logOutput, NULL );
+#if defined( WIN32 )
+	bool memValid = mem_Init( 256 * 1024 * 1024 );
+#else
+	bool memValid = mem_Init( 64 * 1024 * 1024 );
+#endif
+	if( !memValid ) {
+		return -1;
 	}
+
+	SDL_SetMemoryFunctions( mem_AllocateForCallback, mem_ClearAllocateForCallback, mem_ResizeForCallback, mem_ReleaseForCallback );
+
+#ifdef _DEBUG
+	SDL_SetLogPriorities( SDL_LOG_PRIORITY_VERBOSE );
+#else
+	SDL_SetLogPriorities( SDL_LOG_PRIORITY_WARN );
 #endif
 
-	//unalignedAccess( );
-
-	llog( LOG_INFO, "Initializing memory." );
-	// memory first, won't be used everywhere at first so lets keep the initial allocation low, 64 MB
-#if defined( WIN32 )
-	mem_Init( 256 * 1024 * 1024 );
-#else
-	mem_Init( 64 * 1024 * 1024 );
+#ifndef _DEBUG
+	logFile = SDL_IOFromFile( "log.txt", "w" );
+	if( logFile != NULL ) {
+		SDL_SetLogOutputFunction( logOutput, NULL );
+	}
 #endif
 
 #ifdef _DEBUG
@@ -224,8 +231,8 @@ int initEverything( void )
     
 	// then SDL
 	SDL_SetMainReady( );
-	if( SDL_Init( SDL_INIT_TIMER | SDL_INIT_AUDIO | SDL_INIT_VIDEO | SDL_INIT_EVENTS ) != 0 ) {
-		llog( LOG_ERROR, "%s", SDL_GetError( ) );
+	if( !SDL_Init( SDL_INIT_AUDIO | SDL_INIT_VIDEO | SDL_INIT_EVENTS ) ) {
+		llog( LOG_ERROR, "Init Error: %s", SDL_GetError( ) );
 		return -1;
 	}
 	llog( LOG_INFO, "SDL successfully initialized." );
@@ -288,7 +295,7 @@ int initEverything( void )
 	llog( LOG_INFO, "Desired GL version: %i.%i", majorVersion, minorVersion );
 
  #if defined( __ANDROID__ ) || defined( __IPHONEOS__ )
-	Uint32 windowFlags = SDL_WINDOW_SHOWN | SDL_WINDOW_OPENGL | SDL_WINDOW_FULLSCREEN;
+	Uint32 windowFlags = SDL_WINDOW_OPENGL | SDL_WINDOW_FULLSCREEN;
 	SDL_DisplayMode mode;
 	SDL_GetDesktopDisplayMode( 0, &mode );
 	int windowWidth = mode.w;
@@ -297,7 +304,7 @@ int initEverything( void )
 	int windowHeight = DESIRED_WINDOW_HEIGHT;
 	int windowWidth = DESIRED_WINDOW_WIDTH;
 
-	Uint32 windowFlags = SDL_WINDOW_SHOWN | SDL_WINDOW_OPENGL;
+	Uint32 windowFlags = SDL_WINDOW_OPENGL;
 
 	if( canResize ) {
 		windowFlags |= SDL_WINDOW_RESIZABLE;
@@ -306,7 +313,7 @@ int initEverything( void )
 
 #elif defined( METAL_GFX )
     
-    Uint32 windowFlags = SDL_WINDOW_SHOWN | SDL_WINDOW_FULLSCREEN | SDL_WINDOW_METAL;
+    Uint32 windowFlags = SDL_WINDOW_FULLSCREEN | SDL_WINDOW_METAL;
 
     SDL_DisplayMode mode;
     SDL_GetDesktopDisplayMode( 0, &mode );
@@ -328,8 +335,7 @@ int initEverything( void )
 
 	//llog( LOG_INFO, "Window size: %i x %i    Render size: %i x %i", windowWidth, windowHeight, renderWidth, renderHeight );
 
-	window = SDL_CreateWindow( windowName, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
-		windowWidth, windowHeight, windowFlags );
+	window = SDL_CreateWindow( windowName, windowWidth, windowHeight, windowFlags );
 	int finalWidth, finalHeight;
 	SDL_GetWindowSize( window, &finalWidth, &finalHeight );
 	//llog( LOG_INFO, "Final window size: %i x %i", finalWidth, finalHeight );
@@ -394,19 +400,19 @@ int initEverything( void )
 int handleIOSEvents( void* userData, SDL_Event* event )
 {
     switch( event->type ) {
-    case SDL_APP_TERMINATING:
+    case SDL_EVENT_TERMINATING:
         /* Terminate the app.
            Shut everything down before returning from this function.
         */
         // we never seem to actually enter here
         cleanUp( );
         return 0;
-    case SDL_APP_LOWMEMORY:
+    case SDL_EVENT_LOW_MEMORY:
         /* You will get this when your app is paused and iOS wants more memory.
            Release as much memory as possible.
         */
         return 0;
-    case SDL_APP_WILLENTERBACKGROUND:
+    case SDL_EVENT_WILL_ENTER_BACKGROUND:
         /* Prepare your app to go into the background.  Stop loops, etc.
            This gets called when the user hits the home button, or gets a call.
         */
@@ -414,19 +420,19 @@ int handleIOSEvents( void* userData, SDL_Event* event )
         //focused = false;
         //snd_SetFocus( false );
         return 0;
-    case SDL_APP_DIDENTERBACKGROUND:
+    case SDL_EVENT_DID_ENTER_BACKGROUND:
         /* This will get called if the user accepted whatever sent your app to the background.
            If the user got a phone call and canceled it, you'll instead get an SDL_APP_DIDENTERFOREGROUND event and restart your loops.
            When you get this, you have 5 seconds to save all your state or the app will be terminated.
            Your app is NOT active at this point.
         */
         return 0;
-    case SDL_APP_WILLENTERFOREGROUND:
+    case SDL_EVENT_WILL_ENTER_FOREGROUND:
         /* This call happens when your app is coming back to the foreground.
            Restore all your state here.
         */
         return 0;
-    case SDL_APP_DIDENTERFOREGROUND:
+    case SDL_EVENT_DID_ENTER_FOREGROUND:
         /* Restart your loops here.
            Your app is interactive and getting CPU again.
         */
@@ -446,9 +452,9 @@ void processEvents( int windowsEventsOnly )
 	nk_input_begin( &( editorIMGUI.ctx ) );
 	nk_input_begin( &( inGameIMGUI.ctx ) );
 	while( SDL_PollEvent( &e ) != 0 ) {
-		if( e.type == SDL_WINDOWEVENT ) {
-			switch( e.window.event ) {
-			case SDL_WINDOWEVENT_SIZE_CHANGED:
+		if( ( e.type >= SDL_EVENT_WINDOW_FIRST ) && ( e.type <= SDL_EVENT_WINDOW_LAST ) ) {
+			switch( e.type ) {
+			case SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED:
 				if( canResize ) {
 					//llog( LOG_DEBUG, "Window size changed to %i x %i", e.window.data1, e.window.data2 );
 					// resize the rendering based on the size of the new window
@@ -478,12 +484,12 @@ void processEvents( int windowsEventsOnly )
 				break;
 
 			// will want to handle these messages for pausing and unpausing the game when they lose focus
-			case SDL_WINDOWEVENT_FOCUS_GAINED:
+			case SDL_EVENT_WINDOW_FOCUS_GAINED:
 				llog( LOG_DEBUG, "Gained focus" );
 				focused = true;
 				snd_SetFocus( true );
 				break;
-			case SDL_WINDOWEVENT_FOCUS_LOST:
+			case SDL_EVENT_WINDOW_FOCUS_LOST:
 				llog( LOG_DEBUG, "Lost focus" );
 				focused = false;
 				snd_SetFocus( false );
@@ -491,7 +497,7 @@ void processEvents( int windowsEventsOnly )
 			}
 		}
 
-		if( e.type == SDL_QUIT ) {
+		if( e.type == SDL_EVENT_QUIT ) {
 			llog( LOG_DEBUG, "Quitting" );
 			running = false;
 		}
@@ -502,10 +508,10 @@ void processEvents( int windowsEventsOnly )
 
 		// special keys used only on the pc version, primarily for taking screenshots of scenes at different resolutions
 #if defined( WIN32 )
-		if( e.type == SDL_KEYDOWN ) {
+		if( e.type == SDL_EVENT_KEY_DOWN ) {
 
 #ifdef _DEBUG
-			if( e.key.keysym.sym == SDLK_PRINTSCREEN ) {
+			if( e.key.key == SDLK_PRINTSCREEN ) {
 				// take a screen shot
 
 				time_t t = time( NULL );
@@ -525,7 +531,7 @@ void processEvents( int windowsEventsOnly )
 			}
 #endif
 
-			if( e.key.keysym.sym == SDLK_PAUSE ) {
+			if( e.key.key == SDLK_PAUSE ) {
 				// pause the game
 				paused = !paused;
 			}
@@ -533,30 +539,30 @@ void processEvents( int windowsEventsOnly )
 
 			// have the F# keys change the size of the window based on some predetermined values
 			int pressedFKey = -1;
-			if( e.key.keysym.sym == SDLK_F1 ) pressedFKey = 0;
-			if( e.key.keysym.sym == SDLK_F2 ) pressedFKey = 1;
-			if( e.key.keysym.sym == SDLK_F3 ) pressedFKey = 2;
-			if( e.key.keysym.sym == SDLK_F4 ) pressedFKey = 3;
-			if( e.key.keysym.sym == SDLK_F5 ) pressedFKey = 4;
-			if( e.key.keysym.sym == SDLK_F6 ) pressedFKey = 5;
-			if( e.key.keysym.sym == SDLK_F7 ) pressedFKey = 6;
-			if( e.key.keysym.sym == SDLK_F8 ) pressedFKey = 7;
-			if( e.key.keysym.sym == SDLK_F9 ) pressedFKey = 8;
-			if( e.key.keysym.sym == SDLK_F10 ) pressedFKey = 9;
-			if( e.key.keysym.sym == SDLK_F11 ) pressedFKey = 10;
-			if( e.key.keysym.sym == SDLK_F12 ) pressedFKey = 11;
-			if( e.key.keysym.sym == SDLK_F13 ) pressedFKey = 12;
-			if( e.key.keysym.sym == SDLK_F14 ) pressedFKey = 13;
-			if( e.key.keysym.sym == SDLK_F15 ) pressedFKey = 14;
-			if( e.key.keysym.sym == SDLK_F16 ) pressedFKey = 15;
-			if( e.key.keysym.sym == SDLK_F17 ) pressedFKey = 16;
-			if( e.key.keysym.sym == SDLK_F18 ) pressedFKey = 17;
-			if( e.key.keysym.sym == SDLK_F19 ) pressedFKey = 18;
-			if( e.key.keysym.sym == SDLK_F20 ) pressedFKey = 19;
-			if( e.key.keysym.sym == SDLK_F21 ) pressedFKey = 20;
-			if( e.key.keysym.sym == SDLK_F22 ) pressedFKey = 21;
-			if( e.key.keysym.sym == SDLK_F23 ) pressedFKey = 22;
-			if( e.key.keysym.sym == SDLK_F24 ) pressedFKey = 23;
+			if( e.key.key == SDLK_F1 ) pressedFKey = 0;
+			if( e.key.key == SDLK_F2 ) pressedFKey = 1;
+			if( e.key.key == SDLK_F3 ) pressedFKey = 2;
+			if( e.key.key == SDLK_F4 ) pressedFKey = 3;
+			if( e.key.key == SDLK_F5 ) pressedFKey = 4;
+			if( e.key.key == SDLK_F6 ) pressedFKey = 5;
+			if( e.key.key == SDLK_F7 ) pressedFKey = 6;
+			if( e.key.key == SDLK_F8 ) pressedFKey = 7;
+			if( e.key.key == SDLK_F9 ) pressedFKey = 8;
+			if( e.key.key == SDLK_F10 ) pressedFKey = 9;
+			if( e.key.key == SDLK_F11 ) pressedFKey = 10;
+			if( e.key.key == SDLK_F12 ) pressedFKey = 11;
+			if( e.key.key == SDLK_F13 ) pressedFKey = 12;
+			if( e.key.key == SDLK_F14 ) pressedFKey = 13;
+			if( e.key.key == SDLK_F15 ) pressedFKey = 14;
+			if( e.key.key == SDLK_F16 ) pressedFKey = 15;
+			if( e.key.key == SDLK_F17 ) pressedFKey = 16;
+			if( e.key.key == SDLK_F18 ) pressedFKey = 17;
+			if( e.key.key == SDLK_F19 ) pressedFKey = 18;
+			if( e.key.key == SDLK_F20 ) pressedFKey = 19;
+			if( e.key.key == SDLK_F21 ) pressedFKey = 20;
+			if( e.key.key == SDLK_F22 ) pressedFKey = 21;
+			if( e.key.key == SDLK_F23 ) pressedFKey = 22;
+			if( e.key.key == SDLK_F24 ) pressedFKey = 23;
 
 			if( ( pressedFKey != -1 ) && ( pressedFKey < ARRAY_SIZE( resolutions ) ) ) {
 				// switch resolution
@@ -749,12 +755,6 @@ int main( int argc, char** argv )
 		}
 	}
 
-#ifdef _DEBUG
-	SDL_LogSetAllPriority( SDL_LOG_PRIORITY_VERBOSE );
-#else
-	SDL_LogSetAllPriority( SDL_LOG_PRIORITY_WARN );
-#endif
-
 	if( initEverything( ) < 0 ) {
 		return 1;
 	}
@@ -771,20 +771,21 @@ int main( int argc, char** argv )
 	focused = true;
 #endif
 
-	//GameState* startState = &testPointerResponseScreenState;
-	//GameState* startState = &gameScreenState;
-	//GameState* startState = &testAStarScreenState;
-	//GameState* startState = &testJobQueueScreenState;
-	//GameState* startState = &testSoundsScreenState;
-	//GameState* startState = &testSteeringScreenState;
-	//GameState* startState = &bordersTestScreenState;
-	//GameState* startState = &hexTestScreenState;
-	//GameState* startState = &testBloomScreenState;
-	//GameState* startState = &gameOfUrScreenState;
-	//GameState* startState = &testECPSScreenState;
-	GameState* startState = &testMountingState;
+	GameState* startState = NULL;
+	startState = &testPointerResponseScreenState;
+	//startState = &gameScreenState;
+	//startState = &testAStarScreenState;
+	//startState = &testJobQueueScreenState;
+	//startState = &testSoundsScreenState;
+	//startState = &testSteeringScreenState;
+	//startState = &bordersTestScreenState;
+	//startState = &hexTestScreenState;
+	//startState = &testBloomScreenState;
+	//startState = &gameOfUrScreenState;
+	//startState = &testECPSScreenState;
+	//startState = &testMountingState;
 	if( isEditorMode ) {
-		//startState = &editorHubScreenState;
+		startState = &editorHubScreenState;
 	}
 	gsm_EnterState( &globalFSM, startState );
 

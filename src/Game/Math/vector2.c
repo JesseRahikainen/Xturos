@@ -2,7 +2,7 @@
 #include "mathUtil.h"
 #include <math.h>
 #include <string.h>
-#include <SDL_assert.h>
+#include <SDL3/SDL_assert.h>
 #include "System/platformLog.h"
 
 Vector2 vec2( float x, float y )

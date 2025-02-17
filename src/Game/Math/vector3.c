@@ -1,6 +1,6 @@
 #include <math.h>
 #include <stddef.h>
-#include <SDL_assert.h>
+#include <SDL3/SDL_assert.h>
 #include "System/platformLog.h"
 #include "vector3.h"
 

@@ -1,10 +1,11 @@
 #include "memory.h"
 
-#include <SDL_assert.h>
+// we use assert here instead of SDL_assert since SDL_assert will allocate memory, which can lead to a stack overflow if we detect an issue in the memory
+#include <assert.h>
 #include <stdint.h>
 #include <string.h>
-#include <SDL_stdinc.h>
-#include <SDL_mutex.h>
+#include <SDL3/SDL_stdinc.h>
+#include <SDL3/SDL_mutex.h>
 #include <stdbool.h>
 
 #include "platformLog.h"
@@ -44,10 +45,12 @@ jump for the delete. Just need to align the size of the header.
 
 #define IN_USE_FLAG ( 1 << 31 )
 
+#if defined(_DEBUG)
 // debug flags
 //#define TEST_CLEAR_VALUES
 #define LOG_MEMORY_ALLOCATIONS
 #define TEST_EVERY_CHANGE
+#endif
 
 typedef struct MemoryBlockHeader {
 	uint32_t guardValue;
@@ -80,28 +83,24 @@ typedef struct MemoryBlockHeader {
 //  would call mem_Allocate with spineMemory. This would involve creating a lot of memory pools though.
 typedef struct {
 	void* memory;
-	SDL_mutex* mutex;
+	SDL_Mutex* mutex;
 
 	void* watchedAddress;
 	MemoryBlockHeader* watchedHeader;
+	size_t totalSize;
 } MemoryArena;
 
 static MemoryArena memoryBlock = { NULL, NULL, NULL, NULL };
 
-#include <stdio.h>
 #ifdef THREAD_SUPPORT
 static void lockMemoryMutex( void )
 {
-	if( SDL_LockMutex( memoryBlock.mutex ) < 0 ) {
-		printf( "Error locking memory mutex: %s\n", SDL_GetError( ) );
-	}
+	SDL_LockMutex( memoryBlock.mutex );
 }
 
 static void unlockMemoryMutex( void )
 {
-	if( SDL_UnlockMutex( memoryBlock.mutex ) < 0 ) {
-		printf( "Error unlocking memory mutex: %s\n", SDL_GetError( ) );
-	}
+	SDL_UnlockMutex( memoryBlock.mutex );
 }
 #else
 static void lockMemoryMutex( void ) { }
@@ -227,8 +226,8 @@ static void logWatchedMemoryAddressChange( MemoryBlockHeader* header, void* ptr,
 // returns the remaining block after the condensation
 static MemoryBlockHeader* condenseMemoryBlocks( MemoryBlockHeader* start, const char* fileName, int line )
 {
-	SDL_assert( start != NULL );
-	SDL_assert( !( start->flags & IN_USE_FLAG ) );
+	assert( start != NULL );
+	assert( !( start->flags & IN_USE_FLAG ) );
 
 	// find the earliest block that's not in use
 	while( ( start->prev != NULL ) && !( start->prev->flags & IN_USE_FLAG ) ) {
@@ -303,8 +302,8 @@ static MemoryBlockHeader* createNewBlock( void* start, MemoryBlockHeader* prev, 
 
 static void* growBlock( MemoryBlockHeader* header, size_t newSize, const char* fileName, int line )
 {
-	SDL_assert( header != NULL );
-	SDL_assert( header->size < newSize );
+	assert( header != NULL );
+	assert( header->size < newSize );
 
 	void* result = NULL;
 
@@ -402,8 +401,8 @@ static void* growBlock( MemoryBlockHeader* header, size_t newSize, const char* f
 
 static void* shrinkBlock( MemoryBlockHeader* header, size_t newSize, const char* fileName, int line )
 {
-	SDL_assert( header != NULL );
-	SDL_assert( header->size > newSize );
+	assert( header != NULL );
+	assert( header->size > newSize );
 
 	// see if there's enough left after the shrink for a new block, if there is
 	//  then make it and condense it
@@ -449,17 +448,17 @@ static void internal_verify( void )
 	MemoryBlockHeader* header = (MemoryBlockHeader*)( memoryBlock.memory );
 	bool firstBlock = true;
 	while( header != NULL ) {
-		SDL_assert( header->guardValue == GUARD_VALUE );
-		SDL_assert( header->postGuardValue == GUARD_VALUE );
+		assert( header->guardValue == GUARD_VALUE );
+		assert( header->postGuardValue == GUARD_VALUE );
 
 		if( header->prev != NULL ) {
-			SDL_assert( header->prev->next == header );
+			assert( header->prev->next == header );
 		} else {
-			SDL_assert( firstBlock );
+			assert( firstBlock );
 		}
 
 		if( header->next != NULL ) {
-			SDL_assert( header->next->prev == header );
+			assert( header->next->prev == header );
 		}
 
 		header = header->next;
@@ -484,10 +483,16 @@ static bool internal_getVerify( void )
 	return true;
 }
 
-static void internal_verifyPointer( void* p )
+static void internal_verifyPointer( void* p, bool allowNull )
 {
+	if( allowNull && p == NULL ) return;
+
 	// verify the pointer is pointing to valid memory
-	SDL_assert( findMemoryBlock( p, true ) != NULL );
+	MemoryBlockHeader* foundHeader = findMemoryBlock( p, true );
+	if( foundHeader == NULL ) {
+		int x = 0;
+	}
+	assert( foundHeader != NULL );
 }
 
 static void internal_getReportValues( size_t* totalOut, size_t* inUseOut, size_t* overheadOut, uint32_t* fragmentsOut )
@@ -537,12 +542,17 @@ static void internal_release_Data( void* memory, const char* fileName, const int
 {
 #ifdef TEST_EVERY_CHANGE
 	mem_Verify( );
+	internal_verifyPointer( memory, true );
 #endif
 	ASSERT_AND_IF_NOT( memoryBlock.memory != NULL ) return;
 
 	if( memory == NULL ) return;
 
+	void* memoryStart = memoryBlock.memory;
+	void* memoryEnd = (void*)( (uint8_t*)memory + ( 256 * 1024 * 1024 ) );
+
 	MemoryBlockHeader* header = (MemoryBlockHeader*)( (uintptr_t)memory - MEMORY_HEADER_SIZE );
+	MemoryBlockHeader* startHeader = header;
 
 	// release child blocks as well
 	if( header->firstChild != NULL ) {
@@ -563,8 +573,8 @@ static void internal_release_Data( void* memory, const char* fileName, const int
 	logWatchedMemoryAddressChange( header, "mem_Release_Data", NULL );
 	header->flags &= ~IN_USE_FLAG;
 
-	SDL_assert( header->guardValue == GUARD_VALUE );
-	SDL_assert( header->postGuardValue == GUARD_VALUE );
+	assert( header->guardValue == GUARD_VALUE );
+	assert( header->postGuardValue == GUARD_VALUE );
 	
 	header = condenseMemoryBlocks( header, fileName, line );
 	testingSetMemory( (void*)( (uintptr_t)header + MEMORY_HEADER_SIZE ), header->size, 0xAB );
@@ -595,17 +605,18 @@ static void internal_unwatchAddress( void* ptr )
 	}
 }
 
-int mem_Init( size_t totalSize )
+bool mem_Init( size_t totalSize )
 {
 	memoryBlock.mutex = NULL;
 	memoryBlock.watchedAddress = NULL;
 	memoryBlock.watchedHeader = NULL;
 
-	memoryBlock.memory = SDL_malloc(totalSize);
+	memoryBlock.memory = malloc(totalSize);
 	if( memoryBlock.memory == NULL ) {
-		llog( LOG_CRITICAL, "Error allocating memory." );
+		//llog( LOG_CRITICAL, "Error allocating memory." ); // the logging won't be enabled when this is called
 		goto error_cleanup;
 	}
+	memoryBlock.totalSize = totalSize;
 
 	testingSetMemory( memoryBlock.memory, totalSize, 0xFF );
 
@@ -614,22 +625,22 @@ int mem_Init( size_t totalSize )
 #ifdef THREAD_SUPPORT
 	memoryBlock.mutex = SDL_CreateMutex( );
 	if( memoryBlock.mutex == NULL ) {
-		llog( LOG_CRITICAL, "Unable to create memory mutex: %s", SDL_GetError( ) );
+		//llog( LOG_CRITICAL, "Unable to create memory mutex: %s", SDL_GetError( ) ); // the logging won't be enabled when this is called
 		goto error_cleanup;
 	}
 #endif
 
-	return 0;
+	return true;
 
 error_cleanup:
 	mem_CleanUp( );
-	return -1;
+	return false;
 }
 
 void mem_CleanUp( void )
 {
 	// invalidates all the pointers
-	SDL_free( memoryBlock.memory );
+	free( memoryBlock.memory );
 	memoryBlock.memory = NULL;
 
 #ifdef THREAD_SUPPORT
@@ -667,10 +678,10 @@ bool mem_GetVerify( void )
 	return ret;
 }
 
-void mem_VerifyPointer( void* p )
+void mem_VerifyPointer( void* p, bool allowNull )
 {
 	lockMemoryMutex( ); {
-		internal_verifyPointer( p );
+		internal_verifyPointer( p, allowNull );
 	} unlockMemoryMutex( );
 }
 
@@ -700,7 +711,7 @@ void* mem_Allocate_Data( size_t size, const char* fileName, const int line )
 #ifdef TEST_EVERY_CHANGE
 		internal_verify( );
 #endif
-		SDL_assert( memoryBlock.memory != NULL );
+		assert( memoryBlock.memory != NULL );
 
 		size = ALIGN_SIZE( size );
 
@@ -739,9 +750,12 @@ void* mem_Allocate_Data( size_t size, const char* fileName, const int line )
 	#ifdef TEST_EVERY_CHANGE
 		mem_Verify( );
 	#endif
-		SDL_assert( result != NULL );
+		assert( result != NULL );
 
 		if( result != NULL ) {
+	#ifdef TEST_EVERY_CHANGE
+			internal_verifyPointer( result, false );
+	#endif
 			logWatchedMemoryAddressChange( (MemoryBlockHeader*)( (uint8_t*)result - MEMORY_HEADER_SIZE ), "mem_Allocate_Data", NULL );
 		}
 
@@ -756,8 +770,9 @@ void* mem_Resize_Data( void* memory, size_t newSize, const char* fileName, const
 	lockMemoryMutex( ); {
 #ifdef TEST_EVERY_CHANGE
 		internal_verify( );
+		internal_verifyPointer( result, true );
 #endif
-		SDL_assert( memoryBlock.memory != NULL );
+		assert( memoryBlock.memory != NULL );
 
 		if( newSize == 0 ) {
 			internal_release_Data( memory, fileName, line );
@@ -786,9 +801,12 @@ void* mem_Resize_Data( void* memory, size_t newSize, const char* fileName, const
 #ifdef TEST_EVERY_CHANGE
 			mem_Verify( );
 #endif
-			SDL_assert( result != NULL );
+			assert( result != NULL );
 
 			if( result != NULL ) {
+#ifdef TEST_EVERY_CHANGE
+				internal_verifyPointer( result, false );
+#endif
 				logWatchedMemoryAddressChange( (MemoryBlockHeader*)( (uintptr_t)result - MEMORY_HEADER_SIZE ), "mem_Resize_Data", NULL );
 			}
 		}
@@ -902,7 +920,7 @@ void mem_DetachAllChildren( void* parent )
 
 static void hierachicalTest( uint32_t detachFlags, uint32_t resizeFlags )
 {
-	SDL_assert( mem_Init( 32 * 1024 ) == 0 ); {
+	assert( mem_Init( 32 * 1024 ) == 0 ); {
 		// set up
 		void* pointers[13];
 		bool shouldBeReleased[13];
@@ -955,9 +973,36 @@ static void hierachicalTest( uint32_t detachFlags, uint32_t resizeFlags )
 		// delete the root pointer and check if the expected children are deleted
 		mem_Release( pointers[0] );
 		for( size_t i = 0; i < ARRAY_SIZE( pointers ); ++i ) {
-			SDL_assert( mem_IsAllocatedMemory( pointers[i] ) == !shouldBeReleased[i] );
+			assert( mem_IsAllocatedMemory( pointers[i] ) == !shouldBeReleased[i] );
 		}
 	} mem_CleanUp( );
+}
+
+void* mem_AllocateForCallback( size_t size )
+{
+	void* data = mem_Allocate( size );
+	return data;
+}
+
+void* mem_ClearAllocateForCallback( size_t numMembers, size_t memberSize )
+{
+	size_t totalSize = numMembers * memberSize;
+	void* data = mem_Allocate( totalSize );
+	if( data != NULL ) {
+		SDL_memset( data, 0, totalSize );
+	}
+	return data;
+}
+
+void* mem_ResizeForCallback( void* memory, size_t size )
+{
+	void* data = mem_Resize( memory, size );
+	return data;
+}
+
+void mem_ReleaseForCallback( void* memory )
+{
+	mem_Release( memory );
 }
 
 void mem_RunTests( void )
@@ -971,9 +1016,9 @@ void mem_RunTests( void )
 
 	// test basic allocation and release
 	llog( LOG_INFO, "Test basic allocation and release..." );
-	SDL_assert( mem_Init( 32 * 1024 ) == 0 ); {
+	assert( mem_Init( 32 * 1024 ) == 0 ); {
 		testOne = (uint8_t*)mem_Allocate( 100 );
-		SDL_assert( testOne != NULL );
+		assert( testOne != NULL );
 		mem_Verify( );
 
 		mem_Release( testOne );
@@ -983,13 +1028,13 @@ void mem_RunTests( void )
 
 	// test multiple allocations and releases
 	llog( LOG_INFO, "Test multiple allocations and releases..." );
-	SDL_assert( mem_Init( 32 * 1024 ) == 0 ); {
+	assert( mem_Init( 32 * 1024 ) == 0 ); {
 		testOne = (uint8_t*)mem_Allocate( 100 );
-		SDL_assert( testOne != NULL );
+		assert( testOne != NULL );
 		mem_Verify( );
 
 		testTwo = (uint8_t*)mem_Allocate( 100 );
-		SDL_assert( testTwo != NULL );
+		assert( testTwo != NULL );
 		mem_Verify( );
 
 		mem_Release( testTwo );
@@ -1002,34 +1047,34 @@ void mem_RunTests( void )
 
 	// test basic resize
 	llog( LOG_INFO, "Test basic resize..." );
-	SDL_assert( mem_Init( 32 * 1024 ) == 0 ); {
+	assert( mem_Init( 32 * 1024 ) == 0 ); {
 		testOne = (uint8_t*)mem_Allocate( 1000 );
-		SDL_assert( testOne != NULL );
+		assert( testOne != NULL );
 		mem_Verify( );
 
 		testOne = (uint8_t*)mem_Resize( testOne, 500 );
-		SDL_assert( testOne != NULL );
+		assert( testOne != NULL );
 		mem_Verify( );
 
 		testOne = (uint8_t*)mem_Resize( testOne, 750 );
-		SDL_assert( testOne != NULL );
+		assert( testOne != NULL );
 		mem_Verify( );
 	} mem_CleanUp( );
 	llog( LOG_INFO, "Test done." );
 
 	// test resize grow with enough open space in next block to allocate data, and enough data to create new header
 	llog( LOG_INFO, "Test resize grow with enough open space in next block to allocate data, and enough data to create new header..." );
-	SDL_assert( mem_Init( 32 * 1024 ) == 0 ); {
+	assert( mem_Init( 32 * 1024 ) == 0 ); {
 		testOne = (uint8_t*)mem_Allocate( 100 );
-		SDL_assert( testOne != NULL );
+		assert( testOne != NULL );
 		mem_Verify( );
 
 		testTwo = (uint8_t*)mem_Allocate( 100 + MEMORY_HEADER_SIZE + MIN_ALLOC_SIZE );
-		SDL_assert( testTwo != NULL );
+		assert( testTwo != NULL );
 		mem_Verify( );
 
 		testThree = (uint8_t*)mem_Allocate( 100 );
-		SDL_assert( testThree != NULL );
+		assert( testThree != NULL );
 		mem_Verify( );
 
 		mem_Release( testTwo );
@@ -1037,25 +1082,25 @@ void mem_RunTests( void )
 
 		backup = testOne;
 		testOne = mem_Resize( testOne, 200 );
-		SDL_assert( testOne != NULL );
-		SDL_assert( testOne == backup );
+		assert( testOne != NULL );
+		assert( testOne == backup );
 		mem_Verify( );
 	} mem_CleanUp( );
 	llog( LOG_INFO, "Test done." );
 
 	// test resize grow with enough open space in next block to allocate data, and not enough space to create new header
 	llog( LOG_INFO, "Test resize grow with enough open space in next block to allocate data, and not enough space to create new header..." );
-	SDL_assert( mem_Init( 32 * 1024 ) == 0 ); {
+	assert( mem_Init( 32 * 1024 ) == 0 ); {
 		testOne = (uint8_t*)mem_Allocate( 100 );
-		SDL_assert( testOne != NULL );
+		assert( testOne != NULL );
 		mem_Verify( );
 
 		testTwo = (uint8_t*)mem_Allocate( 100 );
-		SDL_assert( testTwo != NULL );
+		assert( testTwo != NULL );
 		mem_Verify( );
 
 		testThree = (uint8_t*)mem_Allocate( 100 );
-		SDL_assert( testThree != NULL );
+		assert( testThree != NULL );
 		mem_Verify( );
 
 		mem_Release( testTwo );
@@ -1063,25 +1108,25 @@ void mem_RunTests( void )
 
 		backup = testOne;
 		testOne = mem_Resize( testOne, 199 );
-		SDL_assert( testOne != NULL );
-		SDL_assert( testOne == backup );
+		assert( testOne != NULL );
+		assert( testOne == backup );
 		mem_Verify( );
 	} mem_CleanUp( );
 	llog( LOG_INFO, "Test done." );
 
 	// test resize grow without enough open space in next block to allocate data
 	llog( LOG_INFO, "Test resize grow without enough open space in next block to allocate data..." );
-	SDL_assert( mem_Init( 32 * 1024 ) == 0 ); {
+	assert( mem_Init( 32 * 1024 ) == 0 ); {
 		testOne = (uint8_t*)mem_Allocate( 100 );
-		SDL_assert( testOne != NULL );
+		assert( testOne != NULL );
 		mem_Verify( );
 
 		testTwo = (uint8_t*)mem_Allocate( 100 );
-		SDL_assert( testTwo != NULL );
+		assert( testTwo != NULL );
 		mem_Verify( );
 
 		testThree = (uint8_t*)mem_Allocate( 100 );
-		SDL_assert( testThree != NULL );
+		assert( testThree != NULL );
 		mem_Verify( );
 
 		mem_Release( testTwo );
@@ -1089,15 +1134,15 @@ void mem_RunTests( void )
 
 		backup = testOne;
 		testOne = mem_Resize( testOne, 1000 );
-		SDL_assert( testOne != NULL );
-		SDL_assert( testOne != backup );
+		assert( testOne != NULL );
+		assert( testOne != backup );
 		mem_Verify( );
 	} mem_CleanUp( );
 	llog( LOG_INFO, "Test done." );
 
 	// test resize shrink where there is enough open space after to create new block
 	llog( LOG_INFO, "Test resize shrink where there is enough open space after to create new block..." );
-	SDL_assert( mem_Init( 32 * 1024 ) == 0 ); {
+	assert( mem_Init( 32 * 1024 ) == 0 ); {
 		testOne = (uint8_t*)mem_Allocate( 100 + MEMORY_HEADER_SIZE + MIN_ALLOC_SIZE );
 		mem_Verify( );
 
@@ -1106,8 +1151,8 @@ void mem_RunTests( void )
 
 		backup = testOne;
 		testOne = (uint8_t*)mem_Resize( testOne, 10 );
-		SDL_assert( testOne != NULL );
-		SDL_assert( testOne == backup );
+		assert( testOne != NULL );
+		assert( testOne == backup );
 		mem_Verify( );
 
 	} mem_CleanUp( );
@@ -1115,7 +1160,7 @@ void mem_RunTests( void )
 
 	// test resize shrink where there is not enough open space after to create new block
 	llog( LOG_INFO, "Test resize shrink where there is not enough open space after to create new block..." );
-	SDL_assert( mem_Init( 32 * 1024 ) == 0 ); {
+	assert( mem_Init( 32 * 1024 ) == 0 ); {
 		testOne = (uint8_t*)mem_Allocate( 100 );
 		mem_Verify( );
 
@@ -1124,8 +1169,8 @@ void mem_RunTests( void )
 
 		backup = testOne;
 		testOne = (uint8_t*)mem_Resize( testOne, 99 );
-		SDL_assert( testOne != NULL );
-		SDL_assert( testOne == backup );
+		assert( testOne != NULL );
+		assert( testOne == backup );
 		mem_Verify( );
 	} mem_CleanUp( );
 	llog( LOG_INFO, "Test done." );
@@ -1134,33 +1179,33 @@ void mem_RunTests( void )
 	{
 		// make sure a child is released when it's parent is released
 		llog( LOG_INFO, "Test that child is released when it's parent is released..." );
-		SDL_assert( mem_Init( 32 * 1024 ) == 0 ); {
+		assert( mem_Init( 32 * 1024 ) == 0 ); {
 			uint8_t* parent = (uint8_t*)mem_Allocate( 100 );
 			uint8_t* child = (uint8_t*)mem_Allocate( 100 );
 			bool isParentAllocated = mem_IsAllocatedMemory( parent );
 			bool isChildAllocated = mem_IsAllocatedMemory( child );
-			SDL_assert( isParentAllocated );
-			SDL_assert( isChildAllocated );
+			assert( isParentAllocated );
+			assert( isChildAllocated );
 			mem_Verify( );
 			mem_Attach( parent, child );
 			mem_Release( parent );
 			mem_Verify( );
 			isParentAllocated = mem_IsAllocatedMemory( parent );
 			isChildAllocated = mem_IsAllocatedMemory( child );
-			SDL_assert( !isParentAllocated );
-			SDL_assert( !isChildAllocated );
+			assert( !isParentAllocated );
+			assert( !isChildAllocated );
 		} mem_CleanUp( );
 		llog( LOG_INFO, "Test done." );
 
 		// make sure a memory block that is parented then un-parented is not released when the parent is released
 		llog( LOG_INFO, "Test that a memory block that is parented then un-parented is not released when the parent is released..." );
-		SDL_assert( mem_Init( 32 * 1024 ) == 0 ); {
+		assert( mem_Init( 32 * 1024 ) == 0 ); {
 			uint8_t* parent = (uint8_t*)mem_Allocate( 100 );
 			uint8_t* child = (uint8_t*)mem_Allocate( 100 );
 			bool isParentAllocated = mem_IsAllocatedMemory( parent );
 			bool isChildAllocated = mem_IsAllocatedMemory( child );
-			SDL_assert( isParentAllocated );
-			SDL_assert( isChildAllocated );
+			assert( isParentAllocated );
+			assert( isChildAllocated );
 			mem_Attach( parent, child );
 			mem_Verify( );
 			mem_DetachFromParent( child );
@@ -1169,20 +1214,20 @@ void mem_RunTests( void )
 			mem_Verify( );
 			isParentAllocated = mem_IsAllocatedMemory( parent );
 			isChildAllocated = mem_IsAllocatedMemory( child );
-			SDL_assert( !isParentAllocated );
-			SDL_assert( isChildAllocated );
+			assert( !isParentAllocated );
+			assert( isChildAllocated );
 		} mem_CleanUp( );
 		llog( LOG_INFO, "Test done." );
 
 		// make sure a child that is parented to a reallocated parent that is moved is released correctly
 		llog( LOG_INFO, "Test that a child that is parented to a reallocated parent that is moved is released correctly..." );
-		SDL_assert( mem_Init( 32 * 1024 ) == 0 ); {
+		assert( mem_Init( 32 * 1024 ) == 0 ); {
 			uint8_t* parent = (uint8_t*)mem_Allocate( 100 );
 			uint8_t* child = (uint8_t*)mem_Allocate( 100 );
 			bool isParentAllocated = mem_IsAllocatedMemory( parent );
 			bool isChildAllocated = mem_IsAllocatedMemory( child );
-			SDL_assert( isParentAllocated );
-			SDL_assert( isChildAllocated );
+			assert( isParentAllocated );
+			assert( isChildAllocated );
 			mem_Attach( parent, child );
 			mem_Verify( );
 			parent = (uint8_t*)mem_Resize( parent, 1024 );
@@ -1190,14 +1235,14 @@ void mem_RunTests( void )
 			mem_Verify( );
 			isParentAllocated = mem_IsAllocatedMemory( parent );
 			isChildAllocated = mem_IsAllocatedMemory( child );
-			SDL_assert( !isParentAllocated );
-			SDL_assert( !isChildAllocated );
+			assert( !isParentAllocated );
+			assert( !isChildAllocated );
 		} mem_CleanUp( );
 		llog( LOG_INFO, "Test done." );
 
 		// make sure you can't create loops
 		llog( LOG_INFO, "Test that you can't recreate loops..." );
-		SDL_assert( mem_Init( 32 * 1024 ) == 0 ); {
+		assert( mem_Init( 32 * 1024 ) == 0 ); {
 			uint8_t* parent = (uint8_t*)mem_Allocate( 100 );
 			uint8_t* child = (uint8_t*)mem_Allocate( 100 );
 			uint8_t* grandChild = (uint8_t*)mem_Allocate( 100 );
@@ -1205,23 +1250,23 @@ void mem_RunTests( void )
 			bool isParentAllocated = mem_IsAllocatedMemory( parent );
 			bool isChildAllocated = mem_IsAllocatedMemory( child );
 			bool isGrandChildAllocated = mem_IsAllocatedMemory( child );
-			SDL_assert( isParentAllocated );
-			SDL_assert( isChildAllocated );
-			SDL_assert( isGrandChildAllocated );
+			assert( isParentAllocated );
+			assert( isChildAllocated );
+			assert( isGrandChildAllocated );
 
 			mem_Attach( parent, child );
 			mem_Verify( );
 			mem_Attach( child, grandChild );
 			mem_Verify( );
 			bool shouldFail = mem_Attach( grandChild, parent ); // this should fail
-			SDL_assert( !shouldFail );
+			assert( !shouldFail );
 			mem_Verify( );
 			
 			MemoryBlockHeader* grandChildHeader = findMemoryBlock( grandChild, true );
 			MemoryBlockHeader* parentHeader = findMemoryBlock( parent, true );
-			SDL_assert( grandChildHeader != NULL );
-			SDL_assert( grandChildHeader->firstChild == NULL );
-			SDL_assert( parentHeader->parent == NULL );
+			assert( grandChildHeader != NULL );
+			assert( grandChildHeader->firstChild == NULL );
+			assert( parentHeader->parent == NULL );
 		} mem_CleanUp( );
 		llog( LOG_INFO, "Test done." );
 

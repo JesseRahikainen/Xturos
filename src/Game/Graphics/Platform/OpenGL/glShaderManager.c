@@ -2,7 +2,7 @@
 #define _CRT_SECURE_NO_DEPRECATE
 #include <string.h>
 #include <stdio.h>
-#include <SDL.h>
+#include <SDL3/SDL.h>
 #include "Graphics/Platform/OpenGL/glPlatform.h"
 
 #include "glShaderManager.h"

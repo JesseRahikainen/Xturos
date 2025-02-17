@@ -1,7 +1,7 @@
 #ifndef ENGINE_GRAPHICS_H
 #define ENGINE_GRAPHICS_H
 
-#include <SDL.h>
+#include <SDL3/SDL.h>
 #include "Math/vector2.h"
 #include "color.h"
 

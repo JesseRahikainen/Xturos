@@ -1,6 +1,6 @@
 #include "cfgFile.h"
-#include <SDL_rwops.h>
-#include <SDL_log.h>
+#include <SDL3/SDL_IOStream.h>
+#include <SDL3/SDL_log.h>
 #include <string.h>
 
 #include "Utils/stretchyBuffer.h"
@@ -40,8 +40,8 @@ void* cfg_OpenFile( const char* fileName )
 	SDL_strlcpy( newFile->filePath, fileName, FILE_PATH_LEN - 1 );
 	newFile->filePath[FILE_PATH_LEN-1] = 0;
 
-	SDL_RWops* rwopsFile = SDL_RWFromFile( fileName, "r" );
-	if( rwopsFile == NULL ) {
+	SDL_IOStream* ioStream = SDL_IOFromFile( fileName, "r" );
+	if( ioStream == NULL ) {
 		// file doesn't exist, just create a new empty configuration file to use
 		return newFile;
 	}
@@ -52,7 +52,7 @@ void* cfg_OpenFile( const char* fileName )
 	size_t numRead;
 	char* fileText = NULL;
 	//llog( LOG_INFO, "Stream size: %i", (int)SDL_RWsize( rwopsFile ) );
-	while( ( numRead = SDL_RWread( rwopsFile, (void*)buffer, sizeof( char ), sizeof( buffer ) ) ) != 0 ) {
+	while( ( numRead = SDL_ReadIO( ioStream, (void*)buffer, sizeof( char ) * sizeof( buffer ) ) ) != 0 ) {
 		char* c = sb_Add( fileText, (int)numRead );
 		for( size_t i = 0; i < numRead; ++i ) {
 			*c++ = buffer[i];
@@ -88,20 +88,20 @@ void* cfg_OpenFile( const char* fileName )
 	}
 
 	sb_Release( fileText );
-	SDL_RWclose( rwopsFile );
+	SDL_CloseIO( ioStream );
 
 	return newFile;
 }
 
 // Saves out the file.
-int cfg_SaveFile( void* cfgFile )
+bool cfg_SaveFile( void* cfgFile )
 {
 	SDL_assert( cfgFile != NULL );
-	int success = 0;
+	bool success = true;
 
 	CFGFile* file = (CFGFile*)cfgFile;
 	char* outBuffer = NULL;
-	SDL_RWops* rwopsFile = NULL;
+	SDL_IOStream* ioStream = NULL;
 
 	char strVal[32];
 
@@ -128,6 +128,7 @@ int cfg_SaveFile( void* cfgFile )
 		int pl = SDL_snprintf( strVal, sizeof( strVal ), "%i", file->sbAttributes[i].value );
 		if( pl >= ARRAY_SIZE( strVal ) ) {
 			llog( LOG_ERROR, "Problem writing out configuration file value, value to long. File: %s   Name: %s", file->filePath, file->sbAttributes[i].fileName );
+			success = false;
 			goto clean_up;
 		} else {
 			c = sb_Add( outBuffer, pl );
@@ -135,11 +136,14 @@ int cfg_SaveFile( void* cfgFile )
 		}
 	}
 
-	rwopsFile = SDL_RWFromFile( file->filePath, "w" );
-	SDL_RWwrite( rwopsFile, outBuffer, sizeof( char ), sb_Count( outBuffer ) );
+	ioStream = SDL_IOFromFile( file->filePath, "w" );
+	if( !SDL_WriteIO( ioStream, outBuffer, sizeof( char ) * sb_Count( outBuffer ) ) ) {
+		llog( LOG_ERROR, "Error writing out to file: %s", SDL_GetError( ) );
+		success = false;
+	}
 
 clean_up:
-	SDL_RWclose( rwopsFile );
+	SDL_CloseIO( ioStream );
 	sb_Release( outBuffer );
 	return success;
 }

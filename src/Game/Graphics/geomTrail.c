@@ -547,7 +547,7 @@ void geomTrail_DumpTailData( int idx, char* fileName )
 	char* fullPath = getSavePath( fileName );
 	llog( LOG_DEBUG, "dumping tail data %i to: %s", idx, fullPath );
 
-	SDL_RWops* dataFile = SDL_RWFromFile( fullPath, "w" );
+	SDL_IOStream* dataFile = SDL_IOFromFile( fullPath, "w" );
 
 	if( dataFile == NULL ) {
 		llog( LOG_DEBUG, "Unable to open file: %s", SDL_GetError( ) );
@@ -560,21 +560,21 @@ void geomTrail_DumpTailData( int idx, char* fileName )
 	memset( message, 0, 256 );
 	SDL_snprintf( message, 255, "count: %i\r\n", sb_Count( sbTrail ) );
 	strLen = SDL_strlen( message );
-	SDL_RWwrite( dataFile, message, 1, strLen );
+	SDL_WriteIO( dataFile, message, strLen );
 
 	memset( message, 0, 256 );
 	SDL_snprintf( message, 255, "prevTimeLeft, currTimeLeft, yOffset\r\n" );
 	strLen = SDL_strlen( message );
-	SDL_RWwrite( dataFile, message, 1, strLen );
+	SDL_WriteIO( dataFile, message, strLen );
 
 	for( size_t i = 0; i < sb_Count( sbTrail ); ++i ) {
 		memset( message, 0, 256 );
 		SDL_snprintf( message, 255, "%f, %f, %f\r\n", sbTrail[i].prevTimeLeft, sbTrail[i].currTimeLeft, sbTrail[i].pos.y );
 		strLen = SDL_strlen( message );
-		SDL_RWwrite( dataFile, message, 1, strLen );
+		SDL_WriteIO( dataFile, message, strLen );
 	}
 
-	SDL_RWclose( dataFile );
+	SDL_CloseIO( dataFile );
 
 pathcleanup:
 	mem_Release( fullPath );

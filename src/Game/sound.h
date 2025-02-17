@@ -2,7 +2,7 @@
 #define JTR_SOUND
 
 #include <stdbool.h>
-#include <SDL_types.h>
+#include <SDL3/SDL.h>
 
 #include "Utils/idSet.h"
 

@@ -1,6 +1,6 @@
 #include "3x3Editor.h"
 
-#include <SDL.h>
+#include <SDL3/SDL.h>
 #include <limits.h>
 #include <stdbool.h>
 

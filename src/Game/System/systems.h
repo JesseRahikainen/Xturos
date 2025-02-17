@@ -1,7 +1,7 @@
 #ifndef SYSTEMS_H
 #define SYSTEMS_H
 
-#include <SDL_events.h>
+#include <SDL3/SDL_events.h>
 #include <inttypes.h>
 
 typedef void (*SystemProcessEventsFunc)( SDL_Event* e );

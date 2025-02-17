@@ -1,10 +1,11 @@
 #ifndef GFX_UTIL_H
 #define GFX_UTIL_H
 
+#include <stdbool.h>
 #include <stdint.h>
 #include "Graphics/Platform/OpenGL/glPlatform.h"
 #include "Math/vector2.h"
-#include <SDL_surface.h>
+#include <SDL3/SDL_surface.h>
 
 #if defined( OPENGL_GFX )
 	#include "Graphics/Platform/OpenGL/graphicsDataTypes_OpenGL.h"
@@ -65,7 +66,7 @@ int gfxUtil_CreateTextureFromRGBABitmap( uint8_t* data, int width, int height, T
 int gfxUtil_CreateTextureFromAlphaBitmap( uint8_t* data, int width, int height, Texture* outTexture );
 
 // Returns whether the SDL_Surface has any pixels that have a transparency that aren't completely clear or solid.
-int gfxUtil_SurfaceIsTranslucent( SDL_Surface* surface );
+bool gfxUtil_SurfaceIsTranslucent( SDL_Surface* surface );
 
 // Takes a screenshot of the current window and puts it at outputPath.
 void gfxUtil_TakeScreenShot( const char* outputPath );

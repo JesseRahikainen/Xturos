@@ -209,7 +209,7 @@ extern void stb_vorbis_flush_pushdata(stb_vorbis *f);
 
 //////////   PULLING INPUT API
 #ifndef STB_VORBIS_NO_STDIO
-#include <SDL_rwops.h>
+#include <SDL3/SDL_IOStream.h>
 #endif
 #ifndef STB_VORBIS_NO_PULLDATA_API
 // This API assumes stb_vorbis is allowed to pull data from a source--
@@ -241,7 +241,7 @@ extern stb_vorbis * stb_vorbis_open_filename(const char *filename,
 // create an ogg vorbis decoder from a filename via fopen(). on failure,
 // returns NULL and sets *error (possibly to VORBIS_file_open_failure).
 
-extern stb_vorbis * stb_vorbis_open_file(SDL_RWops *f, int close_handle_on_close,
+extern stb_vorbis * stb_vorbis_open_file(SDL_IOStream *f, int close_handle_on_close,
                                   int *error, stb_vorbis_alloc *alloc_buffer);
 // create an ogg vorbis decoder from an open FILE *, looking for a stream at
 // the _current_ seek point (ftell). on failure, returns NULL and sets *error.
@@ -251,7 +251,7 @@ extern stb_vorbis * stb_vorbis_open_file(SDL_RWops *f, int close_handle_on_close
 // owns the _entire_ rest of the file after the start point. Use the next
 // function, stb_vorbis_open_file_section(), to limit it.
 
-extern stb_vorbis * stb_vorbis_open_file_section(SDL_RWops *f, int close_handle_on_close,
+extern stb_vorbis * stb_vorbis_open_file_section(SDL_IOStream *f, int close_handle_on_close,
                 int *error, stb_vorbis_alloc *alloc_buffer, Sint64 len);
 // create an ogg vorbis decoder from an open FILE *, looking for a stream at
 // the _current_ seek point (ftell); the stream will be of length 'len' bytes.
@@ -547,7 +547,7 @@ enum STBVorbisError
 #ifndef STB_VORBIS_NO_CRT
 #include <stdlib.h>
 #include <string.h>
-#include <SDL_assert.h>
+#include <SDL3/SDL_assert.h>
 #include <math.h>
 #if !(defined(__APPLE__) || defined(MACOSX) || defined(macintosh) || defined(Macintosh))
 //#include <malloc.h>
@@ -732,7 +732,7 @@ struct stb_vorbis
 #ifndef STB_VORBIS_NO_STDIO
    //FILE *f;
    //uint32 f_start;
-   SDL_RWops* f;
+   SDL_IOStream* f;
    Sint64 f_start;
    int close_on_free;
 #endif
@@ -1281,7 +1281,7 @@ static uint8 get8(vorb *z)
    #ifndef STB_VORBIS_NO_STDIO
    {
 	   uint8 c;
-	   if( SDL_RWread( z->f, &c, 1, 1 ) == 0 ) {
+	   if( SDL_ReadIO( z->f, &c, 1 ) == 0 ) {
 		   z->eof = TRUE;
 		   return 0;
 	   }
@@ -1310,7 +1310,7 @@ static int getn(vorb *z, uint8 *data, int n)
    }
 
    #ifndef STB_VORBIS_NO_STDIO  
-   if( SDL_RWread( z->f, data, n, 1 ) == 1 ) {
+   if( SDL_ReadIO( z->f, data, n ) == n ) {
 	   return 1;
    } else {
 	   z->eof = 1;
@@ -1328,8 +1328,8 @@ static void skip(vorb *z, int n)
    }
    #ifndef STB_VORBIS_NO_STDIO
    {
-	   Sint64 x = SDL_RWtell( z->f );
-	   SDL_RWseek( z->f, x + n, RW_SEEK_SET );
+       Sint64 x = SDL_TellIO( z->f );
+       SDL_SeekIO( z->f, x + n, SDL_IO_SEEK_SET );
    }
    #endif
 }
@@ -1358,10 +1358,10 @@ static int set_file_offset(stb_vorbis *f, unsigned int loc)
       loc += (unsigned int)f->f_start;
    }
 
-   if( SDL_RWseek( f->f, loc, RW_SEEK_SET ) >= 0 )
+   if( SDL_SeekIO( f->f, loc, SDL_IO_SEEK_SET ) >= 0 )
 	   return 1;
    f->eof = 1;
-   SDL_RWseek( f->f, f->f_start, RW_SEEK_END );
+   SDL_SeekIO( f->f, f->f_start, SDL_IO_SEEK_END );
    return 0;
    #endif
 }
@@ -4185,7 +4185,7 @@ static void vorbis_deinit(stb_vorbis *p)
       setup_free(p, p->bit_reverse[i]);
    }
    #ifndef STB_VORBIS_NO_STDIO
-   if( p->close_on_free ) SDL_RWclose( p->f );
+   if( p->close_on_free ) SDL_CloseIO( p->f );
    #endif
 }
 
@@ -4460,7 +4460,7 @@ unsigned int stb_vorbis_get_file_offset(stb_vorbis *f)
    #endif
    if (USE_MEMORY(f)) return (unsigned int)(f->stream - f->stream_start);
    #ifndef STB_VORBIS_NO_STDIO
-   return (unsigned int)( SDL_RWtell( f->f ) - f->f_start );
+   return (unsigned int)( SDL_TellIO( f->f ) - f->f_start );
    #endif
 }
 
@@ -4999,12 +4999,12 @@ int stb_vorbis_get_frame_float(stb_vorbis *f, int *channels, float ***output)
 
 #ifndef STB_VORBIS_NO_STDIO
 
-stb_vorbis * stb_vorbis_open_file_section( SDL_RWops *file, int close_on_free, int *error, stb_vorbis_alloc *alloc, Sint64 length)
+stb_vorbis * stb_vorbis_open_file_section( SDL_IOStream *file, int close_on_free, int *error, stb_vorbis_alloc *alloc, Sint64 length)
 {
 	stb_vorbis *f, p;
 	vorbis_init( &p, alloc );
 	p.f = file;
-	p.f_start = SDL_RWtell( file );
+	p.f_start = SDL_TellIO( file );
 	p.stream_len = (uint32)length;
 	p.close_on_free = close_on_free;
 	if( start_decoder( &p ) ) {
@@ -5022,19 +5022,19 @@ stb_vorbis * stb_vorbis_open_file_section( SDL_RWops *file, int close_on_free, i
 	return NULL;
 }
 
-stb_vorbis * stb_vorbis_open_file(SDL_RWops *file, int close_on_free, int *error, stb_vorbis_alloc *alloc)
+stb_vorbis * stb_vorbis_open_file(SDL_IOStream* file, int close_on_free, int *error, stb_vorbis_alloc *alloc)
 {
    Sint64 len, start;
-   start = SDL_RWtell( file );
-   SDL_RWseek( file, 0, RW_SEEK_END );
-   len = SDL_RWtell( file ) - start;
-   SDL_RWseek( file, start, RW_SEEK_SET );
+   start = SDL_TellIO( file );
+   SDL_SeekIO( file, 0, SDL_IO_SEEK_END );
+   len = SDL_TellIO( file ) - start;
+   SDL_SeekIO( file, start, SDL_IO_SEEK_SET );
    return stb_vorbis_open_file_section( file, close_on_free, error, alloc, len );
 }
 
 stb_vorbis * stb_vorbis_open_filename(const char *filename, int *error, stb_vorbis_alloc *alloc)
 {
-	SDL_RWops* f = SDL_RWFromFile( filename, "rb" );
+    SDL_IOStream* f = SDL_IOFromFile( filename, "rb" );
 	if( f ) {
 		return stb_vorbis_open_file(f, TRUE, error, alloc);
 	}

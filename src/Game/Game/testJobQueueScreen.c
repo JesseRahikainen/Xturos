@@ -31,9 +31,9 @@ static int testSound;
 
 // baseic producer/consumer setup to allow
 static bool prodConsActive = false;
-static SDL_mutex* bufferLock = NULL;
-static SDL_cond* canProduce = NULL;
-static SDL_cond* canConsume = NULL;
+static SDL_Mutex* bufferLock = NULL;
+static SDL_Condition* canProduce = NULL;
+static SDL_Condition* canConsume = NULL;
 static int buffer = -1;
 
 static void delayedLoadTest( void* data )
@@ -143,13 +143,13 @@ static void testProducer( void* data )
 		SDL_LockMutex( bufferLock ); {
 			if( buffer != -1 ) {
 				printf( "Producer encountered full buffer, waiting for consumer to empty it.\n" );
-				SDL_CondWait( canProduce, bufferLock );
+				SDL_WaitCondition( canProduce, bufferLock );
 			}
 
 			buffer = rand( ) % 255;
 			printf( "Produced %i\n", buffer );
 		} SDL_UnlockMutex( bufferLock );
-		SDL_CondSignal( canConsume );
+		SDL_SignalCondition( canConsume );
 	}
 
 	printf( "Producer done.\n" );
@@ -165,13 +165,13 @@ static void testConsumer( void* data )
 		SDL_LockMutex( bufferLock ); {
 			if( buffer == -1 ) {
 				printf( "Consumer encountered empty buffer, waiting for producer to fill it.\n" );
-				SDL_CondWait( canConsume, bufferLock );
+				SDL_WaitCondition( canConsume, bufferLock );
 			}
 
 			printf( "Consumed %i\n", buffer );
 			buffer = -1;
 		} SDL_UnlockMutex( bufferLock );
-		SDL_CondSignal( canProduce );
+		SDL_SignalCondition( canProduce );
 	}
 
 	printf( "Consumer done.\n" );
@@ -194,11 +194,9 @@ static void testJobQueueScreen_Enter( void )
 	testSound = -1;
 
 	bufferLock = SDL_CreateMutex( );
-	canProduce = SDL_CreateCond( );
-	canConsume = SDL_CreateCond( );
+	canProduce = SDL_CreateCondition( );
+	canConsume = SDL_CreateCondition( );
 	prodConsActive = false;
-
-
 
 	cam_TurnOnFlags( 0, 1 );
 	

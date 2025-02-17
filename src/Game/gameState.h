@@ -1,4 +1,4 @@
-#include <SDL_events.h>
+#include <SDL3/SDL_events.h>
 
 #ifndef ENGINE_GAMESTATE_H
 #define ENGINE_GAMESTATE_H

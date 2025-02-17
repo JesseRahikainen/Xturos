@@ -1,6 +1,6 @@
 #include "luaInterface.h"
 
-#include <SDL.h>
+#include <SDL3/SDL.h>
 #include <varargs.h>
 
 #include "System/platformLog.h"
@@ -576,6 +576,9 @@ static int errorFunction( lua_State* ls )
 
 // returns if it was a success
 //  if it was then out should now have a valid value, if not then errorOut should have a valid value
+// vc++ is reporting that the failure branch is never reached
+#pragma warning( push )
+#pragma warning( disable : 4702 )
 bool xLua_GetNextInt( lua_State* ls, int* p, int* out, int* errorOut, const char* name )
 {
 	SDL_assert( ls != NULL );
@@ -594,9 +597,13 @@ bool xLua_GetNextInt( lua_State* ls, int* p, int* out, int* errorOut, const char
 		return true;
 	}
 }
+#pragma warning( pop )
 
 // returns if it was a success
 //  if it was then out should now have a valid value, if not then errorOut should have a valid value
+// vc++ is reporting that the failure branch is never reached
+#pragma warning( push )
+#pragma warning( disable : 4702 )
 bool xLua_GetNextString( lua_State* ls, int* p, const char** out, int* errorOut, const char* name )
 {
 	SDL_assert( ls != NULL );
@@ -619,16 +626,19 @@ bool xLua_GetNextString( lua_State* ls, int* p, const char** out, int* errorOut,
 		return false;
 	}
 }
+#pragma warning( pop )
 
 // returns if it was a success
 //  if it was then out should now have a valid value, if not then errorOut should have a valid value
+// vc++ is reporting that the failure branch is never reached
+#pragma warning( push )
+#pragma warning( disable : 4702 )
 bool xLua_GetNextFloat( lua_State* ls, int* p, float* out, int* errorOut, const char* name )
 {
 	SDL_assert( ls != NULL );
 	SDL_assert( p != NULL );
 	SDL_assert( out != NULL );
 	SDL_assert( errorOut != NULL );
-
 	if( !lua_isnumber( ls, *p ) ) {
 		// error
 		( *out ) = 0.0f;
@@ -640,9 +650,13 @@ bool xLua_GetNextFloat( lua_State* ls, int* p, float* out, int* errorOut, const 
 		return true;
 	}
 }
+#pragma warning( pop )
 
 // returns if it was a success
 //  if it was then out should now have a valid value, if not then errorOut should have a valid value
+// vc++ is reporting that the failure branch is never reached
+#pragma warning( push )
+#pragma warning( disable : 4702 )
 bool xLua_GetNextBool( lua_State* ls, int* p, bool* out, int* errorOut, const char* name )
 {
 	SDL_assert( ls != NULL );
@@ -661,7 +675,7 @@ bool xLua_GetNextBool( lua_State* ls, int* p, bool* out, int* errorOut, const ch
 		return true;
 	}
 }
-
+#pragma warning( pop )
 
 int xLua_DoCall( int narg, int nres )
 {

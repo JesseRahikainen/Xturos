@@ -1,6 +1,6 @@
 #include "aStar.h"
 
-#include <SDL_assert.h>
+#include <SDL3/SDL_assert.h>
 #include <float.h>
 #include <math.h>
 

@@ -1,6 +1,6 @@
 #include "editorHelpers.h"
 
-#include <SDL.h>
+#include <SDL3/SDL.h>
 
 #include <stdbool.h>
 
@@ -61,16 +61,17 @@ static void toLocalPath( char** sbFilePath )
 	const char* tokens = "/";
 
 	char* filePathTokSave = NULL;
-	char* filePathToken = SDL_strtokr( *sbFilePath, tokens, &filePathTokSave );
+	char* filePathToken = SDL_strtok_r( *sbFilePath, tokens, &filePathTokSave );
+	
 
 	char* rootPathTokSave = NULL;
-	char* rootPathToken = SDL_strtokr( sbRoot, tokens, &rootPathTokSave );
+	char* rootPathToken = SDL_strtok_r( sbRoot, tokens, &rootPathTokSave );
 
 	// eat through the tokens until we get something that doesn't match
 	bool tokensMatch = ( strcmp( filePathToken, rootPathToken ) == 0 );
 	while(( filePathToken != NULL ) && ( rootPathToken != NULL ) && tokensMatch) {
-		filePathToken = SDL_strtokr( NULL, tokens, &filePathTokSave );
-		rootPathToken = SDL_strtokr( NULL, tokens, &rootPathTokSave );
+		filePathToken = SDL_strtok_r( NULL, tokens, &filePathTokSave );
+		rootPathToken = SDL_strtok_r( NULL, tokens, &rootPathTokSave );
 
 		if(( filePathToken != NULL ) && ( rootPathToken != NULL )) {
 			tokensMatch = ( strcmp( filePathToken, rootPathToken ) == 0 );
@@ -81,7 +82,7 @@ static void toLocalPath( char** sbFilePath )
 
 	// get all the directories from the path that we didn't hit in the root path and add ../ to the starfor them
 	while( rootPathToken != NULL ) {
-		rootPathToken = SDL_strtokr( NULL, tokens, &rootPathTokSave );
+		rootPathToken = SDL_strtok_r( NULL, tokens, &rootPathTokSave );
 		sb_Push( sbLocalFilePath, '.' );
 		sb_Push( sbLocalFilePath, '.' );
 		sb_Push( sbLocalFilePath, '/' );
@@ -94,7 +95,7 @@ static void toLocalPath( char** sbFilePath )
 		char* strAddSpot = sb_Add( sbLocalFilePath, tokenLen );
 		memcpy( strAddSpot, filePathToken, sizeof( char ) * tokenLen );
 
-		filePathToken = SDL_strtokr( NULL, tokens, &filePathTokSave );
+		filePathToken = SDL_strtok_r( NULL, tokens, &filePathTokSave );
 	}
 	// add terminating null
 	sb_Push( sbLocalFilePath, 0 );
@@ -200,132 +201,63 @@ static void handleDialogError( DWORD errorCode )
 	hub_CreateDialog( "Error", errorText, DT_ERROR, 1, "OK", NULL );
 }
 
-typedef enum {
-	BROWSER_OPEN,
-	BROWSER_SAVE
-} BrowserType;
-
-typedef enum {
-	BRT_FALSE,
-	BRT_TRUE,
-	BRT_INVALID
-} BrowserReturnType;
-
-static void fileBrowser( const char* fileTypeDesc, const char* fileExtension, BrowserType type, bool multiSelect, void (*callback)(const char*) )
+// adapt to the SDL file dialogs where they return a list of things
+void sdlFileDialogCallback( void* userData, const char* const* fileList, int filter )
 {
-	char filter[128];
-	int result = SDL_snprintf( filter, ARRAY_SIZE( filter ), "All (*.*)\n*.*\n%s (*.%s)\n*.%s\n", fileTypeDesc, fileExtension, fileExtension );
-	if(result < 0)
-	{
-		llog( LOG_ERROR, "Error building filter." );
+	void ( *callback )( const char* ) = ( void( * )( const char* ) )userData;
+
+	if( fileList == NULL ) {
+		hub_CreateDialog( "Error", SDL_GetError(), DT_ERROR, 1, "OK", NULL );
+	}
+
+	if( *fileList == NULL ) {
 		return;
 	}
-	if(result >= ARRAY_SIZE( filter )) {
-		llog( LOG_ERROR, "Unable to build filter, increase array size." );
-		return;
-	}
-	wchar_t wideFilter[ARRAY_SIZE( filter )];
-	int toWideResult = (int)mbstowcs( wideFilter, filter, ARRAY_SIZE( filter ) );
-	if(result < 0) {
-		llog( LOG_ERROR, "Error converting filter." );
-		return;
-	}
-	// we use \n as placeholders for the \0 needed so the string operations work correctly
-	for(size_t i = 0; i < (size_t)toWideResult; ++i) {
-		if(wideFilter[i] == L'\n') wideFilter[i] = L'\0';
-	}
 
-	#define FILE_PATH_BUFFER_LEN 512
-	wchar_t* fileName = mem_Allocate( sizeof( wchar_t ) * FILE_PATH_BUFFER_LEN );
-
-	OPENFILENAME ofn;
-	ZeroMemory( &ofn, sizeof( ofn ) );
-	ofn.lStructSize = sizeof( ofn );
-	ofn.hwndOwner = NULL;
-	ofn.lpstrFile = fileName;
-	ofn.lpstrFile[0] = '\0';
-	ofn.nMaxFile = FILE_PATH_BUFFER_LEN;
-	ofn.lpstrFilter = wideFilter;
-	ofn.nFilterIndex = 2;
-	ofn.lpstrCustomFilter = NULL;
-	ofn.lpstrFileTitle = NULL;
-	ofn.nMaxFileTitle = 0;
-	ofn.lpstrInitialDir = NULL;
-	ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_NOCHANGEDIR;
-	if( multiSelect ) ofn.Flags |= OFN_ALLOWMULTISELECT | OFN_EXPLORER;
-
-	BrowserReturnType retVal = BRT_INVALID;
-
-	switch(type) {
-	case BROWSER_OPEN:
-		retVal = BRT_FALSE;
-		if(GetOpenFileName( &ofn )) retVal = BRT_TRUE;
-		break;
-	case BROWSER_SAVE:
-		retVal = BRT_FALSE;
-		if(GetSaveFileName( &ofn )) retVal = BRT_TRUE;
-		break;
-	}
-
-	if(retVal == BRT_TRUE) {
-		// if multiple are returned then ofn.nFileOffset points to the first file name in ofn.lpstrFile, and ofn.lpstr
-		//  the beginning of ofn.lpstrFile is the path, then all the files separated by /0, with the last one ending with /0/0 (yay for fucking with string functions)
-		// if the character before the file is NULL then we have gotten multiple files
-		if( ofn.lpstrFile[ofn.nFileOffset - 1] == 0 ) {
-			// multiple files selected
-
-			// grab the directory path and create the string for it
-			wchar_t* dirPath = ofn.lpstrFile;
-			size_t dirPathLen = SDL_wcslen( dirPath );
-
-			wchar_t* selectedFileName = &ofn.lpstrFile[ofn.nFileOffset];
-			while( SDL_wcslen( selectedFileName ) > 0 ) {
-				size_t fileNameLen = SDL_wcslen( selectedFileName );
-
-				size_t wholeFilePathLen = dirPathLen + fileNameLen + 2; // includes divider and null
-				wchar_t* wholeFilePath = mem_Allocate( sizeof( wchar_t ) * ( wholeFilePathLen ) );
-				SDL_wcslcpy( wholeFilePath, dirPath, wholeFilePathLen );
-				SDL_wcslcat( wholeFilePath, L"\\", wholeFilePathLen );
-				SDL_wcslcat( wholeFilePath, selectedFileName, wholeFilePathLen );
-
-				// how do we handle all the file names?
-				char* utf8Filepath = wideCharToUTF8SB( wholeFilePath );
-				toLocalPath( &utf8Filepath );
-				if( callback != NULL ) callback( utf8Filepath );
-				sb_Release( utf8Filepath );
-
-				mem_Release( wholeFilePath );
-
-				// get the next file name
-				selectedFileName = &selectedFileName[SDL_wcslen( selectedFileName ) + 1];
-			}
-		} else {
-			// one file selected
-			char* utf8Str = wideCharToUTF8SB( ofn.lpstrFile );
-			toLocalPath( &utf8Str );
-			if( callback != NULL ) callback( utf8Str );
-			sb_Release( utf8Str );
+	while( *fileList ) {
+		if( callback != NULL ) {
+			// create a local copy of the string and make it local
+			char* copy = createStretchyStringCopy( *fileList );
+			toLocalPath( &copy );
+			callback( copy );
+			sb_Release( copy );
 		}
-	} else if( retVal == BRT_FALSE ) {
-		DWORD error = CommDlgExtendedError( );
-		handleDialogError( error );
-	} else { // BRT_INVALID
-		hub_CreateDialog( "Error", "Invalid file browser type.", DT_ERROR, 1, "OK", NULL );
+		++fileList;
 	}
-
-	mem_Release( fileName );
 }
 
 // returns a stretchy buffer, be sure to release it
 void editor_chooseLoadFileLocation( const char* fileTypeDesc, const char* fileExtension, bool multiSelect, void ( *callback )( const char* ) )
 {
-	fileBrowser( fileTypeDesc, fileExtension, BROWSER_OPEN, multiSelect, callback );
+	char* fullDescTemplate = "%s (*.%s)";
+	size_t totalLen = sizeof( char ) * ( SDL_strlen( fileTypeDesc ) + SDL_strlen( fileExtension ) + 6 );
+	char* fullDesc = mem_Allocate( sizeof( char ) * totalLen );
+	SDL_snprintf( fullDesc, totalLen, fullDescTemplate, fileTypeDesc, fileExtension );
+	const SDL_DialogFileFilter filters[] = {
+		{ fullDesc, fileExtension },
+		{ "All files (*.*)", "*" }
+	};
+
+	SDL_ShowOpenFileDialog( sdlFileDialogCallback, (void*)callback, NULL, filters, ARRAY_SIZE( filters ), NULL, multiSelect );
+	
+	mem_Release( fullDesc );
 }
 
 // returns a stretchy buffer, be sure to release it
 void editor_chooseSaveFileLocation( const char* fileTypeDesc, const char* fileExtension, void ( *callback )( const char* ) )
 {
-	fileBrowser( fileTypeDesc, fileExtension, BROWSER_SAVE, false, callback );
+	char* fullDescTemplate = "%s (*.%s)";
+	size_t totalLen = sizeof( char ) * ( SDL_strlen( fileTypeDesc ) + SDL_strlen( fileExtension ) + 6 );
+	char* fullDesc = mem_Allocate( sizeof( char ) * totalLen );
+	SDL_snprintf( fullDesc, totalLen, fullDescTemplate, fileTypeDesc, fileExtension );
+	const SDL_DialogFileFilter filters[] = {
+		{ fullDesc, fileExtension },
+		{ "All files (*.*)", "*" }
+	};
+
+	SDL_ShowSaveFileDialog( sdlFileDialogCallback, (void*)callback, NULL, filters, ARRAY_SIZE( filters ), NULL );
+
+	mem_Release( fullDesc );
 }
 
 static void getWorkingDirectory( void )

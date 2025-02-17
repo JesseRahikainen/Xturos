@@ -1,7 +1,7 @@
 #ifndef GAME_TIME_H
 #define GAME_TIME_H
 
-#include <SDL_timer.h>
+#include <SDL3/SDL_timer.h>
 
 //#define PHYSICS_TICKS_PER_SEC 5
 #define PHYSICS_TICKS_PER_SEC 15

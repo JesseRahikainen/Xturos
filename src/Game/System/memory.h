@@ -6,14 +6,14 @@
 #include <stdbool.h>
 
 // we'll make this the main memory thing, then we'll have memArena_* functions that that work with a MemoryArena struct.
-int mem_Init( size_t totalSize );
+bool mem_Init( size_t totalSize );
 void mem_CleanUp( void );
 
 void mem_Log( void );
 void mem_LogAddressBlockData( void* ptr, const char* extra );
 void mem_Verify( void );
 bool mem_GetVerify( void );
-void mem_VerifyPointer( void* p );
+void mem_VerifyPointer( void* p, bool allowNull );
 void mem_Report( void );
 void mem_GetReportValues( size_t* totalOut, size_t* inUseOut, size_t* overheadOut, uint32_t* fragmentsOut );
 
@@ -29,6 +29,11 @@ bool mem_IsAllocatedMemory( void* ptr );
 void* mem_Allocate_Data( size_t size, const char* fileName, const int line );
 void* mem_Resize_Data( void* memory, size_t newSize, const char* fileName, const int line );
 void mem_Release_Data( void* memory, const char* fileName, const int line );
+
+void* mem_AllocateForCallback( size_t size );
+void* mem_ClearAllocateForCallback( size_t numMembers, size_t memberSize );
+void* mem_ResizeForCallback( void* memory, size_t size );
+void mem_ReleaseForCallback( void* memory );
 
 // attach the memory pointed to by child to parent, so that if parent is released so is the child memory
 //  will overwrite the current parent of child if one exists, returns if the attach was successful

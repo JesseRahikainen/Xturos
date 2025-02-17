@@ -1,6 +1,6 @@
 #include "input.h"
 #include <float.h>
-#include <SDL_assert.h>
+#include <SDL3/SDL_assert.h>
 #include "System/platformLog.h"
 #include "System/shared.h"
 #include "System/luaInterface.h"
@@ -553,7 +553,7 @@ int input_BindOnSwipe( Vector2 dir, KeyResponse response )
 	return -1;
 }
 
-static SDL_FingerID watchedFinger = -1;
+static SDL_FingerID watchedFinger = 0;
 static Vector2 watchedFingerPosStart;
 
 static void processSwipePress( SDL_Event* e )
@@ -561,13 +561,13 @@ static void processSwipePress( SDL_Event* e )
 	if( watchedFinger < 0 ) {
 		watchedFingerPosStart.x = e->tfinger.x;
 		watchedFingerPosStart.y = e->tfinger.y;
-		watchedFinger = e->tfinger.fingerId;
+		watchedFinger = e->tfinger.fingerID;
 	}
 }
 
 static void processSwipeRelease( SDL_Event* e )
 {
-	if( e->tfinger.fingerId == watchedFinger ) {
+	if( e->tfinger.fingerID == watchedFinger ) {
 		Vector2 endPos;
 		endPos.x = e->tfinger.x;
 		endPos.y = e->tfinger.y;
@@ -598,7 +598,7 @@ static void processSwipeRelease( SDL_Event* e )
 			}
 		}
 
-		watchedFinger = -1;
+		watchedFinger = 0;
 	}
 }
 
@@ -609,27 +609,27 @@ Process events.
 void input_ProcessEvents( SDL_Event* e )
 {
 	switch( e->type ) {
-	case SDL_MOUSEMOTION:
+	case SDL_EVENT_MOUSE_MOTION:
 		processMouseMovementEvent( e );
 		break;
-	case SDL_KEYDOWN:
+	case SDL_EVENT_KEY_DOWN:
 		if( !e->key.repeat ) {
-			handleKeyEvent( e->key.keysym.sym, keyDownBindings );
+			handleKeyEvent( e->key.key, keyDownBindings );
 		}
 		break;
-	case SDL_KEYUP:
-		handleKeyEvent( e->key.keysym.sym, keyUpBindings );
+	case SDL_EVENT_KEY_UP:
+		handleKeyEvent( e->key.key, keyUpBindings );
 		break;
-	case SDL_MOUSEBUTTONDOWN:
+	case SDL_EVENT_MOUSE_BUTTON_DOWN:
 		handleMouseButtonEvent( e->button.button, mouseButtonDownBindings );
 		break;
-	case SDL_MOUSEBUTTONUP:
+	case SDL_EVENT_MOUSE_BUTTON_UP:
 		handleMouseButtonEvent( e->button.button, mouseButtonUpBindings );
 		break;
-	case SDL_FINGERDOWN:
+	case SDL_EVENT_FINGER_DOWN:
 		processSwipePress( e );
 		break;
-	case SDL_FINGERUP:
+	case SDL_EVENT_FINGER_UP:
 		processSwipeRelease( e );
 		break;
 	}

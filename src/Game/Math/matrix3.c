@@ -1,5 +1,5 @@
 #include "matrix3.h"
-#include <SDL_assert.h>
+#include <SDL3/SDL_assert.h>
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>

@@ -1,7 +1,7 @@
 #ifndef JOB_RING_QUEUE_H
 #define JOB_RING_QUEUE_H
 
-#include <SDL_atomic.h>
+#include <SDL3/SDL_atomic.h>
 
 typedef void (*JobProcessFunc)( void* );
 
@@ -14,9 +14,9 @@ typedef struct {
 typedef struct {
 	size_t size;
 	Job* ringBuffer;
-	SDL_atomic_t head;
-	SDL_atomic_t tail;
-	SDL_atomic_t busy; // a count of how many jobs are currently being processed
+	SDL_AtomicInt head;
+	SDL_AtomicInt tail;
+	SDL_AtomicInt busy; // a count of how many jobs are currently being processed
 } JobRingQueue;
 
 int jrq_Init( JobRingQueue* queue, size_t size );

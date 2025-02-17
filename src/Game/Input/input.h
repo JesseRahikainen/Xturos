@@ -1,7 +1,7 @@
 #ifndef INPUT_H
 #define INPUT_H
 
-#include <SDL_events.h>
+#include <SDL3/SDL_events.h>
 
 #include "Math/vector2.h"
 

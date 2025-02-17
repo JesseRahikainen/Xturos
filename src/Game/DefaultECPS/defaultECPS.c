@@ -1,4 +1,4 @@
-#include <SDL_assert.h>
+#include <SDL3/SDL_assert.h>
 
 #include "defaultECPS.h"
 
@@ -36,7 +36,7 @@ extern const TrackedTweenFunctionRef* __start_regproc;
 extern const TrackedTweenFunctionRef* __stop_regproc;
 
 #define section_foreach_default_process_callback(elem)																						\
-const TrackedTweenFunctionRef* elem = *(const TrackedTweenFunctionRef* const*)( (uintptr_t)&__start_regproc + sizeof( __start_regproc ) );	\
+const DefaultECPSFunc* elem = *(const DefaultECPSFunc* const*)( (uintptr_t)&__start_regproc + sizeof( __start_regproc ) );	\
 for( uintptr_t current = (uintptr_t)&__start_regproc;																						\
 	 current < (uintptr_t)&__stop_regproc;																									\
 	 current += sizeof( const DefaultECPSFunc* ), elem = *(const DefaultECPSFunc*)current )

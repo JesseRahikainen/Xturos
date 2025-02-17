@@ -1,6 +1,6 @@
 #include "messageBroadcast.h"
 
-#include <SDL_assert.h>
+#include <SDL3/SDL_assert.h>
 
 #include "Utils/stretchyBuffer.h"
 

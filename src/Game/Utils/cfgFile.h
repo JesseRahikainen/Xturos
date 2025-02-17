@@ -1,6 +1,8 @@
 #ifndef CFG_PARSER_H
 #define CFG_PARSER_H
 
+#include <stdbool.h>
+
 // quick and dirty cfg file parser
 //  simple format: 
 //   attrName = value
@@ -13,7 +15,7 @@ void* cfg_OpenFile( const char* fileName );
 void cfg_CloseFile( void* cfgFile );
 
 // Saves out the file.
-int cfg_SaveFile( void* cfgFile );
+bool cfg_SaveFile( void* cfgFile );
 
 // Accessors. Pass them a valid config file pointer, the name of the attribute you want, and the default value for the
 //  attribute if it can't find it.

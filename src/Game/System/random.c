@@ -2,8 +2,8 @@
 
 #include <stdlib.h>
 #include <math.h>
-#include <SDL_assert.h>
-#include <SDL.h>
+#include <SDL3/SDL_assert.h>
+#include <SDL3/SDL.h>
 
 #include "Math/mathUtil.h"
 

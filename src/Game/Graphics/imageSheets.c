@@ -1,6 +1,6 @@
 #include "imageSheets.h"
 
-#include <SDL_rwops.h>
+#include <SDL3/SDL.h>
 #include <ctype.h>
 #include <string.h>
 #include <stdlib.h>
@@ -69,8 +69,8 @@ static bool loadSpriteSheetData( const char* fileName, TempSpriteSheetData** out
 	bool ret = false;
 
 	cmp_ctx_t cmp;
-	SDL_RWops* rwopsFile = openRWopsCMPFile( fileName, "rb", &cmp );
-	if( rwopsFile == NULL ) goto clean_up;
+	SDL_IOStream* ioStream = openRWopsCMPFile( fileName, "rb", &cmp );
+	if( ioStream == NULL ) goto clean_up;
 
 	int version;
 	CMP_READ( &cmp, version, cmp_read_int, ioType, "version number", goto clean_up );
@@ -121,7 +121,7 @@ static bool loadSpriteSheetData( const char* fileName, TempSpriteSheetData** out
 
 clean_up:
 
-	if( ( rwopsFile != NULL ) && ( SDL_RWclose( rwopsFile ) < 0 ) ) {
+	if( ( ioStream != NULL ) && !SDL_CloseIO( ioStream ) ) {
 		llog( LOG_ERROR, "Error closing file %s: %s", fileName, SDL_GetError( ) );
 		ret = false;
 	}
@@ -278,8 +278,8 @@ static bool saveSpriteSheetDefinition( const char* fileName, SpriteSheetEntry* e
 	bool done = false;
 
 	cmp_ctx_t cmp;
-	SDL_RWops* rwops = openRWopsCMPFile( fileName, "wb", &cmp );
-	if( rwops == NULL ) {
+	SDL_IOStream* ioStream = openRWopsCMPFile( fileName, "wb", &cmp );
+	if( ioStream == NULL ) {
 		goto clean_up;
 	}
 
@@ -319,7 +319,7 @@ static bool saveSpriteSheetDefinition( const char* fileName, SpriteSheetEntry* e
 
 clean_up:
 
-	if( SDL_RWclose( rwops ) < 0 ) {
+	if( !SDL_CloseIO( ioStream ) ) {
 		llog( LOG_ERROR, "Error closing file %s: %s", fileName, SDL_GetError( ) );
 		done = false;
 	}

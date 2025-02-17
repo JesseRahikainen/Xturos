@@ -1,7 +1,7 @@
 #ifndef GENERAL_PROCESSES_H
 #define GENERAL_PROCESSES_H
 
-#include <SDL_events.h>
+#include <SDL3/SDL_events.h>
 #include "System/ECPS/ecps_dataTypes.h"
 #include "tween.h"
 #include "Math/vector2.h"

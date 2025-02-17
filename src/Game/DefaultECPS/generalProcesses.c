@@ -1,6 +1,6 @@
 #include "generalProcesses.h"
 
-#include <SDL_assert.h>
+#include <SDL3/SDL_assert.h>
 #include <math.h>
 
 #include "Graphics/images.h"
@@ -28,8 +28,8 @@ void gp_GeneralRender( ECPS* ecps, const Entity* entity, ComponentID tfCompID, C
 	GCTransformData* transform = NULL;
 	GCSpriteData* sprite = NULL;
 
-	ecps_GetComponentFromEntity( entity, gcTransformCompID, &transform );
-	ecps_GetComponentFromEntity( entity, gcSpriteCompID, &sprite );
+	ecps_GetComponentFromEntity( entity, tfCompID, &transform );
+	ecps_GetComponentFromEntity( entity, sprCompID, &sprite );
 
 	float t = gt_GetRenderNormalizedTime( );
 	ImageRenderInstruction inst = img_CreateDefaultRenderInstruction( );
@@ -43,17 +43,17 @@ void gp_GeneralRender( ECPS* ecps, const Entity* entity, ComponentID tfCompID, C
 	gc_GetLerpedGlobalMatrix( ecps, transform, &imgOffset, t, &inst.mat );
 
 	GCColorData* colorData = NULL;
-	if( ecps_GetComponentFromEntity( entity, gcClrCompID, &colorData ) ) {
+	if( ecps_GetComponentFromEntity( entity, clrCompID, &colorData ) ) {
 		clr_Lerp( &( colorData->currClr ), &( colorData->futureClr ), t, &( inst.color ) );
 	}
 
 	GCFloatVal0Data* val0Data = NULL;
-	if( ecps_GetComponentFromEntity( entity, gcFloatVal0CompID, &val0Data ) ) {
+	if( ecps_GetComponentFromEntity( entity, floatVal0CompID, &val0Data ) ) {
 		inst.val0 = lerp( val0Data->currValue, val0Data->futureValue, t );
 	}
 
 	GCStencilData* stencilData = NULL;
-	if( ecps_GetComponentFromEntity( entity, gcStencilCompID, &stencilData ) ) {
+	if( ecps_GetComponentFromEntity( entity, stencilCompID, &stencilData ) ) {
 		inst.isStencil = stencilData->isStencil;
 		inst.stencilID = stencilData->stencilID;
 	}
@@ -431,7 +431,7 @@ static void pointerResponseFinalize_Mouse( ECPS* ecps )
 		if( currChosenPointerResponseID != prevChosenPointerResponseID ) {
 			pointerResponseState = PRS_IDLE;
 
-			callLeaveResponse( ecps, currChosenPointerResponseID );
+			callLeaveResponse( ecps, prevChosenPointerResponseID );
 		} else if( pointerResponseMousePressed ) {
 			// if the mouse button was pressed, then transition to clicked over state and call the clicked resonse
 			focusedPointerResponseID = currChosenPointerResponseID;
@@ -484,11 +484,11 @@ static void pointerResponseFinalize_Mouse( ECPS* ecps )
 // needed to handle button presses
 void gp_PointerResponseEventHandler( SDL_Event * evt )
 {
-	if( evt->type == SDL_MOUSEBUTTONDOWN ) {
+	if( evt->type == SDL_EVENT_MOUSE_BUTTON_DOWN ) {
 		if( evt->button.button == SDL_BUTTON_LEFT ) {
 			pointerResponseMousePressed = true;
 		}
-	} else if( evt->type == SDL_MOUSEBUTTONUP ) {
+	} else if( evt->type == SDL_EVENT_MOUSE_BUTTON_UP ) {
 		if( evt->button.button == SDL_BUTTON_LEFT ) {
 			pointerResponseMouseReleased = true;
 		}

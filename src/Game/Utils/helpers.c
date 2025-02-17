@@ -6,8 +6,8 @@
 #elif defined( __ANDROID__ )
 #endif
 
-#include <SDL.h>
-#include <SDL_assert.h>
+#include <SDL3/SDL.h>
+#include <SDL3/SDL_assert.h>
 
 #include "Math/vector2.h"
 #include "Math/mathUtil.h"
@@ -156,8 +156,8 @@ char* wideCharToUTF8SB( const wchar_t* wideStr )
 
 static bool rwopsFileReader( struct cmp_ctx_s* ctx, void* data, size_t limit )
 {
-	SDL_RWops* rwops = (SDL_RWops*)( ctx->buf );
-	if( SDL_RWread( rwops, data, limit, 1 ) != 1 ) {
+	SDL_IOStream* ioStream = (SDL_IOStream*)( ctx->buf );
+	if( SDL_ReadIO( ioStream, data, limit ) != limit ) {
 		llog( LOG_ERROR, "Error reading from file: %s", SDL_GetError( ) );
 		return false;
 	}
@@ -166,8 +166,8 @@ static bool rwopsFileReader( struct cmp_ctx_s* ctx, void* data, size_t limit )
 
 static bool rwopsFileSkipper( struct cmp_ctx_s* ctx, size_t count )
 {
-	SDL_RWops* rwops = (SDL_RWops*)( ctx->buf );
-	if( SDL_RWseek( rwops, (Sint64)count, RW_SEEK_CUR ) == -1 ) {
+	SDL_IOStream* ioStream = (SDL_IOStream*)( ctx->buf );
+	if( SDL_SeekIO( ioStream, (Sint64)count, SDL_IO_SEEK_CUR ) == -1 ) {
 		llog( LOG_ERROR, "Error seeking in file: %s", SDL_GetError( ) );
 		return false;
 	}
@@ -176,30 +176,30 @@ static bool rwopsFileSkipper( struct cmp_ctx_s* ctx, size_t count )
 
 static size_t rwopsFileWriter( struct cmp_ctx_s* ctx, const void* data, size_t count )
 {
-	SDL_RWops* rwops = (SDL_RWops*)( ctx->buf );
-	if( SDL_RWwrite( rwops, data, count, 1 ) != 1 ) {
+	SDL_IOStream* ioStream = (SDL_IOStream*)( ctx->buf );
+	if( SDL_WriteIO( ioStream, data, count ) != count ) {
 		llog( LOG_ERROR, "Error writing to file: %s", SDL_GetError( ) );
 		return false;
 	}
 	return true;
 }
 
-SDL_RWops* openRWopsCMPFile( const char* filePath, const char* mode, cmp_ctx_t* cmpCtx )
+SDL_IOStream* openRWopsCMPFile( const char* filePath, const char* mode, cmp_ctx_t* cmpCtx )
 {
 	ASSERT_AND_IF_NOT( filePath != NULL ) return NULL;
 	ASSERT_AND_IF_NOT( mode != NULL ) return NULL;
 	ASSERT_AND_IF_NOT( cmpCtx != NULL ) return NULL;
 
 	// TODO: handle not overwriting an existing file if the writing fails
-	SDL_RWops* rwopsFile = SDL_RWFromFile( filePath, mode );
-	if( rwopsFile == NULL ) {
+	SDL_IOStream* ioStream = SDL_IOFromFile( filePath, mode );
+	if( ioStream == NULL ) {
 		llog( LOG_ERROR, "Unable to open file %s: %s", filePath, SDL_GetError( ) );
 		return NULL;
 	}
 
-	cmp_init( cmpCtx, rwopsFile, rwopsFileReader, rwopsFileSkipper, rwopsFileWriter );
+	cmp_init( cmpCtx, ioStream, rwopsFileReader, rwopsFileSkipper, rwopsFileWriter );
 
-	return rwopsFile;
+	return ioStream;
 }
 
 int nextHighestPowerOfTwo( int v )

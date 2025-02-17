@@ -1,6 +1,6 @@
 #include "ecps_serialization.h"
 
-#include <SDL.h>
+#include <SDL3/SDL.h>
 #include <stdio.h>
 
 #include "System/ECPS/entityComponentProcessSystem.h"
@@ -389,8 +389,8 @@ EntityID ecps_GetEntityIDfromSerializedLocalID( SerializedEntityInfo* sbEntityIn
 
 bool serializationFileReader( struct cmp_ctx_s* ctx, void* data, size_t limit )
 {
-	SDL_RWops* rwops = (SDL_RWops*)( ctx->buf );
-	if( SDL_RWread( rwops, data, limit, 1 ) != 1 ) {
+	SDL_IOStream* ioStream = (SDL_IOStream*)( ctx->buf );
+	if( SDL_ReadIO( ioStream, data, limit ) != limit ) {
 		llog( LOG_ERROR, "Error reading from file: %s", SDL_GetError( ) );
 		return false;
 	}
@@ -399,8 +399,8 @@ bool serializationFileReader( struct cmp_ctx_s* ctx, void* data, size_t limit )
 
 bool serializationFileSkipper( struct cmp_ctx_s* ctx, size_t count )
 {
-	SDL_RWops* rwops = (SDL_RWops*)( ctx->buf );
-	if( SDL_RWseek( rwops, (Sint64)count, RW_SEEK_CUR ) == -1 ) {
+	SDL_IOStream* ioStream = (SDL_IOStream*)( ctx->buf );
+	if( SDL_SeekIO( ioStream, (Sint64)count, SDL_IO_SEEK_CUR ) == -1 ) {
 		llog( LOG_ERROR, "Error seeking in file: %s", SDL_GetError( ) );
 		return false;
 	}
@@ -409,8 +409,8 @@ bool serializationFileSkipper( struct cmp_ctx_s* ctx, size_t count )
 
 size_t serializationFileWriter( struct cmp_ctx_s* ctx, const void* data, size_t count )
 {
-	SDL_RWops* rwops = (SDL_RWops*)( ctx->buf );
-	if( SDL_RWwrite( rwops, data, count, 1 ) != 1 ) {
+	SDL_IOStream* ioStream = (SDL_IOStream*)( ctx->buf );
+	if( SDL_WriteIO( ioStream, data, count ) != count ) {
 		llog( LOG_ERROR, "Error writing to file: %s", SDL_GetError( ) );
 		return false;
 	}
@@ -427,12 +427,12 @@ bool ecps_SaveSerializedECPS( const char* fileName, SerializedECPS* serializedEC
 
 	// TODO: handle not overwriting an existing file if the writing fails
 	cmp_ctx_t cmp;
-	SDL_RWops* rwopsFile = openRWopsCMPFile( fileName, "wb", &cmp );
-	if( rwopsFile == NULL ) {
+	SDL_IOStream* ioStream = openRWopsCMPFile( fileName, "wb", &cmp );
+	if( ioStream == NULL ) {
 		return false;
 	}
 
-	cmp_init( &cmp, rwopsFile, serializationFileReader, serializationFileSkipper, serializationFileWriter );
+	cmp_init( &cmp, ioStream, serializationFileReader, serializationFileSkipper, serializationFileWriter );
 	bool done = false;
 
 	// find the number of used components
@@ -500,7 +500,7 @@ bool ecps_SaveSerializedECPS( const char* fileName, SerializedECPS* serializedEC
 	done = true;
 
 clean_up:
-	if( SDL_RWclose( rwopsFile ) < 0 ) {
+	if( !SDL_CloseIO( ioStream ) ) {
 		llog( LOG_ERROR, "Error flushing out file %s: %s", fileName, SDL_GetError( ) );
 		done = false;
 	}
@@ -520,8 +520,8 @@ bool ecps_LoadSerializedECPS( const char* fileName, SerializedECPS* serializedEC
 	ASSERT_AND_IF_NOT( serializedECPS->sbEntityInfos == NULL ) return false;
 
 	cmp_ctx_t cmp;
-	SDL_RWops* rwopsFile = openRWopsCMPFile( fileName, "rb", &cmp );
-	if( rwopsFile == NULL ) {
+	SDL_IOStream* ioStream = openRWopsCMPFile( fileName, "rb", &cmp );
+	if( ioStream == NULL ) {
 		return false;
 	}
 
@@ -602,7 +602,7 @@ bool ecps_LoadSerializedECPS( const char* fileName, SerializedECPS* serializedEC
 	done = true;
 
 clean_up:
-	if( SDL_RWclose( rwopsFile ) < 0 ) {
+	if( !SDL_CloseIO( ioStream ) ) {
 		llog( LOG_ERROR, "Error flushing out file %s: %s", fileName, SDL_GetError( ) );
 	}
 

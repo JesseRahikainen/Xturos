@@ -1,6 +1,6 @@
 ﻿#include "spriteAnimationEditor.h"
 
-#include <SDL.h>
+#include <SDL3/SDL.h>
 
 // BIG TODO: make this using an event based approach so we can support undo and redo.
 

@@ -102,13 +102,13 @@
     <LinkIncremental>true</LinkIncremental>
     <TargetName>$(ProjectName)</TargetName>
     <OutDir>$(SolutionDir)\..\..\bin\$(PlatformShortName)_$(Configuration)\</OutDir>
-    <IncludePath>$(ProjectDir)..\..\src\Game;$(ProjectDir)..\..\libraries\stb-master;$(ProjectDir)..\..\libraries\SDL2\include;$(IncludePath);$(IncludePath)</IncludePath>
-    <LibraryPath>$(ProjectDir)..\..\libraries\SDL2\VisualC\Win32\Debug;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(ProjectDir)..\..\src\Game;$(ProjectDir)..\..\libraries\stb-master;$(ProjectDir)..\..\libraries\SDL3\include;$(IncludePath);$(IncludePath)</IncludePath>
+    <LibraryPath>$(ProjectDir)..\..\libraries\SDL3\VisualC\Win32\Debug;$(LibraryPath)</LibraryPath>
     <IntDir>Game\$(PlatformShortName)_$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>$(ProjectDir)..\..\src\Game;$(ProjectDir)..\..\libraries\stb-master;$(ProjectDir)..\..\libraries\SDL2\include;$(IncludePath);$(IncludePath)</IncludePath>
-    <LibraryPath>$(ProjectDir)..\..\libraries\SDL2\VisualC\x64\Debug;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(ProjectDir)..\..\src\Game;$(ProjectDir)..\..\libraries\stb-master;$(ProjectDir)..\..\libraries\SDL3\include;$(IncludePath);$(IncludePath)</IncludePath>
+    <LibraryPath>$(ProjectDir)..\..\libraries\SDL3\VisualC\x64\Debug;$(LibraryPath)</LibraryPath>
     <LinkIncremental>true</LinkIncremental>
     <TargetName>$(ProjectName)</TargetName>
     <IntDir>Game\$(PlatformShortName)_$(Configuration)\</IntDir>
@@ -117,13 +117,13 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
     <OutDir>$(SolutionDir)\..\..\bin\$(PlatformShortName)_$(Configuration)\</OutDir>
-    <IncludePath>$(ProjectDir)..\..\src\Game;$(ProjectDir)..\..\libraries\stb-master;$(ProjectDir)..\..\libraries\SDL2\include;;$(IncludePath)</IncludePath>
-    <LibraryPath>$(ProjectDir)..\..\libraries\SDL2\VisualC\Win32\Release;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(ProjectDir)..\..\src\Game;$(ProjectDir)..\..\libraries\stb-master;$(ProjectDir)..\..\libraries\SDL3\include;;$(IncludePath)</IncludePath>
+    <LibraryPath>$(ProjectDir)..\..\libraries\SDL3\VisualC\Win32\Release;$(LibraryPath)</LibraryPath>
     <IntDir>Game\$(PlatformShortName)_$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <IncludePath>$(ProjectDir)..\..\src\Game;$(ProjectDir)..\..\libraries\stb-master;$(ProjectDir)..\..\libraries\SDL2\include;;$(IncludePath)</IncludePath>
-    <LibraryPath>$(ProjectDir)..\..\libraries\SDL2\VisualC\x64\Release;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(ProjectDir)..\..\src\Game;$(ProjectDir)..\..\libraries\stb-master;$(ProjectDir)..\..\libraries\SDL3\include;;$(IncludePath)</IncludePath>
+    <LibraryPath>$(ProjectDir)..\..\libraries\SDL3\VisualC\x64\Release;$(LibraryPath)</LibraryPath>
     <LinkIncremental>false</LinkIncremental>
     <IntDir>Game\$(PlatformShortName)_$(Configuration)\</IntDir>
     <OutDir>$(SolutionDir)\..\..\bin\$(PlatformShortName)_$(Configuration)\</OutDir>
@@ -131,13 +131,13 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DebugRelease|Win32'">
     <LinkIncremental>false</LinkIncremental>
     <OutDir>$(SolutionDir)\..\..\bin\$(PlatformShortName)_$(Configuration)\</OutDir>
-    <IncludePath>$(ProjectDir)..\..\src\Game;$(ProjectDir)..\..\libraries\stb-master;$(ProjectDir)..\..\libraries\SDL2\include;;$(IncludePath)</IncludePath>
-    <LibraryPath>$(ProjectDir)..\..\libraries\SDL2\VisualC\Win32\Release;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(ProjectDir)..\..\src\Game;$(ProjectDir)..\..\libraries\stb-master;$(ProjectDir)..\..\libraries\SDL3\include;;$(IncludePath)</IncludePath>
+    <LibraryPath>$(ProjectDir)..\..\libraries\SDL3\VisualC\Win32\Release;$(LibraryPath)</LibraryPath>
     <IntDir>Game\$(PlatformShortName)_$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">
-    <IncludePath>$(ProjectDir)..\..\src\Game;$(ProjectDir)..\..\libraries\stb-master;$(ProjectDir)..\..\libraries\SDL2\include;;$(IncludePath)</IncludePath>
-    <LibraryPath>$(ProjectDir)..\..\libraries\SDL2\VisualC\x64\Release;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(ProjectDir)..\..\src\Game;$(ProjectDir)..\..\libraries\stb-master;$(ProjectDir)..\..\libraries\SDL3\include;;$(IncludePath)</IncludePath>
+    <LibraryPath>$(ProjectDir)..\..\libraries\SDL3\VisualC\x64\Release;$(LibraryPath)</LibraryPath>
     <LinkIncremental>false</LinkIncremental>
     <IntDir>Game\$(PlatformShortName)_$(Configuration)\</IntDir>
     <OutDir>$(SolutionDir)\..\..\bin\$(PlatformShortName)_$(Configuration)\</OutDir>
@@ -155,15 +155,16 @@
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <DisableSpecificWarnings>4100;4189;4201;4996;4127;4756;6385;6386;26451;6255;6385;26451;4456;4457</DisableSpecificWarnings>
       <PreprocessToFile>false</PreprocessToFile>
+      <LanguageStandard>stdcpp14</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>SDL2.lib;SDL2main.lib;opengl32.lib;legacy_stdio_definitions.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>SDL2.lib;opengl32.lib;legacy_stdio_definitions.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <IgnoreSpecificDefaultLibraries>msvcrt.lib</IgnoreSpecificDefaultLibraries>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy $(ProjectDir)..\..\libraries\SDL2\VisualC\Win32\Debug\SDL2.dll $(SolutionDir)..\..\bin\$(PlatformShortName)_$(Configuration)\ /d /y</Command>
+      <Command>xcopy $(ProjectDir)..\..\libraries\SDL3\VisualC\Win32\Debug\SDL3.dll $(SolutionDir)..\..\bin\$(PlatformShortName)_$(Configuration)\ /d /y</Command>
     </PostBuildEvent>
     <PostBuildEvent>
       <Message>Copy DLLs</Message>
@@ -180,18 +181,18 @@
       <TreatWarningAsError>true</TreatWarningAsError>
       <ExceptionHandling>false</ExceptionHandling>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
-      <DisableSpecificWarnings>4100;4189;4201;4996;4127;4756;6385;6386;26451;6255;6385;26451;4456;4457</DisableSpecificWarnings>
+      <DisableSpecificWarnings>4100;4189;4201;4996;4127;4756;6385;6386;26451;6255;6385;26451;4456;4457;4311</DisableSpecificWarnings>
       <PreprocessToFile>false</PreprocessToFile>
       <LanguageStandard>stdcpp14</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>SDL2.lib;SDL2main.lib;opengl32.lib;legacy_stdio_definitions.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>SDL3.lib;opengl32.lib;legacy_stdio_definitions.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <IgnoreSpecificDefaultLibraries>msvcrt.lib</IgnoreSpecificDefaultLibraries>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy "$(ProjectDir)..\..\libraries\SDL2\VisualC\x64\Debug\SDL2.dll" "$(SolutionDir)..\..\bin\$(PlatformShortName)_$(Configuration)\" /d /y</Command>
+      <Command>xcopy "$(ProjectDir)..\..\libraries\SDL3\VisualC\x64\Debug\SDL3.dll" "$(SolutionDir)..\..\bin\$(PlatformShortName)_$(Configuration)\" /d /y</Command>
     </PostBuildEvent>
     <PostBuildEvent>
       <Message>Copy DLLs</Message>
@@ -209,16 +210,17 @@
       <TreatWarningAsError>true</TreatWarningAsError>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <DisableSpecificWarnings>4100;4189;4201;4996;4127;4756;6385;6386;26451;6255;6385;26451;4456;4457</DisableSpecificWarnings>
+      <LanguageStandard>stdcpp14</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>SDL2.lib;SDL2main.lib;opengl32.lib;legacy_stdio_definitions.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>SDL2.lib;opengl32.lib;legacy_stdio_definitions.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy $(ProjectDir)..\..\libraries\SDL2\VisualC\Win32\Release\SDL2.dll $(SolutionDir)..\..\bin\$(PlatformShortName)_$(Configuration)\ /d /y</Command>
+      <Command>xcopy $(ProjectDir)..\..\libraries\SDL3\VisualC\Win32\Release\SDL3.dll $(SolutionDir)..\..\bin\$(PlatformShortName)_$(Configuration)\ /d /y</Command>
     </PostBuildEvent>
     <PostBuildEvent>
       <Message>Copy DLLs</Message>
@@ -243,13 +245,13 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>SDL2.lib;SDL2main.lib;opengl32.lib;legacy_stdio_definitions.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>SDL3.lib;opengl32.lib;legacy_stdio_definitions.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
       <ForceSymbolReferences>
       </ForceSymbolReferences>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy "$(ProjectDir)..\..\libraries\SDL2\VisualC\x64\Debug\SDL2.dll" "$(SolutionDir)..\..\bin\$(PlatformShortName)_$(Configuration)\" /d /y</Command>
+      <Command>xcopy "$(ProjectDir)..\..\libraries\SDL3\VisualC\x64\Release\SDL3.dll" "$(SolutionDir)..\..\bin\$(PlatformShortName)_$(Configuration)\" /d /y</Command>
     </PostBuildEvent>
     <PostBuildEvent>
       <Message>Copy DLLs</Message>
@@ -267,16 +269,17 @@
       <TreatWarningAsError>true</TreatWarningAsError>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <DisableSpecificWarnings>4100;4189;4201;4996;4127;4756;6385;6386;26451;6255;6385;26451;4456;4457</DisableSpecificWarnings>
+      <LanguageStandard>stdcpp14</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>SDL2.lib;SDL2main.lib;opengl32.lib;legacy_stdio_definitions.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>SDL2.lib;opengl32.lib;legacy_stdio_definitions.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy $(ProjectDir)..\..\libraries\SDL2\VisualC\Win32\Release\SDL2.dll $(SolutionDir)..\..\bin\$(PlatformShortName)_$(Configuration)\ /d /y</Command>
+      <Command>xcopy $(ProjectDir)..\..\libraries\SDL3\VisualC\Win32\Release\SDL3.dll $(SolutionDir)..\..\bin\$(PlatformShortName)_$(Configuration)\ /d /y</Command>
     </PostBuildEvent>
     <PostBuildEvent>
       <Message>Copy DLLs</Message>
@@ -301,11 +304,11 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>false</OptimizeReferences>
-      <AdditionalDependencies>SDL2.lib;SDL2main.lib;opengl32.lib;legacy_stdio_definitions.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>SDL3.lib;opengl32.lib;legacy_stdio_definitions.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy "$(ProjectDir)..\..\libraries\SDL2\VisualC\x64\Debug\SDL2.dll" "$(SolutionDir)..\..\bin\$(PlatformShortName)_$(Configuration)\" /d /y</Command>
+      <Command>xcopy "$(ProjectDir)..\..\libraries\SDL3\VisualC\x64\Debug\SDL3.dll" "$(SolutionDir)..\..\bin\$(PlatformShortName)_$(Configuration)\" /d /y</Command>
     </PostBuildEvent>
     <PostBuildEvent>
       <Message>Copy DLLs</Message>

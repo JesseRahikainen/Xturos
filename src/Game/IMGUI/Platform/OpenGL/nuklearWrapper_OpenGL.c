@@ -1,7 +1,7 @@
 #define NK_IMPLEMENTATION
 #include "IMGUI/nuklearWrapper.h"
 
-#include <SDL_clipboard.h>
+#include <SDL3/SDL.h>
 
 #include "Graphics/graphics.h"
 #include "Graphics/triRendering.h"
@@ -70,7 +70,8 @@ static void clipboardCopy( nk_handle usr, const char *text, int len )
 
 static void* customAlloc( nk_handle handle, void* old, nk_size size )
 {
-	return mem_Resize( old, size );
+	// this is styled like a realloc, but it's actually just an alloc
+	return mem_Allocate( size );
 }
 
 static void customFree( nk_handle handle, void* p )
@@ -100,7 +101,6 @@ void nk_xu_init( NuklearWrapper* xu, SDL_Window* win, bool useRelativeMousePos, 
 	xu->ctx.memory.pool.userdata = nk_handle_ptr( 0 );
 	
 	// device creation
-	//struct nk_xu_device* dev = &( xu.xuDev );
 	nk_buffer_init( &( xu->cmds ), &alloc, INITIAL_CMD_BUFFER_SIZE );
 	//  create the shader, TODO: share this between contexts
 	
@@ -252,22 +252,22 @@ void nk_xu_handleEvent( NuklearWrapper* xu, SDL_Event* evt )
 		mX = (int)mousePos.x;
 		mY = (int)mousePos.y;
 	} else {
-		if( ( evt->type == SDL_MOUSEBUTTONDOWN ) || ( evt->type == SDL_MOUSEBUTTONUP ) || ( evt->type == SDL_MOUSEMOTION ) ) {
-			mX = evt->button.x;
-			mY = evt->button.y;
+		if( ( evt->type == SDL_EVENT_MOUSE_BUTTON_DOWN ) || ( evt->type == SDL_EVENT_MOUSE_BUTTON_UP ) || ( evt->type == SDL_EVENT_MOUSE_MOTION ) ) {
+			mX = (int)evt->button.x;
+			mY = (int)evt->button.y;
 		}
 	}
 	
-	if( !( xu->useRelativeMousePos ) && ( evt->type == SDL_WINDOWEVENT ) && ( evt->window.event == SDL_WINDOWEVENT_RESIZED ) ) {
+	if( !( xu->useRelativeMousePos ) && ( evt->type == SDL_EVENT_WINDOW_RESIZED ) ) {
 		xu->renderWidth = evt->window.data1;
 		xu->renderHeight = evt->window.data2;
 	}
 
-    if (evt->type == SDL_KEYUP || evt->type == SDL_KEYDOWN) {
+    if (evt->type == SDL_EVENT_KEY_UP || evt->type == SDL_EVENT_KEY_DOWN) {
         /* key events */
-        int down = evt->type == SDL_KEYDOWN;
-        const Uint8* state = SDL_GetKeyboardState(0);
-        SDL_Keycode sym = evt->key.keysym.sym;
+        int down = evt->type == SDL_EVENT_KEY_DOWN;
+        const bool* state = SDL_GetKeyboardState( NULL );
+        SDL_Keycode sym = evt->key.key;
         if( ( sym == SDLK_RSHIFT ) || ( sym == SDLK_LSHIFT ) ) {
             nk_input_key( ctx, NK_KEY_SHIFT, down );
 		} else if( sym == SDLK_DELETE ) {
@@ -282,19 +282,19 @@ void nk_xu_handleEvent( NuklearWrapper* xu, SDL_Event* evt )
             nk_input_key( ctx, NK_KEY_TEXT_START, down );
 		} else if( sym == SDLK_END ) {
             nk_input_key( ctx, NK_KEY_TEXT_END, down );
-        } else if( sym == SDLK_z ) {
+        } else if( sym == SDLK_Z ) {
             nk_input_key( ctx, NK_KEY_TEXT_UNDO, down && state[SDL_SCANCODE_LCTRL] );
-        } else if( sym == SDLK_r ) {
+        } else if( sym == SDLK_R ) {
             nk_input_key( ctx, NK_KEY_TEXT_REDO, down && state[SDL_SCANCODE_LCTRL] );
-        } else if( sym == SDLK_c ) {
+        } else if( sym == SDLK_C ) {
             nk_input_key( ctx, NK_KEY_COPY, down && state[SDL_SCANCODE_LCTRL] );
-        } else if( sym == SDLK_v ) {
+        } else if( sym == SDLK_V ) {
             nk_input_key( ctx, NK_KEY_PASTE, down && state[SDL_SCANCODE_LCTRL] );
-		} else if( sym == SDLK_x ) {
+		} else if( sym == SDLK_X ) {
             nk_input_key( ctx, NK_KEY_CUT, down && state[SDL_SCANCODE_LCTRL] );
-		} else if( sym == SDLK_b ) {
+		} else if( sym == SDLK_B ) {
             nk_input_key( ctx, NK_KEY_TEXT_LINE_START, down && state[SDL_SCANCODE_LCTRL] );
-		} else if( sym == SDLK_e ) {
+		} else if( sym == SDLK_E ) {
             nk_input_key( ctx, NK_KEY_TEXT_LINE_END, down && state[SDL_SCANCODE_LCTRL] );
 		} else if( sym == SDLK_LEFT ) {
             if( state[SDL_SCANCODE_LCTRL] )
@@ -309,19 +309,19 @@ void nk_xu_handleEvent( NuklearWrapper* xu, SDL_Event* evt )
 				nk_input_key( ctx, NK_KEY_RIGHT, down );
 			}
         }
-    } else if( ( evt->type == SDL_MOUSEBUTTONDOWN ) || ( evt->type == SDL_MOUSEBUTTONUP ) ) {
+    } else if( ( evt->type == SDL_EVENT_MOUSE_BUTTON_DOWN ) || ( evt->type == SDL_EVENT_MOUSE_BUTTON_UP ) ) {
         /* mouse button */
-        int down = evt->type == SDL_MOUSEBUTTONDOWN;
+        int down = evt->type == SDL_EVENT_MOUSE_BUTTON_DOWN;
         if( evt->button.button == SDL_BUTTON_LEFT )		nk_input_button( ctx, NK_BUTTON_LEFT, mX, mY, down );
         if( evt->button.button == SDL_BUTTON_MIDDLE )	nk_input_button( ctx, NK_BUTTON_MIDDLE, mX, mY, down );
         if( evt->button.button == SDL_BUTTON_RIGHT )	nk_input_button( ctx, NK_BUTTON_RIGHT, mX, mY, down );
-    } else if( evt->type == SDL_MOUSEMOTION ) {
+    } else if( evt->type == SDL_EVENT_MOUSE_MOTION ) {
 		nk_input_motion( ctx, mX, mY );
-    } else if( evt->type == SDL_TEXTINPUT ) {
+    } else if( evt->type == SDL_EVENT_TEXT_INPUT ) {
         nk_glyph glyph;
         memcpy( glyph, evt->text.text, NK_UTF_SIZE );
         nk_input_glyph( ctx, glyph );
-    } else if( evt->type == SDL_MOUSEWHEEL ) {
+    } else if( evt->type == SDL_EVENT_MOUSE_WHEEL ) {
 		struct nk_vec2 scroll;
 		scroll.y = (float)evt->wheel.y;
 		scroll.x = (float)evt->wheel.x;

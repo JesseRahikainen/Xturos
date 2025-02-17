@@ -1,5 +1,5 @@
 #include <stdlib.h>
-#include <SDL_assert.h>
+#include <SDL3/SDL_assert.h>
 #include <math.h>
 #include "mathUtil.h"
 

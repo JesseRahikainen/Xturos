@@ -95,8 +95,8 @@ int debugRenderer_Circle( unsigned int camFlags, Vector2 center, float radius, C
 	Vector2 circPos[NUM_CIRC_VERTS];
 
 	for( int i = 0; i < NUM_CIRC_VERTS; ++i ) {
-		circPos[i].v[0] = center.v[0] + ( sinf( ( (float)(i) ) * ( ( 2.0f * (float)M_PI ) / (float)(NUM_CIRC_VERTS) ) ) * radius );
-		circPos[i].v[1] = center.v[1] + ( cosf( ( (float)(i) ) * ( ( 2.0f * (float)M_PI ) / (float)(NUM_CIRC_VERTS) ) ) * radius );
+		circPos[i].v[0] = center.v[0] + ( sinf( ( (float)(i) ) * ( ( 2.0f * (float)M_PI_F ) / (float)(NUM_CIRC_VERTS) ) ) * radius );
+		circPos[i].v[1] = center.v[1] + ( cosf( ( (float)(i) ) * ( ( 2.0f * (float)M_PI_F ) / (float)(NUM_CIRC_VERTS) ) ) * radius );
 	}
 
 	fail = 0;
@@ -113,8 +113,8 @@ int debugRenderer_Ellipse( unsigned int camFlags, Vector2 center, float horizRad
 	Vector2 ellipsePos[NUM_CIRC_VERTS];
 
 	for( int i = 0; i < NUM_CIRC_VERTS; ++i ) {
-		ellipsePos[i].v[0] = center.v[0] + ( sinf( ( (float)(i) ) * ( ( 2.0f * (float)M_PI ) / (float)(NUM_CIRC_VERTS) ) ) * horizRadius );
-		ellipsePos[i].v[1] = center.v[1] + ( cosf( ( (float)(i) ) * ( ( 2.0f * (float)M_PI ) / (float)(NUM_CIRC_VERTS) ) ) * vertRadius );
+		ellipsePos[i].v[0] = center.v[0] + ( sinf( ( (float)(i) ) * ( ( 2.0f * (float)M_PI_F ) / (float)(NUM_CIRC_VERTS) ) ) * horizRadius );
+		ellipsePos[i].v[1] = center.v[1] + ( cosf( ( (float)(i) ) * ( ( 2.0f * (float)M_PI_F ) / (float)(NUM_CIRC_VERTS) ) ) * vertRadius );
 	}
 
 	fail = 0;

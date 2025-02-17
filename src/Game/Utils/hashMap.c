@@ -2,11 +2,11 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <SDL_assert.h>
+#include <SDL3/SDL_assert.h>
 #include <string.h>
 #include <math.h>
 
-#include <SDL_stdinc.h>
+#include <SDL3/SDL_stdinc.h>
 
 #include "Math/mathUtil.h"
 #include "System/memory.h"

@@ -34,7 +34,7 @@ typedef enum android_LogPriority {
     SDL_LOG_PRIORITY_CRITICAL,
 */
 
-#include <SDL_log.h>
+#include <SDL3/SDL_log.h>
 #define LOG_VERBOSE (int)SDL_LOG_PRIORITY_VERBOSE
 #define LOG_DEBUG (int)SDL_LOG_PRIORITY_DEBUG
 #define LOG_INFO (int)SDL_LOG_PRIORITY_INFO

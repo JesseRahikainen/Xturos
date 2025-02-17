@@ -1,5 +1,5 @@
-#include <SDL_assert.h>
-#include <SDL_stdinc.h>
+#include <SDL3/SDL_assert.h>
+#include <SDL3/SDL_stdinc.h>
 #include "tween.h"
 #include "Math/mathUtil.h"
 #include <stdio.h>

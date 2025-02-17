@@ -1,7 +1,6 @@
 #ifdef OPENGL_GFX
 
-#include <SDL_syswm.h>
-#include <SDL_video.h>
+#include <SDL3/SDL_video.h>
 
 #include "Graphics/Platform/graphicsPlatform.h"
 
@@ -235,7 +234,7 @@ void gfxPlatform_CleanUp( void )
 
 void gfxPlatform_ShutDown( void )
 {
-	SDL_GL_DeleteContext( glContext );
+	SDL_GL_DestroyContext( glContext );
 }
 
 bool gfxPlatform_CreateTextureFromLoadedImage( TextureFormat texFormat, LoadedImage* image, Texture* outTexture )
@@ -311,9 +310,9 @@ bool gfxPlatform_CreateTextureFromSurface( SDL_Surface* surface, Texture* outTex
 	// convert the pixels into a texture
 	GLenum texFormat;
 
-	if( surface->format->BytesPerPixel == 4 ) {
+	if( surface->format == SDL_PIXELFORMAT_RGBA32 ) {
 		texFormat = GL_RGBA;
-	} else if( surface->format->BytesPerPixel == 3 ) {
+	} else if( surface->format == SDL_PIXELFORMAT_RGB24 ) {
 		texFormat = GL_RGB;
 	} else {
 		llog( LOG_INFO, "Unable to handle format!" );

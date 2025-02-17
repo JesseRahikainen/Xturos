@@ -1,7 +1,7 @@
 #include "ecps_componentBitFlags.h"
 
 #include <stdlib.h>
-#include <SDL_assert.h>
+#include <SDL3/SDL_assert.h>
 
 void ecps_cbf_SetFlagOn( ComponentBitFlags* flags, uint32_t flagToSet )
 {

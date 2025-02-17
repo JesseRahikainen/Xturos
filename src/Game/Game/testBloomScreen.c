@@ -25,7 +25,8 @@ typedef struct {
 	Vector2 velocity;
 	Vector2 pos;
 } MovingThing;
-static MovingThing movingThings[40];
+#define NUM_MOVING_THINGS 40
+static MovingThing movingThings[NUM_MOVING_THINGS];
 
 static void testBloomScreen_Enter( void )
 {
@@ -56,7 +57,7 @@ static void testBloomScreen_Enter( void )
 
 
 
-	for( size_t i = 0; i < ARRAY_SIZE( movingThings ); ++i ) {
+	for( size_t i = 0; i < NUM_MOVING_THINGS; ++i ) {
 		int img = whiteImg;
 		if( ( i % 2 ) == 0 ) {
 			img = markerImg;
@@ -69,7 +70,7 @@ static void testBloomScreen_Enter( void )
 		movingThings[i].velocity.x = ( rand_Choice( NULL ) ? 1.0f : -1.0f ) * speed;
 		movingThings[i].velocity.y = ( rand_Choice( NULL ) ? 1.0f : -1.0f ) * speed;
 
-		if( i > ( ARRAY_SIZE( movingThings ) / 2 ) ) {
+		if( i > ( NUM_MOVING_THINGS / 2 ) ) {
 			// make glow!
 		}
 	}
@@ -93,7 +94,7 @@ static void testBloomScreen_Draw( void )
 
 static void testBloomScreen_PhysicsTick( float dt )
 {
-	for( size_t i = 0; i < ARRAY_SIZE( movingThings ); ++i ) {
+	for( size_t i = 0; i < NUM_MOVING_THINGS; ++i ) {
 		vec2_AddScaled( &movingThings[i].pos, &movingThings[i].velocity, dt, &movingThings[i].pos );
 
 		if( movingThings[i].pos.x <= left ) {

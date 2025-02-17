@@ -1,7 +1,7 @@
 #ifndef GRAPHICS_PLATFORM
 #define GRAPHICS_PLATFORM
 
-#include <SDL_video.h>
+#include <SDL3/SDL_video.h>
 #include <stdbool.h>
 
 #include "Graphics/color.h"

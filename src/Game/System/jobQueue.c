@@ -1,7 +1,7 @@
 #include "jobQueue.h"
 
 #include <stddef.h>
-#include <SDL.h>
+#include <SDL3/SDL.h>
 
 #include "System/platformLog.h"
 #include "Utils/stretchyBuffer.h"
@@ -24,8 +24,8 @@ bool jq_ProcessNextJob( void )
 	return jrq_ProcessNext( &jobQueue );
 }
 
-static SDL_sem* jobQueueSemaphore = NULL;
-static SDL_atomic_t quitFlag;
+static SDL_Semaphore* jobQueueSemaphore = NULL;
+static SDL_AtomicInt quitFlag;
 static SDL_Thread** sbThreadPool = NULL;
 
 #include <stdio.h>
@@ -35,7 +35,7 @@ static int jobThread( void* data )
 	while( quitFlag.value == 0 ) {
 		if( !jrq_ProcessNext( &jobQueue ) ) {
 			// no job to process, wait until more jobs are added
-			SDL_SemWait( jobQueueSemaphore );
+			SDL_WaitSemaphore( jobQueueSemaphore );
 		}
 	}
 
@@ -63,7 +63,7 @@ int jq_Initialize( uint8_t numThreads )
 	}
 
 #ifdef THREAD_SUPPORT
-	SDL_AtomicSet( &quitFlag, 0 );
+	SDL_SetAtomicInt( &quitFlag, 0 );
 
 	jobQueueSemaphore = SDL_CreateSemaphore( 0 );
 	if( jobQueueSemaphore == NULL ) {
@@ -107,11 +107,11 @@ void jq_ShutDown( void )
 {
 #ifdef THREAD_SUPPORT
 	// signal to the threads that they need to shut down
-	SDL_AtomicSet( &quitFlag, 1 );
+	SDL_SetAtomicInt( &quitFlag, 1 );
 
 	// wait for all the threads to shut down
 	for( size_t i = 0; i < sb_Count( sbThreadPool ); ++i ) {
-		SDL_SemPost( jobQueueSemaphore ); // get the threads to wake up
+		SDL_SignalSemaphore( jobQueueSemaphore ); // get the threads to wake up
 
 		// don't need the return value, so don't bother waiting
 		SDL_DetachThread( sbThreadPool[i] );
@@ -148,7 +148,7 @@ bool jq_AddJob( JobProcessFunc proc, void* data )
 		return false;
 	}//*/
 	addJob( proc, data, &jobQueue );
-	SDL_SemPost( jobQueueSemaphore );
+	SDL_SignalSemaphore( jobQueueSemaphore );
 
 	return true;
 }

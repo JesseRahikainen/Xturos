@@ -315,13 +315,13 @@ static void testAStarScreen_Enter( void )
 	llog( LOG_DEBUG, " a - Generate maze" );
 	llog( LOG_DEBUG, " s - Reset and search" );
 
-	input_BindOnKeyPress( SDLK_z, setCurrentStart );
-	input_BindOnKeyPress( SDLK_x, setCurrentEnd );
-	input_BindOnKeyPress( SDLK_q, setCurrentOpen );
-	input_BindOnKeyPress( SDLK_w, setCurrentSticky );
-	input_BindOnKeyPress( SDLK_e, setCurrentClosed );
-	input_BindOnKeyPress( SDLK_a, generateMaze );
-	input_BindOnKeyPress( SDLK_s, resetAndSearch );
+	input_BindOnKeyPress( SDLK_Z, setCurrentStart );
+	input_BindOnKeyPress( SDLK_X, setCurrentEnd );
+	input_BindOnKeyPress( SDLK_Q, setCurrentOpen );
+	input_BindOnKeyPress( SDLK_W, setCurrentSticky );
+	input_BindOnKeyPress( SDLK_E, setCurrentClosed );
+	input_BindOnKeyPress( SDLK_A, generateMaze );
+	input_BindOnKeyPress( SDLK_S, resetAndSearch );
 
 	sbPath = NULL;
 

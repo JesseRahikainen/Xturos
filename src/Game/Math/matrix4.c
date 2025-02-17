@@ -1,6 +1,6 @@
 #include <string.h>
 #include <math.h>
-#include <SDL_assert.h>
+#include <SDL3/SDL_assert.h>
 #include "matrix4.h"
 #include "System/platformLog.h"
 

@@ -429,7 +429,7 @@ static void bordersTestScreen_Exit( void )
 
 static void bordersTestScreen_ProcessEvents( SDL_Event* e )
 {
-	if( e->type == SDL_MOUSEWHEEL ) {
+	if( e->type == SDL_EVENT_MOUSE_WHEEL ) {
 		zoomDelta = e->wheel.y * 0.1f;
 	}
 }

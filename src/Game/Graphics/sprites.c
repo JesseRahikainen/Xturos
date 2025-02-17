@@ -1,6 +1,6 @@
 #include "sprites.h"
 
-#include <SDL_assert.h>
+#include <SDL3/SDL_assert.h>
 
 #include "images.h"
 #include "color.h"
@@ -63,7 +63,7 @@ int spr_Init( void )
 		stencilCompID = ecps_AddComponentType( &spriteECPS, "STNCL", 0, sizeof( GCStencilData ), ALIGN_OF( GCStencilData ), NULL, NULL, NULL, NULL );
 
 		ecps_CreateProcess( &spriteECPS, "DRAW", NULL, runRenderProc, NULL, &renderProc, 2, transformCompID, spriteCompID );
-		ecps_CreateProcess( &spriteECPS, "SWAP", NULL, runSwapProc, NULL, &renderProc, 1, transformCompID );
+		ecps_CreateProcess( &spriteECPS, "SWAP", NULL, runSwapProc, NULL, &swapProc, 1, transformCompID );
 	} ecps_FinishInitialization( &spriteECPS );
 
 	gfx_AddClearCommand( swap );
@@ -129,9 +129,7 @@ void spr_Update( EntityID sprite, const Vector2* newPos, const Vector2* newScale
 
 void spr_SwitchImage( EntityID sprite, int newImage )
 {
-#ifdef _DEBUG
 	SDL_assert( img_IsValidImage( newImage ) );
-#endif
 	Entity entity;
 	if( !ecps_GetEntityByID( &spriteECPS, sprite, &entity ) ) {
 		return;

@@ -1,7 +1,7 @@
 #ifndef COLOR_H
 #define COLOR_H
 
-#include <SDL_pixels.h>
+#include <SDL3/SDL_pixels.h>
 #include <stdint.h>
 #include <stdbool.h>
 #include "Others/cmp.h"

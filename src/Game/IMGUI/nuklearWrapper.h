@@ -10,7 +10,7 @@ the Draw function.
 */
 
 #include <stdbool.h>
-#include <SDL_events.h>
+#include <SDL3/SDL_events.h>
 
 #if defined( WIN32 ) || defined( __ANDROID__ ) || defined( __EMSCRIPTEN__ )
 	#include "IMGUI/Platform/OpenGL/nuklearWrapper_OpenGL.h"

@@ -3,7 +3,7 @@
 
 // so we always have matching defines
 
-#include <SDL_assert.h>
+#include <SDL3/SDL_assert.h>
 
 #define NK_INCLUDE_FIXED_TYPES
 #define NK_INCLUDE_STANDARD_IO 1

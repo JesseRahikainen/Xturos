@@ -1,7 +1,6 @@
 #include "gfxUtil.h"
 
-#include <SDL_endian.h>
-#include <SDL_assert.h>
+#include <SDL3/SDL.h>
 
 // gets sbt_image.h to use our custom memory allocation
 #include <stdlib.h>
@@ -243,39 +242,25 @@ clean_up:
 }
 
 // Returns whether the SDL_Surface has any pixels that have a transparency that aren't completely clear or solid.
-int gfxUtil_SurfaceIsTranslucent( SDL_Surface* surface )
+bool gfxUtil_SurfaceIsTranslucent( SDL_Surface* surface )
 {
-	Uint8 r, g, b, a;
-	int bpp = surface->format->BytesPerPixel;
+	const SDL_PixelFormatDetails* formatDetails = SDL_GetPixelFormatDetails( surface->format );
+	if( formatDetails == NULL ) {
+		llog( LOG_ERROR, "Unable to get format details: %s", SDL_GetError( ) );
+		return false;
+	}
 
+	Uint8 a;
 	for( int y = 0; y < surface->h; ++y ) {
 		for( int x = 0; x < surface->w; ++x ) {
-			Uint32 pixel;
-			// pitch seems to be in bits, not bytes as the documentation says it should be
-			Uint8 *pos = ( ( (Uint8*)surface->pixels ) + ( ( y * ( surface->pitch / 8 ) ) + ( x * bpp ) ) );
-			switch( bpp ) {
-			case 3:
-				if( SDL_BYTEORDER == SDL_BIG_ENDIAN ) {
-					pixel = ( pos[0] << 16 ) | ( pos[1] << 8 ) | pos[2];
-				} else {
-					pixel = pos[0] | ( pos[1] << 8 ) | ( pos[2] << 16 );
-				}
-				break;
-			case 4:
-				pixel = *( (Uint32*)pos );
-				break;
-			default:
-				pixel = 0;
-				break;
-			}
-			SDL_GetRGBA( pixel, surface->format, &r, &g, &b, &a );
+			SDL_ReadSurfacePixel( surface, x, y, NULL, NULL, NULL, &a );
 			if( ( a > 0x00 ) && ( a < 0xFF ) ) {
-				return 1;
+				return true;
 			}
 		}
 	}
 
-	return 0;
+	return false;
 }
 
 void gfxUtil_TakeScreenShot( const char* outputPath )

@@ -1,7 +1,7 @@
 #ifndef CAMERA_H
 #define CAMERA_H
 
-#include <SDL.h>
+#include <SDL3/SDL.h>
 #include <stdint.h>
 #include <stdbool.h>
 

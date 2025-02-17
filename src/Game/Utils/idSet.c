@@ -1,6 +1,6 @@
 #include "idSet.h"
 
-#include <SDL_assert.h>
+#include <SDL3/SDL_assert.h>
 #include "stretchyBuffer.h"
 
 // TODO: Merge this into entityIDs.c, the only difference is this one can handle a variable amount of ids and the other can't
