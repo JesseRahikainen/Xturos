@@ -218,3 +218,4 @@ proj/_webasm/debug_build
 [Ll]ibraries/
 
 # Java and iOS will have their own custom .gitignores because getting all that in here would make it too large and unwieldy
+/bin/data/test.pkg
