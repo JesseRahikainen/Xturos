@@ -1,6 +1,6 @@
 #include "editorHub.h"
 
-#include <varargs.h>
+#include <stdarg.h>
 
 #include "Graphics/graphics.h"
 #include "Graphics/images.h"
@@ -235,7 +235,7 @@ static void toggleEditor( size_t idx )
 	}
 }
 
-static int editorHubScreen_Enter( void )
+static void editorHubScreen_Enter( void )
 {
 	cam_TurnOnFlags( 0, 1 );
 
@@ -243,15 +243,11 @@ static int editorHubScreen_Enter( void )
 
 	hub_InitAllEditors( );
 	hub_RegisterAllEditors( );
-
-	return 1;
 }
 
-static int editorHubScreen_Exit( void )
+static void editorHubScreen_Exit( void )
 {
 	sb_Release( sbEditors );
-
-	return 1;
 }
 
 static void editorHubScreen_ProcessEvents( SDL_Event* e )

@@ -1,6 +1,7 @@
 ﻿#include "spriteAnimationEditor.h"
 
 #include <SDL3/SDL.h>
+#include <limits.h>
 
 // BIG TODO: make this using an event based approach so we can support undo and redo.
 
@@ -11,7 +12,7 @@
 #include "IMGUI/nuklearWrapper.h"
 #include "System/platformLog.h"
 #include "Utils/stretchyBuffer.h"
-#include "CollisionDetection.h"
+#include "collisionDetection.h"
 #include "Math/mathUtil.h"
 #include "Utils/hashMap.h"
 #include "Graphics/images.h"

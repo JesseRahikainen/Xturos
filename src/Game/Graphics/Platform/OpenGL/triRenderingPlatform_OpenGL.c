@@ -28,38 +28,38 @@ bool triPlatform_LoadShaders( void )
 	shaders_Destroy( shaderPrograms, NUM_SHADERS );
 
 	// Sprite shader
-	shaderDefs[0].fileName = NULL;
+	shaderDefs[0].fileName = "Shaders/vertDefault.glsl";
 	shaderDefs[0].type = GL_VERTEX_SHADER;
-	shaderDefs[0].shaderText = DEFAULT_VERTEX_SHADER;
+	shaderDefs[0].shaderText = NULL;// DEFAULT_VERTEX_SHADER;
 
-	shaderDefs[1].fileName = NULL;
+	shaderDefs[1].fileName = "Shaders/fragDefault.glsl";
 	shaderDefs[1].type = GL_FRAGMENT_SHADER;
-	shaderDefs[1].shaderText = DEFAULT_FRAG_SHADER;
+	shaderDefs[1].shaderText = NULL;// DEFAULT_FRAG_SHADER;
 
 	// for rendering fonts
-	shaderDefs[2].fileName = NULL;
+	shaderDefs[2].fileName = "Shaders/fragFont.glsl";
 	shaderDefs[2].type = GL_FRAGMENT_SHADER;
-	shaderDefs[2].shaderText = FONT_FRAG_SHADER;
+	shaderDefs[2].shaderText = NULL;// FONT_FRAG_SHADER;
 
 	// simple sdf rendering
-	shaderDefs[3].fileName = NULL;
+	shaderDefs[3].fileName = "Shaders/fragSimpleSDF.glsl";
 	shaderDefs[3].type = GL_FRAGMENT_SHADER;
-	shaderDefs[3].shaderText = SIMPLE_SDF_FRAG_SHADER;
+	shaderDefs[3].shaderText = NULL;// SIMPLE_SDF_FRAG_SHADER;
 
 	// image sdf rendering
-	shaderDefs[4].fileName = NULL;
+	shaderDefs[4].fileName = "Shaders/fragImageSDF.glsl";
 	shaderDefs[4].type = GL_FRAGMENT_SHADER;
-	shaderDefs[4].shaderText = IMAGE_SDF_FRAG_SHADER;
+	shaderDefs[4].shaderText = NULL;// IMAGE_SDF_FRAG_SHADER;
 
 	// outlined image sdf rendering
-	shaderDefs[5].fileName = NULL;
+	shaderDefs[5].fileName = "Shaders/fragOutlineImageSDF.glsl";
 	shaderDefs[5].type = GL_FRAGMENT_SHADER;
-	shaderDefs[5].shaderText = OUTLINED_IMAGE_SDF_FRAG_SHADER;
+	shaderDefs[5].shaderText = NULL;// OUTLINED_IMAGE_SDF_FRAG_SHADER;
 
 	// alpha map sdf rendering
-	shaderDefs[6].fileName = NULL;
+	shaderDefs[6].fileName = "Shadres/fragAlphaMappedSDF.glsl";
 	shaderDefs[6].type = GL_FRAGMENT_SHADER;
-	shaderDefs[6].shaderText = ALPHA_MAPPED_SDF_FRAG_SHADE;
+	shaderDefs[6].shaderText = NULL;// ALPHA_MAPPED_SDF_FRAG_SHADE;
 
 
 	progDefs[0].fragmentShader = 1;

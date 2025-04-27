@@ -852,7 +852,7 @@ int ecps_AddComponentToEntity( ECPS* ecps, Entity* entity, ComponentID component
 	SDL_assert( entity != NULL );
 
 	if( !ecps_ct_IsComponentTypeValid( &( ecps->componentTypes ), componentID ) ) {
-		llog( LOG_DEBUG, "Attempting to add invalid component to entity." );
+		llog( LOG_DEBUG, "Attempting to add invalid component to entity. compID: %u, entity: %u.", componentID, entity ? entity->id : 0 );
 		return -1;
 	}
 

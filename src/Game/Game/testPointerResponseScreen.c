@@ -115,15 +115,15 @@ static void testPointerResponseScreen_Enter( void )
 		gp_RegisterProcesses( &ecps );
 	} ecps_FinishInitialization( &ecps );//*/
 
+	SerializedECPS serializedECPS;
+	ecps_InitSerialized( &serializedECPS );
+
 	createTestButton( vec2( 400.0f, 300.0f ), vec2( 100.0f, 100.0f ) );
 	createTestButton( vec2( 375.0f, 275.0f ), vec2( 100.0f, 100.0f ) );
 	createTestButton( vec2( 350.0f, 250.0f ), vec2( 100.0f, 100.0f ) );
 	createTestButton( vec2( 325.0f, 225.0f ), vec2( 100.0f, 100.0f ) );
 
 	// serialize the buttons
-	SerializedECPS serializedECPS;
-	ecps_InitSerialized( &serializedECPS );
-
 	ecps_GenerateSerializedECPS( &defaultECPS, &serializedECPS );
 
 	// make sure the number of buttons is correct
@@ -140,6 +140,7 @@ static void testPointerResponseScreen_Enter( void )
 	// try saving out and loading in
 	ecps_SaveSerializedECPS( "test.pkg", &serializedECPS );
 	ecps_CleanSerialized( &serializedECPS );
+	//*/
 	ecps_LoadSerializedECPS( "test.pkg", &serializedECPS );
 
 	// add some more buttons

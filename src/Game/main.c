@@ -785,7 +785,7 @@ int main( int argc, char** argv )
 	//startState = &testECPSScreenState;
 	//startState = &testMountingState;
 	if( isEditorMode ) {
-		startState = &editorHubScreenState;
+		//startState = &editorHubScreenState;
 	}
 	gsm_EnterState( &globalFSM, startState );
 

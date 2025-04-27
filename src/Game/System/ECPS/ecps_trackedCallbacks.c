@@ -2,46 +2,57 @@
 
 #include <stdbool.h>
 #include <SDL3/SDL_assert.h>
+#include <assert.h>
 
 #include "System/platformLog.h"
 
 #include "Utils/hashMap.h"
 
-#if defined(_MSC_VER)
-#define section_foreach_tracked_ecps_entry(elem)																												\
-const TrackedECPSFunctionRef* elem = *(const TrackedECPSFunctionRef* const*)( (uintptr_t)&startTrackedECPSCallbacks + sizeof( startTrackedECPSCallbacks ) );	\
-for( uintptr_t current = (uintptr_t)&startTrackedECPSCallbacks + sizeof( startTrackedECPSCallbacks );															\
-	 current < (uintptr_t)&endTrackedECPSCallbacks;																												\
-	 current += sizeof( const TrackedECPSFunctionRef* ), elem = *(const TrackedECPSFunctionRef* const*)current )
+typedef struct {
+	const char* id;
+	TrackedCallback callback;
+} TrackedECPSFunctionRef;
+#define MAX_TRACKED_ECPS_FUNCTIONS 64
+static TrackedECPSFunctionRef trackedECPSFunctions[MAX_TRACKED_ECPS_FUNCTIONS];
+static int trackedECPSFunctionsCount = 0;
 
-#define section_foreach_tracked_tween_entry(elem)																											\
-const TrackedTweenFunctionRef* elem = *(const TrackedTweenFunctionRef* const*)( (uintptr_t)&startTrackedTweenFuncs + sizeof( startTrackedTweenFuncs ) );	\
-for( uintptr_t current = (uintptr_t)&startTrackedTweenFuncs + sizeof( startTrackedTweenFuncs );																\
-	 current < (uintptr_t)&endTrackedTweenFuncs;																											\
-	 current += sizeof( const TrackedTweenFunctionRef* ), elem = *(const TrackedTweenFunctionRef* const*)current )
+void registerTrackedECPSCallback( const char* id, const TrackedCallback func )
+{
+	assert( trackedECPSFunctionsCount < MAX_TRACKED_ECPS_FUNCTIONS );
+	if( trackedECPSFunctionsCount < MAX_TRACKED_ECPS_FUNCTIONS ) {
+		trackedECPSFunctions[trackedECPSFunctionsCount].id = id;
+		trackedECPSFunctions[trackedECPSFunctionsCount].callback = func;
+		++trackedECPSFunctionsCount;
+	}
+}
 
-#elif defined(__EMSCRIPTEN__)
-extern const TrackedECPSFunctionRef* __start_ecscb;
-extern const TrackedECPSFunctionRef* __stop_ecscb;
-
-#define section_foreach_tracked_entry(elem)																						\
-const TrackedECPSFunctionRef* elem = *(const TrackedECPSFunctionRef* const*)( (uintptr_t)&__start_ecscb + sizeof( __start_ecscb ) );	\
-for( uintptr_t current = (uintptr_t)&__start_ecscb;																				\
-	 current < (uintptr_t)&__stop_ecscb;																						\
-	 current += sizeof( const TrackedECPSFunctionRef* ), elem = *(const TrackedECPSFunctionRef* const*)current )
+#define section_foreach_tracked_ecps_entry(elem)											\
+	const TrackedECPSFunctionRef* elem = &trackedECPSFunctions[0];							\
+	for( int i = 0; i < trackedECPSFunctionsCount; ++i, elem = &trackedECPSFunctions[i] )
 
 
-extern const TrackedTweenFunctionRef* __start_tweenb;
-extern const TrackedTweenFunctionRef* __stop_tweenb;
 
-#define section_foreach_tracked_tween_entry(elem)																						\
-const TrackedTweenFunctionRef* elem = *(const TrackedTweenFunctionRef* const*)( (uintptr_t)&__start_tweenb + sizeof( __start_tweenb ) );	\
-for( uintptr_t current = (uintptr_t)&__start_tweenb;																				\
-	 current < (uintptr_t)&__stop_tweenb;																						\
-	 current += sizeof( const TrackedTweenFunctionRef* ), elem = *(const TrackedTweenFunctionRef* const*)current )
-#else
-#error Tracked callbacks not implmented for this platform.
-#endif
+typedef struct {
+	const char* id;
+	EaseFunc func;
+} TrackedTweenFunctionRef;
+
+#define MAX_TRACKED_TWEEN_FUNCTIONS 40
+static TrackedTweenFunctionRef trackedTweenFunctions[MAX_TRACKED_TWEEN_FUNCTIONS];
+static int trackedTweenFunctionsCount = 0;
+void registerTrackedTweenFunc( const char* id, const EaseFunc func )
+{
+	assert( trackedECPSFunctionsCount < MAX_TRACKED_TWEEN_FUNCTIONS );
+	if( trackedTweenFunctionsCount < MAX_TRACKED_TWEEN_FUNCTIONS ) {
+		trackedTweenFunctions[trackedTweenFunctionsCount].id = id;
+		trackedTweenFunctions[trackedTweenFunctionsCount].func = func;
+		++trackedTweenFunctionsCount;
+	}
+}
+
+#define section_foreach_tracked_tween_entry(elem)											\
+	const TrackedTweenFunctionRef* elem = &trackedTweenFunctions[0];						\
+	for( int i = 0; i < trackedTweenFunctionsCount; ++i, elem = &trackedTweenFunctions[i] )
 
 void ecps_VerifyCallbackIDs( void )
 {

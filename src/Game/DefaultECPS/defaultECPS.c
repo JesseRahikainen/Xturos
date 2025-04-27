@@ -1,4 +1,5 @@
 #include <SDL3/SDL_assert.h>
+#include <assert.h>
 
 #include "defaultECPS.h"
 
@@ -8,55 +9,49 @@
 #include "Utils\helpers.h"
 #include "Utils\stretchyBuffer.h"
 
-#if defined(_MSC_VER)
-#define section_foreach_default_component_callback(elem)																										\
-DefaultECPSFunc elem = *(DefaultECPSFunc*)( (uintptr_t)&startRegisterComponentsFuncs + sizeof( startRegisterComponentsFuncs ) );					\
-for( uintptr_t current = (uintptr_t)&startRegisterComponentsFuncs + sizeof( startRegisterComponentsFuncs );														\
-	 current < (uintptr_t)&endRegisterComponentsFuncs;																											\
-	 current += sizeof( DefaultECPSFunc* ), elem = *(DefaultECPSFunc*)current )
+#define MAX_DEFAULT_COMPONENT_CALLBACKS 32
+static int defaultComponentCallbacksCount = 0;
+DefaultECPSFunc defaultComponentCallbacks[MAX_DEFAULT_COMPONENT_CALLBACKS];
 
-#define section_foreach_default_process_callback(elem)																											\
-DefaultECPSFunc elem = *(DefaultECPSFunc*)( (uintptr_t)&startRegisterProcessesFuncs + sizeof( startRegisterProcessesFuncs ) );						\
-for( uintptr_t current = (uintptr_t)&startRegisterProcessesFuncs + sizeof( startRegisterProcessesFuncs );														\
-	 current < (uintptr_t)&endRegisterProcessFuncs;																												\
-	 current += sizeof( DefaultECPSFunc* ), elem = *(DefaultECPSFunc*)current )
-
-#elif defined(__EMSCRIPTEN__)
-extern const DefaultECPSFunc __start_regcomp;
-extern const DefaultECPSFunc __stop_regcomp;
-
-#define section_foreach_default_component_callback(elem)																		\
-const DefaultECPSFunc elem = *(const DefaultECPSFunc*)( (uintptr_t)&__start_ecscb + sizeof( __start_ecscb ) );					\
-for( uintptr_t current = (uintptr_t)&__start_ecscb;																				\
-	 current < (uintptr_t)&__stop_ecscb;																						\
-	 current += sizeof( const DefaultECPSFunc* ), elem = *(const DefaultECPSFunc*)current )
-
-
-extern const TrackedTweenFunctionRef* __start_regproc;
-extern const TrackedTweenFunctionRef* __stop_regproc;
-
-#define section_foreach_default_process_callback(elem)																						\
-const DefaultECPSFunc* elem = *(const DefaultECPSFunc* const*)( (uintptr_t)&__start_regproc + sizeof( __start_regproc ) );	\
-for( uintptr_t current = (uintptr_t)&__start_regproc;																						\
-	 current < (uintptr_t)&__stop_regproc;																									\
-	 current += sizeof( const DefaultECPSFunc* ), elem = *(const DefaultECPSFunc*)current )
-#else
-#error Tracked callbacks not implmented for this platform.
-#endif
+void registerDefaultECPSComponentCallback( DefaultECPSFunc func )
+{
+	assert( defaultComponentCallbacksCount < MAX_DEFAULT_COMPONENT_CALLBACKS );
+	if( defaultComponentCallbacksCount < MAX_DEFAULT_COMPONENT_CALLBACKS ) {
+		defaultComponentCallbacks[defaultComponentCallbacksCount] = func;
+		++defaultComponentCallbacksCount;
+	}
+}
 
 static void callAllComponentCallbacks( void )
 {
-	section_foreach_default_component_callback( callback ) {
-		if( callback ) (*callback)( &defaultECPS );
+	for( int i = 0; i < defaultComponentCallbacksCount; ++i ) {
+		DefaultECPSFunc func = defaultComponentCallbacks[i];
+		if( func ) (*func)( &defaultECPS );
 	}
 }
 
-static void callAllProcessCallbacks( void )
+#define MAX_DEFAULT_PROCESS_CALLBACKS 32
+static int defaultProcessCallbacksCount = 0;
+DefaultECPSFunc defaultProcessCallbacks[MAX_DEFAULT_PROCESS_CALLBACKS];
+
+void registerDefaultECPSProcessCallback( DefaultECPSFunc func )
 {
-	section_foreach_default_process_callback( callback ) {
-		if( callback ) (*callback)( &defaultECPS );
+	assert( defaultProcessCallbacksCount < MAX_DEFAULT_PROCESS_CALLBACKS );
+	if( defaultProcessCallbacksCount < MAX_DEFAULT_PROCESS_CALLBACKS ) {
+		defaultProcessCallbacks[defaultProcessCallbacksCount] = func;
+		++defaultProcessCallbacksCount;
 	}
 }
+
+
+static void callAllProcessCallbacks( void )
+{
+	for( int i = 0; i < defaultProcessCallbacksCount; ++i ) {
+		DefaultECPSFunc func = defaultProcessCallbacks[i];
+		if( func ) (*func)( &defaultECPS );
+	}
+}
+
 
 ECPS defaultECPS;
 

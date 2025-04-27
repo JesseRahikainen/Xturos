@@ -29,7 +29,6 @@ static void convertDirDividers( char** sbFilePath )
 static void convertDirDividers( char** sbFilePath )
 {
 	SDL_assert( false && "Not supported on this platform." );
-	return NULL;
 }
 #endif
 
@@ -272,22 +271,19 @@ static void getWorkingDirectory( void )
 }
 #else
 // returns a stretchy buffer, be sure to release it
-char* editor_chooseLoadFileLocation( char* )
+void editor_chooseLoadFileLocation( const char* fileTypeDesc, const char* fileExtension, bool multiSelect, void ( *callback )( const char* ) )
 {
 	SDL_assert( false && "Not supported on this platform." );
-	return NULL;
 }
 
 // returns a stretchy buffer, be sure to release it
-char* editor_chooseSaveFileLocation( void )
+void editor_chooseSaveFileLocation( const char* fileTypeDesc, const char* fileExtension, void ( *callback )( const char* ) )
 {
 	SDL_assert( false && "Not supported on this platform." );
-	return NULL;
 }
 
-static char* getWorkingDirectory( void )
+static void getWorkingDirectory( void )
 {
 	SDL_assert( false && "Not supported on this platform." );
-	return NULL;
 }
 #endif

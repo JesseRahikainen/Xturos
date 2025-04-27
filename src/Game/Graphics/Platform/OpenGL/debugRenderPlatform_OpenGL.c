@@ -51,13 +51,13 @@ static int createShader( void )
 {
 	ShaderDefinition debugShaderDefs[2];
 	ShaderProgramDefinition debugProgDef;
-	debugShaderDefs[0].fileName = NULL;
+	debugShaderDefs[0].fileName = "Shaders/vertDebug.glsl";
 	debugShaderDefs[0].type = GL_VERTEX_SHADER;
-	debugShaderDefs[0].shaderText = DEBUG_VERT_SHADER;
+	debugShaderDefs[0].shaderText = NULL;// DEBUG_VERT_SHADER;
 
-	debugShaderDefs[1].fileName = NULL;
+	debugShaderDefs[1].fileName = "Shaders/fragDebug.glsl";
 	debugShaderDefs[1].type = GL_FRAGMENT_SHADER;
-	debugShaderDefs[1].shaderText = DEBUG_FRAG_SHADER;
+	debugShaderDefs[1].shaderText = NULL;// DEBUG_FRAG_SHADER;
 
 	debugProgDef.fragmentShader = 1;
 	debugProgDef.vertexShader = 0;

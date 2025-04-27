@@ -2,6 +2,7 @@
 
 #include <SDL3/SDL.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "System/ECPS/entityComponentProcessSystem.h"
 #include "System/ECPS/ecps_componentTypes.h"
@@ -244,6 +245,7 @@ static bool deserializeMapComponentTypes( const ECPS* ecps, SerializedComponentI
 					return false;
 				} else {
 					// store the component id for later use
+					llog( LOG_DEBUG, "Component %s mapped to component id %u", sbComponentInfos[i].externalID, compID );
 					sbComponentInfos[i].ecpsComponentID = compID;
 				}
 			}
@@ -302,10 +304,12 @@ static bool deserializeEntityComponents( ECPS* ecps, SerializedEntityInfo* sbEnt
 
 			// add the component, then get back the data that has been allocated for it
 			//  sending in NULL as the data when it's expecting something will just zero it out
-			ecps_AddComponentToEntityByID( ecps, sbEntityInfos[i].ecpsEntityID, info.ecpsComponentID, NULL );
+			if( ecps_AddComponentToEntityByID( ecps, sbEntityInfos[i].ecpsEntityID, info.ecpsComponentID, NULL ) != 0 ) {
+				llog( LOG_ERROR, "Error adding component %s to deserialized entity.", info.externalID );
+			}
 			void* compData = NULL;
 			if( !ecps_GetComponentFromEntityByID( ecps, sbEntityInfos[i].ecpsEntityID, info.ecpsComponentID, &compData ) ) {
-				llog( LOG_ERROR, "Error creating component %s for deserialized entity.", info.externalID );
+				llog( LOG_ERROR, "Error getting component data %s from deserialized entity.", info.externalID );
 				return false;
 			}
 
@@ -549,7 +553,12 @@ bool ecps_LoadSerializedECPS( const char* fileName, SerializedECPS* serializedEC
 			goto clean_up;
 		}
 
+		compInfo.ecpsComponentID = INVALID_COMPONENT_ID;
+		compInfo.used = true;
+
 		sb_Push( serializedECPS->sbCompInfos, compInfo );
+
+		llog( LOG_DEBUG, "Read in component info - internal id: %u, external version: %u, external id: %s", compInfo.internalID, compInfo.externalVersion, compInfo.externalID );
 	}
 
 	// read the entity infos

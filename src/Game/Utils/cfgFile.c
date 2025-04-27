@@ -1,5 +1,5 @@
 #include "cfgFile.h"
-#include <SDL3/SDL_IOStream.h>
+#include <SDL3/SDL_iostream.h>
 #include <SDL3/SDL_log.h>
 #include <string.h>
 

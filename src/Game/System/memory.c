@@ -4,6 +4,7 @@
 #include <assert.h>
 #include <stdint.h>
 #include <string.h>
+#include <stdlib.h>
 #include <SDL3/SDL_stdinc.h>
 #include <SDL3/SDL_mutex.h>
 #include <stdbool.h>

@@ -1,6 +1,7 @@
 #include "bordersTestScreen.h"
 
 #include <stdbool.h>
+#include <math.h>
 
 #include "Graphics/graphics.h"
 #include "Graphics/images.h"

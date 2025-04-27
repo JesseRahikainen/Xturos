@@ -197,6 +197,10 @@
     <PostBuildEvent>
       <Message>Copy DLLs</Message>
     </PostBuildEvent>
+    <PreBuildEvent>
+      <Message>Build can copy shaders.</Message>
+      <Command>xcopy "$(SolutionDir)..\..\src\Game\Shaders\GL" "$(SolutionDir)..\..\bin\data\Shaders" /y /i /s</Command>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -256,6 +260,10 @@
     <PostBuildEvent>
       <Message>Copy DLLs</Message>
     </PostBuildEvent>
+    <PreBuildEvent>
+      <Message>Build can copy shaders.</Message>
+      <Command>xcopy "$(SolutionDir)..\..\src\Game\Shaders\GL" "$(SolutionDir)..\..\bin\data\Shaders" /y /i /s</Command>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='DebugRelease|Win32'">
     <ClCompile>
@@ -313,6 +321,10 @@
     <PostBuildEvent>
       <Message>Copy DLLs</Message>
     </PostBuildEvent>
+    <PreBuildEvent>
+      <Message>Build can copy shaders.</Message>
+      <Command>xcopy "$(SolutionDir)..\..\src\Game\Shaders\GL" "$(SolutionDir)..\..\bin\data\Shaders" /y /i /s</Command>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\Game\collisionDetection.h" />
@@ -801,6 +813,24 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\bin\data\Scripts\main.lua" />
+    <None Include="..\..\src\Game\Shaders\GLES\fragAlphaMappedSDF.glsl" />
+    <None Include="..\..\src\Game\Shaders\GLES\fragDebug.glsl" />
+    <None Include="..\..\src\Game\Shaders\GLES\fragDefault.glsl" />
+    <None Include="..\..\src\Game\Shaders\GLES\fragFont.glsl" />
+    <None Include="..\..\src\Game\Shaders\GLES\fragImageSDF.glsl" />
+    <None Include="..\..\src\Game\Shaders\GLES\fragOutlineImageSDF.glsl" />
+    <None Include="..\..\src\Game\Shaders\GLES\fragSimpleSDF.glsl" />
+    <None Include="..\..\src\Game\Shaders\GLES\vertDebug.glsl" />
+    <None Include="..\..\src\Game\Shaders\GLES\vertDefault.glsl" />
+    <None Include="..\..\src\Game\Shaders\GL\fragAlphaMappedSDF.glsl" />
+    <None Include="..\..\src\Game\Shaders\GL\fragDebug.glsl" />
+    <None Include="..\..\src\Game\Shaders\GL\fragDefault.glsl" />
+    <None Include="..\..\src\Game\Shaders\GL\fragFont.glsl" />
+    <None Include="..\..\src\Game\Shaders\GL\fragImageSDF.glsl" />
+    <None Include="..\..\src\Game\Shaders\GL\fragOutlineImageSDF.glsl" />
+    <None Include="..\..\src\Game\Shaders\GL\fragSimpleSDF.glsl" />
+    <None Include="..\..\src\Game\Shaders\GL\vertDebug.glsl" />
+    <None Include="..\..\src\Game\Shaders\GL\vertDefault.glsl" />
     <None Include="..\..\src\ProjectToolScripts\addNewState.ps1" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

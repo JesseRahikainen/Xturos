@@ -124,6 +124,15 @@
     <Filter Include="Script Files">
       <UniqueIdentifier>{441c5fdf-20f7-4e9d-94ec-2239e717d155}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Shaders">
+      <UniqueIdentifier>{694845ca-ef60-4958-9625-c5a7a0bf4110}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Shaders\GL">
+      <UniqueIdentifier>{97269f71-a852-425b-95bb-3141f590695a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Shaders\GLES">
+      <UniqueIdentifier>{e796c24d-d0a9-4e94-8fa1-7dabd7c7d406}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\Game\Graphics\graphics.h">
@@ -839,6 +848,60 @@
     </None>
     <None Include="..\..\bin\data\Scripts\main.lua">
       <Filter>Script Files</Filter>
+    </None>
+    <None Include="..\..\src\Game\Shaders\GL\fragAlphaMappedSDF.glsl">
+      <Filter>Shaders\GL</Filter>
+    </None>
+    <None Include="..\..\src\Game\Shaders\GL\fragDebug.glsl">
+      <Filter>Shaders\GL</Filter>
+    </None>
+    <None Include="..\..\src\Game\Shaders\GL\fragDefault.glsl">
+      <Filter>Shaders\GL</Filter>
+    </None>
+    <None Include="..\..\src\Game\Shaders\GL\fragImageSDF.glsl">
+      <Filter>Shaders\GL</Filter>
+    </None>
+    <None Include="..\..\src\Game\Shaders\GL\fragOutlineImageSDF.glsl">
+      <Filter>Shaders\GL</Filter>
+    </None>
+    <None Include="..\..\src\Game\Shaders\GL\fragSimpleSDF.glsl">
+      <Filter>Shaders\GL</Filter>
+    </None>
+    <None Include="..\..\src\Game\Shaders\GL\vertDebug.glsl">
+      <Filter>Shaders\GL</Filter>
+    </None>
+    <None Include="..\..\src\Game\Shaders\GL\vertDefault.glsl">
+      <Filter>Shaders\GL</Filter>
+    </None>
+    <None Include="..\..\src\Game\Shaders\GL\fragFont.glsl">
+      <Filter>Shaders\GL</Filter>
+    </None>
+    <None Include="..\..\src\Game\Shaders\GLES\vertDefault.glsl">
+      <Filter>Shaders\GLES</Filter>
+    </None>
+    <None Include="..\..\src\Game\Shaders\GLES\fragDefault.glsl">
+      <Filter>Shaders\GLES</Filter>
+    </None>
+    <None Include="..\..\src\Game\Shaders\GLES\fragFont.glsl">
+      <Filter>Shaders\GLES</Filter>
+    </None>
+    <None Include="..\..\src\Game\Shaders\GLES\vertDebug.glsl">
+      <Filter>Shaders\GLES</Filter>
+    </None>
+    <None Include="..\..\src\Game\Shaders\GLES\fragDebug.glsl">
+      <Filter>Shaders\GLES</Filter>
+    </None>
+    <None Include="..\..\src\Game\Shaders\GLES\fragSimpleSDF.glsl">
+      <Filter>Shaders\GLES</Filter>
+    </None>
+    <None Include="..\..\src\Game\Shaders\GLES\fragImageSDF.glsl">
+      <Filter>Shaders\GLES</Filter>
+    </None>
+    <None Include="..\..\src\Game\Shaders\GLES\fragOutlineImageSDF.glsl">
+      <Filter>Shaders\GLES</Filter>
+    </None>
+    <None Include="..\..\src\Game\Shaders\GLES\fragAlphaMappedSDF.glsl">
+      <Filter>Shaders\GLES</Filter>
     </None>
   </ItemGroup>
 </Project>

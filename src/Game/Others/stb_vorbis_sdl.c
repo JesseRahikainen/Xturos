@@ -209,7 +209,7 @@ extern void stb_vorbis_flush_pushdata(stb_vorbis *f);
 
 //////////   PULLING INPUT API
 #ifndef STB_VORBIS_NO_STDIO
-#include <SDL3/SDL_IOStream.h>
+#include <SDL3/SDL_iostream.h>
 #endif
 #ifndef STB_VORBIS_NO_PULLDATA_API
 // This API assumes stb_vorbis is allowed to pull data from a source--

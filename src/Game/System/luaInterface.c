@@ -1,7 +1,7 @@
 #include "luaInterface.h"
 
 #include <SDL3/SDL.h>
-#include <varargs.h>
+#include <stdarg.h>
 
 #include "System/platformLog.h"
 #include "System/memory.h"
@@ -925,9 +925,10 @@ bool xLua_LoadAndDoFile( const char* fileName )
 
 	// make sure the file is local to the directory where the executable is being run from
 
-	int status = luaL_dofile( luaState, fileName );
+
+	int status = luaL_dofile( luaState, fileName );	
 	if( status != LUA_OK ) {
-		llog( LOG_ERROR, "0x%x error while loading file %s: %s", status, fileName, lua_tostring( luaState, -1 ) );
+		llog( LOG_ERROR, "%s", lua_tostring( luaState, -1 ) );
 		lua_pop( luaState, 1 );
 		return false;
 	}
@@ -992,7 +993,7 @@ bool xLua_Init( void )
 	}//*/
 
 	// load the main lua file that has our base engine lua functions
-	if( !xLua_LoadAndDoFile( "Scripts/main.lua " ) ) {
+	if( !xLua_LoadAndDoFile( "Scripts/main.lua" ) ) {
 		llog( LOG_ERROR, "Unable to load Scripts/main.lua." );
 		return false;
 	}

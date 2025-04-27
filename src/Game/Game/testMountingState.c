@@ -172,7 +172,7 @@ static EntityID createMountable3x3Entity( Vector2 pos )
 		gc3x3SpriteCompID, &sprite );
 }
 
-static int testMountingState_Enter( void )
+static void testMountingState_Enter( void )
 {
 	/*ecps_StartInitialization( &defaultECPS ); {
 		gameComponents_Setup( &defaultECPS );
@@ -224,13 +224,10 @@ static int testMountingState_Enter( void )
 	input_BindOnKey( SDLK_R, pressReset, NULL );
 	input_BindOnKey( SDLK_EQUALS, pressScaleUp, releaseScaleUp );
 	input_BindOnKey( SDLK_MINUS, pressScaleDown, releaseScaleDown );
-
-	return 1;
 }
 
-static int testMountingState_Exit( void )
+static void testMountingState_Exit( void )
 {
-	return 1;
 }
 
 static void testMountingState_ProcessEvents( SDL_Event* e )

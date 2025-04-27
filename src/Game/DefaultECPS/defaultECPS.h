@@ -4,6 +4,7 @@
 #include "DefaultECPS/generalComponents.h"
 #include "DefaultECPS/generalProcesses.h"
 #include "System/ECPS/ecps_dataTypes.h"
+#include "Utils/helpers.h"
 
 // we'll have the default components, the default processes, the game specific processes, the game specific processes, the system created to run all the processes, the additional processes for each
 //  phase of the gameloop
@@ -26,37 +27,14 @@ void defaultECPS_AddEventHandler( void ( *handler )( SDL_Event* ), int8_t priori
 
 void defaultECPS_Setup( void );
 
-// register functions to be called during defaultECPS_Setup(), need component and process registration functions
 typedef void (*DefaultECPSFunc)( ECPS* );
 
-#if defined( _MSC_VER )
+void registerDefaultECPSComponentCallback( DefaultECPSFunc func );
+// creates a function that is called before main() that will add this function to the list of default ECPS component functions
+#define ADD_DEFAULT_ECPS_COMPONENT_CALLBACK(fn) INITIALIZER( register_fn##ComponentFunction_ ) { registerDefaultECPSComponentCallback( fn ); }
 
-#pragma section("regcomp$a", read) // beginning
-#pragma section("regcomp$m", read) // storage
-#pragma section("regcomp$z", read) // end
-#define ADD_DEFAULT_COMPONENT_REGISTER __declspec( allocate( "regcomp$m" ) ) 
-__declspec( allocate( "regcomp$a" ) ) static const DefaultECPSFunc startRegisterComponentsFuncs = NULL;
-__declspec( allocate( "regcomp$z" ) ) static const DefaultECPSFunc endRegisterComponentsFuncs = NULL;
-
-#pragma section("regproc$a", read) // beginning
-#pragma section("regproc$m", read) // storage
-#pragma section("regproc$z", read) // end
-#define ADD_DEFAULT_PROCESS_REGISTER __declspec( allocate( "regproc$m" ) ) 
-__declspec( allocate( "regproc$a" ) ) static const DefaultECPSFunc startRegisterProcessesFuncs = NULL;
-__declspec( allocate( "regproc$z" ) ) static const DefaultECPSFunc endRegisterProcessFuncs = NULL;
-
-#elif defined( __EMSCRIPTEN__ )
-#include <emscripten.h>
-#define ADD_DEFAULT_COMPONENT_REGISTER __attribute__( ( used, retain, section( "regcomp" ) ) )
-#define ADD_DEFAULT_PROCESS_REGISTER __attribute__( ( used, retain, section( "regproc" ) ) )
-#else
-#error Default process callbacks not set up for this platform.
-#endif
-
-#define ADD_DEFAULT_ECPS_COMPONENT_CALLBACK(fn) \
-	ADD_DEFAULT_COMPONENT_REGISTER const DefaultECPSFunc defaultCompECPSFunction##fn = fn;
-
-#define ADD_DEFAULT_ECPS_PROCESS_CALLBACK(fn) \
-	ADD_DEFAULT_PROCESS_REGISTER const DefaultECPSFunc defaultProcECPSFunction##fn = fn;
+void registerDefaultECPSProcessCallback( DefaultECPSFunc func );
+// creates a function that is called before main() that will add this function to the list of default ECPS process functions
+#define ADD_DEFAULT_ECPS_PROCESS_CALLBACK(fn) INITIALIZER( register_fn##ProcessFunction_ ) { registerDefaultECPSProcessCallback( fn ); }
 
 #endif

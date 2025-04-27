@@ -371,6 +371,7 @@ void gfxPlatform_DeletePlatformTexture( PlatformTexture texture )
 	GL( glDeleteTextures( 1, &( texture.id ) ) );
 }
 
+#if !defined(__EMSCRIPTEN__)
 void gfxPlatform_GetPlatformTextureSize( PlatformTexture* texture, int* outWidth, int* outHeight )
 {
 	SDL_assert( texture != NULL );
@@ -378,9 +379,18 @@ void gfxPlatform_GetPlatformTextureSize( PlatformTexture* texture, int* outWidth
 	SDL_assert( outHeight != NULL );
 
 	GL( glBindTexture( GL_TEXTURE_2D, texture->id ) );
+
 	GL( glGetTexLevelParameteriv( GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, outWidth ) );
 	GL( glGetTexLevelParameteriv( GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, outHeight ) );
 }
+#else
+void gfxPlatform_GetPlatformTextureSize( PlatformTexture* texture, int* outWidth, int* outHeight )
+{
+	SDL_assert( false && "Unsupported by platform" );
+	( *outWidth ) = 0;
+	( *outHeight ) = 0;
+}
+#endif
 
 void gfxPlatform_Swap( SDL_Window* window )
 {

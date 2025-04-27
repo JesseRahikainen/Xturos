@@ -3,6 +3,6 @@
 
 #include "gameState.h"
 
-GameState testMountingState;
+extern GameState testMountingState;
 
 #endif // inclusion guard
