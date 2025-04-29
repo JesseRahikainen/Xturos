@@ -113,7 +113,7 @@ static struct Shader loadShader( const ShaderDefinition* definition )
 		llog( LOG_VERBOSE, "-- Compiling shader from shader text" );
 		shader.id = compileShader( definition->shaderText, shader.type );
 		if( shader.id == 0 ) {
-			llog( LOG_ERROR, "Error opening shader file %s", ( ( definition->fileName == NULL ) ? "<no-file-name>" : definition->fileName ) );
+			llog( LOG_ERROR, "Error compiling shader." );
 		}
 	} else if( ( definition->fileName != NULL ) && ( strlen( definition->fileName ) > 0 ) ) {
 		llog( LOG_VERBOSE, "-- Compiling shader from file" );
@@ -127,6 +127,8 @@ static struct Shader loadShader( const ShaderDefinition* definition )
 		amountRead = fread( shaderContents, sizeof(char), MAX_SHADER_SIZE, inFile );
 		shaderContents[amountRead] = 0; // can't assume that fread won't use some of the buffer for something, so need to set this here
 		llog( LOG_VERBOSE, "-- Read in %u bytes of text", amountRead );
+
+		//llog( LOG_VERBOSE, "Program:\n%s\n", shaderContents );
 
 		if( ferror( inFile ) || amountRead == 0 ) {
 			llog( LOG_ERROR, "Nothing read in from shader file %s.", ( ( definition->fileName == NULL ) ? "<no-file-name>" : definition->fileName ) );

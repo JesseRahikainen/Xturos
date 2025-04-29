@@ -818,19 +818,23 @@
     <None Include="..\..\src\Game\Shaders\GLES\fragDefault.glsl" />
     <None Include="..\..\src\Game\Shaders\GLES\fragFont.glsl" />
     <None Include="..\..\src\Game\Shaders\GLES\fragImageSDF.glsl" />
+    <None Include="..\..\src\Game\Shaders\GLES\fragNuklear.glsl" />
     <None Include="..\..\src\Game\Shaders\GLES\fragOutlineImageSDF.glsl" />
     <None Include="..\..\src\Game\Shaders\GLES\fragSimpleSDF.glsl" />
     <None Include="..\..\src\Game\Shaders\GLES\vertDebug.glsl" />
     <None Include="..\..\src\Game\Shaders\GLES\vertDefault.glsl" />
+    <None Include="..\..\src\Game\Shaders\GLES\vertNuklear.glsl" />
     <None Include="..\..\src\Game\Shaders\GL\fragAlphaMappedSDF.glsl" />
     <None Include="..\..\src\Game\Shaders\GL\fragDebug.glsl" />
     <None Include="..\..\src\Game\Shaders\GL\fragDefault.glsl" />
     <None Include="..\..\src\Game\Shaders\GL\fragFont.glsl" />
     <None Include="..\..\src\Game\Shaders\GL\fragImageSDF.glsl" />
+    <None Include="..\..\src\Game\Shaders\GL\fragNuklear.glsl" />
     <None Include="..\..\src\Game\Shaders\GL\fragOutlineImageSDF.glsl" />
     <None Include="..\..\src\Game\Shaders\GL\fragSimpleSDF.glsl" />
     <None Include="..\..\src\Game\Shaders\GL\vertDebug.glsl" />
     <None Include="..\..\src\Game\Shaders\GL\vertDefault.glsl" />
+    <None Include="..\..\src\Game\Shaders\GL\vertNuklear.glsl" />
     <None Include="..\..\src\ProjectToolScripts\addNewState.ps1" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

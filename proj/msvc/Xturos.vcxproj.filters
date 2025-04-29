@@ -133,6 +133,9 @@
     <Filter Include="Shaders\GLES">
       <UniqueIdentifier>{e796c24d-d0a9-4e94-8fa1-7dabd7c7d406}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Shaders\HLSL">
+      <UniqueIdentifier>{2f4af986-f884-4ec9-a2eb-a7ef1d51410e}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\Game\Graphics\graphics.h">
@@ -901,6 +904,18 @@
       <Filter>Shaders\GLES</Filter>
     </None>
     <None Include="..\..\src\Game\Shaders\GLES\fragAlphaMappedSDF.glsl">
+      <Filter>Shaders\GLES</Filter>
+    </None>
+    <None Include="..\..\src\Game\Shaders\GL\vertNuklear.glsl">
+      <Filter>Shaders\GL</Filter>
+    </None>
+    <None Include="..\..\src\Game\Shaders\GL\fragNuklear.glsl">
+      <Filter>Shaders\GL</Filter>
+    </None>
+    <None Include="..\..\src\Game\Shaders\GLES\vertNuklear.glsl">
+      <Filter>Shaders\GLES</Filter>
+    </None>
+    <None Include="..\..\src\Game\Shaders\GLES\fragNuklear.glsl">
       <Filter>Shaders\GLES</Filter>
     </None>
   </ItemGroup>

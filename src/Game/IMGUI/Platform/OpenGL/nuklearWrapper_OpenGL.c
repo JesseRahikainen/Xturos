@@ -107,65 +107,17 @@ void nk_xu_init( NuklearWrapper* xu, SDL_Window* win, bool useRelativeMousePos, 
 	ShaderDefinition shaderDefs[2];
 	ShaderProgramDefinition progDef;
 
-	shaderDefs[0].fileName = NULL;
 	shaderDefs[0].type = GL_VERTEX_SHADER;
-	shaderDefs[1].fileName = NULL;
+	shaderDefs[0].fileName = "Shaders/vertNuklear.glsl";
+	shaderDefs[0].shaderText = NULL;
+
 	shaderDefs[1].type = GL_FRAGMENT_SHADER;
-#if defined( __ANDROID__ ) || defined( __EMSCRIPTEN__ )
-	shaderDefs[0].shaderText =	"#version 300 es\n"
-								"uniform mat4 transform;\n"
-								"layout(location = 0) in vec2 vVertex;\n"
-								"layout(location = 1) in vec2 vTexCoord0;\n"
-								"layout(location = 2) in vec4 vColor;\n"
-								"out vec2 vTex;\n"
-								"out vec4 vCol;\n"
-								"void main( void )\n"
-								"{\n"
-								"	vTex = vTexCoord0;\n"
-								"	vCol = vColor;\n"
-								"	gl_Position = transform * vec4( vVertex.xy, 0.0f, 1.0f );\n"
-								"}\n";
+	shaderDefs[1].fileName = "Shaders/fragNuklear.glsl";
+	shaderDefs[1].shaderText = NULL;
 
-	
-	shaderDefs[1].shaderText =	"#version 300 es\n"
-								"in highp vec2 vTex;\n"
-								"in highp vec4 vCol;\n"
-								"uniform sampler2D textureUnit0;\n"
-								"out highp vec4 outCol;\n"
-								"void main( void )\n"
-								"{\n"
-								"	outCol = texture(textureUnit0, vTex) * vCol;\n"
-								"}\n";
-#else
-	shaderDefs[0].shaderText =	"#version 330\n"
-								"uniform mat4 transform;\n"
-								"layout(location = 0) in vec2 vVertex;\n"
-								"layout(location = 1) in vec2 vTexCoord0;\n"
-								"layout(location = 2) in vec4 vColor;\n"
-								"out vec2 vTex;\n"
-								"out vec4 vCol;\n"
-								"void main( void )\n"
-								"{\n"
-								"	vTex = vTexCoord0;\n"
-								"	vCol = vColor;\n"
-								"	gl_Position = transform * vec4( vVertex.xy, 0.0f, 1.0f );\n"
-								"}\n";
-
-	
-	shaderDefs[1].shaderText =	"#version 330\n"
-								"in vec2 vTex;\n"
-								"in vec4 vCol;\n"
-								"uniform sampler2D textureUnit0;\n"
-								"out vec4 outCol;\n"
-								"void main( void )\n"
-								"{\n"
-								"	outCol = texture2D(textureUnit0, vTex) * vCol;\n"
-								"}\n";
-#endif
-
-	progDef.geometryShader = 0;
-	progDef.vertexShader = 1;
-	progDef.fragmentShader = -1;
+	progDef.vertexShader = 0;
+	progDef.fragmentShader = 1;
+	progDef.geometryShader = -1;
 
 	SDL_assert( shaders_Load( shaderDefs, sizeof( shaderDefs ) / sizeof( shaderDefs[0] ), &progDef, &( xu->platform.prog ), 1 ) != 0 );
 
@@ -333,6 +285,7 @@ void nk_xu_handleEvent( NuklearWrapper* xu, SDL_Event* evt )
 //  draw any Nuklear UIs every frame instead of every draw.
 void nk_xu_render( NuklearWrapper* xu )
 {
+#if 0
 	Matrix4 ortho;
 	mat4_CreateOrthographicProjection( 0.0f, (float)( xu->renderWidth ), 0.0f, (float)( xu->renderHeight ), -1000.0f, 1000.0f, &ortho );
 
@@ -463,6 +416,7 @@ void nk_xu_render( NuklearWrapper* xu )
 	GL( glBindVertexArray( 0 ) );
 	GL( glDisable( GL_BLEND ) );
 	GL( glDisable( GL_SCISSOR_TEST ) );
+#endif
 }
 
 void nk_xu_shutdown( NuklearWrapper* xu )

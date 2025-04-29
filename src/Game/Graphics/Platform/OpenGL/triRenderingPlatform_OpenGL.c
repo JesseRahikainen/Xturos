@@ -57,34 +57,34 @@ bool triPlatform_LoadShaders( void )
 	shaderDefs[5].shaderText = NULL;
 
 	// alpha map sdf rendering
-	shaderDefs[6].fileName = "Shadres/fragAlphaMappedSDF.glsl";
+	shaderDefs[6].fileName = "Shaders/fragAlphaMappedSDF.glsl";
 	shaderDefs[6].type = GL_FRAGMENT_SHADER;
 	shaderDefs[6].shaderText = NULL;
 
 
-	progDefs[0].fragmentShader = 1;
-	progDefs[0].vertexShader = 0;
-	progDefs[0].geometryShader = -1;
+	progDefs[ST_DEFAULT].fragmentShader = 1;
+	progDefs[ST_DEFAULT].vertexShader = 0;
+	progDefs[ST_DEFAULT].geometryShader = -1;
 
-	progDefs[1].fragmentShader = 2;
-	progDefs[1].vertexShader = 0;
-	progDefs[1].geometryShader = -1;
+	progDefs[ST_ALPHA_ONLY].fragmentShader = 2;
+	progDefs[ST_ALPHA_ONLY].vertexShader = 0;
+	progDefs[ST_ALPHA_ONLY].geometryShader = -1;
 
-	progDefs[2].fragmentShader = 3;
-	progDefs[2].vertexShader = 0;
-	progDefs[2].geometryShader = -1;
+	progDefs[ST_SIMPLE_SDF].fragmentShader = 3;
+	progDefs[ST_SIMPLE_SDF].vertexShader = 0;
+	progDefs[ST_SIMPLE_SDF].geometryShader = -1;
 
-	progDefs[3].fragmentShader = 4;
-	progDefs[3].vertexShader = 0;
-	progDefs[3].geometryShader = -1;
+	progDefs[ST_IMAGE_SDF].fragmentShader = 4;
+	progDefs[ST_IMAGE_SDF].vertexShader = 0;
+	progDefs[ST_IMAGE_SDF].geometryShader = -1;
 
-	progDefs[4].fragmentShader = 5;
-	progDefs[4].vertexShader = 0;
-	progDefs[4].geometryShader = -1;
+	progDefs[ST_OUTLINED_IMAGE_SDF].fragmentShader = 5;
+	progDefs[ST_OUTLINED_IMAGE_SDF].vertexShader = 0;
+	progDefs[ST_OUTLINED_IMAGE_SDF].geometryShader = -1;
 
-	progDefs[5].fragmentShader = 6;
-	progDefs[5].vertexShader = 0;
-	progDefs[5].geometryShader = -1;
+	progDefs[ST_ALPHA_MAPPED_SDF].fragmentShader = 6;
+	progDefs[ST_ALPHA_MAPPED_SDF].vertexShader = 0;
+	progDefs[ST_ALPHA_MAPPED_SDF].geometryShader = -1;
 
 	llog( LOG_INFO, "  Loading shaders." );
 	if( shaders_Load( &( shaderDefs[0] ), sizeof( shaderDefs ) / sizeof( ShaderDefinition ),
