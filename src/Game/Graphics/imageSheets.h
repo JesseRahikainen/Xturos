@@ -21,9 +21,6 @@ void img_UnloadSpriteSheet( int packageID );
 // Takes in a list of file names and generates the sprite sheet and saves it out to fileName.
 bool img_SaveSpriteSheet( const char* fileName, SpriteSheetEntry* sbEntries, int maxSize, int xPadding, int yPadding );
 
-// Takes in an image and the dividing lines and creates a 3x3 sprite sheet for it.
-bool img_Save3x3( const char* fileName, const char* imageFileName, int width, int height, int left, int right, int top, int bottom );
-
 void img_ThreadedLoadSpriteSheet( const char* fileName, ShaderType shaderType, void ( *onLoadDone )( int ) );
 
 #endif /* inclusion guard */

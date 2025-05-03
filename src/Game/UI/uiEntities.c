@@ -180,7 +180,8 @@ static EntityID create3x3Button( ECPS* ecps, Vector2 position, Vector2 size,
 	GC3x3SpriteData sprite;
 	sprite.camFlags = camFlags;
 	sprite.depth = depth;
-	memcpy( sprite.imgs, slicedBorder, sizeof( sprite.imgs ) );
+	//memcpy( sprite.imgs, slicedBorder, sizeof( sprite.imgs ) );
+	sprite.img = slicedBorder[0];
 	sprite.size = size;
 
 	EntityID buttonID = ecps_CreateEntity( ecps, 4,

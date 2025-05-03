@@ -79,16 +79,23 @@ size_t ecps_ct_ComponentTypeCount( ComponentTypeCollection* ctc )
 
 size_t ecps_ct_GetComponentTypeSize( ComponentTypeCollection* ctc, size_t idx )
 {
-	SDL_assert( idx < sb_Count( ctc->sbTypes ) );
+	ASSERT_AND_IF_NOT( idx < sb_Count( ctc->sbTypes ) ) return 0;
 
 	return ctc->sbTypes[idx].size;
 }
 
 size_t ecps_ct_GetComponentTypeAlign( ComponentTypeCollection* ctc, size_t idx )
 {
-	SDL_assert( idx < sb_Count( ctc->sbTypes ) );
+	ASSERT_AND_IF_NOT( idx < sb_Count( ctc->sbTypes ) ) return 0;
 
 	return ctc->sbTypes[idx].align;
+}
+
+uint32_t ecps_ct_GetComponentTypeVersion( ComponentTypeCollection* ctc, size_t idx )
+{
+	ASSERT_AND_IF_NOT( idx < sb_Count( ctc->sbTypes ) ) return UINT32_MAX;
+
+	return ctc->sbTypes[idx].version;
 }
 
 bool ecps_ct_IsComponentTypeValid( ComponentTypeCollection* ctc, ComponentID componentID )

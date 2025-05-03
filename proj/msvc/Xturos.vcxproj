@@ -331,7 +331,6 @@
     <ClInclude Include="..\..\src\Game\DefaultECPS\defaultECPS.h" />
     <ClInclude Include="..\..\src\Game\DefaultECPS\generalComponents.h" />
     <ClInclude Include="..\..\src\Game\DefaultECPS\generalProcesses.h" />
-    <ClInclude Include="..\..\src\Game\Editors\3x3Editor.h" />
     <ClInclude Include="..\..\src\Game\Editors\editorHelpers.h" />
     <ClInclude Include="..\..\src\Game\Editors\editorHub.h" />
     <ClInclude Include="..\..\src\Game\Editors\spriteAnimationEditor.h" />
@@ -450,7 +449,6 @@
     <ClCompile Include="..\..\src\Game\DefaultECPS\defaultECPS.c" />
     <ClCompile Include="..\..\src\Game\DefaultECPS\generalComponents.c" />
     <ClCompile Include="..\..\src\Game\DefaultECPS\generalProcesses.c" />
-    <ClCompile Include="..\..\src\Game\Editors\3x3Editor.c" />
     <ClCompile Include="..\..\src\Game\Editors\editorHelpers.c" />
     <ClCompile Include="..\..\src\Game\Editors\editorHub.c" />
     <ClCompile Include="..\..\src\Game\Editors\spriteAnimationEditor.c" />

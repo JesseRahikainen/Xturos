@@ -80,8 +80,8 @@ void img_GetOffset( int idx, Vector2* out );
 
 void img_ForceTransparency( int idx, bool transparent );
 
-// Gets the size of the image, putting it into the out Vector2. Returns a negative number if there's an issue.
-int img_GetSize( int idx, Vector2* out );
+// Gets the size of the image, putting it into the out Vector2. Returns false if there's an issue.
+bool img_GetSize( int idx, Vector2* out );
 
 // Gets the the min and max uv coordinates used by the image.
 int img_GetUVCoordinates( int idx, Vector2* outMin, Vector2* outMax );
@@ -119,10 +119,18 @@ typedef struct {
 	float val0;
 	bool isStencil;
 	int stencilID;
+
+	// stores the part of the image we actually want to display as normalized positions
+	Vector2 subSectionTopLeftNorm;
+	Vector2 subSectionBottomRightNorm;
+
 } ImageRenderInstruction;
 
 ImageRenderInstruction img_CreateDefaultRenderInstruction( void );
 void img_ImmediateRender( ImageRenderInstruction* instruction );
+
+// returns if it was able to set the borders correctly
+bool img_SetRenderInstructionBorders( ImageRenderInstruction* instruction, uint32_t left, uint32_t right, uint32_t top, uint32_t bottom );
 
 // helpers so you don't have to worry about creating an instruction, filling it out, and then calling immediate render
 void img_Render_Pos( int imgID, uint32_t camFlags, int8_t depth, const Vector2* pos );

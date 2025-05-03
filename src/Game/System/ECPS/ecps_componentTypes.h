@@ -18,6 +18,7 @@ void ecps_ct_CleanUp( ComponentTypeCollection* ctc );
 size_t ecps_ct_ComponentTypeCount( ComponentTypeCollection* ctc );
 size_t ecps_ct_GetComponentTypeSize( ComponentTypeCollection* ctc, size_t idx );
 size_t ecps_ct_GetComponentTypeAlign( ComponentTypeCollection* ctc, size_t idx );
+uint32_t ecps_ct_GetComponentTypeVersion( ComponentTypeCollection* ctc, size_t idx );
 bool ecps_ct_IsComponentTypeValid( ComponentTypeCollection* ctc, ComponentID componentID );
 
 #endif

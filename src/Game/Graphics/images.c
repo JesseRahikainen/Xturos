@@ -29,7 +29,7 @@ typedef struct {
 	Vector2 uvMin;
 	Vector2 uvMax;
 	Vector2 size;
-	Vector2 offset;
+	Vector2 offset; // determines where the image is drawn from and rotated around, defaults to the center of the image
 	int flags;
 	int packageID;
 	int nextInPackage;
@@ -40,50 +40,10 @@ typedef struct {
 
 static Image images[MAX_IMAGES];
 
-/* Rendering types and variables */
-/*#define MAX_RENDER_INSTRUCTIONS 2048
-typedef struct {
-	Vector2 pos;
-	Vector2 scaledSize;
-	Color color;
-	float rotation;
-	Vector2 offset;
-	float floatVal0;
-} DrawInstructionState;
-
-typedef struct {
-	PlatformTexture textureObj;
-	int imageObj;
-	Vector2 uvs[4];
-	DrawInstructionState start;
-	DrawInstructionState end;
-	int flags;
-	int stencilID;
-	uint32_t camFlags;
-	int8_t depth;
-	ShaderType shaderType;
-	bool isStencil;
-	PlatformTexture extraTextureObj;
-	int extraImageObj;
-} DrawInstruction;
-
-static DrawInstruction renderBuffer[MAX_RENDER_INSTRUCTIONS];
-static int lastDrawInstruction;
-
-// TODO: the default textureObj doesn't work well with the cross platform stuff right now, figure out how to do this
-static const DrawInstruction DEFAULT_DRAW_INSTRUCTION = {
-    { 0 }, -1,
-	{ { 0.0f, 0.0f }, { 0.0f, 1.0f }, { 1.0f, 0.0f }, { 1.0f, 1.0f } },
-	{ { 0.0f, 0.0f }, { 1.0f, 1.0f }, { 1.0f, 1.0f, 1.0f, 1.0f }, 0.0f, { 0.0f, 0.0f } },
-	{ { 0.0f, 0.0f }, { 1.0f, 1.0f }, { 1.0f, 1.0f, 1.0f, 1.0f }, 0.0f, { 0.0f, 0.0f } },
-	0, 0, 0
-};//*/
-
+// Rendering types and variables
 static int maxTextureSize;
 
-/*
-Initializes images.
-*/
+// Initializes images.
 bool img_Init( void )
 {
     maxTextureSize = gfxPlatform_GetMaxTextureSize( );
@@ -91,10 +51,8 @@ bool img_Init( void )
 	return true;
 }
 
-/*
-Finds the first unused image index.
- Returns a postive value on success, a negative on failure.
-*/
+// Finds the first unused image index.
+//  Returns a postive value on success, a negative on failure.
 static int findAvailableImageIndex( )
 {
 	int newIdx = 0;
@@ -126,11 +84,9 @@ bool findImageByID( const char* id, int* outIdx )
 	return false;
 }
 
-/*
-Loads the image stored at file name.
- Returns the index of the image on success.
- Returns -1 on failure, and prints a message to the log.
-*/
+// Loads the image stored at file name.
+//  Returns the index of the image on success.
+//  Returns -1 on failure, and prints a message to the log.
 int img_Load( const char* fileName, ShaderType shaderType )
 {
 	int newIdx = -1;
@@ -694,16 +650,16 @@ void img_ForceTransparency( int idx, bool transparent )
 /*
 Gets the size of the image, putting it into the out Vector2. Returns a negative number if there's an issue.
 */
-int img_GetSize( int idx, Vector2* out )
+bool img_GetSize( int idx, Vector2* out )
 {
 	SDL_assert( out != NULL );
 
 	if( ( idx < 0 ) || ( !( images[idx].flags & IMGFLAG_IN_USE ) ) || ( idx >= MAX_IMAGES ) ) {
-		return -1;
+		return false;
 	}
 
 	(*out) = images[idx].size;
-	return 0;
+	return true;
 }
 
 // Gets the the min and max uv coordinates used by the image.
@@ -854,6 +810,8 @@ ImageRenderInstruction img_CreateDefaultRenderInstruction( void )
 	ri.val0 = 0.0f;
 	ri.isStencil = false;
 	ri.stencilID = -1;
+	ri.subSectionTopLeftNorm.x = ri.subSectionTopLeftNorm.y = 0.0f;
+	ri.subSectionBottomRightNorm.x = ri.subSectionBottomRightNorm.y = 1.0f;
 
 	return ri;
 }
@@ -872,6 +830,9 @@ ImageRenderInstruction img_CreateRenderInstruction_Pos( int imgID, uint32_t camF
 	ri.val0 = 0.0f;
 	ri.isStencil = false;
 	ri.stencilID = -1;
+
+	ri.subSectionTopLeftNorm.x = ri.subSectionTopLeftNorm.y = 0.0f;
+	ri.subSectionBottomRightNorm.x = ri.subSectionBottomRightNorm.y = 1.0f;
 
 	mat3_CreateRenderTransform( pos, 0.0f, &VEC2_ZERO, &VEC2_ONE, &( ri.mat ) );
 
@@ -892,6 +853,9 @@ ImageRenderInstruction img_CreateRenderInstruction_PosRot( int imgID, uint32_t c
 	ri.val0 = 0.0f;
 	ri.isStencil = false;
 	ri.stencilID = -1;
+
+	ri.subSectionTopLeftNorm.x = ri.subSectionTopLeftNorm.y = 0.0f;
+	ri.subSectionBottomRightNorm.x = ri.subSectionBottomRightNorm.y = 1.0f;
 
 	mat3_CreateRenderTransform( pos, rotRad, &VEC2_ZERO, &VEC2_ONE, &( ri.mat ) );
 
@@ -914,6 +878,9 @@ ImageRenderInstruction img_CreateRenderInstruction_PosVScale( int imgID, uint32_
 	ri.isStencil = false;
 	ri.stencilID = -1;
 
+	ri.subSectionTopLeftNorm.x = ri.subSectionTopLeftNorm.y = 0.0f;
+	ri.subSectionBottomRightNorm.x = ri.subSectionBottomRightNorm.y = 1.0f;
+
 	mat3_CreateRenderTransform( pos, 0.0f, &VEC2_ZERO, scale, &( ri.mat ) );
 
 	return ri;
@@ -935,20 +902,24 @@ void img_ImmediateRender( ImageRenderInstruction* instruction )
 	
 	Vector2 imgSize;
 	img_GetSize( imgID, &imgSize );
+	imgSize.w = imgSize.w * ( instruction->subSectionBottomRightNorm.x - instruction->subSectionTopLeftNorm.x );
+	imgSize.h = imgSize.h * ( instruction->subSectionBottomRightNorm.y - instruction->subSectionTopLeftNorm.y );
 
 	TriVert verts[4];
 
 	// generate the uv coords based on the image
 	Vector2 uvs[4];
-	uvs[0] = images[imgID].uvMin;
+	uvs[0].x = lerp( images[imgID].uvMin.x, images[imgID].uvMax.x, instruction->subSectionTopLeftNorm.x );
+	uvs[0].y = lerp( images[imgID].uvMin.y, images[imgID].uvMax.y, instruction->subSectionTopLeftNorm.y );
 
-	uvs[1].x = images[imgID].uvMin.x;
-	uvs[1].y = images[imgID].uvMax.y;
+	uvs[1].x = lerp( images[imgID].uvMin.x, images[imgID].uvMax.x, instruction->subSectionTopLeftNorm.x );
+	uvs[1].y = lerp( images[imgID].uvMin.y, images[imgID].uvMax.y, instruction->subSectionBottomRightNorm.y );
 
-	uvs[2].x = images[imgID].uvMax.x;
-	uvs[2].y = images[imgID].uvMin.y;
+	uvs[2].x = lerp( images[imgID].uvMin.x, images[imgID].uvMax.x, instruction->subSectionBottomRightNorm.x );
+	uvs[2].y = lerp( images[imgID].uvMin.y, images[imgID].uvMax.y, instruction->subSectionTopLeftNorm.y );
 
-	uvs[3] = images[imgID].uvMax;
+	uvs[3].x = lerp( images[imgID].uvMin.x, images[imgID].uvMax.x, instruction->subSectionBottomRightNorm.x );
+	uvs[3].y = lerp( images[imgID].uvMin.y, images[imgID].uvMax.y, instruction->subSectionBottomRightNorm.y );
 
 	// get the verts to use for rendering
 	for( int i = 0; i < 4; ++i ) {
@@ -980,6 +951,33 @@ void img_ImmediateRender( ImageRenderInstruction* instruction )
 		images[imgID].shaderType, images[imgID].textureObj, extraTexture, instruction->val0,
 		instruction->stencilID, instruction->camFlags, instruction->depth,
 		type );
+}
+
+bool img_SetRenderInstructionBorders( ImageRenderInstruction* instruction, uint32_t left, uint32_t right, uint32_t top, uint32_t bottom )
+{
+	ASSERT_AND_IF_NOT( instruction != NULL ) return false;
+	bool isValid = img_IsValidImage( instruction->imgID );
+	ASSERT_AND_IF_NOT( isValid ) return false;
+	ASSERT_AND_IF_NOT( left <= right ) return false;
+	ASSERT_AND_IF_NOT( top <= bottom ) return false;
+
+	// first make sure the borders fit inside the image, if we would create an image that wouldn't be renderable then don't set it
+	Vector2 imgSize;
+	img_GetSize( instruction->imgID, &imgSize );
+
+	ASSERT_AND_IF_NOT( left <= imgSize.w ) return false;
+	ASSERT_AND_IF_NOT( right <= imgSize.w ) return false;
+	ASSERT_AND_IF_NOT( top <= imgSize.h ) return false;
+	ASSERT_AND_IF_NOT( bottom <= imgSize.h ) return false;
+
+//#error TODO: Get this working with the actual rendering
+	instruction->subSectionTopLeftNorm.x = (float)left / imgSize.w;
+	instruction->subSectionTopLeftNorm.y = (float)top / imgSize.h;
+
+	instruction->subSectionBottomRightNorm.x = (float)right / imgSize.w;
+	instruction->subSectionBottomRightNorm.y = (float)bottom / imgSize.h;
+
+	return true;
 }
 
 void img_Render_Pos( int imgID, uint32_t camFlags, int8_t depth, const Vector2* pos )

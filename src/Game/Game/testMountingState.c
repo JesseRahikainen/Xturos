@@ -19,9 +19,10 @@
 // just a simple test of mounting and dismounting things. pressing the mouse button will cause a circle to expand from the player
 //  and mount any entities hit onto them. wasd to move, 'q' and 'e' keys to rotate, 'o' to start mounting, 'p' to release all attached
 
-static int playerImg = -1;
-static int objectImg = -1;
+static int playerImg = INVALID_IMAGE_ID;
+static int objectImg = INVALID_IMAGE_ID;
 static int* buttonImgs = NULL;
+static int buttonImg = INVALID_IMAGE_ID;
 
 #define NUM_MOUNTABLES 100
 
@@ -148,6 +149,8 @@ static int debugPos = 0;
 static Vector2 debugTopLefts[NUM_MOUNTABLES];
 static Vector2 debugSize;
 
+static int testSubSectionImg = INVALID_IMAGE_ID;
+
 static EntityID createMountable3x3Entity( Vector2 pos )
 {
 	float baseSize = 16.0f;
@@ -165,7 +168,11 @@ static EntityID createMountable3x3Entity( Vector2 pos )
 	sprite.depth = 0;
 	//sprite.size = vec2( 32.0f, 16.0f );
 	sprite.size = vec2( baseSize, baseSize );
-	memcpy( sprite.imgs, buttonImgs, sizeof( sprite.imgs ) );
+	sprite.img = buttonImg;
+	sprite.leftBorder = 3;
+	sprite.rightBorder = 6;
+	sprite.topBorder = 3;
+	sprite.bottomBorder = 6;
 
 	return ecps_CreateEntity( &defaultECPS, 2,
 		gcTransformCompID, &tfData,
@@ -184,8 +191,10 @@ static void testMountingState_Enter( void )
 	
 	playerImg = img_Load( "Images/marker.png", ST_DEFAULT );
 	objectImg = img_Load( "Images/color_piece.png", ST_DEFAULT );
+	testSubSectionImg = img_Load( "Images/test.png", ST_DEFAULT );
 
 	img_LoadSpriteSheet( "Images/button.spritesheet", ST_DEFAULT, &buttonImgs );
+	buttonImg = img_Load( "Images/button.png", ST_DEFAULT );
 
 	int renderWidth, renderHeight;
 	gfx_GetRenderSize( &renderWidth, &renderHeight );
@@ -202,8 +211,8 @@ static void testMountingState_Enter( void )
 	float stepY = (float)renderHeight / ( numY + 1 );
 	for( int x = 0; x < numX; ++x ) {
 		for( int y = 0; y < numY; ++y ) {
-			mountables[idx] = createMountableEntity( vec2( stepX + ( stepX * x ), stepY + ( stepY * y ) ) );
-			//mountables[idx] = createMountable3x3Entity( vec2( stepX + ( stepX * x ), stepY + ( stepY * y ) ) );
+			//mountables[idx] = createMountableEntity( vec2( stepX + ( stepX * x ), stepY + ( stepY * y ) ) );
+			mountables[idx] = createMountable3x3Entity( vec2( stepX + ( stepX * x ), stepY + ( stepY * y ) ) );
 			++idx;
 		}
 	}
@@ -250,9 +259,9 @@ static void testMountingState_Draw( void )
 
 	//img_CreateDraw( objectImg, 1, vec2( 400.0f, 300.0f ), vec2( 400.0f, 300.0f ), 10 );
 
-	for( int i = 0; i < NUM_MOUNTABLES; ++i ) {
-		debugRenderer_AABB( 1, debugTopLefts[i], debugSize, CLR_GREEN );
-	}
+	//for( int i = 0; i < NUM_MOUNTABLES; ++i ) {
+	//	debugRenderer_AABB( 1, debugTopLefts[i], debugSize, CLR_GREEN );
+	//}
 }
 
 static void testMountingState_PhysicsTick( float dt )
@@ -293,6 +302,28 @@ static void testMountingState_PhysicsTick( float dt )
 
 static void testMountingState_Render( float t )
 {
+	//testSubSectionImg
+	/*ImageRenderInstruction ri = img_CreateDefaultRenderInstruction( );
+	ri.imgID = buttonImg;
+	ri.camFlags = 1;
+	ri.depth = 0;
+
+	ri.color = CLR_WHITE;
+	ri.val0 = 0.0f;
+	ri.isStencil = false;
+	ri.stencilID = -1;
+
+	ri.subSectionTopLeftNorm.x = ri.subSectionTopLeftNorm.y = 0.0f;
+	ri.subSectionBottomRightNorm.x = ri.subSectionBottomRightNorm.y = 1.0f;
+
+	Vector2 pos = vec2( 400.0f, 300.0f );
+	Vector2 scale = VEC2_ONE;
+	mat3_CreateRenderTransform( &pos, 0.0f, &VEC2_ZERO, &scale, &( ri.mat ) );
+
+	img_SetRenderInstructionBorders( &ri, 0, 0, 0, 0 );
+
+	img_ImmediateRender( &ri );
+	//*/
 }
 
 GameState testMountingState = { testMountingState_Enter, testMountingState_Exit, testMountingState_ProcessEvents,

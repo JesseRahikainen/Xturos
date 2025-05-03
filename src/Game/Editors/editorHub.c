@@ -14,7 +14,6 @@
 
 #include "spriteAnimationEditor.h"
 #include "spriteSheetEditor.h"
-#include "3x3Editor.h"
 
 // dialogs, useful for displaying information
 
@@ -208,7 +207,6 @@ void hub_RegisterAllEditors( void )
 {
 	registerEditor( "Sprite Animation", spriteAnimationEditor_Show, spriteAnimationEditor_Hide, spriteAnimationEditor_IMGUIProcess, spriteAnimationEditor_Tick );
 	registerEditor( "Sprite Sheets", spriteSheetEditor_Show, spriteSheetEditor_Hide, spriteSheetEditor_IMGUIProcess, spriteSheetEditor_Tick );
-	registerEditor( "3x3 Creator", threeByThreeEditor_Show, threeByThreeEditor_Hide, threeByThreeEditor_IMGUIProcess, threeByThreeEditor_Tick );
 
 	// testing stuff
 	//registerEditor( "Test Info Dialog", testMessageDialog, NULL, NULL, NULL );
@@ -219,7 +217,6 @@ void hub_InitAllEditors( )
 {
 	spriteAnimationEditor_Init( );
 	spriteSheetEditor_Init( );
-	threeByThreeEditor_Init( );
 }
 
 static void toggleEditor( size_t idx )

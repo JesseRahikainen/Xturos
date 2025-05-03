@@ -69,8 +69,6 @@ static void render( ECPS* ecps, const Entity* entity )
 }
 
 // ***** Render 3x3 Process
-//  Is there a way to wrap this up into the general render process?
-// TODO: Set this to use the size component instead of using the scale as the size
 Process gp3x3RenderProc;
 static void render3x3( ECPS* ecps, const Entity* entity )
 {
@@ -89,32 +87,62 @@ static void render3x3( ECPS* ecps, const Entity* entity )
 
 	float t = gt_GetRenderNormalizedTime( );
 
-	// create the offsets for each image, we're assuming we won't be using the image offsets for 3x3s
-	// assuming that the dimensions of each column and row are the same
-	// also assumes the width and height to draw greater than the sum of the widths and heights, if it isn't we just
-	//  clamp it so it's a minimum of that much
+
+	// get the base size of the image so we know how much we want to scale it
 	Vector2 renderScale;
 	vec2_Lerp( &( transform->currState.scale ), &( transform->futureState.scale ), t, &renderScale );
 
-	Vector2 sliceSize;
-	img_GetSize( sprite->imgs[0], &sliceSize );
-	float imgLeftColumnWidth = sliceSize.x * renderScale.x;
-	float imgTopRowHeight = sliceSize.y * renderScale.y;
+	Vector2 imgSize;
+	img_GetSize( sprite->img, &imgSize );
 
-	img_GetSize( sprite->imgs[4], &sliceSize );
-	float imgMidColumnWidth = sliceSize.x * renderScale.x;
-	float imgMidRowHeight = sliceSize.y * renderScale.y;
+	SDL_assert( sprite->rightBorder <= imgSize.w );
+	SDL_assert( sprite->bottomBorder <= imgSize.h );
 
-	img_GetSize( sprite->imgs[8], &sliceSize );
-	float imgRightColumnWidth = sliceSize.x * renderScale.x;
-	float imgBottomRowHeight = sliceSize.y * renderScale.y;
+	// get the sub-sections used for rendering
+	uint32_t lefts[9];
+	uint32_t rights[9];
+	uint32_t tops[9];
+	uint32_t bottoms[9];
+
+	lefts[0] = lefts[3] = lefts[6] = 0;
+	lefts[1] = lefts[4] = lefts[7] = sprite->leftBorder;
+	lefts[2] = lefts[5] = lefts[8] = sprite->rightBorder;
+
+	rights[0] = rights[3] = rights[6] = sprite->leftBorder;
+	rights[1] = rights[4] = rights[7] = sprite->rightBorder;
+	rights[2] = rights[5] = rights[8] = (uint32_t)imgSize.w;
+
+	tops[0] = tops[1] = tops[2] = 0;
+	tops[3] = tops[4] = tops[5] = sprite->topBorder;
+	tops[6] = tops[7] = tops[8] = sprite->bottomBorder;
+
+	bottoms[0] = bottoms[1] = bottoms[2] = sprite->topBorder;
+	bottoms[3] = bottoms[4] = bottoms[5] = sprite->bottomBorder;
+	bottoms[6] = bottoms[7] = bottoms[8] = (uint32_t)imgSize.h;
+
+	// calculate the offsets for each piece
+	float scaledLeftBorderSize = sprite->leftBorder * renderScale.x;
+	float scaledRightBorderSize = ( imgSize.w - sprite->rightBorder ) * renderScale.x;
+	float scaledTopBorderSize = sprite->topBorder * renderScale.y;
+	float scaledBottomBorderSize = ( imgSize.h - sprite->bottomBorder ) * renderScale.y;
+
+	float scaledMidWidth = MAX( 0.0f, ( ( sprite->size.w * renderScale.x ) - scaledLeftBorderSize - scaledRightBorderSize ) );
+	float scaledMidHeight = MAX( 0.0f, ( ( sprite->size.h * renderScale.y ) - scaledTopBorderSize - scaledBottomBorderSize ) );
+
+	offsets[0].x = offsets[3].x = offsets[6].x = -( scaledMidWidth / 2.0f ) - ( scaledLeftBorderSize / 2.0f );
+	offsets[1].x = offsets[4].x = offsets[7].x = 0.0f;
+	offsets[2].x = offsets[5].x = offsets[8].x = ( scaledMidWidth / 2.0f ) + ( scaledRightBorderSize / 2.0f );
+
+	offsets[0].y = offsets[1].y = offsets[2].y = -( scaledMidHeight / 2.0f ) - ( scaledTopBorderSize / 2.0f );
+	offsets[3].y = offsets[4].y = offsets[5].y = 0.0f;
+	offsets[6].y = offsets[7].y = offsets[8].y = ( scaledMidHeight / 2.0f ) + ( scaledBottomBorderSize / 2.0f );
 
 	// calculate the scales
-	float midWidth = MAX( 0.0f, ( ( sprite->size.x * renderScale.x ) - imgLeftColumnWidth - imgRightColumnWidth ) );
-	float midWidthScale = midWidth / imgMidColumnWidth;
+	float imgMidWidth = MAX( 0.0f, sprite->rightBorder - sprite->leftBorder );
+	float midWidthScale = imgMidWidth > 0.0f ? scaledMidWidth / ( imgMidWidth * renderScale.x ) : 0.0f;
 
-	float midHeight = MAX( 0.0f, ( ( sprite->size.y * renderScale.y ) - imgTopRowHeight - imgBottomRowHeight ) );
-	float midHeightScale = midHeight / imgMidRowHeight;
+	float imgMidHeight = MAX( 0.0f, sprite->bottomBorder - sprite->topBorder );
+	float midHeightScale = imgMidHeight > 0.0f ? scaledMidHeight / ( imgMidHeight * renderScale.y ) : 0.0f;
 
 	// set the scale to the base scale from size calculations then apply the transform scale
 	scales[0] = scales[2] = scales[6] = scales[8] = VEC2_ONE;
@@ -124,19 +152,10 @@ static void render3x3( ECPS* ecps, const Entity* entity )
 	for( int i = 0; i < 9; ++i ) {
 		vec2_HadamardProd( &( scales[i] ), &( transform->currState.scale ), &( scales[i] ) );
 	}
-
-	// calculate the offsets
-	offsets[0].x = offsets[3].x = offsets[6].x = -( midWidth / 2.0f ) - ( imgLeftColumnWidth / 2.0f );
-	offsets[1].x = offsets[4].x = offsets[7].x = 0.0f;
-	offsets[2].x = offsets[5].x = offsets[8].x = ( midWidth / 2.0f ) + ( imgRightColumnWidth / 2.0f );
-
-	offsets[0].y = offsets[1].y = offsets[2].y = -( midHeight / 2.0f ) - ( imgTopRowHeight / 2.0f );
-	offsets[3].y = offsets[4].y = offsets[5].y = 0.0f;
-	offsets[6].y = offsets[7].y = offsets[8].y = ( midHeight / 2.0f ) + ( imgBottomRowHeight / 2.0f );
-
+	
 	Vector2 storedCurrScale = transform->currState.scale;
 	Vector2 storedFutureScale = transform->futureState.scale;
-	for( int i = 0; i < 9; ++i ) {
+	for( size_t i = 0; i < 9; ++i ) {
 		ImageRenderInstruction inst = img_CreateDefaultRenderInstruction( );
 
 		transform->currState.scale = scales[i];
@@ -144,8 +163,10 @@ static void render3x3( ECPS* ecps, const Entity* entity )
 
 		inst.camFlags = sprite->camFlags;
 		inst.depth = sprite->depth;
-		inst.imgID = sprite->imgs[i];
+		inst.imgID = sprite->img;
 		gc_GetLerpedGlobalMatrix( ecps, transform, &offsets[i], t, &inst.mat );
+
+		img_SetRenderInstructionBorders( &inst, lefts[i], rights[i], tops[i], bottoms[i] );
 
 		GCColorData* colorData = NULL;
 		if( ecps_GetComponentFromEntity( entity, gcClrCompID, &colorData ) ) {

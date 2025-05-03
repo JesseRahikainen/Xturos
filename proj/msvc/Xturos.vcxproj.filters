@@ -378,9 +378,6 @@
     <ClInclude Include="..\..\src\Game\Editors\spriteSheetEditor.h">
       <Filter>Header Files\Editors</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\Game\Editors\3x3Editor.h">
-      <Filter>Header Files\Editors</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\Game\Game\testMountingState.h">
       <Filter>Header Files\Game\States</Filter>
     </ClInclude>
@@ -708,9 +705,6 @@
       <Filter>Source Files\Editors</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\Game\Editors\spriteSheetEditor.c">
-      <Filter>Source Files\Editors</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\Game\Editors\3x3Editor.c">
       <Filter>Source Files\Editors</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\Game\Game\testMountingState.c">

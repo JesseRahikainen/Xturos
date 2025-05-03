@@ -80,7 +80,23 @@ typedef struct {
 extern ComponentID gcStencilCompID;
 
 typedef struct {
-	int imgs[9]; // tl, tc, tr, ml, mc, mr, bl, bc, br
+	int img;
+
+	// borders represented by offset in pixels, all from the top left
+	//   ------->r
+	//  0--->l   
+	// ||+---+---+---+
+	// |V|   |   |   |
+	// |t+---+---+---+
+	// V |   |   |   |
+	// b +---+---+---+
+	//   |   |   |   |
+	//   +---+---+---+
+	uint32_t topBorder;
+	uint32_t bottomBorder;
+	uint32_t leftBorder;
+	uint32_t rightBorder;
+
 	int8_t depth;
 	uint32_t camFlags;
 	Vector2 size;

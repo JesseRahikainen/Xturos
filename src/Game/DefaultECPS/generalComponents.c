@@ -158,10 +158,13 @@ static bool serialize3x3Comp( cmp_ctx_t* cmp, void* data, SerializedEntityInfo* 
 	CMP_WRITE( cmp, sprite->depth, cmp_write_s8, "GC3x3SpriteData", "depth", return false );
 	CMP_WRITE( cmp, &sprite->size, vec2_Serialize, "GC3x3SpriteData", "size", return false );
 
-	for( size_t i = 0; i < ARRAY_SIZE( sprite->imgs ); ++i ) {
-		const char* imgID = img_GetImgStringID( sprite->imgs[i] );
-		CMP_WRITE_STR( cmp, imgID, "GCSpriteData", "img", return false );
-	}
+	const char* imgID = img_GetImgStringID( sprite->img );
+	CMP_WRITE_STR( cmp, imgID, "GCSpriteData", "img", return false );
+
+	CMP_WRITE( cmp, sprite->topBorder, cmp_write_u32, "GC3x3SpriteData", "topBorder", return false );
+	CMP_WRITE( cmp, sprite->bottomBorder, cmp_write_u32, "GC3x3SpriteData", "bottomBorder", return false );
+	CMP_WRITE( cmp, sprite->leftBorder, cmp_write_u32, "GC3x3SpriteData", "leftBorder", return false );
+	CMP_WRITE( cmp, sprite->rightBorder, cmp_write_u32, "GC3x3SpriteData", "rightBorder", return false );
 
 	return true;
 }
@@ -177,15 +180,18 @@ static bool deserialize3x3Comp( cmp_ctx_t* cmp, void* data, SerializedEntityInfo
 	CMP_READ( cmp, sprite->depth, cmp_read_s8, "GC3x3SpriteData", "depth", return false );
 	CMP_READ( cmp, sprite->size, vec2_Deserialize, "GC3x3SpriteData", "size", return false );
 
-	for( size_t i = 0; i < ARRAY_SIZE( sprite->imgs ); ++i ) {
-		char idBuffer[128];
-		uint32_t bufferSize = ARRAY_SIZE( idBuffer );
-		CMP_READ_STR( cmp, idBuffer, bufferSize, "GC3x3SpriteData", "img", return false );
-		sprite->imgs[i] = img_GetExistingByID( idBuffer );
-		if( sprite->imgs[i] == -1 ) {
-			llog( LOG_ERROR, "Unable to find img with id %s for GC3x3SpriteData.", idBuffer );
-		}
+	char idBuffer[128];
+	uint32_t bufferSize = ARRAY_SIZE( idBuffer );
+	CMP_READ_STR( cmp, idBuffer, bufferSize, "GC3x3SpriteData", "img", return false );
+	sprite->img = img_GetExistingByID( idBuffer );
+	if( sprite->img == -1 ) {
+		llog( LOG_ERROR, "Unable to find img with id %s for GC3x3SpriteData.", idBuffer );
 	}
+
+	CMP_READ( cmp, sprite->topBorder, cmp_read_u32, "GC3x3SpriteData", "topBorder", return false );
+	CMP_READ( cmp, sprite->bottomBorder, cmp_read_u32, "GC3x3SpriteData", "bottomBorder", return false );
+	CMP_READ( cmp, sprite->leftBorder, cmp_read_u32, "GC3x3SpriteData", "leftBorder", return false );
+	CMP_READ( cmp, sprite->rightBorder, cmp_read_u32, "GC3x3SpriteData", "rightBorder", return false );
 
 	return true;
 }

@@ -347,6 +347,20 @@ ComponentID ecps_AddComponentType( ECPS* ecps, const char* name, uint32_t versio
 	return id;
 }
 
+// returns the version number, returns 0xFFFFFFFF if the type wasn't found
+bool ecps_GetComponentTypeVersion( ECPS* ecps, ComponentID id, uint32_t* outVersion )
+{
+	SDL_assert( ecps != NULL );
+	SDL_assert( outVersion != NULL );
+
+	if( ecps_ct_IsComponentTypeValid( &( ecps->componentTypes ), id ) ) {
+		(*outVersion) = ecps_ct_GetComponentTypeVersion( &( ecps->componentTypes ), id );
+		return true;
+	}
+
+	return false;
+}
+
 // returns the size of the component type, returns if the component type exists
 bool ecps_GetComponentTypeSize( ECPS* ecps, ComponentID id, size_t* outSize )
 {

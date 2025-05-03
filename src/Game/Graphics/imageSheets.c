@@ -470,42 +470,6 @@ clean_up:
 	return done;
 }
 
-bool img_Save3x3( const char* fileName, const char* imageFileName, int width, int height, int left, int right, int top, int bottom )
-{
-	// images are assumed to start at the top left, first horizontal then vertical
-	RectSet rectSets[1];
-	rectSets[0].sbRects = NULL;
-	rectSets[0].fileName = createStringCopy( imageFileName );
-	rectSets[0].width = width;
-	rectSets[0].height = height;
-	sb_Add( rectSets[0].sbRects, 9 );
-
-	SpriteSheetEntry entries[1];
-	entries[0].sbPath = createStretchyStringCopy( imageFileName );
-
-#define SET_RECT(i, xp, yp, wd, hg) rectSets[0].sbRects[i].x = xp; rectSets[0].sbRects[i].y = yp; rectSets[0].sbRects[i].w = wd; rectSets[0].sbRects[i].h = hg; rectSets[0].sbRects[i].was_packed = 1; rectSets[0].sbRects[i].id = 0;
-
-	SET_RECT( 0, 0, 0, left, top );
-	SET_RECT( 1, left, 0, right - left, top );
-	SET_RECT( 2, right, 0, width - right, top );
-
-	SET_RECT( 3, 0, top, left, bottom - top );
-	SET_RECT( 4, left, top, right - left, bottom - top );
-	SET_RECT( 5, right, top, width - right, bottom - top );
-
-	SET_RECT( 6, 0, bottom, left, height - bottom );
-	SET_RECT( 7, left, bottom, right - left, height - bottom );
-	SET_RECT( 8, right, bottom, width - right, height - bottom );
-
-	bool success = saveSpriteSheetDefinition( fileName, entries, 1, rectSets, 1 );
-
-	mem_Release( rectSets[0].fileName );
-	sb_Release( entries[0].sbPath );
-	sb_Release( rectSets[0].sbRects );
-
-	return success;
-}
-
 //****************************************************************************
 typedef struct {
 	const char* fileName;

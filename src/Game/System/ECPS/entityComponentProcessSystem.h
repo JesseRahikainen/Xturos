@@ -19,6 +19,9 @@ void ecps_CleanUp( ECPS* ecps );
 //  this can only be done before
 ComponentID ecps_AddComponentType( ECPS* ecps, const char* name, uint32_t version, size_t size, size_t align, CleanUpComponent cleanUp, VerifyComponent verify, SerializeComponent serialize, DeserializeComponent deserialize );
 
+// returns the version number, returns if the component type exists
+bool ecps_GetComponentTypeVersion( ECPS* ecps, ComponentID id, uint32_t* outVersion );
+
 // returns the size of the component type, returns if the component type exists
 bool ecps_GetComponentTypeSize( ECPS* ecps, ComponentID id, size_t* outSize );
 
