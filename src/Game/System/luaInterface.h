@@ -2,6 +2,9 @@
 #define LUA_INTERFACE_H
 
 #include <stdbool.h>
+
+#if SCRIPTING_ENABLED
+
 #include "Others/lua-5.4.3/lua.h"
 #include "Others/lua-5.4.3/lualib.h"
 #include "Others/lua-5.4.3/lauxlib.h"
@@ -52,5 +55,14 @@ void xLua_StackDump( void );
 #define LUA_GET_FLOAT(ls, var, p, error) float var = 0.0f; xLua_GetNextFloat( ls, &p, &(var), &error, #var );
 #define LUA_GET_STRING(ls, var, p, error) const char* var = NULL; xLua_GetNextString( ls, &p, &(var), &error, #var );
 #define LUA_GET_BOOL(ls, var, p, error) bool var = false; xLua_GetNextBool( ls, &p, &(var), &error, #var );
+
+#else
+
+bool xLua_Init( void );
+void xLua_ShutDown( void );
+bool xLua_LoadAndDoFile( const char* fileName );
+bool xLua_CallLuaFunction( const char* funcName, const char* paramDef, ... );
+
+#endif // scripting enable
 
 #endif // inclusion guard

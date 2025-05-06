@@ -1,6 +1,9 @@
 #include "luaInterface.h"
 
 #include <SDL3/SDL.h>
+
+#if SCRIPTING_ENABLED
+
 #include <stdarg.h>
 
 #include "System/platformLog.h"
@@ -1078,3 +1081,28 @@ void xLua_StackDump( void )
 
 	llog( LOG_DEBUG, "End stack dump ===" );
 }
+
+#else // scripting enabled
+
+bool xLua_Init( void )
+{
+	return true;
+}
+
+void xLua_ShutDown( void )
+{
+	return;
+}
+
+bool xLua_LoadAndDoFile( const char* fileName )
+{
+	return true;
+}
+
+bool xLua_CallLuaFunction( const char* funcName, const char* paramDef, ... )
+{
+	SDL_assert( false && "Scripting not enabled." );
+	return false;
+}
+
+#endif
