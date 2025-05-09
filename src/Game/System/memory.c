@@ -96,11 +96,13 @@ static MemoryArena memoryBlock = { NULL, NULL, NULL, NULL };
 #ifdef THREAD_SUPPORT
 static void lockMemoryMutex( void )
 {
+	if( memoryBlock.mutex == NULL ) return;
 	SDL_LockMutex( memoryBlock.mutex );
 }
 
 static void unlockMemoryMutex( void )
 {
+	if( memoryBlock.mutex == NULL ) return;
 	SDL_UnlockMutex( memoryBlock.mutex );
 }
 #else
@@ -623,6 +625,8 @@ bool mem_Init( size_t totalSize )
 
 	createNewBlock( memoryBlock.memory, NULL, NULL, totalSize - MEMORY_HEADER_SIZE, __FILE__, __LINE__ );
 
+	SDL_SetMemoryFunctions( mem_AllocateForCallback, mem_ClearAllocateForCallback, mem_ResizeForCallback, mem_ReleaseForCallback );
+
 #ifdef THREAD_SUPPORT
 	memoryBlock.mutex = SDL_CreateMutex( );
 	if( memoryBlock.mutex == NULL ) {
@@ -640,13 +644,13 @@ error_cleanup:
 
 void mem_CleanUp( void )
 {
-	// invalidates all the pointers
-	free( memoryBlock.memory );
-	memoryBlock.memory = NULL;
-
 #ifdef THREAD_SUPPORT
 	SDL_DestroyMutex( memoryBlock.mutex );
 #endif
+
+	// invalidates all the pointers
+	free( memoryBlock.memory );
+	memoryBlock.memory = NULL;
 }
 
 void mem_Log( void )

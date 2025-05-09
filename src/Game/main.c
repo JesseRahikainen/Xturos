@@ -126,12 +126,13 @@ void cleanUp( void )
 	if( logFile != NULL ) {
 		SDL_CloseIO( logFile );
 	}
-	mem_CleanUp( );
     
     SDL_DestroyWindow( window );
     window = NULL;
 
     SDL_Quit( );
+
+	mem_CleanUp( );
 }
 
 // TODO: Move to logPlatform
@@ -205,8 +206,6 @@ int initEverything( void )
 	if( !memValid ) {
 		return -1;
 	}
-
-	SDL_SetMemoryFunctions( mem_AllocateForCallback, mem_ClearAllocateForCallback, mem_ResizeForCallback, mem_ReleaseForCallback );
 
 #ifdef _DEBUG
 	SDL_SetLogPriorities( SDL_LOG_PRIORITY_VERBOSE );
