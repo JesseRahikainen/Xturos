@@ -475,7 +475,7 @@ void ecps_RunProcess( ECPS* ecps, Process* process )
 		size_t size = sb_Count( ecps->sbCommandBuffer );
 		int numCmds = 0;
 		while( cmdBuffer < bufferEnd ) {
-			mem_Verify( );
+			//mem_Verify( );
 			++numCmds;
 			CommandType cmdType = *( (CommandType*)cmdBuffer );
 			switch( cmdType ) {
@@ -495,7 +495,7 @@ void ecps_RunProcess( ECPS* ecps, Process* process )
 				SDL_assert( false && "Invalid command" );
 				break;
 			}
-			mem_Verify( );
+			//mem_Verify( );
 			SDL_assert( cmdBuffer <= ( bufferEnd + 1 ) );
 		}
 

@@ -12,6 +12,9 @@ For right now lets assume the storage is external, we just need a way to turn a 
 
 Essentially we're just getting a bunch of functions that can be used to do some things about a hex grid
  and not with a hex grid.
+
+For flat-top orientation hexagons the size is the distance from the center to the east or west points.
+For pointing-top orientation hexagons the size is the distance from the center to the north or south points.
 */
 
 typedef enum {
@@ -39,6 +42,7 @@ typedef struct {
 } HexGridCoord;
 
 // we're assuming the grid coordinate [0,0] is the position [0,0]
+//  NOTE: there is a chance that two nearby but distinct positions could give the same coord position
 Vector2 hex_Flat_GridToPosition( float size, HexGridCoord coord );
 HexGridCoord hex_Flat_PositionToGrid( float size, Vector2 pos );
 Vector2 hex_Pointy_GridToPosition( float size, HexGridCoord coord );
@@ -60,6 +64,9 @@ void hex_AllInLine( HexGridCoord start, HexGridCoord end, HexGridCoord** sbOutLi
 
 // Get all hex coords that are a certain range from the center, where range > 0, and puts them into the stretchy buffer sbOutList
 void hex_Ring( HexGridCoord center, int32_t range, HexGridCoord** sbOutList );
+
+// Get the distance from a flat side of the hex to the opposite flat side
+float hex_FlatSize( float size );
 
 //***************************************************************************
 // Various functions to convert hex coordinates to grid indices

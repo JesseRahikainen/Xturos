@@ -17,7 +17,7 @@
 
 #include "System/jobQueue.h"
 
-#include "sound.h"
+#include "Audio/sound.h"
 
 #include "DefaultECPS/defaultECPS.h"
 
@@ -266,10 +266,10 @@ static void testJobQueueScreen_Render( float t )
 	}
 
 	const char* testString = "ABCDEFGHIJKLMNOPQRSTUVWXYZ\nabcdefghijklmnopqrstuvwxyz\nTest Test Test   ";
-	txt_DisplayString( testString, vec2( 200.0f, 450.0f ), CLR_CYAN,
+	txt_DisplayString( (const uint8_t*)testString, vec2( 200.0f, 450.0f ), CLR_CYAN,
 		HORIZ_ALIGN_LEFT, VERT_ALIGN_TOP, testFont, 1, 0, 12.0f );
 
-	txt_DisplayString( testString, vec2( 200.0f, 525.0f ), CLR_CYAN,
+	txt_DisplayString( (const uint8_t*)testString, vec2( 200.0f, 525.0f ), CLR_CYAN,
 		HORIZ_ALIGN_LEFT, VERT_ALIGN_TOP, font, 1, 0, 12.0f );
 }
 

@@ -1,3 +1,5 @@
+#define STB_DS_IMPLEMENTATION
+
 #include "helpers.h"
 
 #if defined( WIN32 )

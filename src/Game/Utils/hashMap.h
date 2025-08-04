@@ -12,7 +12,6 @@ based on this: https://probablydance.com/2017/02/26/i-wrote-the-fastest-hashtabl
     hit the upper limit probe count we resize the table to be larger, generally this was at about 2/3 full. Can add a test for retrieving, if the distance
     from the ideal spot is greater than the max probe count we know the item cannot exist (this will end up being equivilant to the test from the Robin
     Hood hashing retrieval test).
-NOTE: We're storing the string pointer passed in, so we're assuming it will not change. Can modify it later to make a copy of the string instead.
 */
 
 #ifndef HASH_MAP_H

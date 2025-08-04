@@ -687,7 +687,7 @@ void txt_CalculateStringRenderSize( const char* utf8Str, int fontID, float desir
 }
 
 // Draws a string on the screen. The base line is determined by pos.
-void txt_DisplayString( const char* utf8Str, Vector2 pos, Color clr, HorizTextAlignment hAlign, VertTextAlignment vAlign,
+void txt_DisplayString( const uint8_t* utf8Str, Vector2 pos, Color clr, HorizTextAlignment hAlign, VertTextAlignment vAlign,
 	int fontID, int camFlags, int8_t depth, float desiredPixelSize )
 {
 	SDL_assert( utf8Str != NULL );

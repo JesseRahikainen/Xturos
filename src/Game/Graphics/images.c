@@ -48,6 +48,18 @@ bool img_Init( void )
 {
     maxTextureSize = gfxPlatform_GetMaxTextureSize( );
 	memset( images, 0, sizeof(images) );
+
+	// create a default white 4x4 square to use
+	uint8_t whiteImgData[] = {
+		255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
+		255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
+		255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
+		255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255
+	};
+	Texture whiteImgTexture;
+	gfxUtil_CreateTextureFromRGBABitmap( whiteImgData, 4, 4, &whiteImgTexture );
+	img_CreateFromTexture( &whiteImgTexture, ST_DEFAULT, "default_white_square" );
+
 	return true;
 }
 
@@ -930,7 +942,7 @@ void img_ImmediateRender( ImageRenderInstruction* instruction )
 	}
 
 	// check stencil
-	TriType type = ( images[imgID].flags & IMGFLAG_HAS_TRANSPARENCY ) ? TT_TRANSPARENT : TT_SOLID;
+	TriType type = ( ( images[imgID].flags & IMGFLAG_HAS_TRANSPARENCY ) || ( instruction->color.a != 1.0f ) ) ? TT_TRANSPARENT : TT_SOLID;
 	if( instruction->isStencil ) {
 		type = TT_STENCIL;
 	}

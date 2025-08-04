@@ -327,6 +327,22 @@
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\src\Game\Audio\sound.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">false</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugRelease|Win32'">false</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Game\Audio\tuning.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">false</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugRelease|Win32'">false</ExcludedFromBuild>
+    </ClInclude>
     <ClInclude Include="..\..\src\Game\collisionDetection.h" />
     <ClInclude Include="..\..\src\Game\DefaultECPS\defaultECPS.h" />
     <ClInclude Include="..\..\src\Game\DefaultECPS\generalComponents.h" />
@@ -349,6 +365,7 @@
     <ClInclude Include="..\..\src\Game\Game\testPointerResponseScreen.h" />
     <ClInclude Include="..\..\src\Game\Game\testSoundsScreen.h" />
     <ClInclude Include="..\..\src\Game\Game\testSteeringScreen.h" />
+    <ClInclude Include="..\..\src\Game\Game\testSynthState.h" />
     <ClInclude Include="..\..\src\Game\Graphics\camera.h" />
     <ClInclude Include="..\..\src\Game\Graphics\color.h" />
     <ClInclude Include="..\..\src\Game\Graphics\debugRendering.h" />
@@ -410,7 +427,6 @@
     <ClInclude Include="..\..\src\Game\Others\lua-5.4.3\lzio.h" />
     <ClInclude Include="..\..\src\Game\Others\nuklear.h" />
     <ClInclude Include="..\..\src\Game\particles.h" />
-    <ClInclude Include="..\..\src\Game\sound.h" />
     <ClInclude Include="..\..\src\Game\System\shared.h" />
     <ClInclude Include="..\..\src\Game\System\ECPS\ecps_componentBitFlags.h" />
     <ClInclude Include="..\..\src\Game\System\ECPS\ecps_componentTypes.h" />
@@ -445,6 +461,22 @@
     <ClInclude Include="..\..\src\Game\world.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\src\Game\Audio\sound.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugRelease|Win32'">false</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">false</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Game\Audio\tuning.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugRelease|Win32'">false</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">false</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="..\..\src\Game\collisionDetection.c" />
     <ClCompile Include="..\..\src\Game\DefaultECPS\defaultECPS.c" />
     <ClCompile Include="..\..\src\Game\DefaultECPS\generalComponents.c" />
@@ -467,6 +499,7 @@
     <ClCompile Include="..\..\src\Game\Game\testPointerResponseScreen.c" />
     <ClCompile Include="..\..\src\Game\Game\testSoundsScreen.c" />
     <ClCompile Include="..\..\src\Game\Game\testSteeringScreen.c" />
+    <ClCompile Include="..\..\src\Game\Game\testSynthState.c" />
     <ClCompile Include="..\..\src\Game\Graphics\camera.c" />
     <ClCompile Include="..\..\src\Game\Graphics\color.c" />
     <ClCompile Include="..\..\src\Game\Graphics\debugRendering.c" />
@@ -769,7 +802,6 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="..\..\src\Game\particles.c" />
-    <ClCompile Include="..\..\src\Game\sound.c" />
     <ClCompile Include="..\..\src\Game\System\ECPS\ecps_componentBitFlags.c" />
     <ClCompile Include="..\..\src\Game\System\ECPS\ecps_componentTypes.c" />
     <ClCompile Include="..\..\src\Game\System\ECPS\ecps_serialization.c" />

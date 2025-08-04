@@ -1,6 +1,7 @@
 #include "camera.h"
 
 #include <string.h>
+#include "Utils/helpers.h"
 #include "System/platformLog.h"
 
 typedef struct {
@@ -15,6 +16,7 @@ typedef struct {
 	uint32_t renderFlags;
 	Matrix4 projectionMat;
 	Vector2 inverseOffset;
+	bool isZeroed; // if the camera is centered at 0, 0 instead of width/2, height/2
 
 	bool isVPMatValid;
 	Matrix4 vpMat;
@@ -43,14 +45,14 @@ static void createZeroedProjectionMatrix( int width, int height, Matrix4* outMat
 	mat4_CreateOrthographicProjection( -halfWidth, halfWidth, -halfHeight, halfHeight, -1000.0f, 1000.0f, outMat );
 }
 
-static Vector2 getCameraPosNext( int camera )
+static Vector2 getCameraViewPosNext( int camera )
 {
 	Vector2 pos;
 	vec2_Add( &( cameras[camera].end.pos ), &( cameras[camera].end.posOffset ), &pos );
 	return pos;
 }
 
-static Vector2 getCameraPosCurr( int camera )
+static Vector2 getCameraViewPosCurr( int camera )
 {
 	Vector2 pos;
 	vec2_Add( &( cameras[camera].start.pos ), &( cameras[camera].start.posOffset ), &pos );
@@ -71,51 +73,74 @@ void cam_Init( void )
 	}
 }
 
-// Creates the base projection matrices for all the cameras.
-//  If zeroed is true it will create matrices with (0,0) being the center, otherwise (0,0) will be the upper left
-void cam_SetProjectionMatrices( int width, int height, bool zeroed )
+// Initializes and sets the projection matrices for all the cameras.
+void cam_InitProjectionMatrices( int width, int height, bool zeroed )
 {
-	Matrix4 proj;
-	Vector2 invOffset;
-
-	if( zeroed ) {
-		createZeroedProjectionMatrix( width, height, &proj );
-		invOffset = vec2( -width / 2.0f, -height / 2.0f );
-	} else {
-		createStandardProjectionMatrix( width, height, &proj );
-		invOffset = VEC2_ZERO;
+	for( int i = 0; i < NUM_CAMERAS; ++i ) {
+		cameras[i].isZeroed = zeroed;
 	}
 
+	cam_SetProjectionMatrices( width, height );
+}
+
+// Creates the base projection matrices for all the cameras.
+//  If zeroed is true it will create matrices with (0,0) being the center, otherwise (0,0) will be the upper left
+void cam_SetProjectionMatrices( int width, int height )
+{
+	Matrix4 standardProjMat;
+	Vector2 standardInvOffset;
+	createStandardProjectionMatrix( width, height, &standardProjMat );
+	standardInvOffset = VEC2_ZERO;
+
+	Matrix4 zeroedProjMat;
+	Vector2 zeroedInvOffset;
+	createZeroedProjectionMatrix( width, height, &zeroedProjMat );
+	zeroedInvOffset = vec2( -width / 2.0f, -height / 2.0f );
+
 	for( int i = 0; i < NUM_CAMERAS; ++i ) {
-		cameras[i].projectionMat = proj;
-		cameras[i].inverseOffset = invOffset;
+		if( cameras[i].isZeroed ) {
+			cameras[i].projectionMat = zeroedProjMat;
+			cameras[i].inverseOffset = zeroedInvOffset;
+		} else {
+			cameras[i].projectionMat = standardProjMat;
+			cameras[i].inverseOffset = standardInvOffset;
+		}
+		
+		cameras[i].isInvViewMatValid = false;
+		cameras[i].isVPMatValid = false;
 	}
 }
 
 // Sets the camera projection matrix with (0,0) being the center
 void cam_SetCenteredProjectionMatrix( int cam, int width, int height )
 {
-	SDL_assert( cam >= 0 );
-	SDL_assert( cam < NUM_CAMERAS );
+	ASSERT_AND_IF_NOT( cam >= 0 ) return;
+	ASSERT_AND_IF_NOT( cam < NUM_CAMERAS ) return;
 	createZeroedProjectionMatrix( width, height, &( cameras[cam].projectionMat ) );
 	cameras[cam].inverseOffset = vec2( -width / 2.0f, -height / 2.0f );
+	cameras[cam].isInvViewMatValid = false;
+	cameras[cam].isVPMatValid = false;
+	cameras[cam].isZeroed = true;
 }
 
 // Sets the camera projection matrix with (0,0) being the upper left corner
 void cam_SetStandardProjectionMatrix( int cam, int width, int height )
 {
-	SDL_assert( cam >= 0 );
-	SDL_assert( cam < NUM_CAMERAS );
+	ASSERT_AND_IF_NOT( cam >= 0 ) return;
+	ASSERT_AND_IF_NOT( cam < NUM_CAMERAS ) return;
 	createStandardProjectionMatrix( width, height, &( cameras[cam].projectionMat ) );
 	cameras[cam].inverseOffset = VEC2_ZERO;
+	cameras[cam].isInvViewMatValid = false;
+	cameras[cam].isVPMatValid = false;
+	cameras[cam].isZeroed = false;
 }
 
 // Sets a custom projection matrix for a camera
 void cam_SetCustomProjectionMatrix( int cam, Matrix4* mat )
 {
-	SDL_assert( cam >= 0 );
-	SDL_assert( cam < NUM_CAMERAS );
-	SDL_assert( mat != NULL );
+	ASSERT_AND_IF_NOT( cam >= 0 ) return;
+	ASSERT_AND_IF_NOT( cam < NUM_CAMERAS ) return;
+	ASSERT_AND_IF_NOT( mat != NULL ) return;
 
 	memcpy( &( cameras[cam].projectionMat ), mat, sizeof( Matrix4 ) );
 }
@@ -140,7 +165,8 @@ int cam_SetState( int camera, Vector2 pos, float scale )
 //  Returns <0 if there's a problem.
 int cam_SetNextState( int camera, Vector2 pos, float scale )
 {
-	SDL_assert( camera < NUM_CAMERAS );
+	ASSERT_AND_IF_NOT( camera >= 0 ) return -1;
+	ASSERT_AND_IF_NOT( camera < NUM_CAMERAS ) return -1;
 
 	vec2_Scale( &pos, scale, &(cameras[camera].end.pos ) );
 	//cameras[camera].end.pos = pos;
@@ -153,7 +179,8 @@ int cam_SetNextState( int camera, Vector2 pos, float scale )
 //  Returns <0 if there's a problem
 int cam_SetNextOffset( int camera, Vector2 offset )
 {
-	SDL_assert( camera < NUM_CAMERAS );
+	ASSERT_AND_IF_NOT( camera >= 0 ) return -1;
+	ASSERT_AND_IF_NOT( camera < NUM_CAMERAS ) return -1;
 	vec2_Scale( &offset, cameras[camera].end.scale, &( cameras[camera].end.posOffset ) );
 	return 0;
 }
@@ -162,7 +189,8 @@ int cam_SetNextOffset( int camera, Vector2 offset )
 //  Returns <0 if there's a problem
 int cam_SetNextPos( int camera, Vector2 pos )
 {
-	SDL_assert( camera < NUM_CAMERAS );
+	ASSERT_AND_IF_NOT( camera >= 0 ) return -1;
+	ASSERT_AND_IF_NOT( camera < NUM_CAMERAS ) return -1;
 
 	vec2_Scale( &pos, cameras[camera].end.scale, &( cameras[camera].end.pos ) );
 	return 0;
@@ -172,7 +200,9 @@ int cam_SetNextPos( int camera, Vector2 pos )
 //  Returns <0 if there's a problem.
 int cam_MoveNextState( int camera, Vector2 delta, float scaleDelta )
 {
-	SDL_assert( camera < NUM_CAMERAS );
+	ASSERT_AND_IF_NOT( camera >= 0 ) return -1;
+	ASSERT_AND_IF_NOT( camera < NUM_CAMERAS ) return -1;
+
 	vec2_Add( &( cameras[camera].start.pos ), &delta, &( cameras[camera].end.pos ) );
 	cameras[camera].end.scale = cameras[camera].start.scale + scaleDelta;
 	if( cameras[camera].end.scale < 0.0f ) {
@@ -183,32 +213,40 @@ int cam_MoveNextState( int camera, Vector2 delta, float scaleDelta )
 
 int cam_GetCurrPos( int camera, Vector2* outPos )
 {
-	SDL_assert( outPos != NULL );
-	SDL_assert( camera < NUM_CAMERAS );
+	ASSERT_AND_IF_NOT( outPos != NULL ) return -1;
+	ASSERT_AND_IF_NOT( camera >= 0 ) return -1;
+	ASSERT_AND_IF_NOT( camera < NUM_CAMERAS ) return -1;
+
 	(*outPos) = cameras[camera].start.pos;
 	return 0;
 }
 
 int cam_GetNextPos( int camera, Vector2* outPos )
 {
-	SDL_assert( outPos != NULL );
-	SDL_assert( camera < NUM_CAMERAS );
+	ASSERT_AND_IF_NOT( outPos != NULL ) return -1;
+	ASSERT_AND_IF_NOT( camera >= 0 ) return -1;
+	ASSERT_AND_IF_NOT( camera < NUM_CAMERAS ) return -1;
+
 	(*outPos) = cameras[camera].end.pos;
 	return 0;
 }
 
 int cam_GetCurrScale( int camera, float* outScale )
 {
-	SDL_assert( outScale != NULL );
-	SDL_assert( camera < NUM_CAMERAS );
+	ASSERT_AND_IF_NOT( outScale != NULL ) return -1;
+	ASSERT_AND_IF_NOT( camera >= 0 ) return -1;
+	ASSERT_AND_IF_NOT( camera < NUM_CAMERAS ) return -1;
+
 	(*outScale) = cameras[camera].start.scale;
 	return 0;
 }
 
 int cam_GetNextScale( int camera, float* outScale )
 {
-	SDL_assert( outScale != NULL );
-	SDL_assert( camera < NUM_CAMERAS );
+	ASSERT_AND_IF_NOT( outScale != NULL ) return -1;
+	ASSERT_AND_IF_NOT( camera >= 0 ) return -1;
+	ASSERT_AND_IF_NOT( camera < NUM_CAMERAS ) return -1;
+
 	(*outScale) = cameras[camera].end.scale;
 	return 0;
 }
@@ -238,12 +276,26 @@ void cam_Update( float dt )
 	currentTime += dt;
 }
 
-// Gets the camera view matrix for the specified camera.
-int cam_GetViewMatrix( int camera, Matrix4* out )
+// Gets the projection matrix that was set up for the camera.
+void cam_GetProjectionMatrix( int camera, Matrix4* out )
 {
+	ASSERT_AND_IF_NOT( out != NULL ) return;
+	ASSERT_AND_IF_NOT( camera >= 0 ) return;
+	ASSERT_AND_IF_NOT( camera < NUM_CAMERAS ) return;
+
+	memcpy( out, &( cameras[camera].projectionMat ), sizeof( Matrix4 ) );
+}
+
+// Gets the camera view matrix for the specified camera.
+void cam_GetViewMatrix( int camera, Matrix4* out )
+{
+	ASSERT_AND_IF_NOT( out != NULL ) return;
+	ASSERT_AND_IF_NOT( camera >= 0 ) return;
+	ASSERT_AND_IF_NOT( camera < NUM_CAMERAS ) return;
+
 	Vector2 pos;
-	Vector2 startPos = getCameraPosCurr( camera );
-	Vector2 endPos = getCameraPosNext( camera );
+	Vector2 startPos = getCameraViewPosCurr( camera );
+	Vector2 endPos = getCameraViewPosNext( camera );
 	Vector2 invPos;
 	Matrix4 transTf, scaleTf;
 	Matrix4 view;
@@ -259,21 +311,20 @@ int cam_GetViewMatrix( int camera, Matrix4* out )
 	mat4_Multiply( &transTf, &scaleTf, &view );
 
 	memcpy( out, &(view), sizeof( Matrix4 ) );
-
-	return 0;
 }
 
 // Gets the view projection matrix for the specified camera.
 //  Returns <0 if there's a problem.
 int cam_GetVPMatrix( int camera, Matrix4* out )
 {
-	SDL_assert( out != NULL );
-	SDL_assert( camera < NUM_CAMERAS );
+	ASSERT_AND_IF_NOT( out != NULL ) return -1;
+	ASSERT_AND_IF_NOT( camera >= 0 ) return -1;
+	ASSERT_AND_IF_NOT( camera < NUM_CAMERAS ) return -1;
 
 	if( !cameras[camera].isVPMatValid ) {
 		Vector2 pos;
-		Vector2 startPos = getCameraPosCurr( camera );
-		Vector2 endPos = getCameraPosNext( camera );
+		Vector2 startPos = getCameraViewPosCurr( camera );
+		Vector2 endPos = getCameraViewPosNext( camera );
 		Vector2 invPos;
 		Matrix4 transTf, scaleTf;
 		Matrix4 view;
@@ -303,17 +354,19 @@ int cam_GetVPMatrix( int camera, Matrix4* out )
 //  Returns <0 if there's a problem.
 int cam_GetInverseViewMatrix( int camera, Matrix4* out )
 {
-	SDL_assert( out != NULL );
-	SDL_assert( camera < NUM_CAMERAS );
+	ASSERT_AND_IF_NOT( out != NULL ) return -1;
+	ASSERT_AND_IF_NOT( camera >= 0 ) return -1;
+	ASSERT_AND_IF_NOT( camera < NUM_CAMERAS ) return -1;
 
 	if( !cameras[camera].isInvViewMatValid ) {
 		Matrix4 transTf, scaleTf;
 
-		Vector2 startPos = getCameraPosCurr( camera );
-		Vector2 endPos = getCameraPosNext( camera );
+		Vector2 startPos = getCameraViewPosCurr( camera );
+		Vector2 endPos = getCameraViewPosNext( camera );
 		Vector2 pos;
 		float t = clamp( 0.0f, 1.0f, ( currentTime / endTime ) );
 		vec2_Lerp( &startPos, &endPos, t, &pos );
+		vec2_Add( &pos, &( cameras[camera].inverseOffset ), &pos );
 		mat4_CreateTranslation( pos.x, pos.y, 0.0f, &transTf );
 
 		float scale = 1.0f / lerp( cameras[camera].start.scale, cameras[camera].end.scale, t );
@@ -333,25 +386,59 @@ int cam_GetInverseViewMatrix( int camera, Matrix4* out )
 
 int cam_ScreenPosToWorldPos( int camera, const Vector2* screenPos, Vector2* out )
 {
-	SDL_assert( screenPos != NULL );
-	SDL_assert( out != NULL );
-	SDL_assert( camera < NUM_CAMERAS );
+	ASSERT_AND_IF_NOT( screenPos != NULL ) return -1;
+	ASSERT_AND_IF_NOT( out != NULL ) return -1;
+	ASSERT_AND_IF_NOT( camera >= 0 ) return -1;
+	ASSERT_AND_IF_NOT( camera < NUM_CAMERAS ) return -1;
 
 	Matrix4 invView;
 	cam_GetInverseViewMatrix( camera, &invView );
 
 	Vector2 pos = *screenPos;
-	vec2_Add( &pos, &( cameras[camera].inverseOffset ), &pos );
 	mat4_TransformVec2Pos( &invView, &pos, out );
 
 	return 0;
+}
+
+bool cam_GetWorldBorders( int camera, Vector2* outTopLeft, Vector2* outBottomRight )
+{
+	ASSERT_AND_IF_NOT( outTopLeft != NULL ) return false;
+	ASSERT_AND_IF_NOT( outBottomRight != NULL ) return false;
+	ASSERT_AND_IF_NOT( camera >= 0 ) return false;
+	ASSERT_AND_IF_NOT( camera < NUM_CAMERAS ) return false;
+
+	// if we're assuming we're using an orthographic camera here then we can just use this:
+	//  width = 2.0f / mat[0], height = 2.0f / mat[5]
+	// out->m[0] = 2.0f / rml;
+	// out->m[5] = 2.0f / tmb;
+	// out->m[10] = -2.0f / fmn;
+	float width = 2.0f / cameras[camera].projectionMat.m[0];
+	float height = 2.0f / cameras[camera].projectionMat.m[5];
+
+	// given the current position of the camera find the positions that would be at the top left and bottom right corners of the camera
+	if( cameras[camera].isZeroed ) {
+		// camera positioned at center of the world
+		outBottomRight->x = width / 2.0f;
+		outBottomRight->y = height / 2.0f;
+		outTopLeft->x = -outBottomRight->x;
+		outTopLeft->y = -outBottomRight->y;
+	} else {
+		// camera positioned at top left corner of the world
+		(*outTopLeft) = VEC2_ZERO;
+		outBottomRight->x = width;
+		outBottomRight->y = height;
+	}
+
+	return true;
 }
 
 // Turns on render flags for the camera.
 //  Returns <0 if there's a problem.
 int cam_TurnOnFlags( int camera, uint32_t flags )
 {
-	SDL_assert( camera < NUM_CAMERAS );
+	ASSERT_AND_IF_NOT( camera >= 0 ) return -1;
+	ASSERT_AND_IF_NOT( camera < NUM_CAMERAS ) return -1;
+
 	cameras[camera].renderFlags |= flags;
 	return 0;
 }
@@ -360,7 +447,9 @@ int cam_TurnOnFlags( int camera, uint32_t flags )
 //  Returns <0 if there's a problem.
 int cam_TurnOffFlags( int camera, uint32_t flags )
 {
-	SDL_assert( camera < NUM_CAMERAS );
+	ASSERT_AND_IF_NOT( camera >= 0 ) return -1;
+	ASSERT_AND_IF_NOT( camera < NUM_CAMERAS ) return -1;
+
 	cameras[camera].renderFlags &= ~flags;
 	return 0;
 }
@@ -369,7 +458,9 @@ int cam_TurnOffFlags( int camera, uint32_t flags )
 //  Returns <0 if there's a problem.
 int cam_SetFlags( int camera, uint32_t flags )
 {
-	SDL_assert( camera < NUM_CAMERAS );
+	ASSERT_AND_IF_NOT( camera >= 0 ) return -1;
+	ASSERT_AND_IF_NOT( camera < NUM_CAMERAS ) return -1;
+
 	cameras[camera].renderFlags = flags;
 	return 0;
 }
@@ -378,7 +469,9 @@ int cam_SetFlags( int camera, uint32_t flags )
 //  Returns 0 if there is something wrong with the index, also when no flags have been set.
 uint32_t cam_GetFlags( int camera )
 {
-	SDL_assert( camera < NUM_CAMERAS );
+	ASSERT_AND_IF_NOT( camera >= 0 ) return 0;
+	ASSERT_AND_IF_NOT( camera < NUM_CAMERAS ) return 0;
+
 	return cameras[camera].renderFlags;
 }
 

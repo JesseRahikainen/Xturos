@@ -234,20 +234,20 @@ void nk_xu_handleEvent( NuklearWrapper* xu, SDL_Event* evt )
             nk_input_key( ctx, NK_KEY_TEXT_START, down );
 		} else if( sym == SDLK_END ) {
             nk_input_key( ctx, NK_KEY_TEXT_END, down );
-        } else if( sym == SDLK_Z ) {
-            nk_input_key( ctx, NK_KEY_TEXT_UNDO, down && state[SDL_SCANCODE_LCTRL] );
-        } else if( sym == SDLK_R ) {
-            nk_input_key( ctx, NK_KEY_TEXT_REDO, down && state[SDL_SCANCODE_LCTRL] );
-        } else if( sym == SDLK_C ) {
-            nk_input_key( ctx, NK_KEY_COPY, down && state[SDL_SCANCODE_LCTRL] );
-        } else if( sym == SDLK_V ) {
-            nk_input_key( ctx, NK_KEY_PASTE, down && state[SDL_SCANCODE_LCTRL] );
-		} else if( sym == SDLK_X ) {
-            nk_input_key( ctx, NK_KEY_CUT, down && state[SDL_SCANCODE_LCTRL] );
-		} else if( sym == SDLK_B ) {
-            nk_input_key( ctx, NK_KEY_TEXT_LINE_START, down && state[SDL_SCANCODE_LCTRL] );
-		} else if( sym == SDLK_E ) {
-            nk_input_key( ctx, NK_KEY_TEXT_LINE_END, down && state[SDL_SCANCODE_LCTRL] );
+        } else if( sym == SDLK_Z && state[SDL_SCANCODE_LCTRL] ) {
+            nk_input_key( ctx, NK_KEY_TEXT_UNDO, down );
+        } else if( sym == SDLK_R && state[SDL_SCANCODE_LCTRL] ) {
+            nk_input_key( ctx, NK_KEY_TEXT_REDO, down );
+        } else if( sym == SDLK_C && state[SDL_SCANCODE_LCTRL] ) {
+            nk_input_key( ctx, NK_KEY_COPY, down );
+        } else if( sym == SDLK_V && state[SDL_SCANCODE_LCTRL] ) {
+            nk_input_key( ctx, NK_KEY_PASTE, down );
+		} else if( sym == SDLK_X && state[SDL_SCANCODE_LCTRL] ) {
+            nk_input_key( ctx, NK_KEY_CUT, down );
+		} else if( sym == SDLK_B && state[SDL_SCANCODE_LCTRL] ) {
+            nk_input_key( ctx, NK_KEY_TEXT_LINE_START, down );
+		} else if( sym == SDLK_E && state[SDL_SCANCODE_LCTRL] ) {
+            nk_input_key( ctx, NK_KEY_TEXT_LINE_END, down );
 		} else if( sym == SDLK_LEFT ) {
             if( state[SDL_SCANCODE_LCTRL] )
                 nk_input_key( ctx, NK_KEY_TEXT_WORD_LEFT, down);
@@ -260,7 +260,10 @@ void nk_xu_handleEvent( NuklearWrapper* xu, SDL_Event* evt )
 			} else {
 				nk_input_key( ctx, NK_KEY_RIGHT, down );
 			}
-        }
+		} else if( down && ( sym >= SDLK_SPACE ) && ( sym <= SDLK_TILDE ) ) {
+			// standard ascii input
+			nk_input_char( ctx, (char)sym );
+		}
     } else if( ( evt->type == SDL_EVENT_MOUSE_BUTTON_DOWN ) || ( evt->type == SDL_EVENT_MOUSE_BUTTON_UP ) ) {
         /* mouse button */
         int down = evt->type == SDL_EVENT_MOUSE_BUTTON_DOWN;
@@ -269,10 +272,6 @@ void nk_xu_handleEvent( NuklearWrapper* xu, SDL_Event* evt )
         if( evt->button.button == SDL_BUTTON_RIGHT )	nk_input_button( ctx, NK_BUTTON_RIGHT, mX, mY, down );
     } else if( evt->type == SDL_EVENT_MOUSE_MOTION ) {
 		nk_input_motion( ctx, mX, mY );
-    } else if( evt->type == SDL_EVENT_TEXT_INPUT ) {
-        nk_glyph glyph;
-        memcpy( glyph, evt->text.text, NK_UTF_SIZE );
-        nk_input_glyph( ctx, glyph );
     } else if( evt->type == SDL_EVENT_MOUSE_WHEEL ) {
 		struct nk_vec2 scroll;
 		scroll.y = (float)evt->wheel.y;
@@ -285,7 +284,7 @@ void nk_xu_handleEvent( NuklearWrapper* xu, SDL_Event* evt )
 //  draw any Nuklear UIs every frame instead of every draw.
 void nk_xu_render( NuklearWrapper* xu )
 {
-#if 0
+#if 1
 	Matrix4 ortho;
 	mat4_CreateOrthographicProjection( 0.0f, (float)( xu->renderWidth ), 0.0f, (float)( xu->renderHeight ), -1000.0f, 1000.0f, &ortho );
 

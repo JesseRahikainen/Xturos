@@ -4,7 +4,10 @@
 #include <stdlib.h>
 
 typedef void (*MessageResponse)(void*);
-typedef size_t MessageID;
+
+typedef enum {
+	MSG_WINDOW_RESIZED
+} MessageID;
 
 // register a message listener, you can register the same listener more than once
 void mb_RegisterListener( const MessageID message, MessageResponse response );

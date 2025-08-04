@@ -199,7 +199,7 @@ static void gameScreen_Render( float t )
 		img_Render_Pos( sbImageSheet[i], 1, 0, &pos[i] );
 	}
 
-	txt_DisplayString( "Testing stuff\nAnd even more stuff\nAnd once more", VEC2_ZERO, CLR_RED, HORIZ_ALIGN_LEFT, VERT_ALIGN_TOP, font, 1, 0, 128.0f );
+	txt_DisplayString( (const uint8_t*)"Testing stuff\nAnd even more stuff\nAnd once more", VEC2_ZERO, CLR_RED, HORIZ_ALIGN_LEFT, VERT_ALIGN_TOP, font, 1, 0, 128.0f );
 }
 
 GameState testECPSScreenState = { gameScreen_Enter, gameScreen_Exit, gameScreen_ProcessEvents,

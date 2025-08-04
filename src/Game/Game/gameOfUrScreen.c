@@ -324,14 +324,14 @@ typedef enum {
 	PT_AI
 } PlayerType;
 
-static int boardImg = -1;
-static int pieceImg = -1;
-static int headProfileImg = -1;
-static int gearImg = -1;
-static int whiteBoxImg = -1;
-static int font = -1;
-static int* buttonImg;
-static int hiliteImg = -1;
+static int boardImg = INVALID_IMAGE_ID;
+static int pieceImg = INVALID_IMAGE_ID;
+static int headProfileImg = INVALID_IMAGE_ID;
+static int gearImg = INVALID_IMAGE_ID;
+static int whiteBoxImg = INVALID_IMAGE_ID;
+static int font = INVALID_IMAGE_ID;
+static int buttonImg = INVALID_IMAGE_ID;
+static int hiliteImg = INVALID_IMAGE_ID;
 
 static int lastWinner = -1;
 
@@ -475,7 +475,7 @@ static void gameOfUrState_Enter( void )
 	gearImg = img_Load( "Images/gear.png", ST_DEFAULT );
 	whiteBoxImg = img_Load( "Images/white.png", ST_DEFAULT );
 	font = txt_LoadFont( "Fonts/Aileron-Regular.otf", 24 );
-	img_LoadSpriteSheet( "Images/button.spritesheet", ST_DEFAULT, &buttonImg );
+	buttonImg = img_Load( "Images/button.png", ST_DEFAULT );
 	hiliteImg = img_Load( "Images/hilite.png", ST_DEFAULT );
 
 	gsm_EnterState( &gameSM, &startState );
@@ -527,9 +527,9 @@ static void createTurnLabel( )
 {
 	EntityID label;
 	if( currBoardState.currPlayer == 0 ) {
-		label = createLabel( &defaultECPS, "Turn: White", vec2( 400.0f, 270.0f ), CLR_WHITE, HORIZ_ALIGN_CENTER, VERT_ALIGN_TOP, font, 24.0f, 1, 10 );
+		label = createLabel( &defaultECPS, "Turn: White", vec2( 400.0f, 270.0f ), CLR_WHITE, HORIZ_ALIGN_CENTER, VERT_ALIGN_TOP, font, 24.0f, 1, 10, false );
 	} else {
-		label = createLabel( &defaultECPS, "Turn: Black", vec2( 400.0f, 270.0f ), CLR_WHITE, HORIZ_ALIGN_CENTER, VERT_ALIGN_TOP, font, 24.0f, 1, 10 );
+		label = createLabel( &defaultECPS, "Turn: Black", vec2( 400.0f, 270.0f ), CLR_WHITE, HORIZ_ALIGN_CENTER, VERT_ALIGN_TOP, font, 24.0f, 1, 10, false );
 	}
 
 	gp_AddGroupIDToEntityAndChildren( &defaultECPS, label, LABEL_GROUP_ID );
@@ -540,7 +540,7 @@ static void createRollLabel( )
 	if( currBoardState.roll >= 0 ) {
 		char strBuffer[64];
 		SDL_snprintf( strBuffer, 64, "Rolled a %i", currBoardState.roll );
-		EntityID label = createLabel( &defaultECPS, strBuffer, vec2( 400.0f, 300.0f ), CLR_WHITE, HORIZ_ALIGN_CENTER, VERT_ALIGN_TOP, font, 24.0f, 1, 10 );
+		EntityID label = createLabel( &defaultECPS, strBuffer, vec2( 400.0f, 300.0f ), CLR_WHITE, HORIZ_ALIGN_CENTER, VERT_ALIGN_TOP, font, 24.0f, 1, 10, false );
 		gp_AddGroupIDToEntityAndChildren( &defaultECPS, label, LABEL_GROUP_ID );
 	}
 }
@@ -597,11 +597,11 @@ static void start_Enter( void )
 
 	EntityID label;
 	if( lastWinner == 0 ) {
-		label = createLabel( &defaultECPS, "Winner: Player 1", vec2( 275.0f, 40.0f ), CLR_WHITE, HORIZ_ALIGN_LEFT, VERT_ALIGN_BASE_LINE, font, 24.0f, 1, 0 );
+		label = createLabel( &defaultECPS, "Winner: Player 1", vec2( 275.0f, 40.0f ), CLR_WHITE, HORIZ_ALIGN_LEFT, VERT_ALIGN_BASE_LINE, font, 24.0f, 1, 0, true );
 	} else if( lastWinner == 1 ) {
-		label = createLabel( &defaultECPS, "Winner: Player 2", vec2( 275.0f, 40.0f ), CLR_WHITE, HORIZ_ALIGN_LEFT, VERT_ALIGN_BASE_LINE, font, 24.0f, 1, 0 );
+		label = createLabel( &defaultECPS, "Winner: Player 2", vec2( 275.0f, 40.0f ), CLR_WHITE, HORIZ_ALIGN_LEFT, VERT_ALIGN_BASE_LINE, font, 24.0f, 1, 0, true );
 	} else {
-		label = createLabel( &defaultECPS, "Winner: None", vec2( 275.0f, 40.0f ), CLR_WHITE, HORIZ_ALIGN_LEFT, VERT_ALIGN_BASE_LINE, font, 24.0f, 1, 0 );
+		label = createLabel( &defaultECPS, "Winner: None", vec2( 275.0f, 40.0f ), CLR_WHITE, HORIZ_ALIGN_LEFT, VERT_ALIGN_BASE_LINE, font, 24.0f, 1, 0, true );
 	}
 	gp_AddGroupIDToEntityAndChildren( &defaultECPS, label, LABEL_GROUP_ID );
 
@@ -679,12 +679,12 @@ static void humanChooseMove_Enter( void )
 	for( size_t i = 0; i < sb_Count( sbHumanMoveList ); ++i ) {
 		switch( sbHumanMoveList[i].type ) {
 		case MT_SKIP:
-			//matchingMoveList[i] = btn_Create( basePos, buttonSize, buttonSize, "Skip", font, 24.0f, CLR_BLACK, VEC2_ZERO, buttonImg, -1, CLR_WHITE, 1, 10, pressedButton, NULL );
-			matchingMoveList[i] = button_Create3x3Button( &defaultECPS, basePos, buttonSize, "Skip", font, 24.0f, CLR_BLACK, VEC2_ZERO, buttonImg, CLR_WHITE, 1, 0, pressedButton, NULL );
+			matchingMoveList[i] = button_Create3x3Button( &defaultECPS, basePos, buttonSize, "Skip", font, 24.0f,
+				CLR_BLACK, VEC2_ZERO, buttonImg, 3, 6, 3, 6, CLR_WHITE, 1, 0, pressedButton, NULL );
 			break;
 		case MT_ROLL:
-			//matchingMoveList[i] = btn_Create( basePos, buttonSize, buttonSize, "Roll", font, 24.0f, CLR_BLACK, VEC2_ZERO, buttonImg, -1, CLR_WHITE, 1, 10, pressedButton, NULL );
-			matchingMoveList[i] = button_Create3x3Button( &defaultECPS, basePos, buttonSize, "Roll", font, 24.0f, CLR_BLACK, VEC2_ZERO, buttonImg, CLR_WHITE, 1, 0, pressedButton, NULL );
+			matchingMoveList[i] = button_Create3x3Button( &defaultECPS, basePos, buttonSize, "Roll", font, 24.0f,
+				CLR_BLACK, VEC2_ZERO, buttonImg, 3, 6, 3, 6, CLR_WHITE, 1, 0, pressedButton, NULL );
 			break;
 		case MT_PIECE:
 		{

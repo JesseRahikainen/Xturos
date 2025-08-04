@@ -11,9 +11,11 @@
 // Initialize all the cameras, set them to the identity.
 void cam_Init( void );
 
+// Initializes and sets the projection matrices for all the cameras.
+void cam_InitProjectionMatrices( int width, int height, bool zeroed );
+
 // Creates the base projection matrices for all the cameras.
-//  If zeroed is true it will create matrices with (0,0) being the center, otherwise (0,0) will be the upper left
-void cam_SetProjectionMatrices( int width, int height, bool zeroed );
+void cam_SetProjectionMatrices( int width, int height );
 
 // Sets the camera projection matrix with (0,0) being the center
 void cam_SetCenteredProjectionMatrix( int cam, int width, int height );
@@ -57,8 +59,11 @@ void cam_FinalizeStates( float timeToEnd );
 // Update all the cameras, call this before rendering stuff.
 void cam_Update( float dt );
 
+// Gets the projection matrix that was set up for the camera.
+void cam_GetProjectionMatrix( int camera, Matrix4* out );
+
 // Gets the camera view matrix for the specified camera.
-int cam_GetViewMatrix( int camera, Matrix4* out );
+void cam_GetViewMatrix( int camera, Matrix4* out );
 
 // Gets the view projection matrix for the specified camera.
 //  Returns <0 if there's a problem.
@@ -69,6 +74,8 @@ int cam_GetVPMatrix( int camera, Matrix4* out );
 int cam_GetInverseViewMatrix( int camera, Matrix4* out );
 
 int cam_ScreenPosToWorldPos( int camera, const Vector2* screenPos, Vector2* out );
+
+bool cam_GetWorldBorders( int camera, Vector2* outTopLeft, Vector2* outBottomRight );
 
 // Turns on render flags for the camera.
 //  Returns <0 if there's a problem.

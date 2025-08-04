@@ -329,11 +329,12 @@ void input_UpdateMouseWindow( int windowWidth, int windowHeight )
 
 	if( windowRatio < inputRatio ) {
 		mouseInputOffset.x = 0.0f;
-		mouseInputOffset.y = -( windowSize.y - ( windowSize.x / inputRatio ) ) / 2.0f;
+		mouseInputOffset.y = 0.0f;// -( windowSize.y - ( windowSize.x / inputRatio ) ) / 2.0f;
 
-		mouseInputScale = mouseInputArea.x / windowSize.x;
+		//mouseInputScale = mouseInputArea.x / windowSize.x;
+		mouseInputScale = mouseInputArea.y / windowSize.y;
 	} else {
-		mouseInputOffset.x = -( windowSize.x - ( windowSize.y * inputRatio ) ) / 2.0f;
+		mouseInputOffset.x = 0.0f;// -( windowSize.x - ( windowSize.y * inputRatio ) ) / 2.0f;
 		mouseInputOffset.y = 0.0f;
 
 		mouseInputScale = mouseInputArea.y / windowSize.y;

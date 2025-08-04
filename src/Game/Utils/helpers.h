@@ -8,6 +8,15 @@
 
 #include "Others/cmp.h"
 
+#include "System/memory.h"
+
+// needed for the hash map, will eventually want to transition the stretchy buffer over to just using the dynamic array from this as well
+#if !defined(STBDS_REALLOC) && !defined(STBDS_FREE)
+#define STBDS_REALLOC(c,p,s) mem_Resize(p,s)
+#define STBDS_FREE(c,p)      mem_Release(p)
+#endif
+#include "stb_ds.h"
+
 // general helper functions
 #define ARRAY_SIZE( a ) ( sizeof( a ) / sizeof( a[0] ) )
 #define ANY_BITS_ON( bits, testOnBits ) ( ( bits ) & ( testOnBits ) )

@@ -105,8 +105,14 @@ int main( int argc, char** argv )
 				}
 			} else {
 				fprintf( stderr, "Too many files supplied." );
+				return 1;
 			}
 		}
+	}
+
+	if( inputFilePath == NULL ) {
+		fprintf( stderr, "No input file specified." );
+		return 1;
 	}
 
 	// load the image

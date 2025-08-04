@@ -6,7 +6,7 @@
 #include "Graphics/debugRendering.h"
 #include "Graphics/imageSheets.h"
 #include "UI/text.h"
-#include "sound.h"
+#include "Audio/sound.h"
 #include "UI/uiEntities.h"
 #include "DefaultECPS/defaultECPS.h"
 #include "DefaultECPS/generalProcesses.h"

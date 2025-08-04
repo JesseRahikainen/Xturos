@@ -9,7 +9,9 @@
 
 // Labels
 EntityID createLabel( ECPS* ecps, const char* utf8Str, Vector2 pos, Color clr, HorizTextAlignment hAlign, VertTextAlignment vAlign,
-	int fontID, float fontSize, int camFlags, int8_t depth );
+	int fontID, float fontSize, int camFlags, int8_t depth, bool useTextArea );
+
+void setTextString( ECPS* ecps, EntityID entity, const char* utf8Str );
 
 // Buttons
 EntityID button_CreateEmpty( ECPS* ecps, Vector2 position, Vector2 size, int8_t depth, TrackedCallback pressResponse, TrackedCallback releaseResponse );
@@ -20,14 +22,19 @@ EntityID button_CreateImageButton( ECPS* ecps, Vector2 position, Vector2 normalS
 
 EntityID button_Create3x3Button( ECPS* ecps, Vector2 position, Vector2 size,
 	const char* text, int fontID, float fontPixelSize, Color fontColor, Vector2 textOffset,
-	int* slicedBorder, Color imgColor, unsigned int camFlags, int8_t depth, TrackedCallback pressResponse, TrackedCallback releaseResponse );
+	int img, uint32_t topBorder, uint32_t bottomBorder, uint32_t leftBorder, uint32_t rightBorder, Color imgColor, unsigned int camFlags, int8_t depth,
+	TrackedCallback pressResponse, TrackedCallback releaseResponse );
 
 EntityID button_Create3x3ScriptButton( ECPS* ecps, Vector2 position, Vector2 size,
 	const char* text, int fontID, float fontPixelSize, Color fontColor, Vector2 textOffset,
-	int* slicedBorder, Color imgColor, unsigned int camFlags, int8_t depth, const char* pressResponse, const char* releaseResponse );
+	int img, uint32_t topBorder, uint32_t bottomBorder, uint32_t leftBorder, uint32_t rightBorder,
+	Color imgColor, uint32_t camFlags, int8_t depth, const char* pressResponse, const char* releaseResponse );
 
 EntityID button_CreateTextButton( ECPS* ecps, Vector2 position, Vector2 size,
 	const char* text, int fontID, float fontPixelSize, Color fontColor, Vector2 textOffset,
-	unsigned int camFlags, int8_t depth, TrackedCallback pressResponse, TrackedCallback releaseResponse );
+	uint32_t camFlags, int8_t depth, TrackedCallback pressResponse, TrackedCallback releaseResponse );
+
+EntityID button_CreateImageOnlyButton( ECPS* ecps, Vector2 position, Vector2 normalSize, Vector2 clickedSize,
+	int imgID, Color imgColor, uint32_t camFlags, int8_t depth, TrackedCallback pressResponse, TrackedCallback releaseResponse );
 
 #endif // inclusion guard

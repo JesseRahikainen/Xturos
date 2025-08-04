@@ -12,6 +12,7 @@
 #include "Graphics/spriteAnimation.h"
 #include "System/ECPS/ecps_trackedCallbacks.h"
 #include "System/shared.h"
+#include "UI/text.h"
 
 // used for callbacks that could point to source or script files
 typedef struct {
@@ -154,15 +155,16 @@ extern ComponentID gcPointerResponseCompID;
 // a flag used to indicate that an entity should be destroyed when next possible
 extern ComponentID gcCleanUpFlagCompID;
 
-// for right now all text will be drawn centered
 typedef struct {
 	uint32_t camFlags;
 	int8_t depth;
 	uint8_t* text;
 	int fontID;
-	Color clr; // assuming any color components aren't for this, need to find a better way to do this
 	float pixelSize;
 	bool textIsDynamic;
+	HorizTextAlignment horizAlign;
+	VertTextAlignment vertAlign;
+	bool useTextArea;
 } GCTextData;
 extern ComponentID gcTextCompID;
 

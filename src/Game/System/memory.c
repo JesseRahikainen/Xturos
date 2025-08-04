@@ -495,6 +495,7 @@ static void internal_verifyPointer( void* p, bool allowNull )
 	if( foundHeader == NULL ) {
 		int x = 0;
 	}
+	MemoryBlockHeader* foundDealloactedHeader = findMemoryBlock( p, false );
 	assert( foundHeader != NULL );
 }
 
@@ -624,6 +625,8 @@ bool mem_Init( size_t totalSize )
 	testingSetMemory( memoryBlock.memory, totalSize, 0xFF );
 
 	createNewBlock( memoryBlock.memory, NULL, NULL, totalSize - MEMORY_HEADER_SIZE, __FILE__, __LINE__ );
+
+	memoryBlock.mutex = NULL;
 
 	SDL_SetMemoryFunctions( mem_AllocateForCallback, mem_ClearAllocateForCallback, mem_ResizeForCallback, mem_ReleaseForCallback );
 
@@ -923,6 +926,33 @@ void mem_DetachAllChildren( void* parent )
 	} unlockMemoryMutex( );
 }
 
+void* mem_AllocateForCallback( size_t size )
+{
+	void* data = mem_Allocate( size );
+	return data;
+}
+
+void* mem_ClearAllocateForCallback( size_t numMembers, size_t memberSize )
+{
+	size_t totalSize = numMembers * memberSize;
+	void* data = mem_Allocate( totalSize );
+	if( data != NULL ) {
+		SDL_memset( data, 0, totalSize );
+	}
+	return data;
+}
+
+void* mem_ResizeForCallback( void* memory, size_t size )
+{
+	void* data = mem_Resize( memory, size );
+	return data;
+}
+
+void mem_ReleaseForCallback( void* memory )
+{
+	mem_Release( memory );
+}
+
 static void hierachicalTest( uint32_t detachFlags, uint32_t resizeFlags )
 {
 	assert( mem_Init( 32 * 1024 ) == 0 ); {
@@ -981,33 +1011,6 @@ static void hierachicalTest( uint32_t detachFlags, uint32_t resizeFlags )
 			assert( mem_IsAllocatedMemory( pointers[i] ) == !shouldBeReleased[i] );
 		}
 	} mem_CleanUp( );
-}
-
-void* mem_AllocateForCallback( size_t size )
-{
-	void* data = mem_Allocate( size );
-	return data;
-}
-
-void* mem_ClearAllocateForCallback( size_t numMembers, size_t memberSize )
-{
-	size_t totalSize = numMembers * memberSize;
-	void* data = mem_Allocate( totalSize );
-	if( data != NULL ) {
-		SDL_memset( data, 0, totalSize );
-	}
-	return data;
-}
-
-void* mem_ResizeForCallback( void* memory, size_t size )
-{
-	void* data = mem_Resize( memory, size );
-	return data;
-}
-
-void mem_ReleaseForCallback( void* memory )
-{
-	mem_Release( memory );
 }
 
 void mem_RunTests( void )

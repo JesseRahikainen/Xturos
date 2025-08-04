@@ -136,6 +136,12 @@
     <Filter Include="Shaders\HLSL">
       <UniqueIdentifier>{2f4af986-f884-4ec9-a2eb-a7ef1d51410e}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Audio">
+      <UniqueIdentifier>{362b7c98-b946-4953-b8cf-60b3de0a1911}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Audio">
+      <UniqueIdentifier>{9260c2c7-8ed7-4bb8-b717-0dc5f895f81b}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\Game\Graphics\graphics.h">
@@ -160,9 +166,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Game\particles.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Game\sound.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Game\tween.h">
@@ -480,6 +483,15 @@
     <ClInclude Include="..\..\src\Game\System\shared.h">
       <Filter>Header Files\System</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\Game\Audio\sound.h">
+      <Filter>Header Files\Audio</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Game\Audio\tuning.h">
+      <Filter>Header Files\Audio</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Game\Game\testSynthState.h">
+      <Filter>Header Files\Game\States</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\Game\Graphics\graphics.c">
@@ -507,9 +519,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\Game\particles.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\Game\sound.c">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\Game\tween.c">
@@ -823,6 +832,15 @@
     </ClCompile>
     <ClCompile Include="..\..\src\Game\System\luaInterface.c">
       <Filter>Source Files\System</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Game\Audio\sound.c">
+      <Filter>Source Files\Audio</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Game\Audio\tuning.c">
+      <Filter>Source Files\Audio</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Game\Game\testSynthState.c">
+      <Filter>Source Files\Game\States</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

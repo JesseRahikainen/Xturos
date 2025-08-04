@@ -18,6 +18,7 @@
 // some warnings in their code, assume they know what they're doing until proven otherwise
 #pragma warning( push )
 #pragma warning( disable : 4701 )
+#pragma warning( disable : 5287 )
 #include "Others/nuklear.h"
 #pragma warning( pop )
 

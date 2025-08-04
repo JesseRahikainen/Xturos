@@ -1,21 +1,20 @@
 #include "<temp>State.h"
 
+#include "Graphics/graphics.h"
 #include "Graphics/debugRendering.h"
 #include "System/ECPS/entityComponentProcessSystem.h"
-#include "Components/generalComponents.h"
-#include "gameComponents.h"
-#include "gameProcesses.h"
+#include "DefaultECPS/generalComponents.h"
+#include "DefaultECPS/generalProcesses.h"
+#include "DefaultECPS/defaultECPS.h"
 #include "System/platformLog.h"
-#include "Processes/generalProcesses.h"
+#include "System/gameTime.h"
 
-static int <temp>State_Enter( void )
+static void <temp>State_Enter( void )
 {
-	return 1;
 }
 
-static int <temp>State_Exit( void )
+static void <temp>State_Exit( void )
 {
-	return 1;
 }
 
 static void <temp>State_ProcessEvents( SDL_Event* e )

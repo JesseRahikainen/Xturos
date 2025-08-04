@@ -198,10 +198,12 @@ static void renderText( ECPS* ecps, const Entity* entity )
 	GCTextData* txt = NULL;
 	GCTransformData* tf = NULL;
 	GCSizeData* size = NULL;
+	GCColorData* color = NULL;
 
 	ecps_GetComponentFromEntity( entity, gcTransformCompID, &tf );
 	ecps_GetComponentFromEntity( entity, gcTextCompID, &txt );
 	ecps_GetComponentFromEntity( entity, gcSizeCompID, &size );
+	ecps_GetComponentFromEntity( entity, gcClrCompID, &color );
 
 	float t = gt_GetRenderNormalizedTime( );
 	Matrix3 baseMatrix;
@@ -210,7 +212,18 @@ static void renderText( ECPS* ecps, const Entity* entity )
 	Vector2 currSize;
 	vec2_Lerp( &(size->currentSize), &(size->futureSize), t, &currSize );
 
-	txt_DisplayTextArea( txt->text, &baseMatrix, currSize, txt->clr, HORIZ_ALIGN_CENTER, VERT_ALIGN_CENTER, txt->fontID, 0, NULL, txt->camFlags, txt->depth, txt->pixelSize );
+	Color clr = CLR_WHITE;
+	if( color != NULL ) {
+		clr_Lerp( &color->currClr, &color->futureClr, t, &clr );
+	}
+
+	if( txt->useTextArea ) {
+		txt_DisplayTextArea( txt->text, &baseMatrix, currSize, clr, txt->horizAlign, txt->vertAlign, txt->fontID, 0, NULL, txt->camFlags, txt->depth, txt->pixelSize );
+	} else {
+		Vector2 pos;
+		mat3_GetPosition( &baseMatrix, &pos );
+		txt_DisplayString( txt->text, pos, clr, txt->horizAlign, txt->vertAlign, txt->fontID, txt->camFlags, txt->depth, txt->pixelSize );
+	}
 }
 
 // ***** Render Swap Process

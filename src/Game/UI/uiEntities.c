@@ -13,7 +13,7 @@
 #include "DefaultECPS/generalComponents.h"
 
 EntityID createLabel( ECPS* ecps, const char* utf8Str, Vector2 position, Color fontColor, HorizTextAlignment hAlign, VertTextAlignment vAlign,
-	int fontID, float fontPixelSize, int camFlags, int8_t depth )
+	int fontID, float fontPixelSize, int camFlags, int8_t depth, bool useTextArea )
 {
 	// calculate the size
 	Vector2 size;
@@ -21,25 +21,53 @@ EntityID createLabel( ECPS* ecps, const char* utf8Str, Vector2 position, Color f
 
 	GCTransformData tf = gc_CreateTransformPos( position );
 
+	GCColorData clr;
+	clr.currClr = fontColor;
+	clr.futureClr = fontColor;
+
 	GCTextData textData;
 	textData.camFlags = camFlags;
-	textData.depth = depth + 1;
-	textData.clr = fontColor;
+	textData.depth = depth;
 	textData.fontID = fontID;
 	textData.pixelSize = fontPixelSize;
 	textData.text = (uint8_t*)createStringCopy( utf8Str );
 	textData.textIsDynamic = true;
+	textData.horizAlign = hAlign;
+	textData.vertAlign = vAlign;
+	textData.useTextArea = useTextArea;
 
 	GCSizeData sizeData;
 	sizeData.currentSize = sizeData.futureSize = size;
 
-	return ecps_CreateEntity( ecps, 3,
+	return ecps_CreateEntity( ecps, 4,
 		gcTransformCompID, &tf,
 		gcTextCompID, &textData,
-		gcSizeCompID, &sizeData );
+		gcSizeCompID, &sizeData,
+		gcClrCompID, &clr );
+}
+// TODO: Animate the button states.
+
+void setTextString( ECPS* ecps, EntityID entity, const char* utf8Str )
+{
+	GCTextData* txt = NULL;
+	GCSizeData* size = NULL;
+
+	if( !ecps_GetComponentFromEntityByID( ecps, entity, gcTextCompID, &txt ) ) {
+		return;
+	}
+
+	if( txt->textIsDynamic ) {
+		mem_Release( txt->text );
+	}
+	txt->text = (uint8_t*)createStringCopy( utf8Str );
+
+	if( ecps_GetComponentFromEntityByID( ecps, entity, gcSizeCompID, &size ) ) {
+		Vector2 calcSize;
+		txt_CalculateStringRenderSize( utf8Str, txt->fontID, txt->pixelSize, &calcSize );
+		size->currentSize = size->futureSize = calcSize;
+	}
 }
 
-// TODO: Animate the button states.
 
 EntityID button_CreateEmpty( ECPS* ecps, Vector2 position, Vector2 size, int8_t depth, TrackedCallback pressResponse, TrackedCallback releaseResponse )
 {
@@ -76,19 +104,24 @@ EntityID button_CreateImageButton( ECPS* ecps, Vector2 position, Vector2 normalS
 		GCTextData textData;
 		textData.camFlags = camFlags;
 		textData.depth = depth + 1;
-		textData.clr = fontColor;
 		textData.fontID = fontID;
 		textData.pixelSize = fontPixelSize;
 		textData.text = (uint8_t*)createStringCopy( text );
 		textData.textIsDynamic = true;
+		textData.horizAlign = HORIZ_ALIGN_CENTER;
+		textData.vertAlign = VERT_ALIGN_CENTER;
+
+		GCColorData clr;
+		clr.currClr = clr.futureClr = fontColor;
 
 		GCSizeData sizeData;
 		sizeData.currentSize = sizeData.futureSize = normalSize;
 
-		textID = ecps_CreateEntity( ecps, 3,
+		textID = ecps_CreateEntity( ecps, 4,
 			gcTransformCompID, &tf,
 			gcTextCompID, &textData,
-			gcSizeCompID, &sizeData );
+			gcSizeCompID, &sizeData,
+			gcClrCompID, &clr );
 	}
 
 	ASSERT_AND_IF_NOT( textID != INVALID_ENTITY_ID )
@@ -136,7 +169,8 @@ EntityID button_CreateImageButton( ECPS* ecps, Vector2 position, Vector2 normalS
 
 static EntityID create3x3Button( ECPS* ecps, Vector2 position, Vector2 size,
 	const char* text, int fontID, float fontPixelSize, Color fontColor, Vector2 textOffset,
-	int* slicedBorder, Color imgColor, unsigned int camFlags, int8_t depth )
+	int img, uint32_t topBorder, uint32_t bottomBorder, uint32_t leftBorder, uint32_t rightBorder,
+	Color imgColor, unsigned int camFlags, int8_t depth )
 {
 	// first create the text entity
 	EntityID textID = INVALID_ENTITY_ID;
@@ -146,19 +180,24 @@ static EntityID create3x3Button( ECPS* ecps, Vector2 position, Vector2 size,
 		GCTextData textData;
 		textData.camFlags = camFlags;
 		textData.depth = depth + 1;
-		textData.clr = fontColor;
 		textData.fontID = fontID;
 		textData.pixelSize = fontPixelSize;
 		textData.text = (uint8_t*)createStringCopy( text );
 		textData.textIsDynamic = true;
+		textData.horizAlign = HORIZ_ALIGN_CENTER;
+		textData.vertAlign = VERT_ALIGN_CENTER;
+
+		GCColorData clr;
+		clr.currClr = clr.futureClr = fontColor;
 
 		GCSizeData sizeData;
 		sizeData.currentSize = sizeData.futureSize = size;
 
-		textID = ecps_CreateEntity( ecps, 3,
+		textID = ecps_CreateEntity( ecps, 4,
 			gcTransformCompID, &tf,
 			gcTextCompID, &textData,
-			gcSizeCompID, &sizeData );
+			gcSizeCompID, &sizeData,
+			gcClrCompID, &clr );
 	}
 
 	ASSERT_AND_IF_NOT( textID != INVALID_ENTITY_ID )
@@ -180,8 +219,11 @@ static EntityID create3x3Button( ECPS* ecps, Vector2 position, Vector2 size,
 	GC3x3SpriteData sprite;
 	sprite.camFlags = camFlags;
 	sprite.depth = depth;
-	//memcpy( sprite.imgs, slicedBorder, sizeof( sprite.imgs ) );
-	sprite.img = slicedBorder[0];
+	sprite.img = img;
+	sprite.leftBorder = leftBorder;
+	sprite.rightBorder = rightBorder;
+	sprite.topBorder = topBorder;
+	sprite.bottomBorder = bottomBorder;
 	sprite.size = size;
 
 	EntityID buttonID = ecps_CreateEntity( ecps, 4,
@@ -197,9 +239,10 @@ static EntityID create3x3Button( ECPS* ecps, Vector2 position, Vector2 size,
 
 EntityID button_Create3x3Button( ECPS* ecps, Vector2 position, Vector2 size,
 	const char* text, int fontID, float fontPixelSize, Color fontColor, Vector2 textOffset,
-	int* slicedBorder, Color imgColor, unsigned int camFlags, int8_t depth, TrackedCallback pressResponse, TrackedCallback releaseResponse )
+	int img, uint32_t topBorder, uint32_t bottomBorder, uint32_t leftBorder, uint32_t rightBorder, Color imgColor, unsigned int camFlags, int8_t depth,
+	TrackedCallback pressResponse, TrackedCallback releaseResponse )
 {
-	EntityID buttonID = create3x3Button( ecps, position, size, text, fontID, fontPixelSize, fontColor, textOffset, slicedBorder, imgColor, camFlags, depth );
+	EntityID buttonID = create3x3Button( ecps, position, size, text, fontID, fontPixelSize, fontColor, textOffset, img, topBorder, bottomBorder, leftBorder, rightBorder, imgColor, camFlags, depth );
 	if( buttonID != INVALID_ENTITY_ID ) {
 		GCPointerResponseData response;
 		response.leaveResponse = createSourceCallback( NULL );
@@ -214,9 +257,10 @@ EntityID button_Create3x3Button( ECPS* ecps, Vector2 position, Vector2 size,
 
 EntityID button_Create3x3ScriptButton( ECPS* ecps, Vector2 position, Vector2 size,
 	const char* text, int fontID, float fontPixelSize, Color fontColor, Vector2 textOffset,
-	int* slicedBorder, Color imgColor, unsigned int camFlags, int8_t depth, const char* pressResponse, const char* releaseResponse )
+	int img, uint32_t topBorder, uint32_t bottomBorder, uint32_t leftBorder, uint32_t rightBorder,
+	Color imgColor, uint32_t camFlags, int8_t depth, const char* pressResponse, const char* releaseResponse )
 {
-	EntityID buttonID = create3x3Button( ecps, position, size, text, fontID, fontPixelSize, fontColor, textOffset, slicedBorder, imgColor, camFlags, depth );
+	EntityID buttonID = create3x3Button( ecps, position, size, text, fontID, fontPixelSize, fontColor, textOffset, img, topBorder, bottomBorder, leftBorder, rightBorder, imgColor, camFlags, depth );
 	if( buttonID != INVALID_ENTITY_ID ) {
 		GCPointerResponseData response;
 		response.leaveResponse = createSourceCallback( NULL );
@@ -231,26 +275,31 @@ EntityID button_Create3x3ScriptButton( ECPS* ecps, Vector2 position, Vector2 siz
 
 EntityID button_CreateTextButton( ECPS* ecps, Vector2 position, Vector2 size,
 	const char* text, int fontID, float fontPixelSize, Color fontColor, Vector2 textOffset,
-	unsigned int camFlags, int8_t depth, TrackedCallback pressResponse, TrackedCallback releaseResponse )
+	uint32_t camFlags, int8_t depth, TrackedCallback pressResponse, TrackedCallback releaseResponse )
 {
 	GCTransformData tf = gc_CreateTransformPos( position );
 
 	GCTextData textData;
 	textData.camFlags = camFlags;
-	textData.depth = depth + 1;
-	textData.clr = fontColor;
+	textData.depth = depth;
 	textData.fontID = fontID;
 	textData.pixelSize = fontPixelSize;
 	textData.text = (uint8_t*)createStringCopy( text );
 	textData.textIsDynamic = true;
+	textData.horizAlign = HORIZ_ALIGN_CENTER;
+	textData.vertAlign = VERT_ALIGN_CENTER;
+	textData.useTextArea = true;
 
 	GCSizeData sizeData;
 	sizeData.currentSize = sizeData.futureSize = size;
 
+	GCColorData clr;
+	clr.currClr = clr.futureClr = fontColor;
+
 	GCPointerCollisionData ptr;
-	ptr.camFlags = 1;
+	ptr.camFlags = camFlags;
 	vec2_Scale( &size, 0.5f, &( ptr.collisionHalfDim ) );
-	ptr.priority = 1;
+	ptr.priority = depth;
 
 	GCPointerResponseData response;
 	response.leaveResponse = createSourceCallback( NULL );
@@ -258,10 +307,47 @@ EntityID button_CreateTextButton( ECPS* ecps, Vector2 position, Vector2 size,
 	response.pressResponse = createSourceCallback( pressResponse );
 	response.releaseResponse = createSourceCallback( releaseResponse );
 
-	EntityID buttonID = ecps_CreateEntity( ecps, 5,
+	EntityID buttonID = ecps_CreateEntity( ecps, 6,
 		gcTransformCompID, &tf,
 		gcTextCompID, &textData,
 		gcSizeCompID, &sizeData,
+		gcPointerCollisionCompID, &ptr,
+		gcPointerResponseCompID, &response,
+		gcClrCompID, &clr );
+
+	return buttonID;
+}
+
+EntityID button_CreateImageOnlyButton( ECPS* ecps, Vector2 position, Vector2 normalSize, Vector2 clickedSize,
+	int imgID, Color imgColor, uint32_t camFlags, int8_t depth, TrackedCallback pressResponse, TrackedCallback releaseResponse )
+{
+	Vector2 scale;
+	img_GetDesiredScale( imgID, normalSize, &scale );
+	GCTransformData tf = gc_CreateTransformPosScale( position, scale );
+
+	GCColorData clr;
+	clr.currClr = clr.futureClr = imgColor;
+
+	GCPointerCollisionData ptr;
+	ptr.camFlags = camFlags;
+	vec2_Scale( &normalSize, 0.5f, &( ptr.collisionHalfDim ) );
+	ptr.priority = depth;
+
+	GCPointerResponseData response;
+	response.leaveResponse = createSourceCallback( NULL );
+	response.overResponse = createSourceCallback( NULL );
+	response.pressResponse = createSourceCallback( pressResponse );
+	response.releaseResponse = createSourceCallback( releaseResponse );
+
+	GCSpriteData sprite;
+	sprite.camFlags = camFlags;
+	sprite.depth = depth;
+	sprite.img = imgID;
+
+	EntityID buttonID = ecps_CreateEntity( ecps, 5,
+		gcSpriteCompID, &sprite,
+		gcTransformCompID, &tf,
+		gcClrCompID, &clr,
 		gcPointerCollisionCompID, &ptr,
 		gcPointerResponseCompID, &response );
 

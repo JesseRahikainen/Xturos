@@ -214,6 +214,12 @@ void hex_Ring( HexGridCoord center, int32_t range, HexGridCoord** sbOutList )
 	}
 }
 
+// Get the distance from a flat side of the hex to the opposite flat side
+float hex_FlatSize( float size )
+{
+	return SQRT_THREE * size;
+}
+
 //***************************************************************************
 // Various functions to convert hex coordinates to grid indices
 //  For these we'll assume the hex coord [0,0] corresponds to index 0

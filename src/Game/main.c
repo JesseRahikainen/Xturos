@@ -16,7 +16,7 @@
 #include "Graphics/camera.h"
 #include "Graphics/graphics.h"
 #include "Math/mathUtil.h"
-#include "sound.h"
+#include "Audio/sound.h"
 #include "Utils/cfgFile.h"
 #include "IMGUI/nuklearWrapper.h"
 #include "world.h"
@@ -40,6 +40,7 @@
 #include "Game/testBloomScreen.h"
 #include "Game/gameOfUrScreen.h"
 #include "Game/testMountingState.h"
+#include "Game/testSynthState.h"
 
 #include "System/memory.h"
 #include "System/systems.h"
@@ -54,6 +55,7 @@
 #include "System/jobQueue.h"
 #include "Utils/helpers.h"
 #include "DefaultECPS/defaultECPS.h"
+#include "System/messageBroadcast.h"
 
 #define DESIRED_WORLD_WIDTH 800
 #define DESIRED_WORLD_HEIGHT 600
@@ -358,7 +360,7 @@ int initEverything( void )
 	llog( LOG_INFO, "Mixer successfully initialized" );
 
 	cam_Init( );
-	cam_SetProjectionMatrices( worldWidth, worldHeight, false );
+	cam_InitProjectionMatrices( worldWidth, worldHeight, false );
 	llog( LOG_INFO, "Cameras successfully initialized" );
 
 	input_InitMouseInputArea( worldWidth, worldHeight );
@@ -371,7 +373,7 @@ int initEverything( void )
 	input_UpdateMouseWindow( winWidth, winHeight );
 	llog( LOG_INFO, "Input successfully initialized" );
 
-	initIMGUI( &inGameIMGUI, true, renderWidth, renderHeight );
+	initIMGUI( &inGameIMGUI, false, renderWidth, renderHeight );
 	initIMGUI( &editorIMGUI, false, winWidth, winHeight );
 	llog( LOG_INFO, "IMGUI successfully initialized" );
 
@@ -459,17 +461,17 @@ void processEvents( int windowsEventsOnly )
 					// resize the rendering based on the size of the new window
 					gfx_RenderResize( window, e.window.data1, e.window.data2 );
 
-					// adjust world size so everything base don that scales correctly
+					// adjust world size so everything based on that scales correctly
 					int worldHeight = DESIRED_WORLD_HEIGHT;
 					int worldWidth = (int)( worldHeight * (float)e.window.data1 / (float)e.window.data2 );
 					world_SetSize( worldWidth, worldHeight );
 					//recalculateSafeArea( );
 
 					// adjust the cameras to work with the new render aspect ratio
-					//setCameraMatrices( worldWidth, worldHeight );
+					cam_SetProjectionMatrices( worldWidth, worldHeight );
 
 					// need to signal to everything else that stuff had changed and stuff may need to be relayed out
-					//mb_BroadcastMessage( RESIZE_UI_ELEMENTS, NULL );
+					mb_BroadcastMessage( MSG_WINDOW_RESIZED, NULL );
 
 					// force a draw so everything updates correctly
 					if( paused ) {
@@ -771,8 +773,7 @@ int main( int argc, char** argv )
 #endif
 
 	GameState* startState = NULL;
-	startState = &testPointerResponseScreenState;
-	//startState = &gameScreenState;
+	//startState = &testPointerResponseScreenState;
 	//startState = &testAStarScreenState;
 	//startState = &testJobQueueScreenState;
 	//startState = &testSoundsScreenState;
@@ -783,8 +784,9 @@ int main( int argc, char** argv )
 	//startState = &gameOfUrScreenState;
 	//startState = &testECPSScreenState;
 	//startState = &testMountingState;
+	//startState = &testSynthState;
 	if( isEditorMode ) {
-		//startState = &editorHubScreenState;
+		startState = &editorHubScreenState;
 	}
 	gsm_EnterState( &globalFSM, startState );
 

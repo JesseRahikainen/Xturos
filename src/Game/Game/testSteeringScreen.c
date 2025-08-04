@@ -230,8 +230,8 @@ static void testSteeringScreen_PhysicsTick( float dt )
 	steering_Wandering( &( sbVehicles[0].pos ), &( sbVehicles[0].vel ), &( sbVehicles[0].wanderTarget ), 25.0f, 25.0f, 5.0f, &newTarget, &newVel );
 	sbVehicles[0].wanderTarget = newTarget;//*/
 	//steering_Seek( &( sbVehicles[0].pos ), &testTarget, &( sbVehicles[0].vel ) );
-	steering_Flee( &( sbVehicles[0].pos ), &testTarget, &( sbVehicles[0].vel ) );
-	//steering_Arrive( &( sbVehicles[0].pos ), &testTarget, 10.0f, 200.0f, &( sbVehicles[0].vel ) );
+	//steering_Flee( &( sbVehicles[0].pos ), &testTarget, &( sbVehicles[0].vel ) );
+	steering_Arrive( &( sbVehicles[0].pos ), &testTarget, 10.0f, 200.0f, &( sbVehicles[0].vel ) );
 
 	vec2_Scale( &( sbVehicles[0].vel ), sbVehicles[0].maxSpeed, &( sbVehicles[0].vel ) );
 
