@@ -41,6 +41,7 @@
 #include "Game/gameOfUrScreen.h"
 #include "Game/testMountingState.h"
 #include "Game/testSynthState.h"
+#include "Game/initialChoiceState.h"
 
 #include "System/memory.h"
 #include "System/systems.h"
@@ -772,22 +773,20 @@ int main( int argc, char** argv )
 	focused = true;
 #endif
 
-	GameState* startState = NULL;
-	//startState = &testPointerResponseScreenState;
-	//startState = &testAStarScreenState;
-	//startState = &testJobQueueScreenState;
-	//startState = &testSoundsScreenState;
-	//startState = &testSteeringScreenState;
-	//startState = &bordersTestScreenState;
-	//startState = &hexTestScreenState;
-	//startState = &testBloomScreenState;
-	//startState = &gameOfUrScreenState;
-	//startState = &testECPSScreenState;
-	//startState = &testMountingState;
-	//startState = &testSynthState;
-	if( isEditorMode ) {
-		startState = &editorHubScreenState;
-	}
+	initialChoice_RegisterState( "Editor", &editorHubScreenState );
+	initialChoice_RegisterState( "Test Pointer Response", &testPointerResponseScreenState );
+	initialChoice_RegisterState( "Test A*", &testAStarScreenState );
+	initialChoice_RegisterState( "Test Job Queue", &testJobQueueScreenState );
+	initialChoice_RegisterState( "Test Sounds", &testSoundsScreenState );
+	initialChoice_RegisterState( "Test Sterring", &testSteeringScreenState );
+	initialChoice_RegisterState( "Test Borders", &bordersTestScreenState );
+	initialChoice_RegisterState( "Test Hexes", &hexTestScreenState );
+	initialChoice_RegisterState( "Game of Ur", &gameOfUrScreenState );
+	initialChoice_RegisterState( "Test ECPS", &testECPSScreenState );
+	initialChoice_RegisterState( "Test Mounting", &testMountingState );
+	initialChoice_RegisterState( "Test Synth", &testSynthState );
+
+	GameState* startState = &initialChoiceState;
 	gsm_EnterState( &globalFSM, startState );
 
 #if defined( __EMSCRIPTEN__ )

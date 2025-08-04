@@ -94,12 +94,6 @@
     <Filter Include="Source Files\Game\TestScreens">
       <UniqueIdentifier>{ad6e1b5d-a7a6-4360-a951-108192c072bd}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\Game\States">
-      <UniqueIdentifier>{71471fc1-b927-4dbf-ae77-de05f5fac6df}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\Game\States">
-      <UniqueIdentifier>{c928b319-c59d-4fe4-92db-a8963139d679}</UniqueIdentifier>
-    </Filter>
     <Filter Include="_ProjectToolScripts">
       <UniqueIdentifier>{b616a4c9-a239-4541-8752-202485e5ca11}</UniqueIdentifier>
     </Filter>
@@ -381,9 +375,6 @@
     <ClInclude Include="..\..\src\Game\Editors\spriteSheetEditor.h">
       <Filter>Header Files\Editors</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\Game\Game\testMountingState.h">
-      <Filter>Header Files\Game\States</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\Game\DefaultECPS\defaultECPS.h">
       <Filter>Header Files\DefaultECPS</Filter>
     </ClInclude>
@@ -490,7 +481,13 @@
       <Filter>Header Files\Audio</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Game\Game\testSynthState.h">
-      <Filter>Header Files\Game\States</Filter>
+      <Filter>Header Files\Game\TestScreens</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Game\Game\testMountingState.h">
+      <Filter>Header Files\Game\TestScreens</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Game\Game\initialChoiceState.h">
+      <Filter>Header Files\Game\TestScreens</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -716,9 +713,6 @@
     <ClCompile Include="..\..\src\Game\Editors\spriteSheetEditor.c">
       <Filter>Source Files\Editors</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\Game\Game\testMountingState.c">
-      <Filter>Source Files\Game\States</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\Game\DefaultECPS\defaultECPS.c">
       <Filter>Source Files\DefaultECPS</Filter>
     </ClCompile>
@@ -840,7 +834,13 @@
       <Filter>Source Files\Audio</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\Game\Game\testSynthState.c">
-      <Filter>Source Files\Game\States</Filter>
+      <Filter>Source Files\Game\TestScreens</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Game\Game\testMountingState.c">
+      <Filter>Source Files\Game\TestScreens</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Game\Game\initialChoiceState.c">
+      <Filter>Source Files\Game\TestScreens</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
