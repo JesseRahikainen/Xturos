@@ -4,13 +4,13 @@
 #include <math.h>
 #include <stdlib.h>
 #include <float.h>
-#include <SDL3/SDL_assert.h>
 
 #include "Graphics/debugRendering.h"
 #include "Math/vector2.h"
 #include "Math/mathUtil.h"
 #include "Utils/stretchyBuffer.h"
 #include "System/platformLog.h"
+#include "Utils/helpers.h"
 
 // raycasting intersection functions
 int RayCastvAABBAxis( float rayStart, float dir, float boxMin, float boxMax, float* tMin, float* tMax )
@@ -123,7 +123,7 @@ int RayCastvHalfSpace( Vector2* start, Vector2* dir, Collider* collider, float* 
 	float nDotDir = vec2_DotProduct( &( collider->halfSpace.normal ), dir );
 	(*t) = ( collider->halfSpace.d - nDotA ) / nDotDir;
 
-	if( ( (*t) >= 0.0f ) && ( (*t) <= 1.0f ) ) {
+	if( (*t) >= 0.0f ) {
 		vec2_AddScaled( start, dir, (*t), pt );
 		return 1;
 	}
@@ -449,12 +449,12 @@ int LineSegmentvHalfSpace( Collider* primary, Collider* fixed, Vector2* outSepar
 bool collision_LineSegmentCollision( Vector2* l0p0, Vector2* l0p1, Vector2* l1p0, Vector2* l1p1, Vector2* outCollPos, float* outT )
 {
 	// https://stackoverflow.com/questions/563198/how-do-you-detect-where-two-line-segments-intersect
-	SDL_assert( l0p0 != NULL );
-	SDL_assert( l0p1 != NULL );
-	SDL_assert( l1p0 != NULL );
-	SDL_assert( l1p1 != NULL );
-	SDL_assert( outCollPos != NULL );
-	SDL_assert( outT != NULL );
+	ASSERT_AND_IF_NOT( l0p0 != NULL ) return false;
+	ASSERT_AND_IF_NOT( l0p1 != NULL ) return false;
+	ASSERT_AND_IF_NOT( l1p0 != NULL ) return false;
+	ASSERT_AND_IF_NOT( l1p1 != NULL ) return false;
+	ASSERT_AND_IF_NOT( outCollPos != NULL ) return false;
+	ASSERT_AND_IF_NOT( outT != NULL ) return false;
 	if( FLT_EQ( vec2_DistSqrd( l0p0, l0p1 ), 0.0f ) ) return false;
 	if( FLT_EQ( vec2_DistSqrd( l1p0, l1p1 ), 0.0f ) ) return false;
 
@@ -599,10 +599,10 @@ bool collision_Test( Collider* mainCollider, ColliderCollection collection )
 Finds and handles the all collisions between mainCollider and the colliders in the list.
  NOTE: You shouldn't modify the passed in list in the response.
 */
-void collision_Detect( Collider* mainCollider, ColliderCollection collection, CollisionResponse response, int passThroughIdx )
+void collision_Detect( Collider* mainCollider, ColliderCollection collection, CollisionResponse response, size_t passThroughIdx )
 {
 	Vector2 separation = VEC2_ZERO;
-	int idx;
+	size_t idx;
 	Collider* current;
 	char* data = (char*)collection.firstCollider;
 
@@ -636,13 +636,13 @@ void collision_DetectAll( ColliderCollection firstCollection, ColliderCollection
 		return;
 	}
 
-	for( int i = 0; i < firstCollection.count; ++i ) {
+	for( size_t i = 0; i < firstCollection.count; ++i ) {
 		firstCurrent = (Collider*)( firstData + ( i * firstCollection.stride ) );
 		if( ( firstCurrent == NULL ) || ( firstCurrent->type == CT_DEACTIVATED ) ) {
 			continue;
 		}
 
-		for( int j = 0; j < secondCollection.count; ++j ) {
+		for( size_t j = 0; j < secondCollection.count; ++j ) {
 			secondCurrent = (Collider*)( secondData + ( j * secondCollection.stride ) );
 			if( ( secondCurrent == NULL ) || ( secondCurrent->type == CT_DEACTIVATED ) ) {
 				continue;
@@ -668,13 +668,13 @@ void collision_DetectAllInternal( ColliderCollection collection, CollisionRespon
 		return;
 	}
 
-	for( int i = 0; i < collection.count; ++i ) {
+	for( size_t i = 0; i < collection.count; ++i ) {
 		firstCurrent = (Collider*)( data + ( i * collection.stride ) );
 		if( ( firstCurrent == NULL ) || ( firstCurrent->type == CT_DEACTIVATED ) ) {
 			continue;
 		}
 
-		for( int j = i + 1; j < collection.count; ++j ) {
+		for( size_t j = i + 1; j < collection.count; ++j ) {
 			secondCurrent = (Collider*)( data + ( j * collection.stride ) );
 			if( ( secondCurrent == NULL ) || ( secondCurrent->type == CT_DEACTIVATED ) ) {
 				continue;
@@ -775,14 +775,20 @@ Helper function to create a half-space collider from a position and normal.
 */
 void collision_CalculateHalfSpace( const Vector2* pos, const Vector2* normal, Collider* outCollider )
 {
-	SDL_assert( outCollider != NULL );
-	SDL_assert( pos != NULL );
-	SDL_assert( normal != NULL );
-
+	ASSERT_AND_IF_NOT( outCollider != NULL ) return;
 	outCollider->type = CT_HALF_SPACE;
-	outCollider->halfSpace.normal = (*normal);
+	// default values for out collider if it's provided
+	outCollider->halfSpace.pos = VEC2_ZERO;
+	outCollider->halfSpace.d = 0.0f;
+	outCollider->halfSpace.normal = VEC2_UP;
+
+	ASSERT_AND_IF_NOT( pos != NULL ) return;
+	ASSERT_AND_IF_NOT( normal != NULL ) return;
+
+	outCollider->halfSpace.normal = *normal;
 	vec2_Normalize( &( outCollider->halfSpace.normal ) );
 	outCollider->halfSpace.d = vec2_DotProduct( &( outCollider->halfSpace.normal ), pos );
+	outCollider->halfSpace.pos = *pos;
 }
 
 /*
@@ -805,6 +811,22 @@ void collision_DebugDrawing( Collider* collision, unsigned int camFlags, Color c
 	case CT_LINE_SEGMENT:
 		debugRenderer_Line( camFlags, collision->lineSegment.posOne, collision->lineSegment.posTwo, color );
 		break;
+	case CT_HALF_SPACE:
+		{
+			Vector2 normalPerp = vec2( collision->halfSpace.normal.y, -collision->halfSpace.normal.x );
+
+			Vector2 trianglePoints[3];
+			vec2_AddScaled( &collision->halfSpace.pos, &collision->halfSpace.normal, 8.0f, &trianglePoints[0] );
+			vec2_AddScaled( &collision->halfSpace.pos, &normalPerp, 8.0f, &trianglePoints[1] );
+			vec2_AddScaled( &collision->halfSpace.pos, &normalPerp, -8.0f, &trianglePoints[2] );
+			debugRenderer_Triangle( camFlags, trianglePoints[0], trianglePoints[1], trianglePoints[2], color );
+
+			Vector2 linePoints[2];
+			vec2_AddScaled( &collision->halfSpace.pos, &normalPerp, 10000.0f, &linePoints[0] );
+			vec2_AddScaled( &collision->halfSpace.pos, &normalPerp, -10000.0f, &linePoints[1] );
+			debugRenderer_Line( camFlags, linePoints[0], linePoints[1], color );
+		}
+		break;
 	}
 }
 
@@ -821,9 +843,9 @@ void collision_CollectionDebugDrawing( ColliderCollection collection, unsigned i
 
 bool collision_IsPointInsideComplexPolygon( Vector2* pos, Vector2* polygon, size_t numPts )
 {
-	SDL_assert( pos != NULL );
-	SDL_assert( polygon != NULL );
-	SDL_assert( numPts >= 3 );
+	ASSERT_AND_IF_NOT( pos != NULL ) return false;
+	ASSERT_AND_IF_NOT( polygon != NULL ) return false;
+	ASSERT_AND_IF_NOT( numPts >= 3 ) return false;
 
 	// http://alienryderflex.com/polygon/
 

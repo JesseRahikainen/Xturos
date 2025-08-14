@@ -42,8 +42,8 @@ static void initialChoiceState_Process( void )
 	gfx_GetRenderSize( &renderWidth, &renderHeight );
 	struct nk_rect windowBounds = { 0.0f, 0.0f, (float)renderWidth, (float)renderHeight };
 	const int NUM_COLS = 6;
-	if( nk_begin( ctx, "Synth Test", windowBounds, 0 ) ) {
-		for( size_t row = 0; row < ( sb_Count( states ) / NUM_COLS ); ++row ) {
+	if( nk_begin( ctx, "Initial Choice", windowBounds, 0 ) ) {
+		for( size_t row = 0; row < ( ( sb_Count( states ) / NUM_COLS ) + 1 ); ++row ) {
 			nk_layout_row_begin( ctx, NK_STATIC, 30, NUM_COLS ); {
 				for( size_t col = 0; col < NUM_COLS; ++col ) {
 					size_t idx = ( row * NUM_COLS ) + col;

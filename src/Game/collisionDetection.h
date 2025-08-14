@@ -37,6 +37,7 @@ typedef struct {
 typedef struct {
 	enum ColliderType type;
 	Vector2 normal;
+	Vector2 pos; // mainly used for debugging
 	float d;
 } ColliderHalfSpace;
 
@@ -60,7 +61,7 @@ typedef struct {
 	size_t count;
 } ColliderCollection;
 
-typedef void(*CollisionResponse)( int firstColliderIdx, int secondColliderIdx, Vector2 separation );
+typedef void(*CollisionResponse)( size_t firstColliderIdx, size_t secondColliderIdx, Vector2 separation );
 
 /*
 Finds the separation needed for c1 to move and not overlap c2.
@@ -76,7 +77,7 @@ bool collision_Test( Collider* mainCollider, ColliderCollection collection );
 Finds and handles the all collisions between mainCollider and the colliders in the list.
  NOTE: You shouldn't modify the passed in colliders in the response.
 */
-void collision_Detect( Collider* mainCollider, ColliderCollection collection, CollisionResponse response, int passThroughIdx );
+void collision_Detect( Collider* mainCollider, ColliderCollection collection, CollisionResponse response, size_t passThroughIdx );
 
 /*
 Finds all the collisions between every collider in firstCollectin and secondCollection.

@@ -730,7 +730,7 @@ bool collisionTestAndResponse( Entity* eOne, Entity* eTwo, ComponentID firstComp
 	return false;
 }
 
-void collisionResponse( int firstColliderIdx, int secondColliderIdx, Vector2 separation )
+void collisionResponse( size_t firstColliderIdx, size_t secondColliderIdx, Vector2 separation )
 {
 	Entity eOne;
 	Entity eTwo;

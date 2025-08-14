@@ -355,6 +355,7 @@
     <ClInclude Include="..\..\src\Game\Game\bordersTestScreen.h" />
     <ClInclude Include="..\..\src\Game\Game\gameOfUrScreen.h" />
     <ClInclude Include="..\..\src\Game\Game\initialChoiceState.h" />
+    <ClInclude Include="..\..\src\Game\Game\testCollisionsState.h" />
     <ClInclude Include="..\..\src\Game\Game\testECPSScreen.h" />
     <ClInclude Include="..\..\src\Game\Game\hexTestScreen.h" />
     <ClInclude Include="..\..\src\Game\Game\testAStarScreen.h" />
@@ -490,6 +491,7 @@
     <ClCompile Include="..\..\src\Game\Game\bordersTestScreen.c" />
     <ClCompile Include="..\..\src\Game\Game\gameOfUrScreen.c" />
     <ClCompile Include="..\..\src\Game\Game\initialChoiceState.c" />
+    <ClCompile Include="..\..\src\Game\Game\testCollisionsState.c" />
     <ClCompile Include="..\..\src\Game\Game\testECPSScreen.c" />
     <ClCompile Include="..\..\src\Game\Game\hexTestScreen.c" />
     <ClCompile Include="..\..\src\Game\Game\testAStarScreen.c" />

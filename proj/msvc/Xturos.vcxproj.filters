@@ -489,6 +489,9 @@
     <ClInclude Include="..\..\src\Game\Game\initialChoiceState.h">
       <Filter>Header Files\Game\TestScreens</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\Game\Game\testCollisionsState.h">
+      <Filter>Header Files\Game\TestScreens</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\Game\Graphics\graphics.c">
@@ -840,6 +843,9 @@
       <Filter>Source Files\Game\TestScreens</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\Game\Game\initialChoiceState.c">
+      <Filter>Source Files\Game\TestScreens</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Game\Game\testCollisionsState.c">
       <Filter>Source Files\Game\TestScreens</Filter>
     </ClCompile>
   </ItemGroup>

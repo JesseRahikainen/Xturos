@@ -78,4 +78,10 @@ void fitRatioInsideRect( float ratio, Vector2* fitterMins, Vector2* fitterMaxes,
 float exponentialSmoothing( float current, float target, float speed, float dt );
 Vector2* exponentialSmoothingV2( const Vector2* current, const Vector2* target, float speed, float dt, Vector2* out );
 
+// simple cubic bezier
+Vector2 cubicBezier( const Vector2 zero, const Vector2 one, const Vector2 two, const Vector2 three, float u );
+
+// generates a rectangle of the passed in ratio that goes around the fitter rectangle, the axis that isn't tight to the fitter will be centered around the fitter
+void envelopeRect( float widthHeightRatio, const Vector2* fitterMins, const Vector2* fitterMaxes, Vector2* outMins, Vector2* outMaxes );
+
 #endif // inclusion guard

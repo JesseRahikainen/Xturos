@@ -41,6 +41,7 @@
 #include "Game/gameOfUrScreen.h"
 #include "Game/testMountingState.h"
 #include "Game/testSynthState.h"
+#include "Game/testCollisionsState.h"
 #include "Game/initialChoiceState.h"
 
 #include "System/memory.h"
@@ -778,13 +779,14 @@ int main( int argc, char** argv )
 	initialChoice_RegisterState( "Test A*", &testAStarScreenState );
 	initialChoice_RegisterState( "Test Job Queue", &testJobQueueScreenState );
 	initialChoice_RegisterState( "Test Sounds", &testSoundsScreenState );
-	initialChoice_RegisterState( "Test Sterring", &testSteeringScreenState );
+	initialChoice_RegisterState( "Test Steering", &testSteeringScreenState );
 	initialChoice_RegisterState( "Test Borders", &bordersTestScreenState );
 	initialChoice_RegisterState( "Test Hexes", &hexTestScreenState );
 	initialChoice_RegisterState( "Game of Ur", &gameOfUrScreenState );
 	initialChoice_RegisterState( "Test ECPS", &testECPSScreenState );
 	initialChoice_RegisterState( "Test Mounting", &testMountingState );
 	initialChoice_RegisterState( "Test Synth", &testSynthState );
+	initialChoice_RegisterState( "Test Collisions", &testCollisionsState );
 
 	GameState* startState = &initialChoiceState;
 	gsm_EnterState( &globalFSM, startState );

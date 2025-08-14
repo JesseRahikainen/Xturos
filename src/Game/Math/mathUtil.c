@@ -2,6 +2,7 @@
 #include <SDL3/SDL_assert.h>
 #include <math.h>
 #include "mathUtil.h"
+#include "Utils/helpers.h"
 
 int isPowerOfTwo( int x )
 {
@@ -419,9 +420,9 @@ float exponentialSmoothing( float current, float target, float speed, float dt )
 
 Vector2* exponentialSmoothingV2( const Vector2* current, const Vector2* target, float speed, float dt, Vector2* out )
 {
-	SDL_assert( current != NULL );
-	SDL_assert( target != NULL );
-	SDL_assert( out != NULL );
+	ASSERT_AND_IF_NOT( current != NULL ) return out;
+	ASSERT_AND_IF_NOT( target != NULL ) return out;
+	ASSERT_AND_IF_NOT( out != NULL ) return out;
 
 	float scalar = ( 1.0f - SDL_expf( -speed * dt ) );
 	vec2_Subtract( target, current, out );
@@ -430,12 +431,50 @@ Vector2* exponentialSmoothingV2( const Vector2* current, const Vector2* target, 
 	return out;
 }
 
-/*void envelopRect( float ratio, Vector2* fitterMins, Vector2* fitterMaxes, Vector2* outMins, Vector2* outMaxes )
+// simple cubic bezier
+Vector2 cubicBezier( const Vector2 zero, const Vector2 one, const Vector2 two, const Vector2 three, float u )
 {
-	SDL_assert( fitterMins != NULL );
-	SDL_assert( fitterMaxes != NULL );
-	SDL_assert( outMins != NULL );
-	SDL_assert( outMaxes != NULL );
+	float oneMinU = 1.0f - u;
 
-	// TODO: Finish this, generates a rectangle of the passed in ratio that goes around the fitter rectangle
-}//*/
+	Vector2 result = VEC2_ZERO;
+	vec2_AddScaled( &result, &zero, oneMinU * oneMinU * oneMinU, &result );
+	vec2_AddScaled( &result, &one, 3 * u * ( oneMinU * oneMinU ), &result );
+	vec2_AddScaled( &result, &two, 3 * ( u * u ) * oneMinU, &result );
+	vec2_AddScaled( &result, &three, u * u * u, &result );
+
+	return result;
+}
+
+// generates a rectangle of the passed in ratio that goes around the fitter rectangle, the axis that isn't tight to the fitter will be centered around the fitter
+void envelopeRect( float widthHeightRatio, const Vector2* fitterMins, const Vector2* fitterMaxes, Vector2* outMins, Vector2* outMaxes )
+{
+	ASSERT_AND_IF_NOT( fitterMins != NULL ) return;
+	ASSERT_AND_IF_NOT( fitterMaxes != NULL ) return;
+	ASSERT_AND_IF_NOT( outMins != NULL ) return;
+	ASSERT_AND_IF_NOT( outMaxes != NULL ) return;
+	ASSERT_AND_IF_NOT( fitterMins->x <= fitterMaxes->x ) return;
+	ASSERT_AND_IF_NOT( fitterMins->y <= fitterMaxes->y ) return;
+
+	float fitterWidth = fitterMaxes->x - fitterMins->x;
+	float fitterHeight = fitterMaxes->y - fitterMins->x;
+
+	float fitterRatio = fitterWidth / fitterHeight;
+
+	if( widthHeightRatio > fitterRatio ) {
+		// out rect will be wider than fitter, use the vertical part of the fitter
+		outMins->y = fitterMins->y;
+		outMaxes->y = fitterMaxes->y;
+		float halfOutWidth = ( fitterHeight * widthHeightRatio ) / 2.0f;
+		float center = ( fitterMins->x + fitterMaxes->x ) / 2.0f;
+		outMins->x = center - halfOutWidth;
+		outMaxes->x = center + halfOutWidth;
+	} else {
+		// out rect will be taller than fitter, use the horizontal part of the fitter
+		outMins->x = fitterMins->x;
+		outMaxes->x = fitterMaxes->x;
+		float halfOutHeight = ( widthHeightRatio / fitterWidth ) / 2.0f;
+		float center = ( fitterMins->y + fitterMaxes->y ) / 2.0f;
+		outMins->y = center - halfOutHeight;
+		outMaxes->y = center + halfOutHeight;
+	}
+}
