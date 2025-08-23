@@ -43,7 +43,7 @@ static Collider* addCollider( void )
 static void addAABB( void )
 {
 	Collider* coll = addCollider( );
-	coll->type = CT_AABB;
+	coll->type = CT_AAB;
 	coll->aabb.center = VEC2_ZERO;
 	coll->aabb.halfDim = vec2( 10.0f, 10.0f );
 }
@@ -68,6 +68,13 @@ static void addLineSegment( void )
 	coll->type = CT_LINE_SEGMENT;
 	coll->lineSegment.posOne = vec2( -5.0f, 0.0f );
 	coll->lineSegment.posTwo = vec2( 5.0f, 0.0f );
+}
+
+static void addBox( void )
+{
+	Collider* coll = addCollider( );
+	Vector2 halfSize = vec2( 10.0f, 10.0f );
+	collision_CalculateOrientedBox( &VEC2_ZERO, 0.0f, &halfSize, coll );
 }
 
 static size_t* sbSelectedCollidersList = NULL;
@@ -249,6 +256,46 @@ static void showLineSegmentUI( struct nk_context* ctx, Collider* coll )
 	} nk_layout_row_end( ctx );
 }
 
+static void showBoxUI( struct nk_context* ctx, Collider* coll )
+{
+	nk_layout_row_begin( ctx, NK_DYNAMIC, 30, 1 ); {
+		// spacer
+	} nk_layout_row_end( ctx );
+
+	float angleRad = collision_GetOrientedBoxRadianRotation( coll );
+	Vector2 pos = coll->aabb.center;
+	Vector2 halfSize = coll->aabb.halfDim;
+
+	nk_layout_row_begin( ctx, NK_DYNAMIC, 30, 1 ); {
+		nk_layout_row_push( ctx, 1.0f );
+		nk_property_float( ctx, "Center X", -FLT_MAX, &( pos.x ), FLT_MAX, 1.0f, 2.0f );
+	} nk_layout_row_end( ctx );
+
+	nk_layout_row_begin( ctx, NK_DYNAMIC, 30, 1 ); {
+		nk_layout_row_push( ctx, 1.0f );
+		nk_property_float( ctx, "Center Y", -FLT_MAX, &( pos.y ), FLT_MAX, 1.0f, 2.0f );
+	} nk_layout_row_end( ctx );
+
+	nk_layout_row_begin( ctx, NK_DYNAMIC, 30, 1 ); {
+		nk_layout_row_push( ctx, 1.0f );
+		halfSize.w = nk_propertyf( ctx, "Width", -FLT_MAX, halfSize.w * 2.0f, FLT_MAX, 1.0f, 2.0f ) / 2.0f;
+	} nk_layout_row_end( ctx );
+
+	nk_layout_row_begin( ctx, NK_DYNAMIC, 30, 1 ); {
+		nk_layout_row_push( ctx, 1.0f );
+		halfSize.h = nk_propertyf( ctx, "Height", -FLT_MAX, halfSize.h * 2.0f, FLT_MAX, 1.0f, 2.0f ) / 2.0f;
+	} nk_layout_row_end( ctx );
+
+	nk_layout_row_begin( ctx, NK_DYNAMIC, 30, 1 ); {
+		nk_layout_row_push( ctx, 1.0f );
+		float angleDeg = RAD_TO_DEG( angleRad );
+		nk_property_float( ctx, "Rotation", -FLT_MAX, &angleDeg, FLT_MAX, 1.0f, 2.0f );
+		angleRad = DEG_TO_RAD( angleDeg );
+	} nk_layout_row_end( ctx );
+
+	collision_CalculateOrientedBox( &pos, angleRad, &halfSize, coll );
+}
+
 static void testCollisionsState_Process( void )
 {
 	struct nk_context* ctx = &( inGameIMGUI.ctx );
@@ -287,9 +334,16 @@ static void testCollisionsState_Process( void )
 			}
 		} nk_layout_row_end( ctx );
 
+		nk_layout_row_begin( ctx, NK_DYNAMIC, 30, 1 ); {
+			nk_layout_row_push( ctx, 1.0f );
+			if( nk_button_label( ctx, "Create Box Collision" ) ) {
+				addBox( );
+			}
+		} nk_layout_row_end( ctx );
+
 		if( selectedCollider != SIZE_MAX ) {
 			switch( colliders.firstCollider[selectedCollider].type ) {
-			case CT_AABB:
+			case CT_AAB:
 				showAABBUI( ctx, &colliders.firstCollider[selectedCollider] );
 				break;
 			case CT_CIRCLE:
@@ -300,6 +354,9 @@ static void testCollisionsState_Process( void )
 				break;
 			case CT_LINE_SEGMENT:
 				showLineSegmentUI( ctx, &colliders.firstCollider[selectedCollider] );
+				break;
+			case CT_ORIENTED_BOX:
+				showBoxUI( ctx, &colliders.firstCollider[selectedCollider] );
 				break;
 			}
 

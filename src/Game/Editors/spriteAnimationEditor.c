@@ -154,7 +154,7 @@ static void editorSetAABCollider( void* data, int colliderID, float centerX, flo
 	if( colliderID >= (int)sb_Count( sbColliders ) ) return;
 	if( colliderID < 0 ) return;
 
-	sbColliders[colliderID].collider.type = CT_AABB;
+	sbColliders[colliderID].collider.type = CT_AAB;
 	sbColliders[colliderID].collider.aabb.center.x = centerX;
 	sbColliders[colliderID].collider.aabb.center.y = centerY;
 	sbColliders[colliderID].collider.aabb.halfDim.w = width / 2.0f;
@@ -485,8 +485,8 @@ static void drawCollisions( struct nk_command_buffer* buffer )
 	float clipCenterY = buffer->clip.y + ( buffer->clip.h / 2.0f );
 	for( size_t i = 0; i < sb_Count( sbColliders ); ++i ) {
 		switch( sbColliders[i].collider.type ) {
-		case CT_AABB: {
-			ColliderAABB* aab = &sbColliders[i].collider.aabb;
+		case CT_AAB: {
+			ColliderAAB* aab = &sbColliders[i].collider.aabb;
 			nk_stroke_rect( buffer,
 				nk_rect( clipCenterX + aab->center.x - aab->halfDim.w, clipCenterY + aab->center.y - aab->halfDim.h, 2.0f * aab->halfDim.w, 2.0f * aab->halfDim.h ),
 				0.0f, 1.0f, nk_rgb_cf( sbColliders[i].color ) );

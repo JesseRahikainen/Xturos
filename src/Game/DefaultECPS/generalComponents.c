@@ -208,7 +208,7 @@ static bool serializeCollComp( cmp_ctx_t* cmp, void* data, SerializedEntityInfo*
 
 	switch( coll->base.type )
 	{
-	case CT_AABB:
+	case CT_AAB:
 		CMP_WRITE( cmp, &(coll->aab.halfDim), vec2_Serialize, "GCColliderData", "halfDim", return false; );
 		break;
 	case CT_CIRCLE:
@@ -235,7 +235,7 @@ static bool deserializeCollComp( cmp_ctx_t* cmp, void* data, SerializedEntityInf
 
 	switch( coll->base.type )
 	{
-	case CT_AABB:
+	case CT_AAB:
 		CMP_READ( cmp, coll->aab.halfDim, vec2_Deserialize, "GCColliderData", "halfDim", return false; );
 		break;
 	case CT_CIRCLE:
@@ -982,8 +982,8 @@ void gc_ColliderDataToCollider( GCColliderData* colliderData, GCTransformData* t
 	case CT_DEACTIVATED:
 		outCollider->type = CT_DEACTIVATED;
 		break;
-	case CT_AABB:
-		outCollider->type = CT_AABB;
+	case CT_AAB:
+		outCollider->type = CT_AAB;
 		outCollider->aabb.halfDim = colliderData->aab.halfDim;
 		outCollider->aabb.center = tfData->futureState.pos;
 		break;

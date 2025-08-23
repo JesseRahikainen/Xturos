@@ -59,6 +59,18 @@ void mat3_SetColumn( Matrix3* m, int column, const Vector3* col )
 	m->m[column+2] = col->v[2];
 }
 
+// sets the top two entries of the column to the passed in vector
+void mat3_SetColumn2( Matrix3* m, int column, const Vector2* col )
+{
+	SDL_assert( m != NULL );
+	SDL_assert( col != NULL );
+	SDL_assert( ( column >= 0 ) && ( column < 3 ) );
+
+	column *= 3;
+	m->m[column + 0] = col->v[0];
+	m->m[column + 1] = col->v[1];
+}
+
 Vector3* mat3_GetColumn( const Matrix3* m, int column, Vector3* out )
 {
 	SDL_assert( m != NULL );
@@ -157,6 +169,7 @@ Vector2* mat3_TransformVec2Pos( const Matrix3* m, const Vector2* v, Vector2* out
 	SDL_assert( m != NULL );
 	SDL_assert( v != NULL );
 	SDL_assert( out != NULL );
+	SDL_assert( out != v );
 
 	out->v[0] = ( m->m[0] * v->v[0] ) + ( m->m[3] * v->v[1] ) + m->m[6];
 	out->v[1] = ( m->m[1] * v->v[0] ) + ( m->m[4] * v->v[1] ) + m->m[7];

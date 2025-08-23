@@ -35,6 +35,7 @@ Matrix3* mat3_Multiply( const Matrix3* m, const Matrix3* n, Matrix3* out );
 
 Vector3* mat3_TransformVec3Dir( const Matrix3* m, const Vector3* v, Vector3* out );
 void mat3_SetColumn( Matrix3* m, int column, const Vector3* col );
+void mat3_SetColumn2( Matrix3* m, int column, const Vector2* col ); // sets the top two entries of the column to the passed in vector
 Vector3* mat3_GetColumn( const Matrix3* m, int column, Vector3* out );
 Vector2* mat3_GetColumn_2( const Matrix3* m, int column, Vector2* out );
 void mat3_SetPosition( Matrix3* m, const Vector2* pos );
