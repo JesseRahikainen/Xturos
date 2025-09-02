@@ -62,6 +62,9 @@ Sets the size of the window, used for getting relative mouse position.
 */
 void input_UpdateMouseWindow( int windowWidth, int windowHeight );
 
+// returns if the mouse is inside the window
+bool input_MousePositionValid( void );
+
 /*
 Gets the relative position of the mouse.
  Returns 1 if the position is inside the input area.
@@ -72,6 +75,9 @@ int input_GetMousePosition( Vector2* out );
 Gets the position of the mouse in the window.
 */
 void input_GetRawMousePosition( Vector2* out );
+
+// Get the world position relative to a camera
+bool input_GetCamMousePos( int camera, Vector2* out );
 
 /*
 Clears all current mouse button bindings.

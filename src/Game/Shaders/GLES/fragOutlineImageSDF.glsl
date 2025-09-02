@@ -1,7 +1,7 @@
-// draws the image using the SDF method, but defines a certain range as an outline, that will be
-//  a secondary color
 #version 300 es
 
+// draws the image using the SDF method, but defines a certain range as an outline, that will be
+//  a secondary color
 in mediump vec2 vTex;
 in mediump vec4 vCol; // base color
 

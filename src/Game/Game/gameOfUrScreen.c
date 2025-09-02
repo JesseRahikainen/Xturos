@@ -606,19 +606,19 @@ static void start_Enter( void )
 	gp_AddGroupIDToEntityAndChildren( &defaultECPS, label, LABEL_GROUP_ID );
 
 	EntityID button = button_CreateTextButton( &defaultECPS, vec2( 500.0f, 280.0f ), vec2( 200.0f, 40.0f ), "Start HvH",
-		font, 24.0f, CLR_WHITE, VEC2_ZERO, 1, 0, pressStart_HumanVsHuman, NULL );
+		font, 24.0f, CLR_WHITE, VEC2_ZERO, 1, 0, pressStart_HumanVsHuman, NULL, NULL, NULL );
 	gp_AddGroupIDToEntityAndChildren( &defaultECPS, button, BUTTON_GROUP_ID );
 
 	button = button_CreateTextButton( &defaultECPS, vec2( 500.0f, 320.0f ), vec2( 200.0f, 40.0f ), "Start HvC",
-		font, 24.0f, CLR_WHITE, VEC2_ZERO, 1, 0, pressStart_HumanVsComputer, NULL );
+		font, 24.0f, CLR_WHITE, VEC2_ZERO, 1, 0, pressStart_HumanVsComputer, NULL, NULL, NULL );
 	gp_AddGroupIDToEntityAndChildren( &defaultECPS, button, BUTTON_GROUP_ID );
 
 	button = button_CreateTextButton( &defaultECPS, vec2( 500.0f, 360.0f ), vec2( 200.0f, 40.0f ), "Start CvH",
-		font, 24.0f, CLR_WHITE, VEC2_ZERO, 1, 0, pressStart_ComputerVsHuman, NULL );
+		font, 24.0f, CLR_WHITE, VEC2_ZERO, 1, 0, pressStart_ComputerVsHuman, NULL, NULL, NULL );
 	gp_AddGroupIDToEntityAndChildren( &defaultECPS, button, BUTTON_GROUP_ID );
 
 	button = button_CreateTextButton( &defaultECPS, vec2( 500.0f, 400.0f ), vec2( 200.0f, 40.0f ), "Start CvC",
-		font, 24.0f, CLR_WHITE, VEC2_ZERO, 1, 0, pressStart_ComputerVsComputer, NULL );
+		font, 24.0f, CLR_WHITE, VEC2_ZERO, 1, 0, pressStart_ComputerVsComputer, NULL, NULL, NULL );
 	gp_AddGroupIDToEntityAndChildren( &defaultECPS, button, BUTTON_GROUP_ID );
 }
 
@@ -680,21 +680,21 @@ static void humanChooseMove_Enter( void )
 		switch( sbHumanMoveList[i].type ) {
 		case MT_SKIP:
 			matchingMoveList[i] = button_Create3x3Button( &defaultECPS, basePos, buttonSize, "Skip", font, 24.0f,
-				CLR_BLACK, VEC2_ZERO, buttonImg, 3, 6, 3, 6, CLR_WHITE, 1, 0, pressedButton, NULL );
+				CLR_BLACK, VEC2_ZERO, buttonImg, 3, 6, 3, 6, CLR_WHITE, 1, 0, pressedButton, NULL, NULL, NULL );
 			break;
 		case MT_ROLL:
 			matchingMoveList[i] = button_Create3x3Button( &defaultECPS, basePos, buttonSize, "Roll", font, 24.0f,
-				CLR_BLACK, VEC2_ZERO, buttonImg, 3, 6, 3, 6, CLR_WHITE, 1, 0, pressedButton, NULL );
+				CLR_BLACK, VEC2_ZERO, buttonImg, 3, 6, 3, 6, CLR_WHITE, 1, 0, pressedButton, NULL, NULL, NULL );
 			break;
 		case MT_PIECE:
 		{
 			int8_t currPos = currBoardState.pieces[sbHumanMoveList[i].piece.player][sbHumanMoveList[i].piece.piece];
 			if( currPos < 0 ) {
 				// create button over the penned pieces
-				matchingMoveList[i] = button_CreateEmpty( &defaultECPS, basePenButtonPos[sbHumanMoveList[i].piece.player], humanInputButtonSize, 10, pressedButton, NULL );
+				matchingMoveList[i] = button_CreateEmpty( &defaultECPS, basePenButtonPos[sbHumanMoveList[i].piece.player], humanInputButtonSize, 10, pressedButton, NULL, NULL, NULL );
 			} else {
 				// create button over the corresponding piece
-				matchingMoveList[i] = button_CreateEmpty( &defaultECPS, boardPositions[currPos], humanInputButtonSize, 10, pressedButton, NULL );
+				matchingMoveList[i] = button_CreateEmpty( &defaultECPS, boardPositions[currPos], humanInputButtonSize, 10, pressedButton, NULL, NULL, NULL );
 			}
 		} break;
 		}

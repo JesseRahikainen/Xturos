@@ -953,6 +953,54 @@ void mem_ReleaseForCallback( void* memory )
 	mem_Release( memory );
 }
 
+
+size_t mem_GetMemoryUsed( void )
+{
+	size_t memoryTotal = 0;
+
+	lockMemoryMutex( ); {
+		MemoryBlockHeader* header = (MemoryBlockHeader*)( memoryBlock.memory );
+		while( header != NULL ) {
+			if( header->flags & IN_USE_FLAG ) {
+				memoryTotal += header->size + MEMORY_HEADER_SIZE;
+			}
+			header = header->next;
+		}
+	} unlockMemoryMutex( );
+
+	return memoryTotal;
+}
+
+// gets the amount memory used between the start and the last allocated block
+//  works better than mem_GetMemoryUsed() if you want to determine the maximum amount of memory the program uses as it
+//  takes fragmentation into account
+size_t mem_GetAllHasBeenUsed( void )
+{
+	size_t memoryTotal = 0;
+
+	lockMemoryMutex( ); {
+		MemoryBlockHeader* header = (MemoryBlockHeader*)( memoryBlock.memory );
+		// scan through until we reach the end or the final unallocated block
+		while( ( header != NULL ) && ( ( header->next != NULL ) || ( header->flags & IN_USE_FLAG ) ) ) {
+			memoryTotal += header->size + MEMORY_HEADER_SIZE;
+			header = header->next;
+		}
+	} unlockMemoryMutex( );
+
+	return memoryTotal;
+}
+
+// will call mem_GetAllHasBeenUsed() and log if there's been an increase since the last time this was run
+static size_t currMaxAllUsed = 0;
+void mem_RunAllUsedTest( void )
+{
+	size_t allUsed = mem_GetAllHasBeenUsed( );
+	if( allUsed > currMaxAllUsed ) {
+		currMaxAllUsed = allUsed;
+		llog( LOG_DEBUG, "New max all used: %i", (int)currMaxAllUsed );
+	}
+}
+
 static void hierachicalTest( uint32_t detachFlags, uint32_t resizeFlags )
 {
 	assert( mem_Init( 32 * 1024 ) == 0 ); {

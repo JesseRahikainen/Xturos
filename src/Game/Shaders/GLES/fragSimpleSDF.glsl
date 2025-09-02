@@ -1,6 +1,6 @@
-// gotten from here: https://metalbyexample.com/rendering-text-in-metal-with-signed-distance-fields/
 #version 300 es
 
+// gotten from here: https://metalbyexample.com/rendering-text-in-metal-with-signed-distance-fields/
 in mediump vec2 vTex;
 in mediump vec4 vCol;
 

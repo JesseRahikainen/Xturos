@@ -211,28 +211,28 @@ static void testJobQueueScreen_Enter( void )
 	whiteImg = img_Load( "Images/white.png", ST_DEFAULT );
 
 	button_CreateImageButton( &defaultECPS, vec2( 50.0f, 50.0f ), vec2( 50.0f, 50.0f ), vec2( 60.0f, 60.0f ), "Create Job", 
-		font, 12.0f, CLR_WHITE, VEC2_ZERO, whiteImg, CLR_BLUE, 1, 0, createJob, NULL );
+		font, 12.0f, CLR_WHITE, VEC2_ZERO, whiteImg, CLR_BLUE, 1, 0, createJob, NULL, NULL, NULL );
 
 	button_CreateImageButton( &defaultECPS, vec2( 150.0f, 50.0f ), vec2( 50.0f, 50.0f ), vec2( 60.0f, 60.0f ), "Create 10\nJobs",
-		font, 12.0f, CLR_WHITE, VEC2_ZERO, whiteImg, CLR_BLUE, 1, 0, createTenJobs, NULL );
+		font, 12.0f, CLR_WHITE, VEC2_ZERO, whiteImg, CLR_BLUE, 1, 0, createTenJobs, NULL, NULL, NULL );
 
 	button_CreateImageButton( &defaultECPS, vec2( 250.0f, 50.0f ), vec2( 50.0f, 50.0f ), vec2( 60.0f, 60.0f ), "Create 100\nJobs",
-		font, 12.0f, CLR_WHITE, VEC2_ZERO, whiteImg, CLR_BLUE, 1, 0, createHundredJobs, NULL );
+		font, 12.0f, CLR_WHITE, VEC2_ZERO, whiteImg, CLR_BLUE, 1, 0, createHundredJobs, NULL, NULL, NULL );
 
 	button_CreateImageButton( &defaultECPS, vec2( 350.0f, 50.0f ), vec2( 50.0f, 50.0f ), vec2( 60.0f, 60.0f ), "Test Img\nLoad",
-		font, 12.0f, CLR_WHITE, VEC2_ZERO, whiteImg, CLR_BLUE, 1, 0, createDelayedLoadTest, NULL );
+		font, 12.0f, CLR_WHITE, VEC2_ZERO, whiteImg, CLR_BLUE, 1, 0, createDelayedLoadTest, NULL, NULL, NULL );
 
 	button_CreateImageButton( &defaultECPS, vec2( 450.0f, 50.0f ), vec2( 50.0f, 50.0f ), vec2( 60.0f, 60.0f ), "Test Font\nLoad",
-		font, 12.0f, CLR_WHITE, VEC2_ZERO, whiteImg, CLR_BLUE, 1, 0, createDelayedFontLoadTest, NULL );
+		font, 12.0f, CLR_WHITE, VEC2_ZERO, whiteImg, CLR_BLUE, 1, 0, createDelayedFontLoadTest, NULL, NULL, NULL );
 
 	button_CreateImageButton( &defaultECPS, vec2( 550.0f, 50.0f ), vec2( 50.0f, 50.0f ), vec2( 60.0f, 60.0f ), "Test Snd\nLoad",
-		font, 12.0f, CLR_WHITE, VEC2_ZERO, whiteImg, CLR_BLUE, 1, 0 , createDelayedSoundLoadTest, NULL );
+		font, 12.0f, CLR_WHITE, VEC2_ZERO, whiteImg, CLR_BLUE, 1, 0 , createDelayedSoundLoadTest, NULL, NULL, NULL );
 
 	button_CreateImageButton( &defaultECPS, vec2( 50.0f, 150.0f ), vec2( 50.0f, 50.0f ), vec2( 60.0f, 60.0f ), "Test Snd\nPlay",
-		font, 12.0f, CLR_WHITE, VEC2_ZERO, whiteImg, CLR_BLUE, 1, 0 , testSoundPlay, NULL );
+		font, 12.0f, CLR_WHITE, VEC2_ZERO, whiteImg, CLR_BLUE, 1, 0 , testSoundPlay, NULL, NULL, NULL );
 
 	button_CreateImageButton( &defaultECPS, vec2( 150.0f, 150.0f ), vec2( 50.0f, 50.0f ), vec2( 60.0f, 60.0f ), "Test\nProd/Cons",
-		font, 12.0f, CLR_WHITE, VEC2_ZERO, whiteImg, CLR_BLUE, 1, 0, testProduceConsumer, NULL );
+		font, 12.0f, CLR_WHITE, VEC2_ZERO, whiteImg, CLR_BLUE, 1, 0, testProduceConsumer, NULL, NULL, NULL );
 }
 
 static void testJobQueueScreen_Exit( void )

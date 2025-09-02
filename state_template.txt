@@ -12,14 +12,14 @@ GameState <temp>State;
 
 #include "<temp>State.h"
 
+#include "Graphics/graphics.h"
 #include "Graphics/debugRendering.h"
-#include "values.h"
 #include "System/ECPS/entityComponentProcessSystem.h"
-#include "Components/generalComponents.h"
-#include "gameComponents.h"
-#include "gameProcesses.h"
+#include "DefaultECPS/generalComponents.h"
+#include "DefaultECPS/generalProcesses.h"
+#include "DefaultECPS/defaultECPS.h"
 #include "System/platformLog.h"
-#include "Processes/generalProcesses.h"
+#include "System/gameTime.h"
 
 static void <temp>State_Enter( void )
 {

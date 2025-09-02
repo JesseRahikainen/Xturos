@@ -570,12 +570,12 @@ void snd_SetVolume( float volume, unsigned int group )
 
 float snd_dBToVolume( float dB )
 {
-	return powf( 10.0f, 0.05f * dB );
+	return SDL_powf( 10.0f, 0.05f * dB );
 }
 
 float snd_VolumeTodB( float volume )
 {
-	return 20.0f * log10f( volume );
+	return 20.0f * SDL_log10f( volume );
 }
 
 // Returns an id that can be used to change the volume and pitch

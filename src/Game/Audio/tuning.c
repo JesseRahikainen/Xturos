@@ -49,7 +49,7 @@ static double generateNoteHertz( double a4Hertz, int8_t octave, OctaveNote note,
 	// generate the difference based on the octave
 	double cents = ( octave - 4 ) * FULL_OCTAVE_CENTS; // gives base value for the given octave
 	cents += intervalCents[note] - intervalCents[NOTE_A]; // gives the note within the octave, the octave is base C, while the tuning tone is A
-	double result = a4Hertz * pow( 2.0, cents / FULL_OCTAVE_CENTS );
+	double result = a4Hertz * SDL_pow( 2.0, cents / FULL_OCTAVE_CENTS );
 	return result;
 }
 

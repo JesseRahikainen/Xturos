@@ -5,6 +5,10 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#define KILOBYTES(k) ( (k) * 1024 )
+#define MEGABYTES(m) ( KILOBYTES(m) * 1024 )
+#define GIGABYTES(g) ( MEGABYTES(g) * 1024 )
+
 // we'll make this the main memory thing, then we'll have memArena_* functions that that work with a MemoryArena struct.
 bool mem_Init( size_t totalSize );
 void mem_CleanUp( void );
@@ -40,6 +44,17 @@ void mem_ReleaseForCallback( void* memory );
 bool mem_Attach( void* parent, void* child );
 void mem_DetachFromParent( void* child );
 void mem_DetachAllChildren( void* parent );
+
+// gets the amount of currently allocated memory
+size_t mem_GetMemoryUsed( void );
+
+// gets the amount memory used between the start and the last allocated block
+//  works better than mem_GetMemoryUsed() if you want to determine the maximum amount of memory the program uses as it
+//  takes fragmentation into account
+size_t mem_GetAllHasBeenUsed( void );
+
+// will call mem_GetAllHasBeenUsed() and log if there's been an increase since the last time this was run
+void mem_RunAllUsedTest( void );
 
 void mem_RunTests( void );
 

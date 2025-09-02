@@ -45,11 +45,11 @@ static void testSoundsScreen_Enter( void )
 	font = txt_LoadFont( "Fonts/Aileron-Regular.otf", 32 );
 
 	EntityID playButton = button_CreateTextButton( &defaultECPS, vec2( 100.0f, 100.0f ), vec2( 100.0f, 100.0f ), "Play Sound",
-		font, 32.0f, CLR_BLUE, VEC2_ZERO, 1, 0, NULL, PlaySound );
+		font, 32.0f, CLR_BLUE, VEC2_ZERO, 1, 0, NULL, PlaySound, NULL, NULL );
 	gp_AddGroupIDToEntityAndChildren( &defaultECPS, playButton, BUTTON_GROUP );
 
 	EntityID streamButton = button_CreateTextButton( &defaultECPS, vec2( 400.0f, 100.0f ), vec2( 100.0f, 100.0f ), "Stream",
-		font, 32.0f, CLR_BLUE, VEC2_ZERO, 1, 0, NULL, ToggleStream );
+		font, 32.0f, CLR_BLUE, VEC2_ZERO, 1, 0, NULL, ToggleStream, NULL, NULL );
 	gp_AddGroupIDToEntityAndChildren( &defaultECPS, streamButton, BUTTON_GROUP );
 }
 

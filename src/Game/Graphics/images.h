@@ -83,6 +83,12 @@ void img_ForceTransparency( int idx, bool transparent );
 // Gets the size of the image, putting it into the out Vector2. Returns false if there's an issue.
 bool img_GetSize( int idx, Vector2* out );
 
+// returns the ShaderType of the image, returns NUM_SHADERS if the image isn't valid
+ShaderType img_GetShaderType( int idx );
+
+// used to override the ShaderType value used when the image was loaded, helpful for sprite sheets
+void img_SetShaderType( int idx, ShaderType shaderType );
+
 // Gets the the min and max uv coordinates used by the image.
 int img_GetUVCoordinates( int idx, Vector2* outMin, Vector2* outMax );
 

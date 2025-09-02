@@ -1,6 +1,6 @@
-// same as the simple SDF fragment shader but uses the alpha, will not support transparency in the image
 #version 300 es
 
+// same as the simple SDF fragment shader but uses the alpha, will not support transparency in the image
 in mediump vec2 vTex;
 in mediump vec4 vCol;
 

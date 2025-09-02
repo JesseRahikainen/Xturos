@@ -290,7 +290,7 @@ void nk_xu_render( NuklearWrapper* xu )
 	mat4_CreateOrthographicProjection( 0.0f, (float)( xu->renderWidth ), 0.0f, (float)( xu->renderHeight ), -1000.0f, 1000.0f, &ortho );
 
 	// global state
-	glViewport( 0, 0, xu->renderWidth, xu->renderHeight );
+	GL( glViewport( 0, 0, xu->renderWidth, xu->renderHeight ) );
 	GL( glEnable( GL_BLEND ) );
 	GL( glBlendEquation( GL_FUNC_ADD ) );
 	GL( glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA ) );

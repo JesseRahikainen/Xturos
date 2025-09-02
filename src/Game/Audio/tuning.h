@@ -29,7 +29,8 @@ typedef struct {
 
 typedef enum {
 	TUNING_EQUAL_TEMPERAMENT,
-	TUNING_PYTHAGOREAN
+	TUNING_PYTHAGOREAN,
+	NUM_TUNINGS
 } TuningIntervals;
 
 typedef struct {

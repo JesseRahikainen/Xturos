@@ -395,6 +395,7 @@ int cam_ScreenPosToWorldPos( int camera, const Vector2* screenPos, Vector2* out 
 	cam_GetInverseViewMatrix( camera, &invView );
 
 	Vector2 pos = *screenPos;
+	vec2_Add( &pos, &( cameras[camera].inverseOffset ), &pos );
 	mat4_TransformVec2Pos( &invView, &pos, out );
 
 	return 0;

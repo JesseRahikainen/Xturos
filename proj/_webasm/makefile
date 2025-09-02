@@ -10,6 +10,7 @@ SRC_DIR = ../../src/Game
 DATA_DIR = ../../bin/data
 
 CSRC = $(wildcard $(SRC_DIR)/*.c) \
+       $(wildcard $(SRC_DIR)/Audio/*.c) \
        $(wildcard $(SRC_DIR)/Graphics/*.c) \
 	   $(wildcard $(SRC_DIR)/Graphics/Platform/*.c) \
 	   $(wildcard $(SRC_DIR)/Graphics/Platform/OpenGL/*.c) \

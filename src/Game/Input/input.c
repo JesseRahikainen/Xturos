@@ -3,8 +3,9 @@
 #include <SDL3/SDL_assert.h>
 #include "System/platformLog.h"
 #include "System/shared.h"
-#include "System/luaInterface.h"
 #include "System/memory.h"
+#include "Math/matrix3.h"
+#include "Graphics/camera.h"
 
 /***** Key Binding *****/
 
@@ -51,7 +52,8 @@ static void runResponse( Response* response )
 	if( response->type == CBT_SOURCE ) {
 		if( response->sourceResponse.response != NULL ) response->sourceResponse.response( );
 	} else if( response->type == CBT_LUA ) {
-		if( response->scriptResponse.response[0] != 0 ) xLua_CallLuaFunction( response->scriptResponse.response, "" );
+		SDL_assert( false && "Doesn't work in this version of the engine." );
+		//if( response->scriptResponse.response[0] != 0 ) xLua_CallLuaFunction( response->scriptResponse.response, "" );
 	} else {
 		llog( LOG_ERROR, "Unknown callback type." );
 	}
@@ -329,16 +331,21 @@ void input_UpdateMouseWindow( int windowWidth, int windowHeight )
 
 	if( windowRatio < inputRatio ) {
 		mouseInputOffset.x = 0.0f;
-		mouseInputOffset.y = 0.0f;// -( windowSize.y - ( windowSize.x / inputRatio ) ) / 2.0f;
+		mouseInputOffset.y = -( windowSize.y - ( windowSize.x / inputRatio ) ) / 2.0f;
 
-		//mouseInputScale = mouseInputArea.x / windowSize.x;
-		mouseInputScale = mouseInputArea.y / windowSize.y;
+		mouseInputScale = windowSize.y / mouseInputArea.y;
 	} else {
-		mouseInputOffset.x = 0.0f;// -( windowSize.x - ( windowSize.y * inputRatio ) ) / 2.0f;
+		mouseInputOffset.x = -( windowSize.x - ( windowSize.y * inputRatio ) ) / 2.0f;
 		mouseInputOffset.y = 0.0f;
 
-		mouseInputScale = mouseInputArea.y / windowSize.y;
+		mouseInputScale = windowSize.x / mouseInputArea.x;
 	}
+}
+
+// returns if the mouse is inside the window
+bool input_MousePositionValid( void )
+{
+	return mousePosValid;
 }
 
 /*
@@ -357,6 +364,18 @@ Gets the position of the mouse in the window.
 void input_GetRawMousePosition( Vector2* out )
 {
 	(*out) = rawMousePosition;
+}
+
+// Get the world position relative to a camera
+bool input_GetCamMousePos( int camera, Vector2* out )
+{
+	Vector2 mp;
+	input_GetMousePosition( &mp );
+	Matrix4 invView;
+	cam_GetInverseViewMatrix( 0, &invView );
+	mat4_TransformVec2Pos( &invView, &mp, out );
+
+	return mousePosValid;
 }
 
 /*

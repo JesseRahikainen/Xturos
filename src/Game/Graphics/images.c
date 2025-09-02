@@ -674,6 +674,24 @@ bool img_GetSize( int idx, Vector2* out )
 	return true;
 }
 
+// returns the ShaderType of the image
+ShaderType img_GetShaderType( int idx )
+{
+	if( ( idx < 0 ) || ( !( images[idx].flags & IMGFLAG_IN_USE ) ) || ( idx >= MAX_IMAGES ) ) {
+		return NUM_SHADERS;
+	}
+	return images[idx].shaderType;
+}
+
+// used to override the ShaderType value used when the image was loaded, helpful for sprite sheets
+void img_SetShaderType( int idx, ShaderType shaderType )
+{
+	if( ( idx < 0 ) || ( !( images[idx].flags & IMGFLAG_IN_USE ) ) || ( idx >= MAX_IMAGES ) ) {
+		return;
+	}
+	images[idx].shaderType = shaderType;
+}
+
 // Gets the the min and max uv coordinates used by the image.
 int img_GetUVCoordinates( int idx, Vector2* outMin, Vector2* outMax )
 {
