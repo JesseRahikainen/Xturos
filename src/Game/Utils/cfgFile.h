@@ -17,11 +17,15 @@ void cfg_CloseFile( void* cfgFile );
 // Saves out the file.
 bool cfg_SaveFile( void* cfgFile );
 
-// Accessors. Pass them a valid config file pointer, the name of the attribute you want, and the default value for the
+// For getters pass them a valid config file pointer, the name of the attribute you want, and the default value for the
 //  attribute if it can't find it.
-int cfg_GetInt( void* cfgFile, const char* attrName, int defaultVal );
+// For setters pass a valid config file pointer, the name of the attribute, and the value you want to set. If the attribute
+//  doesn't exist it will create a new one. Returns if the setting was successful.
 
-// If the attribute already exists it sets the associated value, if it doesn't exist it is added.
-void cfg_SetInt( void* cfgFile, const char* attrName, int val );
+int cfg_GetInt( void* cfgFile, const char* attrName, int defaultVal );
+bool cfg_SetInt( void* cfgFile, const char* attrName, int val );
+
+float cfg_GetFloat( void* cfgFile, const char* attrName, float defaultVal );
+bool cfg_SetFloat( void* cfgFile, const char* attrName, float val );
 
 #endif // inclusion guard
