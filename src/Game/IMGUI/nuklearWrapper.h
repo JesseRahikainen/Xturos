@@ -40,10 +40,12 @@ typedef struct {
 extern NuklearWrapper editorIMGUI;
 extern NuklearWrapper inGameIMGUI;
 
+void nk_xu_initMessageListeners( void );
 void nk_xu_init( NuklearWrapper* xu, SDL_Window* win, bool useRelativeMousePos, int renderWidth, int renderHeight );
 void nk_xu_fontStashBegin( NuklearWrapper* xu, struct nk_font_atlas** atlas );
-void nk_xu_fontStashEnd( NuklearWrapper* xu );
+void nk_xu_fontStashEnd( NuklearWrapper* xu, float fontHeight );
 void nk_xu_handleEvent( NuklearWrapper* xu, SDL_Event* e );
+void nk_xu_setRenderSize( NuklearWrapper* xu, int renderWidth, int renderHeight );
 void nk_xu_render( NuklearWrapper* xu );
 void nk_xu_shutdown( NuklearWrapper* xu );
 void nk_xu_clear( NuklearWrapper* xu );

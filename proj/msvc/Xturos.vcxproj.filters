@@ -136,6 +136,12 @@
     <Filter Include="Source Files\Audio">
       <UniqueIdentifier>{9260c2c7-8ed7-4bb8-b717-0dc5f895f81b}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\Game\SharedScreens">
+      <UniqueIdentifier>{c57c0218-42b4-4f05-9680-b42a4c3e8d57}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Game\SharedStates">
+      <UniqueIdentifier>{0fe29d58-8534-4c9e-9764-28405c01e823}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\Game\Graphics\graphics.h">
@@ -492,6 +498,9 @@
     <ClInclude Include="..\..\src\Game\Game\testCollisionsState.h">
       <Filter>Header Files\Game\TestScreens</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\Game\Game\optionsState.h">
+      <Filter>Header Files\Game\SharedStates</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\Game\Graphics\graphics.c">
@@ -847,6 +856,9 @@
     </ClCompile>
     <ClCompile Include="..\..\src\Game\Game\testCollisionsState.c">
       <Filter>Source Files\Game\TestScreens</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Game\Game\optionsState.c">
+      <Filter>Source Files\Game\SharedScreens</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

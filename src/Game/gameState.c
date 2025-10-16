@@ -85,9 +85,12 @@ void gsm_PhysicsTick( GameStateMachine* fsm, float dt )
 void gsm_Render( GameStateMachine* fsm, float normRenderTime )
 {
 	SDL_assert( fsm );
-
-	GameState* state = sb_Last( fsm->sbStateStack );
-	if( ( state != NULL ) && ( state->render != NULL ) ) {
-		state->render( normRenderTime );
+	
+	// render in reverse order
+	for( size_t i = 0; i < sb_Count( fsm->sbStateStack ); ++i ) {
+		GameState* state = fsm->sbStateStack[i];
+		if( ( state != NULL ) && ( state->render != NULL ) ) {
+			state->render( normRenderTime );
+		}
 	}
 }

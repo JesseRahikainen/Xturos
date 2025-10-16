@@ -42,6 +42,7 @@
 #include "Game/testMountingState.h"
 #include "Game/testSynthState.h"
 #include "Game/testCollisionsState.h"
+#include "Game/optionsState.h"
 #include "Game/initialChoiceState.h"
 
 #include "System/memory.h"
@@ -59,17 +60,19 @@
 #include "DefaultECPS/defaultECPS.h"
 #include "System/messageBroadcast.h"
 
-#define DESIRED_WORLD_WIDTH 800
-#define DESIRED_WORLD_HEIGHT 600
-
 #define DESIRED_RENDER_WIDTH 800
 #define DESIRED_RENDER_HEIGHT 600
-#ifdef __EMSCRIPTEN__
-	#define DESIRED_WINDOW_WIDTH DESIRED_WORLD_WIDTH
-	#define DESIRED_WINDOW_HEIGHT DESIRED_WORLD_WIDTH
+
+#if defined( __EMSCRIPTEN__ )
+	#define DESIRED_WINDOW_WIDTH DESIRED_RENDER_WIDTH
+	#define DESIRED_WINDOW_HEIGHT DESIRED_RENDER_HEIGHT
+	#define DESIRED_WORLD_WIDTH DESIRED_RENDER_WIDTH
+	#define DESIRED_WORLD_HEIGHT DESIRED_RENDER_HEIGHT
 #else
-	#define DESIRED_WINDOW_WIDTH 800
-	#define DESIRED_WINDOW_HEIGHT 600
+	#define DESIRED_WINDOW_WIDTH 1920
+	#define DESIRED_WINDOW_HEIGHT 1080
+	#define DESIRED_WORLD_WIDTH DESIRED_RENDER_WIDTH
+	#define DESIRED_WORLD_HEIGHT DESIRED_RENDER_HEIGHT
 #endif
 
 #define DEFAULT_REFRESH_RATE 30
@@ -80,7 +83,7 @@ static bool paused;
 static bool forceDraw;
 static Uint64 lastTicks;
 static Uint64 physicsTickAcc;
-static SDL_Window* window;
+static SDL_Window* sdlWindow;
 static SDL_IOStream* logFile;
 static const char* windowName = "Xturos";
 static bool canResize;
@@ -92,13 +95,33 @@ typedef struct {
 } AvailableResolution;
 
 static AvailableResolution resolutions[] = {
-	{ 540, 960 },
-	{ 1242, 2688 },
-	{ 1242, 2208 },
-	{ 2048, 2732 },
-	{ 300, 1000 },
-	{ 2160, 3840 },
-	{ 1080, 1920 },
+	{ 1920, 1080 },
+	{ 1366, 768 },
+	{ 2560, 1440 },
+	{ 1440, 900 },
+	{ 1600, 900 },
+	{ 3840, 2160 },
+	{ 1680, 1050 },
+	{ 1360, 1050 },
+	{ 1280, 1024 },
+	{ 2560, 1080 },
+	{ 3440, 1440 },
+	{ 1920, 1200 },
+	{ 1280, 800 },
+	{ 1024, 768 },
+	{ 1280, 720 },
+	{ 640, 360 },
+	{ 640, 480 },
+	{ 800, 600 },
+	{ 1536, 864 },
+	{ 2048, 1152 },
+	{ 1600, 1200 },
+	{ 2048, 1536 },
+	{ 2560, 1600 },
+	{ 5120, 2880 },
+	{ 6144, 3456 },
+	{ 7680, 2160 },
+	{ 7680, 4320 },
 };
 
 float getWindowRefreshRate( SDL_Window* w )
@@ -131,8 +154,8 @@ void cleanUp( void )
 		SDL_CloseIO( logFile );
 	}
     
-    SDL_DestroyWindow( window );
-    window = NULL;
+    SDL_DestroyWindow( sdlWindow );
+	sdlWindow = NULL;
 
     SDL_Quit( );
 
@@ -157,16 +180,16 @@ void logOutput( void* userData, int category, SDL_LogPriority priority, const ch
 #endif
 }
 
-static void initIMGUI( NuklearWrapper* imgui, bool useRelativeMousePos, int width, int height )
+static void initIMGUI( NuklearWrapper* imgui, bool useRelativeMousePos, int width, int height, float fontHeight )
 {
-	nk_xu_init( imgui, window, useRelativeMousePos, width, height );
+	nk_xu_init( imgui, sdlWindow, useRelativeMousePos, width, height );
 
 	struct nk_font_atlas* fontAtlas;
 	nk_xu_fontStashBegin( imgui, &fontAtlas );
 	// load fonts
-	struct nk_font *font = nk_font_atlas_add_from_file( fontAtlas, "./Fonts/Aileron-Regular.otf", 14, 0 );
+	struct nk_font *font = nk_font_atlas_add_from_file( fontAtlas, "./Fonts/Aileron-Regular.otf", fontHeight, 0 );
 	
-	nk_xu_fontStashEnd( imgui );
+	nk_xu_fontStashEnd( imgui, fontHeight );
 	nk_style_set_font( &( imgui->ctx ), &( font->handle ) );
 }
 
@@ -291,8 +314,8 @@ int initEverything( void )
     SDL_GL_SetAttribute( SDL_GL_DOUBLEBUFFER, 1 );
 	SDL_GL_SetAttribute( SDL_GL_STENCIL_SIZE, stencilSize );
 #if !defined( __ANDROID__ ) && !defined( __IPHONEOS__ )
-	SDL_GL_SetAttribute( SDL_GL_MULTISAMPLEBUFFERS, 1 );
-	SDL_GL_SetAttribute( SDL_GL_MULTISAMPLESAMPLES, 16 );
+	//SDL_GL_SetAttribute( SDL_GL_MULTISAMPLEBUFFERS, 1 ); #error upscaling has something to do with this, maybe find a different way to do it? render to texture?
+	//SDL_GL_SetAttribute( SDL_GL_MULTISAMPLESAMPLES, 16 );
 #endif
 
 	llog( LOG_INFO, "Desired GL version: %i.%i", majorVersion, minorVersion );
@@ -325,34 +348,34 @@ int initEverything( void )
     int windowHeight = mode.h;
     
 #endif
-	//int renderHeight = DESIRED_RENDER_HEIGHT;
-	//int renderWidth = (int)( renderHeight * (float)windowWidth / (float)windowHeight );
-	int renderHeight = windowHeight;
-	int renderWidth = windowWidth;
+
+	int renderHeight = DESIRED_RENDER_HEIGHT;
+	int renderWidth = DESIRED_RENDER_WIDTH;
 
 	int worldHeight = DESIRED_WORLD_HEIGHT;
-	int worldWidth = (int)( worldHeight * (float)windowWidth / (float)windowHeight );
+	int worldWidth = DESIRED_WORLD_WIDTH;
 
 	//llog( LOG_INFO, "World size: %i x %i", worldWidth, worldHeight );
 	world_SetSize( worldWidth, worldHeight );
 
 	//llog( LOG_INFO, "Window size: %i x %i    Render size: %i x %i", windowWidth, windowHeight, renderWidth, renderHeight );
 
-	window = SDL_CreateWindow( windowName, windowWidth, windowHeight, windowFlags );
+	sdlWindow = SDL_CreateWindow( windowName, windowWidth, windowHeight, windowFlags );
 	int finalWidth, finalHeight;
-	SDL_GetWindowSize( window, &finalWidth, &finalHeight );
+	SDL_GetWindowSize( sdlWindow, &finalWidth, &finalHeight );
 	//llog( LOG_INFO, "Final window size: %i x %i", finalWidth, finalHeight );
 
-	if( window == NULL ) {
+	if( sdlWindow == NULL ) {
 		llog( LOG_ERROR, "%s", SDL_GetError( ) );
 		return -1;
 	}
 	llog( LOG_INFO, "SDL OpenGL window successfully created" );
 
 	// Create rendering
-	if( gfx_Init( window, renderWidth, renderHeight ) < 0 ) {
+	if( gfx_Init( sdlWindow, RRT_FIT_RENDER_INSIDE, renderWidth, renderHeight ) < 0 ) {
 		return -1;
 	}
+	gfx_GetRenderSize( &renderWidth, &renderHeight ); // get the render size after everything has been adjusted in gfx_Init()
 	llog( LOG_INFO, "Rendering successfully initialized" );
 
 	// Create sound mixer
@@ -362,21 +385,20 @@ int initEverything( void )
 	llog( LOG_INFO, "Mixer successfully initialized" );
 
 	cam_Init( );
-	cam_InitProjectionMatrices( worldWidth, worldHeight, false );
+	cam_InitProjectionMatrices( renderWidth, renderHeight, false );
 	llog( LOG_INFO, "Cameras successfully initialized" );
 
-	input_InitMouseInputArea( worldWidth, worldHeight );
+	input_Init( );
+	llog( LOG_INFO, "Input successfully initialized" );
 
 	// on mobile devices we can't assume the width and height we've used to create the window
 	//  are the current width and height
 	int winWidth;
 	int winHeight;
-	SDL_GetWindowSize( window, &winWidth, &winHeight );
-	input_UpdateMouseWindow( winWidth, winHeight );
-	llog( LOG_INFO, "Input successfully initialized" );
-
-	initIMGUI( &inGameIMGUI, false, renderWidth, renderHeight );
-	initIMGUI( &editorIMGUI, false, winWidth, winHeight );
+	SDL_GetWindowSize( sdlWindow, &winWidth, &winHeight );
+	initIMGUI( &inGameIMGUI, true, renderWidth, renderHeight, 14.0f );
+	initIMGUI( &editorIMGUI, false, winWidth, winHeight, 14.0f );
+	nk_xu_initMessageListeners( );
 	llog( LOG_INFO, "IMGUI successfully initialized" );
 
 	txt_Init( );
@@ -448,7 +470,7 @@ int handleIOSEvents( void* userData, SDL_Event* event )
     return 1;
 }
 
-/* input processing */
+// input processing
 void processEvents( int windowsEventsOnly )
 {
 	SDL_Event e;
@@ -457,33 +479,15 @@ void processEvents( int windowsEventsOnly )
 	while( SDL_PollEvent( &e ) != 0 ) {
 		if( ( e.type >= SDL_EVENT_WINDOW_FIRST ) && ( e.type <= SDL_EVENT_WINDOW_LAST ) ) {
 			switch( e.type ) {
-			case SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED:
-				if( canResize ) {
-					//llog( LOG_DEBUG, "Window size changed to %i x %i", e.window.data1, e.window.data2 );
-					// resize the rendering based on the size of the new window
-					gfx_RenderResize( window, e.window.data1, e.window.data2 );
-
-					// adjust world size so everything based on that scales correctly
-					int worldHeight = DESIRED_WORLD_HEIGHT;
-					int worldWidth = (int)( worldHeight * (float)e.window.data1 / (float)e.window.data2 );
-					world_SetSize( worldWidth, worldHeight );
-					//recalculateSafeArea( );
-
-					// adjust the cameras to work with the new render aspect ratio
-					cam_SetProjectionMatrices( worldWidth, worldHeight );
-
-					// need to signal to everything else that stuff had changed and stuff may need to be relayed out
+			case SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED: {
+					// data1 == width, data2 == height
+					gfx_OnWindowResize( e.window.data1, e.window.data2 );
 					mb_BroadcastMessage( MSG_WINDOW_RESIZED, NULL );
 
-					// force a draw so everything updates correctly
 					if( paused ) {
 						forceDraw = true;
 					}
 				}
-				// data1 == width, data2 == height
-				gfx_SetWindowSize( e.window.data1, e.window.data2 );
-				input_UpdateMouseWindow( e.window.data1, e.window.data2 );
-
 				break;
 
 			// will want to handle these messages for pausing and unpausing the game when they lose focus
@@ -510,10 +514,8 @@ void processEvents( int windowsEventsOnly )
 		}
 
 		// special keys used only on the pc version, primarily for taking screenshots of scenes at different resolutions
-#if defined( WIN32 )
+#if defined( WIN32 ) & defined( _DEBUG )
 		if( e.type == SDL_EVENT_KEY_DOWN ) {
-
-#ifdef _DEBUG
 			if( e.key.key == SDLK_PRINTSCREEN ) {
 				// take a screen shot
 
@@ -532,15 +534,63 @@ void processEvents( int windowsEventsOnly )
 				mem_Release( fileName );
 				mem_Release( savePath );
 			}
-#endif
 
 			if( e.key.key == SDLK_PAUSE ) {
 				// pause the game
 				paused = !paused;
 			}
 
+			// just testing toggling full screen
+			/*if( e.key.key == SDLK_PAGEUP ) {
+				int windowCount;
+				SDL_Window** windows = SDL_GetWindows( &windowCount );
+				{
+					int x = 0;
+				}
+				SDL_free( windows );
 
-			// have the F# keys change the size of the window based on some predetermined values
+				//bool isFullScreen = SDL_GetWindowFlags( window ) & SDL_WINDOW_FULLSCREEN;
+				//SDL_SetWindowFullscreen( window, !isFullScreen );
+
+				int numDisplays;
+				SDL_DisplayID* displays = SDL_GetDisplays( &numDisplays );
+				llog( LOG_DEBUG, "Found %i displays", numDisplays );
+				for( int i = 0; i < numDisplays; ++i ) {
+					int numModes = 0;
+					SDL_DisplayMode** modes = SDL_GetFullscreenDisplayModes( displays[i], &numModes );
+					llog( LOG_DEBUG, "Display %i has %i modes", displays[i], numModes );
+					for( int a = 0; a < numModes; ++a ) {
+						llog( LOG_DEBUG, "-- mode %i - %ix%i, pd: %f, refresh: %f", a, modes[a]->w, modes[a]->h, modes[a]->pixel_density, modes[a]->refresh_rate );
+					}
+					SDL_free( modes );
+				}
+				SDL_free( displays );
+
+
+				{
+					SDL_DisplayID* displays = SDL_GetDisplays( &numDisplays );
+					int numModes = 0;
+					SDL_DisplayMode** modes = SDL_GetFullscreenDisplayModes( displays[0], &numModes );
+
+					SDL_SetWindowFullscreenMode( sdlWindow, modes[0] );
+					bool isFullScreen = SDL_GetWindowFlags( sdlWindow ) & SDL_WINDOW_FULLSCREEN;
+					SDL_SetWindowFullscreen( sdlWindow, !isFullScreen );
+
+					SDL_free( modes );
+					SDL_free( displays );
+				}
+
+				// for selecting full screen mode we need to select the display we want it on (can enumerate them and let them select)
+				//  then what resolution they want for it, or given the resizing do we really need to? not really
+				// we just need to choose if it's full screen, full screen windowed, and if it's windowed a resolution which we can just have
+				//  a set list to choose from
+				// do we want to select the display when doing full screen? lets not for right now, means we don't have to query SDL for stuff,
+				// just have to send stuff to it
+
+				// we're just going to store the SDL_Window pointer somewhere we can access it globally
+			}//*/
+
+			// have the F# keys change the size of the window based on some predetermined values, useful when you need to take screen shots
 			int pressedFKey = -1;
 			if( e.key.key == SDLK_F1 ) pressedFKey = 0;
 			if( e.key.key == SDLK_F2 ) pressedFKey = 1;
@@ -554,22 +604,19 @@ void processEvents( int windowsEventsOnly )
 			if( e.key.key == SDLK_F10 ) pressedFKey = 9;
 			if( e.key.key == SDLK_F11 ) pressedFKey = 10;
 			if( e.key.key == SDLK_F12 ) pressedFKey = 11;
-			if( e.key.key == SDLK_F13 ) pressedFKey = 12;
-			if( e.key.key == SDLK_F14 ) pressedFKey = 13;
-			if( e.key.key == SDLK_F15 ) pressedFKey = 14;
-			if( e.key.key == SDLK_F16 ) pressedFKey = 15;
-			if( e.key.key == SDLK_F17 ) pressedFKey = 16;
-			if( e.key.key == SDLK_F18 ) pressedFKey = 17;
-			if( e.key.key == SDLK_F19 ) pressedFKey = 18;
-			if( e.key.key == SDLK_F20 ) pressedFKey = 19;
-			if( e.key.key == SDLK_F21 ) pressedFKey = 20;
-			if( e.key.key == SDLK_F22 ) pressedFKey = 21;
-			if( e.key.key == SDLK_F23 ) pressedFKey = 22;
-			if( e.key.key == SDLK_F24 ) pressedFKey = 23;
 
-			if( ( pressedFKey != -1 ) && ( pressedFKey < ARRAY_SIZE( resolutions ) ) ) {
-				// switch resolution
-				SDL_SetWindowSize( window, resolutions[pressedFKey].width, resolutions[pressedFKey].height );
+			if( pressedFKey != -1 ) {
+				if( e.key.mod & SDL_KMOD_CTRL ) {
+					pressedFKey += 12;
+				}
+
+				if( pressedFKey < ARRAY_SIZE( resolutions ) ) {
+					// switch resolution
+					bool swap = ( e.key.mod & SDL_KMOD_SHIFT ) != 0;
+					int width = swap ? resolutions[pressedFKey].height : resolutions[pressedFKey].width;
+					int height = swap ? resolutions[pressedFKey].width : resolutions[pressedFKey].height;
+					SDL_SetWindowSize( sdlWindow, width, height );
+				}
 			}
 		}
 #endif
@@ -577,7 +624,6 @@ void processEvents( int windowsEventsOnly )
 		sys_ProcessEvents( &e );
 		input_ProcessEvents( &e );
 		gsm_ProcessEvents( &globalFSM, &e );
-		//imgui_ProcessEvents( &e ); // just for TextInput events when text input is enabled
 		nk_xu_handleEvent( &editorIMGUI, &e );
 		nk_xu_handleEvent( &inGameIMGUI, &e );
 	}
@@ -728,7 +774,7 @@ void mainLoop( void* v )
 		Uint64 flipTimer = gt_StartTimer( );
 #endif
 		{
-			gfx_Swap( window );
+			gfx_Swap( sdlWindow );
 		}
 #if defined( PROFILING_ENABLED )
 		flipTimerSec = gt_StopTimer( flipTimer );
@@ -774,19 +820,20 @@ int main( int argc, char** argv )
 	focused = true;
 #endif
 
-	initialChoice_RegisterState( "Editor", &editorHubScreenState );
-	initialChoice_RegisterState( "Test Pointer Response", &testPointerResponseScreenState );
-	initialChoice_RegisterState( "Test A*", &testAStarScreenState );
-	initialChoice_RegisterState( "Test Job Queue", &testJobQueueScreenState );
-	initialChoice_RegisterState( "Test Sounds", &testSoundsScreenState );
-	initialChoice_RegisterState( "Test Steering", &testSteeringScreenState );
-	initialChoice_RegisterState( "Test Borders", &bordersTestScreenState );
-	initialChoice_RegisterState( "Test Hexes", &hexTestScreenState );
-	initialChoice_RegisterState( "Game of Ur", &gameOfUrScreenState );
-	initialChoice_RegisterState( "Test ECPS", &testECPSScreenState );
-	initialChoice_RegisterState( "Test Mounting", &testMountingState );
-	initialChoice_RegisterState( "Test Synth", &testSynthState );
-	initialChoice_RegisterState( "Test Collisions", &testCollisionsState );
+	initialChoice_RegisterState( "Editor", &editorHubScreenState, false );
+	initialChoice_RegisterState( "Test Pointer Response", &testPointerResponseScreenState, false );
+	initialChoice_RegisterState( "Test A*", &testAStarScreenState, false );
+	initialChoice_RegisterState( "Test Job Queue", &testJobQueueScreenState, false );
+	initialChoice_RegisterState( "Test Sounds", &testSoundsScreenState, false );
+	initialChoice_RegisterState( "Test Steering", &testSteeringScreenState, false );
+	initialChoice_RegisterState( "Test Borders", &bordersTestScreenState, false );
+	initialChoice_RegisterState( "Test Hexes", &hexTestScreenState, false );
+	initialChoice_RegisterState( "Game of Ur", &gameOfUrScreenState, false );
+	initialChoice_RegisterState( "Test ECPS", &testECPSScreenState, false );
+	initialChoice_RegisterState( "Test Mounting", &testMountingState, false );
+	initialChoice_RegisterState( "Test Synth", &testSynthState, false );
+	initialChoice_RegisterState( "Test Collisions", &testCollisionsState, false );
+	initialChoice_RegisterState( "Options Dialog", &optionsState, true );
 
 	GameState* startState = &initialChoiceState;
 	gsm_EnterState( &globalFSM, startState );

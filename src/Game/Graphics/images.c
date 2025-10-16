@@ -36,6 +36,7 @@ typedef struct {
 	ShaderType shaderType;
 	int extraImageObj;
 	char* id;
+	bool allowUnload;
 } Image;
 
 static Image images[MAX_IMAGES];
@@ -58,7 +59,8 @@ bool img_Init( void )
 	};
 	Texture whiteImgTexture;
 	gfxUtil_CreateTextureFromRGBABitmap( whiteImgData, 4, 4, &whiteImgTexture );
-	img_CreateFromTexture( &whiteImgTexture, ST_DEFAULT, "default_white_square" );
+	int whiteImgID = img_CreateFromTexture( &whiteImgTexture, ST_DEFAULT, "default_white_square" );
+	images[whiteImgID].allowUnload = false;
 
 	return true;
 }
@@ -137,6 +139,7 @@ int img_Load( const char* fileName, ShaderType shaderType )
 		images[newIdx].flags |= IMGFLAG_HAS_TRANSPARENCY;
 	}
 	images[newIdx].id = createStringCopy( fileName );
+	images[newIdx].allowUnload = true;
 
 	return newIdx;
 }
@@ -185,6 +188,7 @@ int img_CreateFromLoadedImage( LoadedImage* loadedImg, ShaderType shaderType, co
 		images[newIdx].flags |= IMGFLAG_HAS_TRANSPARENCY;
 	}
 	images[newIdx].id = createStringCopy( id );
+	images[newIdx].allowUnload = true;
 
 	return newIdx;
 }
@@ -219,6 +223,7 @@ int img_CreateFromTexture( Texture* texture, ShaderType shaderType, const char* 
 		images[newIdx].flags |= IMGFLAG_HAS_TRANSPARENCY;
 	}
 	images[newIdx].id = createStringCopy( id );
+	images[newIdx].allowUnload = true;
 
 	return newIdx;
 }
@@ -277,6 +282,7 @@ static void bindImageJob( void* data )
 		images[newIdx].flags |= IMGFLAG_HAS_TRANSPARENCY;
 	}
 	images[newIdx].id = createStringCopy( loadData->fileName );
+	images[newIdx].allowUnload = true;
 
 	(*(loadData->outIdx)) = newIdx;
 
@@ -390,6 +396,7 @@ int img_Create( SDL_Surface* surface, ShaderType shaderType, const char* id )
 			images[newIdx].flags |= IMGFLAG_HAS_TRANSPARENCY;
 		}
 		images[newIdx].id = createStringCopy( id );
+		images[newIdx].allowUnload = true;
 	}
 
 	return newIdx;
@@ -405,6 +412,11 @@ void img_Clean( int idx )
 	SDL_assert( images[idx].flags & IMGFLAG_IN_USE );
 
 	if( ( idx < 0 ) || ( ( images[idx].size.v[0] == 0.0f ) && ( images[idx].size.v[1] == 0.0f ) ) || ( idx >= MAX_IMAGES ) ) {
+		return;
+	}
+
+	if( !images[idx].allowUnload ) {
+		llog( LOG_WARN, "Attempting to unload an image that is not unloadable." );
 		return;
 	}
 
@@ -478,6 +490,7 @@ static int split( Texture* texture, int packageID, ShaderType shaderType, int co
 		} else {
 			images[newIdx].id = NULL; // TODO: Create a random UUID to use.
 		}
+		images[newIdx].allowUnload = true;
 
 		if( retIDs != NULL ) {
 			retIDs[i] = newIdx;
@@ -1088,6 +1101,27 @@ void img_Render_PosScaleVClr( int imgID, uint32_t camFlags, int8_t depth, const 
 	ri.color = ( *clr );
 
 	mat3_CreateRenderTransform( pos, 0.0f, &VEC2_ZERO, scale, &( ri.mat ) );
+
+	img_ImmediateRender( &ri );
+}
+
+void img_Render_PosSizeVClr( int imgID, uint32_t camFlags, int8_t depth, const Vector2* pos, const Vector2* size, const Color* clr )
+{
+	SDL_assert( pos != NULL );
+	SDL_assert( clr != NULL );
+	SDL_assert( size != NULL );
+
+	ImageRenderInstruction ri = img_CreateDefaultRenderInstruction( );
+
+	ri.imgID = imgID;
+	ri.camFlags = camFlags;
+	ri.depth = depth;
+	ri.color = ( *clr );
+
+	Vector2 scale;
+	img_GetDesiredScale( imgID, *size, &scale );
+
+	mat3_CreateRenderTransform( pos, 0.0f, &VEC2_ZERO, &scale, &( ri.mat ) );
 
 	img_ImmediateRender( &ri );
 }

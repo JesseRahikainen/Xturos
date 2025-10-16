@@ -16,7 +16,7 @@
 // raycasting intersection functions
 static bool invalidRayCastType( Vector2* start, Vector2* dir, Collider* collider, float* t, Vector2* pt )
 {
-	llog( LOG_WARN, "Attempting to detect a collision between a ray and a collider that has no valid detection method." );
+	ASSERT_ALWAYS( "Attempting to detect a collision between a ray and a collider that has no valid detection method." );
 	return false;
 }
 
@@ -177,7 +177,7 @@ RayCastCheck rayCastChecks[NUM_COLLIDER_TYPES] = { RayCastvAABB, RayCastvCircle,
 //  used if we don't want to ever handle collisions between these two types.
 static bool invalidCollision( Collider* primary, Collider* fixed, Vector2* outSeparation )
 {
-	llog( LOG_WARN, "Attempting to detect a collision between two collider types that has no valid detection method." );
+	ASSERT_ALWAYS( "Attempting to detect a collision between two collider types that has no valid detection method." );
 	return false;
 }
 
@@ -999,7 +999,7 @@ float collision_Distance( Collider* collider, Vector2* pos )
 	} break;
 	default:
 		// TODO: Add line segment, half-space, and oriented box
-		llog( LOG_WARN, "Attempting to find distance from collider what has no distance function." );
+		ASSERT_ALWAYS( "Attempting to find distance from collider what has no distance function." );
 		break;
 	}
 

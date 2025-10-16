@@ -60,6 +60,9 @@ size_t strlenNullTest( const char* str );
 // useful when wanting to test and do something if the test passes
 #define ASSERT_AND_IF( x ) SDL_assert( x ); if( ( x ) )
 
+// useful when we've gotten into a path we should never get into, just assert and let us know why
+#define ASSERT_ALWAYS( x ) SDL_assert( false && ( x ) );
+
 char* extractFileName( const char* filePath );
 
 #if defined( WIN32 )

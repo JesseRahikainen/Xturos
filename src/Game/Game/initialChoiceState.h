@@ -3,7 +3,7 @@
 
 #include "gameState.h"
 
-void initialChoice_RegisterState( const char* name, GameState* state );
+void initialChoice_RegisterState( const char* name, GameState* state, bool pushedState );
 
 extern GameState initialChoiceState;
 

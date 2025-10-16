@@ -11,6 +11,8 @@
 #include "Input/input.h"
 #include "System/platformLog.h"
 #include "Graphics/images.h"
+#include "System/messageBroadcast.h"
+#include "Utils/helpers.h"
 
 #include "Graphics/debugRendering.h"
 
@@ -33,12 +35,15 @@ typedef struct {
     nk_byte col[4];
 } nk_xturos_vertex;
 
-static void uploadAtlas( NuklearWrapper* xu, const void *image, int width, int height)
+static void uploadAtlas( NuklearWrapper* xu, const void *image, int width, int height, float fontHeight )
 {
 	Texture texture;
 	gfxUtil_CreateTextureFromRGBABitmap( (uint8_t*)image, width, height, &texture );
 
-	xu->platform.fontImg = img_CreateFromTexture( &texture, ST_DEFAULT, "NuklearFont" );
+	char fontImgID[32];
+	SDL_snprintf( fontImgID, ARRAY_SIZE( fontImgID ), "NuklearFont%f", fontHeight );
+
+	xu->platform.fontImg = img_CreateFromTexture( &texture, ST_DEFAULT, fontImgID );
 	if( xu->platform.fontImg < 0 ) {
 		llog( LOG_ERROR, "Error creating Nuklear font image." );
 		return;
@@ -78,6 +83,27 @@ static void customFree( nk_handle handle, void* p )
 {
 	mem_Release( p );
 }
+
+static void handleRenderResize( void* data )
+{
+	int renderWidth, renderHeight;
+	gfx_GetRenderSize( &renderWidth, &renderHeight );
+	nk_xu_setRenderSize( &inGameIMGUI, renderWidth, renderHeight );
+}
+
+static void handleWindowResize( void* data )
+{
+	int windowWidth, windowHeight;
+	gfx_GetWindowSize( &windowWidth, &windowHeight );
+	nk_xu_setRenderSize( &editorIMGUI, windowWidth, windowHeight );
+}
+
+void nk_xu_initMessageListeners( void )
+{
+	mb_RegisterListener( MSG_WINDOW_RESIZED, handleWindowResize );
+	mb_RegisterListener( MSG_RENDER_RESIZED, handleRenderResize );
+}
+
 
 void nk_xu_init( NuklearWrapper* xu, SDL_Window* win, bool useRelativeMousePos, int renderWidth, int renderHeight )
 {
@@ -178,18 +204,24 @@ void nk_xu_fontStashBegin( NuklearWrapper* xu, struct nk_font_atlas** atlas )
 	*atlas = &( xu->fontAtlas );
 }
 
-void nk_xu_fontStashEnd( NuklearWrapper* xu )
+void nk_xu_fontStashEnd( NuklearWrapper* xu, float fontHeight )
 {
 	const void *image;
 	int w, h;
 
 	xu->fontAtlas.config->range = defaultGlyphRanges( );
 	image = nk_font_atlas_bake( &( xu->fontAtlas ), &w, &h, NK_FONT_ATLAS_RGBA32 );
-	uploadAtlas( xu, image, w, h );
+	uploadAtlas( xu, image, w, h, fontHeight );
 	nk_font_atlas_end( &( xu->fontAtlas ), nk_handle_id( xu->platform.fontImg ), &( xu->nullTx ) );
 	if( xu->fontAtlas.default_font ) {
 		nk_style_set_font( &( xu->ctx ), &( xu->fontAtlas.default_font->handle ) );
 	}
+}
+
+void nk_xu_setRenderSize( NuklearWrapper* xu, int renderWidth, int renderHeight )
+{
+	xu->renderWidth = renderWidth;
+	xu->renderHeight = renderHeight;
 }
 
 void nk_xu_handleEvent( NuklearWrapper* xu, SDL_Event* evt )
@@ -209,11 +241,6 @@ void nk_xu_handleEvent( NuklearWrapper* xu, SDL_Event* evt )
 			mX = (int)evt->button.x;
 			mY = (int)evt->button.y;
 		}
-	}
-	
-	if( !( xu->useRelativeMousePos ) && ( evt->type == SDL_EVENT_WINDOW_RESIZED ) ) {
-		xu->renderWidth = evt->window.data1;
-		xu->renderHeight = evt->window.data2;
 	}
 
     if (evt->type == SDL_EVENT_KEY_UP || evt->type == SDL_EVENT_KEY_DOWN) {
@@ -309,7 +336,7 @@ void nk_xu_render( NuklearWrapper* xu )
 		void* elements = NULL;
 		const nk_draw_index* offset = NULL;
 
-		// allocate vertex adn element buffer
+		// allocate vertex and element buffer
 		GL( glBindVertexArray( xu->platform.vao ) );
 		GL( glBindBuffer( GL_ARRAY_BUFFER, xu->platform.vbo ) );
 		GL( glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, xu->platform.ebo ) );

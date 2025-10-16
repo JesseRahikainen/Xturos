@@ -17,13 +17,16 @@
 #include "debugRendering.h"
 #include "triRendering.h"
 
-#include "IMGUI/nuklearWrapper.h"
+#include "Utils/helpers.h"
 
-//#include "Graphics/Platform/OpenGL/glPlatform.h"
+#include "IMGUI/nuklearWrapper.h"
 
 #include "System/platformLog.h"
 
 #include "Utils/stretchyBuffer.h"
+#include "System/messageBroadcast.h"
+
+static RenderResizeType renderResizeType;
 
 static float currentTime;
 static float endTime;
@@ -36,78 +39,225 @@ static Color windowClearColor = { 0.0f, 0.0f, 0.0f, 1.0f };
 static int renderWidth;
 static int renderHeight;
 
+// when using the best fit resizing we need the base desired area to calculate the final area
+static int desiredRenderWidth;
+static int desiredRenderHeight;
+
+// stored and used when we need to calculate things
+static int windowWidth;
+static int windowHeight;
+
 // defines where in the window we'll copy the rendered area to
 static int windowRenderX0;
 static int windowRenderX1;
 static int windowRenderY0;
 static int windowRenderY1;
 
+// defines the area we'll pull from the rendered area to copy from
+static int renderRenderX0;
+static int renderRenderX1;
+static int renderRenderY0;
+static int renderRenderY1;
+
+
 static GfxDrawTrisFunc* sbAdditionalDrawFuncs = NULL;
 static GfxClearFunc* sbAdditionalClearFuncs = NULL;
 
-void gfx_calculateRenderSize( int desiredRenderWidth, int desiredRenderHeight, int* outRenderWidth, int* outRenderHeight )
+
+
+static void fitAreaInsideOtherSetOuter( int innerWidth, int innerHeight, int outerWidth, int outerHeight,
+	int* outInnerX0, int* outInnerY0, int* outInnerX1, int* outInnerY1,
+	int* outOuterX0, int* outOuterY0, int* outOuterX1, int* outOuterY1 )
 {
-	int maxSize = gfxPlatform_GetMaxSize( MAX( renderWidth, renderHeight ) );
+	int centerX = outerWidth / 2;
+	int centerY = outerHeight / 2;
 
-	renderWidth = desiredRenderWidth;
-	renderHeight = desiredRenderHeight;
+	float outerRatio = (float)outerWidth / (float)outerHeight;
+	float innerRatio = (float)innerWidth / (float)innerHeight;
 
-	float ratio = (float)renderWidth / (float)renderHeight;
-	if( renderWidth > maxSize ) {
-		renderWidth = (int)maxSize;
-		renderHeight = (int)( maxSize / ratio );
-		llog( LOG_DEBUG, "Render width outside maximum size allowed by OpenGL, resizing to %ix%i", renderWidth, renderHeight );
-	} else if( renderHeight > maxSize ) {
-		renderWidth = (int)( maxSize * ratio );
-		renderHeight = (int)maxSize;
-		llog( LOG_DEBUG, "Render height outside maximum size allowed by OpenGL, resizing to %ix%i", renderWidth, renderHeight );
+	( *outInnerX0 ) = 0;
+	( *outInnerY0 ) = 0;
+	( *outInnerX1 ) = innerWidth;
+	( *outInnerY1 ) = innerHeight;
+
+	if( FLT_EQ( outerRatio, innerRatio ) ) {
+		// if they're equal there's a chance of some precision errors causing issues, so just assign directly
+		( *outOuterX0 ) = 0;
+		( *outOuterY0 ) = 0;
+		( *outOuterX1 ) = outerWidth;
+		( *outOuterY1 ) = outerHeight;
+	} else if( outerRatio < innerRatio ) {
+		( *outOuterX0 ) = 0;
+		( *outOuterX1 ) = outerWidth;
+
+		int height = (int)( outerWidth / innerRatio );
+		( *outOuterY0 ) = centerY - ( height / 2 );
+		( *outOuterY1 ) = centerY + ( height / 2 );
+	} else {
+		int width = (int)( outerHeight * innerRatio );
+		( *outOuterX0 ) = centerX - ( width / 2 );
+		( *outOuterX1 ) = centerX + ( width / 2 );
+
+		( *outOuterY0 ) = 0;
+		( *outOuterY1 ) = outerHeight;
 	}
-	(*outRenderWidth) = renderWidth;
-	(*outRenderHeight) = renderHeight;
 }
 
-/*
-Initial setup for the rendering instruction buffer.
- Returns 0 on success.
-*/
-int gfx_Init( SDL_Window* window, int desiredRenderWidth, int desiredRenderHeight )
+static void recalculateRenderPositions( void )
+{
+	switch( renderResizeType ) {
+	case RRT_MATCH:
+	case RRT_FIXED_HEIGHT:
+	case RRT_FIXED_WIDTH:
+	case RRT_BEST_FIT:
+		// all of these should render to the entire window
+		windowRenderX0 = 0;
+		windowRenderY0 = 0;
+		windowRenderX1 = windowWidth;
+		windowRenderY1 = windowHeight;
+
+		renderRenderX0 = 0;
+		renderRenderY0 = 0;
+		renderRenderX1 = renderWidth;
+		renderRenderY1 = renderHeight;
+		break;
+	case RRT_FIT_RENDER_INSIDE:
+		fitAreaInsideOtherSetOuter(
+			renderWidth, renderHeight, windowWidth, windowHeight,
+			&renderRenderX0, &renderRenderY0, &renderRenderX1, &renderRenderY1,
+			&windowRenderX0, &windowRenderY0, &windowRenderX1, &windowRenderY1 );
+		break;
+	case RRT_FIT_RENDER_OUTSIDE:
+		fitAreaInsideOtherSetOuter(
+			windowWidth, windowHeight, renderWidth, renderHeight,
+			&windowRenderX0, &windowRenderY0, &windowRenderX1, &windowRenderY1,
+			&renderRenderX0, &renderRenderY0, &renderRenderX1, &renderRenderY1 );
+		break;
+	default:
+		ASSERT_ALWAYS( "No implemented case." );
+	}
+}
+
+static void calculateRenderFixedWidth( int* outNewWidth, int* outNewHeight )
+{
+	( *outNewWidth ) = desiredRenderWidth;
+	float ratio = (float)windowWidth / (float)windowHeight;
+	( *outNewHeight ) = (int)( desiredRenderWidth / ratio );
+}
+
+static void calculateRenderFixedHeight( int* outNewWidth, int* outNewHeight )
+{
+	( *outNewHeight ) = desiredRenderHeight;
+	float ratio = (float)windowWidth / (float)windowHeight;
+	( *outNewWidth ) = (int)( desiredRenderHeight * ratio );
+}
+
+static void calculateRenderBestFit( int* outNewWidth, int* outNewHeight )
+{
+	// for best fit we'll check the window ratio against the desired render ratio and choose one
+	float windowRatio = (float)windowWidth / (float)windowHeight;
+	float renderRatio = (float)renderWidth / (float)renderHeight;
+
+	if( FLT_EQ( windowRatio, renderRatio ) ) {
+		// if they're equal there's a chance of some precision errors causing issues
+		( *outNewWidth ) = windowWidth;
+		( *outNewHeight ) = windowHeight;
+	} else if( windowRatio < renderRatio ) {
+		calculateRenderFixedWidth( outNewWidth, outNewHeight );
+	} else {
+		calculateRenderFixedHeight( outNewWidth, outNewHeight );
+	}
+}
+
+static bool updateRenderDimensions( void )
+{
+	// we're assuming things have changed 
+	int newRenderWidth = desiredRenderWidth;
+	int newRenderHeight = desiredRenderHeight;
+
+	// recalculate the actual render sizes based on the 
+	switch( renderResizeType ) {
+	case RRT_MATCH:
+		// resize render to match window
+		newRenderWidth = windowWidth;
+		newRenderHeight = windowHeight;
+		break;
+	case RRT_FIXED_HEIGHT:
+		calculateRenderFixedHeight( &newRenderWidth, &newRenderHeight );
+		break;
+	case RRT_FIXED_WIDTH:
+		calculateRenderFixedWidth( &newRenderWidth, &newRenderHeight );
+		break;
+	case RRT_BEST_FIT:
+		calculateRenderBestFit( &newRenderWidth, &newRenderHeight );
+		break;
+
+		// these two won't change the size of the renderer
+	case RRT_FIT_RENDER_INSIDE:
+	case RRT_FIT_RENDER_OUTSIDE:
+		break;
+	default:
+		ASSERT_ALWAYS( "No implemented case." );
+	}
+
+	bool anyChange = false;
+
+	if( ( newRenderWidth != renderWidth ) || ( newRenderHeight != renderHeight ) ) {
+		renderWidth = newRenderWidth;
+		renderHeight = newRenderHeight;
+		anyChange = true;
+	}
+	recalculateRenderPositions( );
+
+	return anyChange;
+}
+
+// Initial setup for the rendering instruction buffer.
+//  Returns 0 on success.
+bool gfx_Init( SDL_Window* window, RenderResizeType type, int initRenderWidth, int initRenderHeight )
 {
 	currentTime = 0.0f;
 	endTime = 0.0f;
 
-	if( !gfxPlatform_Init( window, desiredRenderWidth, desiredRenderHeight, VS_ADAPTIVE ) ) {
-		return -1;
-	}
-	
-	int windowWidth, windowHeight;
 	SDL_GetWindowSize( window, &windowWidth, &windowHeight );
 	llog( LOG_DEBUG, "Window size render: %i x %i", windowWidth, windowHeight );
-    llog( LOG_DEBUG, "Desired size render: %i x %i", desiredRenderWidth, desiredRenderHeight );
-	gfx_SetWindowSize( windowWidth, windowHeight );
+	llog( LOG_DEBUG, "Desired size render: %i x %i", initRenderWidth, initRenderHeight );
 
+	renderWidth = initRenderWidth;
+	renderHeight = initRenderHeight;
+	desiredRenderWidth = initRenderWidth;
+	desiredRenderHeight = initRenderHeight;
+	renderResizeType = type;
+	updateRenderDimensions( );
+	cam_SetProjectionMatrices( renderWidth, renderHeight );
+
+	if( !gfxPlatform_Init( window, VS_ADAPTIVE ) ) {
+		return false;
+	}
+	
 	// initialize everything else
 	if( !img_Init( ) ) {
-		return -1;
+		return false;
 	}
 	llog( LOG_INFO, "Images initialized." );
 
 	if( debugRenderer_Init( ) < 0 ) {
-		return -1;
+		return false;
 	}
 	llog( LOG_INFO, "Debug renderer initialized." );
 
 	if( triRenderer_Init( ) < 0 ) {
-		return -1;
+		return false;
 	}
 	llog( LOG_INFO, "Triangle renderer initialized." );
 
 	if( !sprAnim_Init( ) ) {
-		return -1;
+		return false;
 	}
 	llog( LOG_INFO, "Sprite animations initialized." );
     
 	gameClearColor = CLR_MAGENTA;
-    
+
 #if defined( __IPHONEOS__ )
     SDL_SysWMinfo info;
     SDL_VERSION( &info.version );
@@ -120,12 +270,9 @@ int gfx_Init( SDL_Window* window, int desiredRenderWidth, int desiredRenderHeigh
         llog( LOG_INFO, "Invalid subsystem type." );
         return -1;
     }
-    
-    //defaultFBO = info.info.uikit.framebuffer;
-    //defaultColorRBO = info.info.uikit.colorbuffer;
 #endif
 
-	return 0;
+	return true;
 }
 
 void gfx_ShutDown( void )
@@ -133,72 +280,108 @@ void gfx_ShutDown( void )
 	gfxPlatform_ShutDown( );
 }
 
-void gfx_SetWindowSize( int windowWidth, int windowHeight )
+void gfx_SetDesiredRenderSize( int newDesiredWidth, int newDesiredHeight )
 {
-	//llog( LOG_INFO, "Setting window size: %i x %i", windowWidth, windowHeight );
-	int centerX = windowWidth / 2;
-	int centerY = windowHeight / 2;
+	ASSERT_AND_IF_NOT( newDesiredWidth > 0 ) return;
+	ASSERT_AND_IF_NOT( newDesiredHeight > 0 ) return;
 
-	int width;
-	int height;
+	// nothing to change
+	if( ( desiredRenderWidth == newDesiredWidth ) && ( desiredRenderHeight == newDesiredHeight ) ) return;
+	if( renderResizeType != RRT_BEST_FIT ) return;
 
-	float windowRatio = (float)windowWidth/(float)windowHeight;
-	float renderRatio = (float)renderWidth/(float)renderHeight;
+	desiredRenderWidth = newDesiredWidth;
+	desiredRenderHeight = newDesiredHeight;
 
-	if( FLT_EQ( windowRatio, renderRatio ) ) {
-		// if they're equal there's a chance of some precision errors causing issues
-		windowRenderX0 = 0;
-		windowRenderX1 = windowWidth;
-		windowRenderY0 = 0;
-		windowRenderY1 = windowHeight;
-	} else if( windowRatio < renderRatio ) {
-		windowRenderX0 = 0;
-		windowRenderX1 = windowWidth;
-
-		height = (int)( windowWidth / renderRatio );
-		windowRenderY0 = centerY - ( height / 2 );
-		windowRenderY1 = centerY + ( height / 2 );
-	} else {
-		width = (int)( windowHeight * renderRatio );
-		windowRenderX0 = centerX - ( width / 2 );
-		windowRenderX1 = centerX + ( width / 2 );
-
-		windowRenderY0 = 0;
-		windowRenderY1 = windowHeight;
+	if( updateRenderDimensions( ) ) {
+		gfx_BuildRenderTarget( );
 	}
 }
 
-void gfx_RenderResize( SDL_Window* window, int newRenderWidth, int newRenderHeight )
+RenderResizeType gfx_GetRenderResizeType( void )
 {
-	int finalWidth, finalHeight;
-	gfx_calculateRenderSize( newRenderWidth, newRenderHeight, &finalWidth, &finalHeight );
-
-	int windowWidth, windowHeight;
-	SDL_GetWindowSize( window, &windowWidth, &windowHeight );
-	gfx_SetWindowSize( windowWidth, windowHeight ); // adjusts the windowRenderDN values
-
-	gfxPlatform_RenderResize( finalWidth, finalHeight );
+	return renderResizeType;
 }
 
-void gfx_GetWindowSize( int* outWidth, int* outHeight )
+static void runChangeUpdates( void )
 {
-	SDL_assert( outWidth != NULL );
-	SDL_assert( outHeight != NULL );
-
-	(*outWidth) = windowRenderX1 - windowRenderX0;
-	(*outHeight) = windowRenderY1 - windowRenderY0;
+	gfx_BuildRenderTarget( );
+	cam_SetProjectionMatrices( renderWidth, renderHeight );
 }
 
-/*
-Just gets the size.
-*/
-void gfx_GetRenderSize( int* renderWidthOut, int* renderHeightOut )
+void gfx_ChangeRenderResizeType( RenderResizeType type )
 {
-	SDL_assert( renderWidthOut != NULL );
-	SDL_assert( renderHeightOut != NULL );
+	if( renderResizeType == type ) return;
 
-	(*renderWidthOut) = renderWidth;
-	(*renderHeightOut) = renderHeight;
+	renderResizeType = type;
+	if( updateRenderDimensions( ) ) {
+		runChangeUpdates( );
+	}
+	mb_BroadcastMessage( MSG_RENDER_RESIZED, NULL );
+}
+
+void gfx_OnWindowResize( int newWindowWidth, int newWindowHeight )
+{
+	ASSERT_AND_IF_NOT( newWindowWidth > 0 ) return;
+	ASSERT_AND_IF_NOT( newWindowHeight > 0 ) return;
+
+	windowWidth = newWindowWidth;
+	windowHeight = newWindowHeight;
+
+	if( updateRenderDimensions( ) ) {
+		runChangeUpdates( );
+	}
+	mb_BroadcastMessage( MSG_RENDER_RESIZED, NULL );
+
+	llog( LOG_DEBUG, "Resize - window: %ix%i  render: %ix%i", windowWidth, windowHeight, renderWidth, renderHeight );
+}
+
+void gfx_GetRenderSize( int* outRenderWidth, int* outRenderHeight )
+{
+	ASSERT_AND_IF_NOT( outRenderWidth != NULL ) return;
+	ASSERT_AND_IF_NOT( outRenderHeight != NULL ) return;
+
+	( *outRenderWidth ) = renderWidth;
+	( *outRenderHeight ) = renderHeight;
+}
+
+void gfx_GetWindowSize( int* outWindowWidth, int* outWindowHeight )
+{
+	ASSERT_AND_IF_NOT( outWindowWidth != NULL ) return;
+	ASSERT_AND_IF_NOT( outWindowHeight != NULL ) return;
+
+	( *outWindowWidth ) = windowWidth;
+	( *outWindowHeight ) = windowHeight;
+}
+
+void gfx_GetRenderSubArea( int* outX0, int* outY0, int* outX1, int* outY1 )
+{
+	ASSERT_AND_IF_NOT( outX0 != NULL ) return;
+	ASSERT_AND_IF_NOT( outY0 != NULL ) return;
+	ASSERT_AND_IF_NOT( outX1 != NULL ) return;
+	ASSERT_AND_IF_NOT( outY1 != NULL ) return;
+
+	( *outX0 ) = renderRenderX0;
+	( *outY0 ) = renderRenderY0;
+	( *outX1 ) = renderRenderX1;
+	( *outY1 ) = renderRenderY1;
+}
+
+void gfx_GetWindowSubArea( int* outX0, int* outY0, int* outX1, int* outY1 )
+{
+	ASSERT_AND_IF_NOT( outX0 != NULL ) return;
+	ASSERT_AND_IF_NOT( outY0 != NULL ) return;
+	ASSERT_AND_IF_NOT( outX1 != NULL ) return;
+	ASSERT_AND_IF_NOT( outY1 != NULL ) return;
+
+	( *outX0 ) = windowRenderX0;
+	( *outY0 ) = windowRenderY0;
+	( *outX1 ) = windowRenderX1;
+	( *outY1 ) = windowRenderY1;
+}
+
+void gfx_BuildRenderTarget( void )
+{
+	gfxPlatform_RenderResize( renderWidth, renderHeight );
 }
 
 void gfx_CleanUp( void )
@@ -275,8 +458,10 @@ void gfx_Render( float dt )
 #if defined( __EMSCRIPTEN__ )
 	gfxPlatform_StaticSizeRender( dt, t, gameClearColor );
 #else
-	//gfxPlatform_StaticSizeRender( dt, t, windowClearColor );/*
-	gfxPlatform_DynamicSizeRender( dt, t, renderWidth, renderHeight, windowRenderX0, windowRenderY0, windowRenderX1, windowRenderY1, gameClearColor );//*/
+	gfxPlatform_DynamicSizeRender( dt, t,
+		renderRenderX0, renderRenderY0, renderRenderX1, renderRenderY1,
+		windowRenderX0, windowRenderY0, windowRenderX1, windowRenderY1,
+		gameClearColor, windowClearColor );
 #endif
 }
 

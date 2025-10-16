@@ -5,7 +5,22 @@
 #include "System/shared.h"
 #include "System/memory.h"
 #include "Math/matrix3.h"
+#include "Graphics/graphics.h"
 #include "Graphics/camera.h"
+#include "System/messageBroadcast.h"
+
+static void handleRedoMouseArea( void* data )
+{
+	input_SetupMouseArea( );
+}
+
+bool input_Init( void )
+{
+	input_SetupMouseArea( );
+	mb_RegisterListener( MSG_RENDER_RESIZED, handleRedoMouseArea );
+	mb_RegisterListener( MSG_WINDOW_RESIZED, handleRedoMouseArea );
+	return true;
+}
 
 /***** Key Binding *****/
 
@@ -65,9 +80,7 @@ static void clearResponse( Response* response )
 	response->type = CBT_NONE;
 }
 
-/*
-Clears all the current key bindings.
-*/
+// Clears all the current key bindings.
 void input_ClearAllKeyBinds( void )
 {
 	for( int i = 0; i < MAX_BINDINGS; ++i ) {
@@ -76,9 +89,7 @@ void input_ClearAllKeyBinds( void )
 	}
 }
 
-/*
-Clears all key bindings assocated with the passed in key code.
-*/
+// Clears all key bindings assocated with the passed in key code.
 void input_ClearKeyBinds( SDL_Keycode code )
 {
 	for( int i = 0; i < MAX_BINDINGS; ++i ) {
@@ -91,9 +102,7 @@ void input_ClearKeyBinds( SDL_Keycode code )
 	}
 }
 
-/*
-Clears all key bindings associated with the passed in response function.
-*/
+// Clears all key bindings associated with the passed in response function.
 void input_ClearKeyResponse( KeyResponse response )
 {
 	for( int i = 0; i < MAX_BINDINGS; ++i ) {
@@ -107,10 +116,8 @@ void input_ClearKeyResponse( KeyResponse response )
 	}
 }
 
-/*
-Finds the first unused binding in the list.
- Return < 0 if we don't find a spot.
-*/
+// Finds the first unused binding in the list.
+//  Return < 0 if we don't find a spot.
 static int bindToList( SDL_Keycode code, KeyResponse response, KeyBindings* bindingsList )
 {
 	if( response == NULL ) {
@@ -163,9 +170,7 @@ static int bindScriptToList( SDL_Keycode code, const char* response, KeyBindings
 	return 0;
 }
 
-/*
-Binds a function response when a key is pressed down.
-*/
+// Binds a function response when a key is pressed down.
 int input_BindOnKeyPress( SDL_Keycode code, KeyResponse response )
 {
 	if( bindToList( code, response, keyDownBindings ) < 0 ) {
@@ -184,9 +189,7 @@ int input_BindScriptOnKeyPress( SDL_Keycode code, const char* func )
 	return 0;
 }
 
-/*
-Binds a function response when a key is released.
-*/
+// Binds a function response when a key is released.
 int input_BindOnKeyRelease( SDL_Keycode code, KeyResponse response )
 {
 	if( bindToList( code, response, keyUpBindings ) < 0 ) {
@@ -205,10 +208,8 @@ int input_BindScriptOnKeyRelease( SDL_Keycode code, const char* func )
 	return 0;
 }
 
-/*
-Binds function response when a key is pressed and released.
- Returns < 0 if there was a problem binding the key.
-*/
+// Binds function response when a key is pressed and released.
+//  Returns < 0 if there was a problem binding the key.
 int input_BindOnKey( SDL_Keycode code, KeyResponse onPressResponse, KeyResponse onReleaseResponse )
 {
 	int onPress = 0;
@@ -245,10 +246,8 @@ int input_BindScriptOnKey( SDL_Keycode code, const char* onPressFunc, const char
 	return 0;
 }
 
-/*
-Gets the code associated with response function. Puts them into the keyCodes array (which should be no larger than maxKeyCodes).
- The rest of the array is filled with SDLK_UNKNOWN.
-*/
+// Gets the code associated with response function. Puts them into the keyCodes array (which should be no larger than maxKeyCodes).
+//  The rest of the array is filled with SDLK_UNKNOWN.
 void getKeyBindings( KeyResponse response, SDL_Keycode* keyCodes, int maxKeyCodes, KeyBindings* bindingList )
 {
 	int keyCodeIdx = 0;
@@ -275,9 +274,7 @@ void input_GetKeyReleaseBindings( KeyResponse response, SDL_Keycode* keyCodes, i
 	getKeyBindings( response, keyCodes, maxKeyCodes, keyUpBindings );
 }
 
-/*
-Handles a key event.
-*/
+// Handles a key event.
 void handleKeyEvent( SDL_Keycode code, KeyBindings* bindingsList )
 {
 	for( int i = 0; i < MAX_BINDINGS; ++i ) {
@@ -290,56 +287,42 @@ void handleKeyEvent( SDL_Keycode code, KeyBindings* bindingsList )
 /***** Mouse Input *****/
 static Vector2 mousePosition;
 static Vector2 rawMousePosition;
-static int mousePosValid;
+static bool mousePosValid;
 
 static Vector2 mouseInputArea;
 static Vector2 mouseInputOffset;
 static float mouseInputScale;
 
-/*
-Sets up the coordinates for relative mouse position handling.
-*/
-void input_InitMouseInputArea( int inputWidth, int inputHeight )
+// Sets up the coordinates for relative mouse position handling. Should be called after, and is only valid after, any changes to the render area or window size.
+void input_SetupMouseArea( void )
 {
-	mousePosValid = 0;
+	mousePosValid = false;
 	mousePosition = VEC2_ZERO;
 	rawMousePosition = VEC2_ZERO;
 
-	mouseInputArea.x = (float)inputWidth;
-	mouseInputArea.y = (float)inputHeight;
-	mouseInputOffset = VEC2_ZERO;
-	mouseInputScale = 1.0f;
-}
+	// this is to calculate the conversion from window space to render space
+	int winX0, winY0, winX1, winY1;
+	gfx_GetWindowSubArea( &winX0, &winY0, &winX1, &winY1 );
+	Vector2 winMin = vec2( (float)winX0, (float)winY0 );
+	Vector2 winMax = vec2( (float)winX1, (float)winY1 );
 
-/*
-Sets the size of the window, used for getting relative mouse position.
-*/
-void input_UpdateMouseWindow( int windowWidth, int windowHeight )
-{
-	mousePosValid = 0;
-	mousePosition = VEC2_ZERO;
+	int renderX0, renderY0, renderX1, renderY1;
+	gfx_GetRenderSubArea( &renderX0, &renderY0, &renderX1, &renderY1 );
+	Vector2 renderMin = vec2( (float)renderX0, (float)renderY0 );
+	Vector2 renderMax = vec2( (float)renderX1, (float)renderY1 );
 
-	Vector2 windowSize;
+	vec2_Subtract( &renderMax, &renderMin, &mouseInputArea );
 
-	// calculates the offset and scaling necessary to convert the window mouse position to the desired input area
-	//  assumes that the input area is centered in the window
-	windowSize.x = (float)windowWidth;
-	windowSize.y = (float)windowHeight;
+	// the final equation will be: mousePos = ( rawMousePos + mouseInputOffset ) * mouseInputScale
+	vec2_Subtract( &renderMin, &winMin, &mouseInputOffset );
+	// we're assuming the ratio of the window and render areas are the same
+	mouseInputScale = ( renderMax.x - renderMin.x ) / ( winMax.x - winMin.x );
 
-	float windowRatio = windowSize.x / windowSize.y;
-	float inputRatio = mouseInputArea.x / mouseInputArea.y;
-
-	if( windowRatio < inputRatio ) {
-		mouseInputOffset.x = 0.0f;
-		mouseInputOffset.y = -( windowSize.y - ( windowSize.x / inputRatio ) ) / 2.0f;
-
-		mouseInputScale = windowSize.y / mouseInputArea.y;
-	} else {
-		mouseInputOffset.x = -( windowSize.x - ( windowSize.y * inputRatio ) ) / 2.0f;
-		mouseInputOffset.y = 0.0f;
-
-		mouseInputScale = windowSize.x / mouseInputArea.x;
+	if( gfx_GetRenderResizeType( ) == RRT_FIT_RENDER_OUTSIDE ) {
+		vec2_Scale( &mouseInputOffset, 1.0f / mouseInputScale, &mouseInputOffset );
 	}
+
+	llog( LOG_DEBUG, "mouseInputOffset: <%.02f, %.02f>, mouseInputScale: %.02f", mouseInputOffset.x, mouseInputOffset.y, mouseInputScale );
 }
 
 // returns if the mouse is inside the window
@@ -348,19 +331,15 @@ bool input_MousePositionValid( void )
 	return mousePosValid;
 }
 
-/*
-Gets the relative position of the mouse.
- Returns 1 if the position is inside the input area.
-*/
-int input_GetMousePosition( Vector2* out )
+// Gets the relative position of the mouse.
+//  Returns if the position is inside the input area.
+bool input_GetMousePosition( Vector2* out )
 {
 	(*out) = mousePosition;
 	return mousePosValid;
 }
 
-/*
-Gets the position of the mouse in the window.
-*/
+// Gets the position of the mouse in the window.
 void input_GetRawMousePosition( Vector2* out )
 {
 	(*out) = rawMousePosition;
@@ -378,9 +357,7 @@ bool input_GetCamMousePos( int camera, Vector2* out )
 	return mousePosValid;
 }
 
-/*
-Clears all current mouse button bindings.
-*/
+// Clears all current mouse button bindings.
 void input_ClearAllMouseButtonBinds( void )
 {
 	for( int i = 0; i < MAX_BINDINGS; ++i ) {
@@ -389,9 +366,7 @@ void input_ClearAllMouseButtonBinds( void )
 	}
 }
 
-/*
-Clears all key bindings assocated with the passed in key code.
-*/
+// Clears all key bindings assocated with the passed in key code.
 void input_ClearMouseButtonBinds( Uint8 button )
 {
 	for( int i = 0; i < MAX_BINDINGS; ++i ) {
@@ -404,9 +379,7 @@ void input_ClearMouseButtonBinds( Uint8 button )
 	}
 }
 
-/*
-Clears all mouse button bindsings associated with the passed in response.
-*/
+// Clears all mouse button bindsings associated with the passed in response.
 void input_ClearMouseButtonReponse( KeyResponse response )
 {
 	for( int i = 0; i < MAX_BINDINGS; ++i ) {
@@ -419,15 +392,13 @@ void input_ClearMouseButtonReponse( KeyResponse response )
 	}
 }
 
-/*
-Finds the first unused binding in the list.
- Return < 0 if we don't find a spot.
-*/
-static int bindToMouseList( Uint8 button, KeyResponse response, MouseButtonBindings* bindingsList )
+// Finds the first unused binding in the list.
+//  Return false if we don't find a spot, true if we do.
+static bool bindToMouseList( Uint8 button, KeyResponse response, MouseButtonBindings* bindingsList )
 {
 	if( response == NULL ) {
 		llog( LOG_DEBUG, "Attempting to bind a mouse button with a NULL response." );
-		return -1;
+		return false;
 	}
 
 	int idx;
@@ -436,27 +407,27 @@ static int bindToMouseList( Uint8 button, KeyResponse response, MouseButtonBindi
 
 	if( idx >= MAX_BINDINGS ) {
 		llog( LOG_DEBUG, "Mouse button binding list full, increase size of bind list." );
-		return -1;
+		return false;
 	}
 
 	bindingsList[idx].button = button;
 	bindingsList[idx].response.type = CBT_SOURCE;
 	bindingsList[idx].response.sourceResponse.response = response;
 
-	return 0;
+	return true;
 }
 
-static int bindScriptToMouseList( Uint8 button, const char* response, MouseButtonBindings* bindingsList )
+static bool bindScriptToMouseList( Uint8 button, const char* response, MouseButtonBindings* bindingsList )
 {
 	size_t responseLen = SDL_strlen( response );
 	if( responseLen == 0 ) {
 		llog( LOG_DEBUG, "Attempting to bind a script to mouse button with no reponse." );
-		return -1;
+		return false;
 	}
 
 	if( responseLen >= SCRIPT_FUNC_NAME_MAX_LEN ) {
 		llog( LOG_DEBUG, "Attempting to bind a script to mouse button with a reponse with too long a name." );
-		return -1;
+		return false;
 	}
 
 	int idx;
@@ -465,40 +436,36 @@ static int bindScriptToMouseList( Uint8 button, const char* response, MouseButto
 
 	if( idx >= MAX_BINDINGS ) {
 		llog( LOG_DEBUG, "Mouse button binding list full, increase size of bind list." );
-		return -1;
+		return false;
 	}
 
 	bindingsList[idx].button = button;
 	bindingsList[idx].response.type = CBT_LUA;
 	SDL_strlcpy( bindingsList[idx].response.scriptResponse.response, response, SCRIPT_FUNC_NAME_MAX_LEN );
 
-	return 0;
+	return true;
 }
 
-/*
-Binds a function response when a key is pressed down.
- Returns < 0 if there was a problem binding the key.
-*/
-int input_BindOnMouseButtonPress( Uint8 button, KeyResponse response )
+// Binds a function response when a key is pressed down.
+//  Returns < 0 if there was a problem binding the key.
+bool input_BindOnMouseButtonPress( Uint8 button, KeyResponse response )
 {
 	return bindToMouseList( button, response, mouseButtonDownBindings );
 }
 
-int input_BindScriptOnMouseButtonPress( Uint8 button, const char* response )
+bool input_BindScriptOnMouseButtonPress( Uint8 button, const char* response )
 {
 	return bindScriptToMouseList( button, response, mouseButtonDownBindings );
 }
 
-/*
-Binds a function response when a key is released.
- Returns < 0 if there was a problem binding the key.
-*/
-int input_BindOnMouseButtonRelease( Uint8 button, KeyResponse response )
+// Binds a function response when a key is released.
+//  Returns < 0 if there was a problem binding the key.
+bool input_BindOnMouseButtonRelease( Uint8 button, KeyResponse response )
 {
 	return bindToMouseList( button, response, mouseButtonUpBindings );
 }
 
-int input_BindScriptOnMouseButtonRelease( Uint8 button, const char* response )
+bool input_BindScriptOnMouseButtonRelease( Uint8 button, const char* response )
 {
 	return bindScriptToMouseList( button, response, mouseButtonUpBindings );
 }
@@ -542,9 +509,7 @@ static SwipeBinding swipeBindings[MAX_BINDINGS];
 #define MIN_SWIPE_DIST 0.1f
 #define MAX_SWIPE_ERROR 0.1f;
 
-/*
-Clears all binded swipes.
-*/
+// Clears all binded swipes.
 void input_ClearAllSwipeBinds( void )
 {
 	for( int i = 0; i < MAX_BINDINGS; ++i ) {
@@ -552,10 +517,8 @@ void input_ClearAllSwipeBinds( void )
 	}
 }
 
-/*
-Binds a function response when a swipe is made in a specific direction.
- Returns < 0 if there was a problem binding the swipe.
-*/
+// Binds a function response when a swipe is made in a specific direction.
+//  Returns < 0 if there was a problem binding the swipe.
 int input_BindOnSwipe( Vector2 dir, KeyResponse response )
 {
 	vec2_Normalize( &dir );
@@ -623,9 +586,7 @@ static void processSwipeRelease( SDL_Event* e )
 }
 
 /***** General Usage Functions *****/
-/*
-Process events.
-*/
+// Process events.
 void input_ProcessEvents( SDL_Event* e )
 {
 	switch( e->type ) {

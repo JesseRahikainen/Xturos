@@ -51,8 +51,7 @@ static int generateFBO( int renderWidth, int renderHeight, GLuint* fboOut, GLuin
 
 	//  create the render buffer objects
 	GL( glBindRenderbuffer( GL_RENDERBUFFER, rbosOut[DEPTH_RBO] ) );
-	//GL( glRenderbufferStorage( GL_RENDERBUFFER, GL_DEPTH_COMPONENT32, renderWidth, renderHeight ) );/*
-	GL( glRenderbufferStorage( GL_RENDERBUFFER, GL_DEPTH32F_STENCIL8, renderWidth, renderHeight ) );//*/
+	GL( glRenderbufferStorage( GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, renderWidth, renderHeight ) );
 
 	GL( glBindRenderbuffer( GL_RENDERBUFFER, rbosOut[COLOR_RBO] ) );
 	GL( glRenderbufferStorage( GL_RENDERBUFFER, GL_RGB8, renderWidth, renderHeight ) );
@@ -60,8 +59,7 @@ static int generateFBO( int renderWidth, int renderHeight, GLuint* fboOut, GLuin
 	//  bind the render buffer objects
 	GL( glBindFramebuffer( GL_DRAW_FRAMEBUFFER, ( *fboOut ) ) );
 	GL( glFramebufferRenderbuffer( GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, rbosOut[COLOR_RBO] ) );
-	//GL( glFramebufferRenderbuffer( GL_DRAW_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rbosOut[DEPTH_RBO] ) );/*
-	GL( glFramebufferRenderbuffer( GL_DRAW_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbosOut[DEPTH_RBO] ) );//*/
+	GL( glFramebufferRenderbuffer( GL_DRAW_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbosOut[DEPTH_RBO] ) );
 
 	if( checkAndLogFrameBufferCompleteness( GL_DRAW_FRAMEBUFFER, NULL ) < 0 ) {
 		return -1;
@@ -72,7 +70,7 @@ static int generateFBO( int renderWidth, int renderHeight, GLuint* fboOut, GLuin
 	return 0;
 }
 
-bool gfxPlatform_Init( SDL_Window* window, int desiredRenderWidth, int desiredRenderHeight, VSync desiredVSync )
+bool gfxPlatform_Init( SDL_Window* window, VSync desiredVSync )
 {
 	// setup opengl
 	glContext = SDL_GL_CreateContext( window );
@@ -127,13 +125,10 @@ bool gfxPlatform_Init( SDL_Window* window, int desiredRenderWidth, int desiredRe
 	GL( glPixelStorei( GL_PACK_ALIGNMENT, 1 ) );
 	GL( glPixelStorei( GL_UNPACK_ALIGNMENT, 1 ) );
 
-	int finalWidth, finalHeight;
-	gfx_calculateRenderSize( desiredRenderWidth, desiredRenderHeight, &finalWidth, &finalHeight );
-
-	//llog( LOG_DEBUG, "render size: %i x %i", finalWidth, finalHeight );
-
 	// create the main render frame buffer object
-	if( generateFBO( finalWidth, finalHeight, &mainRenderFBO, &( mainRenderRBOs[0] ) ) < 0 ) {
+	int renderWidth, renderHeight;
+	gfx_GetRenderSize( &renderWidth, &renderHeight );
+	if( generateFBO( renderWidth, renderHeight, &mainRenderFBO, &( mainRenderRBOs[0] ) ) < 0 ) {
 		return false;
 	}
     
@@ -166,10 +161,12 @@ int gfxPlatform_GetMaxSize( int desiredSize )
 	return (int)maxSize;
 }
 
-void gfxPlatform_DynamicSizeRender( float dt, float t, int renderWidth, int renderHeight,
-	int windowRenderX0, int windowRenderY0, int windowRenderX1, int windowRenderY1, Color clearColor )
+void gfxPlatform_DynamicSizeRender( float dt, float t,
+	int renderX0, int renderY0, int renderX1, int renderY1,
+	int windowRenderX0, int windowRenderY0, int windowRenderX1, int windowRenderY1,
+	Color renderClearColor, Color windowCleaColor )
 {
-	GL( glViewport( 0, 0, renderWidth, renderHeight ) );
+	GL( glViewport( 0, 0, renderX1 - renderX0, renderY1 - renderY0 ) );
 
 #if !defined( __IPHONEOS__ ) && !defined( __ANDROID__ ) && !defined( __EMSCRIPTEN__ )
 	GL( glEnable( GL_MULTISAMPLE ) );
@@ -180,7 +177,7 @@ void gfxPlatform_DynamicSizeRender( float dt, float t, int renderWidth, int rend
 	GL( glBindFramebuffer( GL_DRAW_FRAMEBUFFER, mainRenderFBO ) );
         GL( glDrawBuffers( 1, &mainRenderBuffers ) );
         // clear the screen and draw everything to a frame buffer
-        GL( glClearColor( clearColor.r, clearColor.g, clearColor.b, clearColor.a ) );
+        GL( glClearColor( renderClearColor.r, renderClearColor.g, renderClearColor.b, renderClearColor.a ) );
         GL( glColorMask( GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE ) );
 		GL( glDepthMask( true ) );
         GL( glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT ) );
@@ -188,12 +185,14 @@ void gfxPlatform_DynamicSizeRender( float dt, float t, int renderWidth, int rend
 	GL( glBindFramebuffer( GL_DRAW_FRAMEBUFFER, defaultFBO ) );
 
 	// now render the main frame buffer to the screen, scaling based on the size of the window
+	GL( glClearColor( windowCleaColor.r, windowCleaColor.g, windowCleaColor.b, windowCleaColor.a ) );
+	GL( glClear( GL_COLOR_BUFFER_BIT ) );
 	GL( glBindFramebuffer( GL_READ_FRAMEBUFFER, mainRenderFBO ) );
-		GL( glReadBuffer( GL_COLOR_ATTACHMENT0 ) );
-		GL( glBlitFramebuffer( 0, 0, renderWidth, renderHeight,
-			windowRenderX0, windowRenderY0, windowRenderX1, windowRenderY1,
-			GL_COLOR_BUFFER_BIT,
-			GL_LINEAR ) );
+		GL( glBlitFramebuffer(
+				renderX0, renderY0, renderX1, renderY1,
+				windowRenderX0, windowRenderY0, windowRenderX1, windowRenderY1,
+				GL_COLOR_BUFFER_BIT,
+				GL_LINEAR ) );
 	GL( glBindFramebuffer( GL_READ_FRAMEBUFFER, defaultFBO ) );
 	
     // iOS: need to make sure the framebuffer and colorbuffer objects in the SysWMInfo are correctly bound

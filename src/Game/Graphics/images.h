@@ -144,6 +144,7 @@ void img_Render_PosClr( int imgID, uint32_t camFlags, int8_t depth, const Vector
 void img_Render_PosRot( int imgID, uint32_t camFlags, int8_t depth, const Vector2* pos, float rotRad );
 void img_Render_PosRotClr( int imgID, uint32_t camFlags, int8_t depth, const Vector2* pos, float rotRad, const Color* clr );
 void img_Render_PosScaleVClr( int imgID, uint32_t camFlags, int8_t depth, const Vector2* pos, const Vector2* scale, const Color* clr );
+void img_Render_PosSizeVClr( int imgID, uint32_t camFlags, int8_t depth, const Vector2* pos, const Vector2* size, const Color* clr );
 void img_Render_PosRotScaleClr( int imgID, uint32_t camFlags, int8_t depth, const Vector2* pos, float rotRad, float scale, const Color* clr );
 
 #endif /* inclusion guard */

@@ -6,7 +6,8 @@
 typedef void (*MessageResponse)(void*);
 
 typedef enum {
-	MSG_WINDOW_RESIZED
+	MSG_WINDOW_RESIZED,
+	MSG_RENDER_RESIZED
 } MessageID;
 
 // register a message listener, you can register the same listener more than once

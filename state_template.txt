@@ -46,5 +46,9 @@ static void <temp>State_PhysicsTick( float dt )
 {
 }
 
+static void <temp>State_Render( float t )
+{
+}
+
 GameState <temp>State = { <temp>State_Enter, <temp>State_Exit, <temp>State_ProcessEvents,
-	<temp>State_Process, <temp>State_Draw, <temp>State_PhysicsTick };
+	<temp>State_Process, <temp>State_Draw, <temp>State_PhysicsTick, <temp>State_Render };

@@ -23,12 +23,14 @@ typedef enum {
 
 // this header acts as an interface for the platform specific graphic functions
 
-bool gfxPlatform_Init( SDL_Window* window, int desiredRenderWidth, int desiredRenderHeight, VSync desiredVSync );
+bool gfxPlatform_Init( SDL_Window* window, VSync desiredVSync );
 
 int gfxPlatform_GetMaxSize( int desiredSize );
 
-void gfxPlatform_DynamicSizeRender( float dt, float t, int renderWidth, int renderHeight,
-	int windowRenderX0, int windowRenderY0, int windowRenderX1, int windowRenderY1, Color clearColor );
+void gfxPlatform_DynamicSizeRender( float dt, float t,
+    int renderX0, int renderY0, int renderX1, int renderY1,
+	int windowRenderX0, int windowRenderY0, int windowRenderX1, int windowRenderY1,
+    Color renderClearColor, Color windowCleaColor );
 
 void gfxPlatform_StaticSizeRender( float dt, float t, Color clearColor );
 
