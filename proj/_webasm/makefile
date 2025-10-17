@@ -49,7 +49,8 @@ CFLAGS = -s WASM=1 \
 		 -DOPENGL_GFX \
 		 -DNK_INCLUDE_STANDARD_IO \
 		 -L$(SDL_LIB_DIR) \
-		 -l$(SDL_LIB)
+		 -l$(SDL_LIB) \
+		 -DSCRIPTING_ENABLED
 		 
 OUT = index.html
 RBUILD = release_build

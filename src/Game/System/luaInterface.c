@@ -19,11 +19,23 @@ static lua_State* luaState = NULL;
 #include "Graphics/images.h"
 #include "Graphics/camera.h"
 #include "Graphics/graphics.h"
-#include "sound.h"
+#include "Audio/sound.h"
 #include "Input/input.h"
 #include "Graphics/imageSheets.h"
 #include "UI/uiEntities.h"
 #include "DefaultECPS/defaultECPS.h"
+
+static int lua_LoadAndDoFile( lua_State* ls )
+{
+	int p = -1;
+	int error;
+
+	LUA_GET_STRING( ls, fileName, p, error );
+
+	xLua_LoadAndDoFile( fileName );
+
+	return 1;
+}
 
 static int lua_LoadImage( lua_State* ls )
 {
@@ -234,6 +246,8 @@ static int lua_CreateButton( lua_State* ls )
 	int p = -1;
 	int error;
 
+	LUA_GET_STRING( ls, leaveFuncName, p, error );
+	LUA_GET_STRING( ls, overFuncName, p, error );
 	LUA_GET_STRING( ls, releaseFuncName, p, error );
 	LUA_GET_STRING( ls, pressFuncName, p, error );
 	LUA_GET_INT( ls, depth, p, error );
@@ -242,7 +256,11 @@ static int lua_CreateButton( lua_State* ls )
 	LUA_GET_FLOAT( ls, backgroundBlue, p, error );
 	LUA_GET_FLOAT( ls, backgroundGreen, p, error );
 	LUA_GET_FLOAT( ls, backgroundRed, p, error );
-	LUA_GET_INT( ls, background3x3PackageID, p, error );
+	LUA_GET_INT( ls, rightBorder, p, error );
+	LUA_GET_INT( ls, leftBorder, p, error );
+	LUA_GET_INT( ls, bottomBorder, p, error );
+	LUA_GET_INT( ls, topBorder, p, error );
+	LUA_GET_INT( ls, imgID, p, error );
 	LUA_GET_FLOAT( ls, yTextOffset, p, error );
 	LUA_GET_FLOAT( ls, xTextOffset, p, error );
 	LUA_GET_FLOAT( ls, fontAlpha, p, error );
@@ -257,10 +275,6 @@ static int lua_CreateButton( lua_State* ls )
 	LUA_GET_FLOAT( ls, yPos, p, error );
 	LUA_GET_FLOAT( ls, xPos, p, error );
 
-	int* images = img_GetPackageImages( background3x3PackageID );
-	SDL_assert( images != NULL );
-	SDL_assert( sb_Count( images ) == 9 );
-
 	if( depth < INT8_MIN ) {
 		llog( LOG_WARN, "Depth too low, clamping to minimum value." );
 		depth = INT8_MIN;
@@ -272,7 +286,8 @@ static int lua_CreateButton( lua_State* ls )
 	}
 
 	EntityID buttonID = button_Create3x3ScriptButton( &defaultECPS, vec2( xPos, yPos ), vec2( width, height ), text, font, textSize, clr( fontRed, fontGreen, fontBlue, fontAlpha ),
-		vec2( xTextOffset, yTextOffset ), images, clr( backgroundRed, backgroundGreen, backgroundBlue, backgroundAlpha ), camFlags, (int8_t)depth, pressFuncName, releaseFuncName );
+		vec2( xTextOffset, yTextOffset ), imgID, topBorder, bottomBorder, leftBorder, rightBorder,
+		clr( backgroundRed, backgroundGreen, backgroundBlue, backgroundAlpha ), camFlags, (int8_t)depth, pressFuncName, releaseFuncName, overFuncName, leaveFuncName );
 
 	lua_pushinteger( ls, (lua_Integer)buttonID );
 	return 1;
@@ -283,6 +298,7 @@ static int lua_CreateLabel( lua_State* ls )
 	int p = -1;
 	int error;
 
+	LUA_GET_BOOL( ls, useTextArea, p, error );
 	LUA_GET_INT( ls, depth, p, error );
 	LUA_GET_INT( ls, camFlags, p, error );
 	LUA_GET_FLOAT( ls, textSize, p, error );
@@ -307,7 +323,7 @@ static int lua_CreateLabel( lua_State* ls )
 		depth = INT8_MAX;
 	}
 
-	EntityID labelID = createLabel( &defaultECPS, text, vec2( xPos, yPos ), clr( red, green, blue, alpha ), hAlign, vAlign, font, textSize, camFlags, (int8_t)depth );
+	EntityID labelID = createLabel( &defaultECPS, text, vec2( xPos, yPos ), clr( red, green, blue, alpha ), hAlign, vAlign, font, textSize, camFlags, (int8_t)depth, useTextArea );
 
 	lua_pushinteger( ls, (lua_Integer)labelID );
 	return 1;
@@ -912,6 +928,13 @@ void xLua_CleanUpTableKeys( char** sbKeys )
 
 //************************************************************************************
 // Main functions
+static bool doesStartWith( const char* fullString, const char* possibleStart )
+{
+	size_t possibleStartLen = SDL_strlen( possibleStart );
+	if( SDL_strlen( fullString ) < possibleStartLen ) return false;
+	return SDL_memcmp( fullString, possibleStart, possibleStartLen ) == 0;
+}
+
 bool xLua_LoadAndDoFile( const char* fileName )
 {
 	SDL_assert( luaState != NULL );
@@ -926,8 +949,27 @@ bool xLua_LoadAndDoFile( const char* fileName )
 		return false;
 	}
 
-	// make sure the file is local to the directory where the executable is being run from
+#if !defined(__EMSCRIPTEN__) // we should never have to worry about loading strange files when running from the web
+	// make sure the file is local to the working directory where the executable is being run from
+	//  the other option is to assuming all script files will be under the Scripts directory and assume
+	//  we use that as a base
+	char* workingDirectory = SDL_GetCurrentDirectory( );
+	
+	// need to expand the fileName to the full path
+#if defined(_WIN32)
+	char fullPath[256];
+	_fullpath( fullPath, fileName, ARRAY_SIZE( fullPath ) );
+#else
+	#error No way to get fullpath of a file defined for this platform
+#endif
+	bool validFile = doesStartWith( fullPath, workingDirectory );
+	SDL_free( workingDirectory );
 
+	if( !validFile ) {
+		llog( LOG_ERROR, "Attempting to load a file outside the allowed directories." );
+		return false;
+	}
+#endif
 
 	int status = luaL_dofile( luaState, fileName );	
 	if( status != LUA_OK ) {
@@ -990,10 +1032,10 @@ bool xLua_Init( void )
 
 	// disable some individual things that would break the sandbox
 	// using this as a reference, understanding we don't need to worry about the global state: https://lua-users.org/wiki/SandBoxes
-	/*for( size_t i = 0; i < ARRAY_SIZE( disabledFunctions ); ++i ) {
+	for( size_t i = 0; i < ARRAY_SIZE( disabledFunctions ); ++i ) {
 		lua_pushnil( luaState );
 		lua_setglobal( luaState, disabledFunctions[i] );
-	}//*/
+	}
 
 	// load the main lua file that has our base engine lua functions
 	if( !xLua_LoadAndDoFile( "Scripts/main.lua" ) ) {
@@ -1002,6 +1044,7 @@ bool xLua_Init( void )
 	}
 
 	// register some functions that Lua scripts can use, probably want to pull these out into a separate file eventually
+	xLua_RegisterCFunction( "loadAndDoFile", lua_LoadAndDoFile );
 	xLua_RegisterCFunction( "setCameraFlags", lua_SetCamFlags );
 	xLua_RegisterCFunction( "setClearColor", lua_SetClearColor );
 	xLua_RegisterCFunction( "loadImage", lua_LoadImage );

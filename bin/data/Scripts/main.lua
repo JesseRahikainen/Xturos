@@ -147,7 +147,8 @@ main.CollisionTypes = protect( {
     AABB = 0,
     CIRCLE = 1,
     HALF_SPACE = 2,
-    LINE_SEGMENT = 3
+    LINE_SEGMENT = 3,
+    ORIENTED_BOX = 4
 } )
 
 -- Input handling, used for binding callbacks for button presses

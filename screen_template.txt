@@ -4,7 +4,7 @@
 
 #include "gameState.h"
 
-GameState <temp>ScreenState;
+extern GameState <temp>ScreenState;
 
 #endif // inclusion guard
 

@@ -148,7 +148,7 @@
       </PrecompiledHeader>
       <WarningLevel>Level4</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;OPENGL_GFX;_DEBUG;_CONSOLE;_LIB;GLEW_STATIC;THREAD_SUPPORT;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>SCRIPTING_ENABLED;WIN32;OPENGL_GFX;_DEBUG;_CONSOLE;_LIB;GLEW_STATIC;THREAD_SUPPORT;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <TreatWarningAsError>true</TreatWarningAsError>
       <ExceptionHandling>false</ExceptionHandling>
@@ -176,7 +176,7 @@
       </PrecompiledHeader>
       <WarningLevel>Level4</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;OPENGL_GFX;_DEBUG;_CONSOLE;_LIB;GLEW_STATIC;THREAD_SUPPORT;DEBUG_GL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>SCRIPTING_ENABLED;WIN32;OPENGL_GFX;_DEBUG;_CONSOLE;_LIB;GLEW_STATIC;THREAD_SUPPORT;DEBUG_GL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <TreatWarningAsError>true</TreatWarningAsError>
       <ExceptionHandling>false</ExceptionHandling>
@@ -210,7 +210,7 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>WIN32;OPENGL_GFX;NDEBUG;_CONSOLE;GLEW_STATIC;_LIB;THREAD_SUPPORT;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>SCRIPTING_ENABLED;WIN32;OPENGL_GFX;NDEBUG;_CONSOLE;GLEW_STATIC;_LIB;THREAD_SUPPORT;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <TreatWarningAsError>true</TreatWarningAsError>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <DisableSpecificWarnings>4100;4189;4201;4996;4127;4756;6385;6386;26451;6255;6385;26451;4456;4457</DisableSpecificWarnings>
@@ -238,7 +238,7 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>WIN32;OPENGL_GFX;NDEBUG;_CONSOLE;GLEW_STATIC;_LIB;THREAD_SUPPORT;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>SCRIPTING_ENABLED;WIN32;OPENGL_GFX;NDEBUG;_CONSOLE;GLEW_STATIC;_LIB;THREAD_SUPPORT;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <TreatWarningAsError>true</TreatWarningAsError>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <DisableSpecificWarnings>4100;4189;4201;4996;4127;4756;6385;6386;26451;6255;6385;26451;4456;4457</DisableSpecificWarnings>
@@ -273,7 +273,7 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>WIN32;OPENGL_GFX;NDEBUG;_CONSOLE;GLEW_STATIC;_LIB;THREAD_SUPPORT;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>SCRIPTING_ENABLED;WIN32;OPENGL_GFX;NDEBUG;_CONSOLE;GLEW_STATIC;_LIB;THREAD_SUPPORT;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <TreatWarningAsError>true</TreatWarningAsError>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <DisableSpecificWarnings>4100;4189;4201;4996;4127;4756;6385;6386;26451;6255;6385;26451;4456;4457</DisableSpecificWarnings>
@@ -301,7 +301,7 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>WIN32;OPENGL_GFX;NDEBUG;_CONSOLE;GLEW_STATIC;_LIB;THREAD_SUPPORT;DEBUG_GL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>SCRIPTING_ENABLED;WIN32;OPENGL_GFX;NDEBUG;_CONSOLE;GLEW_STATIC;_LIB;THREAD_SUPPORT;DEBUG_GL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <TreatWarningAsError>true</TreatWarningAsError>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <DisableSpecificWarnings>4100;4189;4201;4996;4127;4756;6385;6386;26451;6255;6385;26451;4456;4457</DisableSpecificWarnings>
