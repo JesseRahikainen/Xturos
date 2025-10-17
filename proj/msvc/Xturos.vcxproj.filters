@@ -501,6 +501,9 @@
     <ClInclude Include="..\..\src\Game\Game\optionsState.h">
       <Filter>Header Files\Game\SharedStates</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\Game\Game\testGamePadState.h">
+      <Filter>Header Files\Game\TestScreens</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\Game\Graphics\graphics.c">
@@ -859,6 +862,9 @@
     </ClCompile>
     <ClCompile Include="..\..\src\Game\Game\optionsState.c">
       <Filter>Source Files\Game\SharedScreens</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Game\Game\testGamePadState.c">
+      <Filter>Source Files\Game\TestScreens</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

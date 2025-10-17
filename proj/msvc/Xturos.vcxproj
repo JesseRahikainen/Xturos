@@ -361,6 +361,7 @@
     <ClInclude Include="..\..\src\Game\Game\hexTestScreen.h" />
     <ClInclude Include="..\..\src\Game\Game\testAStarScreen.h" />
     <ClInclude Include="..\..\src\Game\Game\testBloomScreen.h" />
+    <ClInclude Include="..\..\src\Game\Game\testGamePadState.h" />
     <ClInclude Include="..\..\src\Game\Game\testJobQueueScreen.h" />
     <ClInclude Include="..\..\src\Game\Game\testMountingState.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
@@ -498,6 +499,7 @@
     <ClCompile Include="..\..\src\Game\Game\hexTestScreen.c" />
     <ClCompile Include="..\..\src\Game\Game\testAStarScreen.c" />
     <ClCompile Include="..\..\src\Game\Game\testBloomScreen.c" />
+    <ClCompile Include="..\..\src\Game\Game\testGamePadState.c" />
     <ClCompile Include="..\..\src\Game\Game\testJobQueueScreen.c" />
     <ClCompile Include="..\..\src\Game\Game\testMountingState.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>

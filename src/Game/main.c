@@ -43,6 +43,7 @@
 #include "Game/testSynthState.h"
 #include "Game/testCollisionsState.h"
 #include "Game/optionsState.h"
+#include "Game/testGamePadState.h"
 #include "Game/initialChoiceState.h"
 
 #include "System/memory.h"
@@ -257,7 +258,7 @@ int initEverything( void )
     
 	// then SDL
 	SDL_SetMainReady( );
-	if( !SDL_Init( SDL_INIT_AUDIO | SDL_INIT_VIDEO | SDL_INIT_EVENTS ) ) {
+	if( !SDL_Init( SDL_INIT_AUDIO | SDL_INIT_VIDEO | SDL_INIT_EVENTS | SDL_INIT_GAMEPAD ) ) {
 		llog( LOG_ERROR, "Init Error: %s", SDL_GetError( ) );
 		return -1;
 	}
@@ -833,6 +834,7 @@ int main( int argc, char** argv )
 	initialChoice_RegisterState( "Test Mounting", &testMountingState, false );
 	initialChoice_RegisterState( "Test Synth", &testSynthState, false );
 	initialChoice_RegisterState( "Test Collisions", &testCollisionsState, false );
+	initialChoice_RegisterState( "Test Gamepad", &testGamePadState, false );
 	initialChoice_RegisterState( "Options Dialog", &optionsState, true );
 
 	GameState* startState = &initialChoiceState;
