@@ -254,17 +254,17 @@ static void editorHubScreen_ProcessEvents( SDL_Event* e )
 static void editorHubScreen_Process( void )
 {
 	int width, height;
-	gfx_GetRenderSize( &width, &height );
+	gfx_GetWindowSize( &width, &height );
 
 	struct nk_context* ctx = &( editorIMGUI.ctx );
-	float buttonHeight = 22.0f;
-	float menuHeight = 50.0f + ( sb_Count( sbEditors ) * 26.0f );
+	const float BUTTON_HEIGHT = 37.0f;
+	float menuHeight = 85.0f + ( sb_Count( sbEditors ) * 44.0f );
 	menuHeight = MIN( height / 2.0f, menuHeight );
-	float buttonWidth = 120.0f;
-	float menuWidth = 146.0f; // TODO: Figure out how to calculate all the sizes so things can fit better
+	float buttonWidth = 204.0f;
+	float menuWidth = 228.0f; // TODO: Figure out how to calculate all the sizes so things can fit better
 	
 	if( nk_begin( ctx, "Tools", nk_rect( 0.0f, 0.0f, menuWidth, menuHeight ), NK_WINDOW_MINIMIZABLE | NK_WINDOW_BORDER | NK_WINDOW_MOVABLE ) ) {
-		nk_layout_row_begin( ctx, NK_STATIC, buttonHeight, 1 );
+		nk_layout_row_begin( ctx, NK_STATIC, BUTTON_HEIGHT, 1 );
 		nk_layout_row_push( ctx, buttonWidth );
 
 		for( size_t i = 0; i < sb_Count( sbEditors ); ++i ) {

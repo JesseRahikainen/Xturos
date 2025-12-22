@@ -20,6 +20,9 @@
 #include "Utils/helpers.h"
 #include "Graphics/Platform/graphicsPlatform.h"
 
+const float STANDARD_ROW_HEIGHT = 34.0f;
+const float STANRARD_BUTTON_SIZE = 50.0f;
+
 static SpriteAnimation editorSpriteAnimation = { NULL, 10.0f, 5, true, NULL, -1 };
 static PlayingSpriteAnimation editorPlayingSprite = { &editorSpriteAnimation, 0.0f };
 
@@ -73,7 +76,7 @@ typedef struct {
 
 static EditorCollider* sbColliders;
 
-static struct nk_rect windowBounds = { 150.0f, 10.0f, 600.0f, 600.f };
+static struct nk_rect windowBounds = { 150.0f, 10.0f, 1000.0f, 1000.f };
 
 static int drawnSprite = -1;
 static Vector2 drawnOffset = { 0.0f, 0.0f };
@@ -375,7 +378,7 @@ static void displayEventData_SwitchImage( struct nk_context* ctx, AnimEvent* evt
 	}
 	
 	int lastSelected = currentSelected;
-	nk_combobox_callback( ctx, switchImageComboxBoxItemGetter, NULL, &currentSelected, (int)sb_Count( sbLoadedImageDisplays ), 20, nk_vec2( 300.0f, 300.0f ) );
+	nk_combobox_callback( ctx, switchImageComboxBoxItemGetter, NULL, &currentSelected, (int)sb_Count( sbLoadedImageDisplays ), (int)STANDARD_ROW_HEIGHT, nk_vec2( 510.0f, 510.0f ) );
 
 	if( currentSelected > 0 ) {
 		evt->switchImg.imgID = sbLoadedImageDisplays[currentSelected].imageId;
@@ -413,12 +416,12 @@ static bool displayEventData( struct nk_context* ctx, size_t eventIdx )
 	AnimEvent* evt = &editorSpriteAnimation.sbEvents[eventIdx];
 	AnimEvent oldEvent = *evt;
 
-	nk_layout_row_begin( ctx, NK_DYNAMIC, 20, 1 );
+	nk_layout_row_begin( ctx, NK_DYNAMIC, STANDARD_ROW_HEIGHT, 1 );
 	nk_layout_row_push( ctx, 1.0f );
 
 	// edit the type of event it is
 	int currType = (int)evt->base.type;
-	nk_combobox( ctx, eventTypeNames, MAX_ANIM_EVENT_TYPES, &currType, 20, nk_vec2( 150.0f, 105.0f ) );
+	nk_combobox( ctx, eventTypeNames, MAX_ANIM_EVENT_TYPES, &currType, 20, nk_vec2( 255.0f, 180.0f ) );
 	if( currType != evt->base.type ) {
 		switch( currType ) {
 		case AET_SWITCH_IMAGE:
@@ -548,11 +551,11 @@ void spriteAnimationEditor_IMGUIProcess( void )
 
 		nk_menubar_begin( ctx ); {
 
-			nk_layout_row_begin( ctx, NK_STATIC, 20, INT_MAX );
-			nk_layout_row_push( ctx, 50 );
-			if( nk_menu_begin_label( ctx, "File", NK_TEXT_ALIGN_LEFT | NK_TEXT_ALIGN_MIDDLE, nk_vec2( 120, 100 ) ) ) {
+			nk_layout_row_begin( ctx, NK_STATIC, STANDARD_ROW_HEIGHT, INT_MAX );
+			nk_layout_row_push( ctx, 85 );
+			if( nk_menu_begin_label( ctx, "File", NK_TEXT_ALIGN_LEFT | NK_TEXT_ALIGN_MIDDLE, nk_vec2( 180, 170 ) ) ) {
 				
-				nk_layout_row_dynamic( ctx, 20, 1 );
+				nk_layout_row_dynamic( ctx, STANDARD_ROW_HEIGHT, 1 );
 				if( nk_menu_item_label( ctx, "New", NK_TEXT_ALIGN_LEFT | NK_TEXT_ALIGN_MIDDLE ) ) {
 					newAnimation( );
 				}
@@ -577,7 +580,7 @@ void spriteAnimationEditor_IMGUIProcess( void )
 			}
 		} nk_menubar_end( ctx );
 
-		float layoutHeight = nk_window_get_height( ctx ) - 76.0f;
+		float layoutHeight = nk_window_get_height( ctx ) - 130.0f;
 		nk_layout_space_begin( ctx, NK_DYNAMIC, layoutHeight, INT_MAX ); {
 			// general section, have tabs to show various things like file information and configuration options
 			nk_flags groupFlags = NK_WINDOW_BORDER;// | NK_WINDOW_TITLE;
@@ -636,31 +639,31 @@ void spriteAnimationEditor_IMGUIProcess( void )
 					// general configuration stuff
 
 					// sprite scale
-					nk_layout_row_begin( ctx, NK_DYNAMIC, 20, 1 );
+					nk_layout_row_begin( ctx, NK_DYNAMIC, STANDARD_ROW_HEIGHT, 1 );
 					nk_layout_row_push( ctx, 1.0f );
 					nk_labelf( ctx, NK_TEXT_ALIGN_LEFT | NK_TEXT_ALIGN_MIDDLE, "Sprite Draw Scale: %.2f", spriteScale );
 
-					nk_layout_row_begin( ctx, NK_DYNAMIC, 20, 1 );
+					nk_layout_row_begin( ctx, NK_DYNAMIC, STANDARD_ROW_HEIGHT, 1 );
 					nk_layout_row_push( ctx, 1.0f );
 					nk_slider_float( ctx, 0.1f, &spriteScale, 3.0f, 0.01f );
 
-					nk_layout_row_begin( ctx, NK_DYNAMIC, 20, 1 );
+					nk_layout_row_begin( ctx, NK_DYNAMIC, STANDARD_ROW_HEIGHT, 1 );
 					nk_layout_row_push( ctx, 1.0f );
 					if( nk_button_label( ctx, "Reset Scale" ) ) {
 						spriteScale = 1.0f;
 					}
 
 					// background color
-					nk_layout_row_begin( ctx, NK_DYNAMIC, 20, 1 );
+					nk_layout_row_begin( ctx, NK_DYNAMIC, STANDARD_ROW_HEIGHT, 1 );
 					nk_layout_row_push( ctx, 1.0f );
 					nk_label( ctx, "Background Color", NK_TEXT_ALIGN_LEFT | NK_TEXT_ALIGN_MIDDLE );
 
-					nk_layout_row_begin( ctx, NK_DYNAMIC, 80, 1 );
+					nk_layout_row_begin( ctx, NK_DYNAMIC, STANDARD_ROW_HEIGHT * 4.0f, 1 );
 					nk_layout_row_push( ctx, 1.0f );
 					nk_color_pick( ctx, &spriteBGColor, NK_RGB );
 
 					// how many collision bounds we want to display
-					nk_layout_row_begin( ctx, NK_DYNAMIC, 20, 1 );
+					nk_layout_row_begin( ctx, NK_DYNAMIC, STANDARD_ROW_HEIGHT, 1 );
 					nk_layout_row_push( ctx, 1.0f );
 					nk_label( ctx, "Colliders to show:", NK_TEXT_ALIGN_LEFT | NK_TEXT_ALIGN_MIDDLE );
 					int newCollidersToShow;
@@ -691,11 +694,11 @@ void spriteAnimationEditor_IMGUIProcess( void )
 						nk_style_push_color( ctx, &ctx->style.text.color, nk_rgba_cf( sbColliders[i].color ) );
 						char colliderName[25];
 						SDL_snprintf( colliderName, 24, "Collider %i", i );
-						nk_layout_row_begin( ctx, NK_DYNAMIC, 20, 1 );
+						nk_layout_row_begin( ctx, NK_DYNAMIC, STANDARD_ROW_HEIGHT, 1 );
 						nk_layout_row_push( ctx, 1.0f );
 						nk_label( ctx, colliderName, NK_TEXT_ALIGN_LEFT | NK_TEXT_ALIGN_MIDDLE );
 
-						nk_layout_row_begin( ctx, NK_DYNAMIC, 80, 1 );
+						nk_layout_row_begin( ctx, NK_DYNAMIC, STANDARD_ROW_HEIGHT * 4.0f, 1 );
 						nk_layout_row_push( ctx, 1.0f );
 						nk_color_pick( ctx, &( sbColliders[i].color ), NK_RGB ); // TODO: make the picker bigger, or have it just set RGB instead of using the picker
 
@@ -723,8 +726,8 @@ void spriteAnimationEditor_IMGUIProcess( void )
 			nk_layout_space_push( ctx, nk_rect( 0.0f, 0.5f, 0.3f, 0.5f ) );
 			if( nk_group_begin( ctx, "EventAndControls", groupFlags ) ) {
 				// First the controls: play, pause, stop
-				nk_layout_row_begin( ctx, NK_STATIC, 30, 3 );
-				nk_layout_row_push( ctx, 30 );
+				nk_layout_row_begin( ctx, NK_STATIC, STANRARD_BUTTON_SIZE, 3 );
+				nk_layout_row_push( ctx, STANRARD_BUTTON_SIZE );
 				if( nk_button_image( ctx, playNKImage ) ) {
 					// if the animation isn't looping, and reached the end then restart it
 					//  otherwise start playing from the current time
@@ -762,14 +765,14 @@ void spriteAnimationEditor_IMGUIProcess( void )
 			nk_layout_space_push( ctx, nk_rect( 0.3f, 0.5f, 0.7f, 0.5f ) );
 			if( nk_group_begin( ctx, "Timeline", groupFlags ) ) {
 
-				const float FRAME_DIM = 20.0f;
+				const float FRAME_DIM = 34.0f;
 
 				// calculate the width of the component
 				float width = editorSpriteAnimation.durationFrames * FRAME_DIM;
 
 				// at the top draw the time indicator
-				//nk_layout_row_begin( ctx, NK_DYNAMIC, 10.0f, 1 );
-				nk_layout_row_begin( ctx, NK_STATIC, 10.0f, 1 );
+				//nk_layout_row_begin( ctx, NK_DYNAMIC, 17.0f, 1 );
+				nk_layout_row_begin( ctx, NK_STATIC, 17.0f, 1 );
 				nk_layout_row_push( ctx, width );
 				float percentDone = editorPlayingSprite.timePassed / sprAnim_GetTotalTime( &editorSpriteAnimation );
 				if( nk_slider_float( ctx, 0.0f, &percentDone, 1.0f, 0.0001f ) ) {

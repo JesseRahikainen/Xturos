@@ -18,7 +18,7 @@
 
 static SpriteSheetEntry* sbEntries = NULL;
 
-static struct nk_rect windowBounds = { 150.0f, 10.0f, 600.0f, 400.f };
+static struct nk_rect windowBounds = { 150.0f, 10.0f, 800.0f, 600.f };
 
 static int xPadding = 2;
 static int yPadding = 2;
@@ -141,11 +141,11 @@ void spriteSheetEditor_IMGUIProcess( void )
 	if(nk_begin( ctx, "Sprite Sheet", windowBounds, NK_WINDOW_MINIMIZABLE | NK_WINDOW_BORDER | NK_WINDOW_MOVABLE | NK_WINDOW_SCALABLE )) {
 		nk_menubar_begin( ctx ); {
 
-			nk_layout_row_begin( ctx, NK_STATIC, 20, INT_MAX );
-			nk_layout_row_push( ctx, 50 );
-			if( nk_menu_begin_label( ctx, "File", NK_TEXT_ALIGN_LEFT | NK_TEXT_ALIGN_MIDDLE, nk_vec2( 120, 120 ) ) ) {
+			nk_layout_row_begin( ctx, NK_STATIC, 34, INT_MAX );
+			nk_layout_row_push( ctx, 85 );
+			if( nk_menu_begin_label( ctx, "File", NK_TEXT_ALIGN_LEFT | NK_TEXT_ALIGN_MIDDLE, nk_vec2( 204, 204 ) ) ) {
 
-				nk_layout_row_dynamic( ctx, 20, 1 );
+				nk_layout_row_dynamic( ctx, 34, 1 );
 				if( nk_menu_item_label( ctx, "New", NK_TEXT_ALIGN_LEFT | NK_TEXT_ALIGN_MIDDLE ) ) {
 					createNewSpriteSheet( );
 				}
@@ -165,8 +165,8 @@ void spriteSheetEditor_IMGUIProcess( void )
 				nk_menu_end( ctx );
 			}
 
-			if( nk_menu_begin_label( ctx, "Images", NK_TEXT_ALIGN_LEFT | NK_TEXT_ALIGN_MIDDLE, nk_vec2( 120, 80 ) ) ) {
-				nk_layout_row_dynamic( ctx, 20, 1 );
+			if( nk_menu_begin_label( ctx, "Images", NK_TEXT_ALIGN_LEFT | NK_TEXT_ALIGN_MIDDLE, nk_vec2( 204, 136 ) ) ) {
+				nk_layout_row_dynamic( ctx, 34, 1 );
 				if( nk_menu_item_label( ctx, "Select files...", NK_TEXT_ALIGN_LEFT | NK_TEXT_ALIGN_MIDDLE ) ) {
 					editor_chooseLoadFileLocation( "PNG Image", "png", true, addFileEntry );
 				}
@@ -181,7 +181,7 @@ void spriteSheetEditor_IMGUIProcess( void )
 
 		nk_layout_row_begin( ctx, NK_STATIC, 1, 1 ); // padding
 
-		nk_layout_row_begin( ctx, NK_DYNAMIC, 20, 3 ); {
+		nk_layout_row_begin( ctx, NK_DYNAMIC, 34, 3 ); {
 			nk_layout_row_push( ctx, 0.3f );
 			nk_property_int( ctx, "X-Padding", 0, &xPadding, 100, 1, 0.0f );
 			nk_property_int( ctx, "Y-Padding", 0, &yPadding, 100, 1, 0.0f );
@@ -192,10 +192,10 @@ void spriteSheetEditor_IMGUIProcess( void )
 		size_t itemToDelete = SIZE_MAX;
 		// list of locations: path, and delete button
 		for( size_t i = 0; i < sb_Count( sbEntries ); ++i ) {
-			nk_layout_row_begin( ctx, NK_STATIC, 20, 2 ); {
-				nk_layout_row_push( ctx, rowWidth - 20.0f );
+			nk_layout_row_begin( ctx, NK_STATIC, 34, 2 ); {
+				nk_layout_row_push( ctx, rowWidth - 34.0f );
 				nk_label( ctx, sbEntries[i].sbPath, NK_TEXT_LEFT );
-				nk_layout_row_push( ctx, 20.0f );
+				nk_layout_row_push( ctx, 34.0f );
 				if( nk_button_label( ctx, "X" ) ) {
 					itemToDelete = i;
 				}

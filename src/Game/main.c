@@ -398,7 +398,7 @@ int initEverything( void )
 	int winHeight;
 	SDL_GetWindowSize( sdlWindow, &winWidth, &winHeight );
 	initIMGUI( &inGameIMGUI, true, renderWidth, renderHeight, 14.0f );
-	initIMGUI( &editorIMGUI, false, winWidth, winHeight, 14.0f );
+	initIMGUI( &editorIMGUI, false, winWidth, winHeight, 24.0f );//18.0f );
 	nk_xu_initMessageListeners( );
 	llog( LOG_INFO, "IMGUI successfully initialized" );
 
