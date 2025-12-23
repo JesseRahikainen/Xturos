@@ -39,9 +39,9 @@ typedef struct {
 
 void tuning_Setup( Tuning* tuning, double a4Hertz, TuningIntervals tuningInterval );
 void tuning_SetupStandard( Tuning* tuning );
-double tuning_GetNoteHertz( Note* note, Tuning* tuning );
-float tuning_NotePitchAdjustment( Note* referenceNote, Note* note, Tuning* tuning );
-float tuning_HertzPitchAdjustment( double referenceNoteHertz, Note* note, Tuning* tuning );
+double tuning_GetNoteHertz( const Note* note, const Tuning* tuning );
+float tuning_NotePitchAdjustment( const Note* referenceNote, const Note* note, const Tuning* tuning );
+float tuning_HertzPitchAdjustment( double referenceNoteHertz, const Note* note, const Tuning* tuning );
 
 //=============================================================
 // for music stuff
@@ -71,10 +71,10 @@ typedef enum {
 } Scales;
 
 // adds a number of steps to the base note and returns the resulting not, if the steps would put it out of range it clamps
-Note music_AddStepsToNote( Note* baseNote, int steps );
+Note music_AddStepsToNote( const Note* baseNote, int steps );
 
 // returns a stretchy buffer, need to make sure it's cleaned up properly
-Note* music_GetScaleSB( Note* tonic, Scales scale );
+Note* music_GetScaleSB( const Note* tonic, Scales scale );
 
 typedef enum {
 	CHORD_TYPE_MAJOR_TRIAD,
@@ -91,6 +91,6 @@ typedef enum {
 	CHORD_TYPE_AUGMENTED_SEVENTH
 } ChordType;
 
-Note* music_GetChordSB( Note* tonic, ChordType chordType );
+Note* music_GetChordSB( const Note* tonic, ChordType chordType );
 
 #endif // inclusion guard

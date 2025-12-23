@@ -9,6 +9,9 @@
 
 #define FULL_OCTAVE_CENTS 1200.0
 
+// if we need to return something but have nothing valid we can return
+const Note DEFAULT_NOTE = { 4, NOTE_A };
+
 static const double EQUAL_TEMPERAMENT[] = { 0.0, 100.0, 200.0, 300.0, 400.0, 500.0, 600.0, 700.0, 800.0, 900.0, 1000.0, 1100.0 };
 static const double PYTHAGOREAN_TUNING[] = { 0.0, 90.225, 203.910, 294.135, 407.820, 588.270, 611.730, 701.955, 792.180, 905.865, 996.090, 1109.775 };
 
@@ -37,7 +40,7 @@ static Note fromIndex( size_t index )
 	return result;
 }
 
-static size_t getNoteIndex( Note* note )
+static size_t getNoteIndex( const Note* note )
 {
 	return getIndex( note->octave, note->octaveNote );
 }
@@ -89,7 +92,7 @@ void tuning_SetupStandard( Tuning* tuning )
 	tuning_Setup( tuning, 440.0, TUNING_EQUAL_TEMPERAMENT );
 }
 
-double tuning_GetNoteHertz( Note* note, Tuning* tuning )
+double tuning_GetNoteHertz( const Note* note, const Tuning* tuning )
 {
 	ASSERT_AND_IF_NOT( tuning != NULL ) return 0.0;
 	ASSERT_AND_IF_NOT( note != NULL ) return 0.0;
@@ -98,7 +101,7 @@ double tuning_GetNoteHertz( Note* note, Tuning* tuning )
 	return tuning->freqs[getNoteIndex( note )];
 }
 
-float tuning_NotePitchAdjustment( Note* referenceNote, Note* note, Tuning* tuning )
+float tuning_NotePitchAdjustment( const Note* referenceNote, const Note* note, const Tuning* tuning )
 {
 	SDL_assert( referenceNote != NULL );
 	SDL_assert( note != NULL );
@@ -109,7 +112,7 @@ float tuning_NotePitchAdjustment( Note* referenceNote, Note* note, Tuning* tunin
 	return (float)( hertz / referenceHertz );
 }
 
-float tuning_HertzPitchAdjustment( double referenceNoteHertz, Note* note, Tuning* tuning )
+float tuning_HertzPitchAdjustment( double referenceNoteHertz, const Note* note, const Tuning* tuning )
 {
 	SDL_assert( note != NULL );
 	SDL_assert( tuning != NULL );
@@ -144,8 +147,9 @@ const static int OCTATONIC_TWO_SCALE[] = { 0, 2, 3, 5, 6, 8, 9, 11 };
 const static int WHOLE_TONE_SCALE[] = { 0, 2, 4, 6, 8, 10 };
 
 // adds a number of steps to the base note and returns the resulting not, if the steps would put it out of range it clamps
-Note music_AddStepsToNote( Note* baseNote, int steps )
+Note music_AddStepsToNote( const Note* baseNote, int steps )
 {
+	ASSERT_AND_IF_NOT( baseNote != NULL ) return DEFAULT_NOTE;
 	size_t index = getIndex( baseNote->octave, baseNote->octaveNote );
 	index += steps;
 	Note result = fromIndex( index );
@@ -187,8 +191,11 @@ static void getScaleSteps( Scales scale, const int** outScaleSteps, size_t* outS
 	}
 }
 
-static Note* getStepNotes( Note* tonic, int* steps, size_t numSteps )
+static Note* getStepNotes( const Note* tonic, int* steps, size_t numSteps )
 {
+	ASSERT_AND_IF_NOT( tonic != NULL ) return NULL;
+	ASSERT_AND_IF_NOT( steps != NULL ) return NULL;
+
 	Note* result = NULL;
 
 	for( size_t i = 0; i < numSteps; ++i ) {
@@ -200,7 +207,7 @@ static Note* getStepNotes( Note* tonic, int* steps, size_t numSteps )
 }
 
 // returns a stretchy buffer, need to make sure it's cleaned up properly
-Note* music_GetScaleSB( Note* tonic, Scales scale )
+Note* music_GetScaleSB( const Note* tonic, Scales scale )
 {
 	int* scaleSteps;
 	size_t numScaleSteps;
@@ -248,7 +255,7 @@ static void getChordSteps( ChordType type, const int** outChordSteps, size_t* ou
 	}
 }
 
-Note* music_GetChordSB( Note* tonic, ChordType chordType )
+Note* music_GetChordSB( const Note* tonic, ChordType chordType )
 {
 	int* steps;
 	size_t numSteps;
