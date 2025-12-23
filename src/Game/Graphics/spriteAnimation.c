@@ -195,6 +195,11 @@ float sprAnim_GetTotalTime( SpriteAnimation* anim )
 uint32_t sprAnim_FrameAtTime( SpriteAnimation* anim, float time )
 {
 	uint32_t frame = (uint32_t)( time * anim->fps );
+	if( anim->loops ) {
+		frame = frame % anim->durationFrames;
+	} else {
+		frame = MIN( frame, anim->durationFrames - 1 );
+	}
 	return frame;
 }
 
@@ -273,13 +278,62 @@ void sprAnim_ProcessAnim( PlayingSpriteAnimation* playingAnim, AnimEventHandler*
 
 uint32_t sprAnim_GetCurrentFrame( PlayingSpriteAnimation* playingAnim )
 {
-	SDL_assert( playingAnim != NULL );
-
+	ASSERT_AND_IF_NOT( playingAnim != NULL ) return INVALID_ANIM_FRAME;
+	
 	if( playingAnim->animation == NULL ) {
-		return 0;
+		return INVALID_ANIM_FRAME;
 	}
 	uint32_t frame = sprAnim_FrameAtTime( playingAnim->animation, playingAnim->timePassed );
 	return frame;
+}
+
+uint32_t sprAnim_NextImageEvent( SpriteAnimation* anim, uint32_t startingFrame, bool forward, bool inclusive )
+{
+	uint32_t foundEvent = INVALID_ANIM_EVENT_IDX;
+	size_t bestDist = SIZE_MAX;
+	uint32_t frame = startingFrame + 1;
+
+	for( size_t i = 0; i < sb_Count( anim->sbEvents ); ++i ) {
+		// TODO? Make this a parameter?
+		if( anim->sbEvents[i].base.type != AET_SWITCH_IMAGE ) continue;
+
+		// first make sure it's a valid position
+		if( !anim->loops ) {
+			// if it doesn't loop make sure we're only checking in the right direction
+			if( forward ) {
+				if( anim->sbEvents[i].base.frame < startingFrame ) continue;
+			} else {
+				if( anim->sbEvents[i].base.frame > startingFrame ) continue;
+			}
+		}
+
+		// if not inclusive then exclude starting frame
+		if( !inclusive && ( anim->sbEvents[i].base.frame == startingFrame ) ) continue;
+
+		size_t dist = SIZE_MAX;
+		if( forward ) {
+			if( anim->sbEvents[i].base.frame < startingFrame ) {
+				// if we get here we assume we're already looping, validity check above should catch it before that
+				dist = anim->durationFrames - ( startingFrame - anim->sbEvents[i].base.frame );
+			} else {
+				dist = anim->sbEvents[i].base.frame - startingFrame;
+			}
+		} else {
+			if( anim->sbEvents[i].base.frame < startingFrame ) {
+				// if we get here we assume we're already looping, validity check above should catch it before that
+				dist = anim->durationFrames - ( anim->sbEvents[i].base.frame - startingFrame );
+			} else {
+				dist = startingFrame - anim->sbEvents[i].base.frame;
+			}
+		}
+
+		if( dist < bestDist ) {
+			bestDist = dist;
+			foundEvent = (uint32_t)i;
+		}
+	}
+
+	return foundEvent;
 }
 
 bool sprAnim_Save( const char* fileName, SpriteAnimation* anim )

@@ -19,6 +19,9 @@
 #include "Graphics/imageSheets.h"
 #include "Utils/helpers.h"
 #include "Graphics/Platform/graphicsPlatform.h"
+#include "System/jobQueue.h"
+
+#include "Graphics/Platform/OpenGL/glDebugging.h"
 
 const float STANDARD_ROW_HEIGHT = 34.0f;
 const float STANRARD_BUTTON_SIZE = 50.0f;
@@ -41,6 +44,8 @@ static bool hitAnimationEnd = false;
 static char* currentFileName = NULL;
 
 static float spriteScale = 1.0f;
+static float prevImageAlpha = 0.25f;
+static float nextImageAlpha = 0.0f;
 
 static struct nk_colorf spriteBGColor = { 0.25f, 0.25f, 0.25f, 1.0f };
 
@@ -106,14 +111,16 @@ static void unloadCurrentSpriteSheet( )
 	}
 }
 
-static void spriteSheetChosen( const char* filePath )
+static void spriteSheetChosen( void* data )
 {
+	char* filePath = (char*)data;
 	// attempt to load the new sprite sheet 
 	int* sbNewlyLoadedImages = NULL;
 	int newPackageID = editor_loadSpriteSheetFile( filePath, &sbNewlyLoadedImages );
-	
+
 	if( newPackageID < 0 ) {
 		hub_CreateDialog( "Error Loading Sprite Sheet", "There was an error loading the sprite sheet. Check error log for more details.", DT_ERROR, 1, "OK", NULL );
+		mem_Release( data );
 		return;
 	}
 
@@ -122,15 +129,21 @@ static void spriteSheetChosen( const char* filePath )
 	// set the new data
 	editorSpriteAnimation.spriteSheetPackageID = newPackageID;
 	mem_Release( editorSpriteAnimation.spriteSheetFile );
-	size_t pathLen = SDL_strlen( filePath ) + 1;
-	editorSpriteAnimation.spriteSheetFile = mem_Allocate( pathLen );
-	SDL_strlcpy( editorSpriteAnimation.spriteSheetFile, filePath, pathLen );
+	editorSpriteAnimation.spriteSheetFile = filePath; // claiming the string for ourselves, release later
 	sbSpriteSheetImages = sbNewlyLoadedImages; 
+}
+
+static void spriteSheetChosenCallback( const char* filePath )
+{
+	// have to make sure we're calling stuff on the main thread because we're creating textures
+	char* filePathCopy = createStringCopy( filePath );
+	jq_AddMainThreadJob( spriteSheetChosen, filePathCopy );
 }
 
 static void chooseSpriteSheet( void )
 {
-	editor_chooseLoadFileLocation( "Sprite Sheet", "spritesheet", false, spriteSheetChosen );
+	checkAndLogErrors( "pre-editor_chooseLoadFileLocation failure" );
+	editor_chooseLoadFileLocation( "Sprite Sheet", "spritesheet", false, spriteSheetChosenCallback );
 }
 
 static void loadAndAssociateSpriteSheet( void )
@@ -510,35 +523,62 @@ static void drawCollisions( struct nk_command_buffer* buffer )
 	}
 }
 
-static void drawCurrentImage( struct nk_command_buffer* buffer )
+static void drawImageEvent( uint32_t eventIdx, float alpha, struct nk_command_buffer* buffer )
 {
-	if( !img_IsValidImage( drawnSprite ) ) return;
-	
+	if( eventIdx == INVALID_ANIM_EVENT_IDX ) return;
+
+	ASSERT_AND_IF_NOT( eventIdx < sb_Count( editorSpriteAnimation.sbEvents ) ) return;
+	ASSERT_AND_IF_NOT( editorSpriteAnimation.sbEvents[eventIdx].base.type == AET_SWITCH_IMAGE ) return;
+
+	int imgID = editorSpriteAnimation.sbEvents[eventIdx].switchImg.imgID;
+	Vector2 offset = editorSpriteAnimation.sbEvents[eventIdx].switchImg.offset;
+
+	if( !img_IsValidImage( imgID ) ) return;
+
 	Vector2 size;
-	img_GetSize( drawnSprite, &size );
+	img_GetSize( imgID, &size );
 
 	PlatformTexture texture;
-	img_GetTextureID( drawnSprite, &texture );
+	img_GetTextureID( imgID, &texture );
 
 	// needs full texture width and height here
 	int textureWidth;
 	int textureHeight;
 	gfxPlatform_GetPlatformTextureSize( &texture, &textureWidth, &textureHeight );
 
-	float clipCenterX = buffer->clip.x + ( buffer->clip.w / 2.0f ) - ( size.w / 2.0f * spriteScale ) + drawnOffset.x;
-	float clipCenterY = buffer->clip.y + ( buffer->clip.h / 2.0f ) - ( size.h / 2.0f * spriteScale ) + drawnOffset.y;
+	float clipCenterX = buffer->clip.x + ( buffer->clip.w / 2.0f ) - ( size.w / 2.0f * spriteScale ) + offset.x;
+	float clipCenterY = buffer->clip.y + ( buffer->clip.h / 2.0f ) - ( size.h / 2.0f * spriteScale ) + offset.y;
 
 	Vector2 uvMin, uvMax;
-	img_GetUVCoordinates( drawnSprite, &uvMin, &uvMax );
+	img_GetUVCoordinates( imgID, &uvMin, &uvMax );
 
 	Vector2 subImageMin = vec2( uvMin.x * textureWidth, uvMin.y * textureHeight );
 	Vector2 subImageMax = vec2( uvMax.x * textureWidth, uvMax.y * textureHeight );
 	struct nk_rect subImageRect = nk_rect( subImageMin.x, subImageMin.y, subImageMax.x - subImageMin.x, subImageMax.y - subImageMin.y );
-	struct nk_image image = nk_subimage_id( drawnSprite, (nk_ushort)textureWidth, (nk_ushort)textureHeight, subImageRect );
-	
+	struct nk_image image = nk_subimage_id( imgID, (nk_ushort)textureWidth, (nk_ushort)textureHeight, subImageRect );
+
 	struct nk_rect drawRect = nk_rect( clipCenterX, clipCenterY, size.x * spriteScale, size.y * spriteScale );
 
-	nk_draw_image( buffer, drawRect, &image, nk_rgb( 255, 255, 255 ) );
+	nk_draw_image( buffer, drawRect, &image, nk_rgba_f( 1.0f, 1.0f, 1.0f, alpha ) );
+}
+
+static void drawCurrentImage( struct nk_command_buffer* buffer )
+{
+	// we need to do the onion skinning, to do that we want to get and draw the previous and next images
+
+	uint32_t currFrame = sprAnim_GetCurrentFrame( &editorPlayingSprite );
+
+	uint32_t currEvent = sprAnim_NextImageEvent( &editorSpriteAnimation, currFrame, false, true ); // image for current frame
+	uint32_t prevEvent = INVALID_ANIM_EVENT_IDX;
+	uint32_t nextEvent = sprAnim_NextImageEvent( &editorSpriteAnimation, currFrame, true, false ); // next image
+
+	if( currEvent != INVALID_ANIM_EVENT_IDX ) {
+		prevEvent = sprAnim_NextImageEvent( &editorSpriteAnimation, editorSpriteAnimation.sbEvents[currEvent].base.frame, false, false ); // previous image
+	}
+
+	drawImageEvent( prevEvent, prevImageAlpha, buffer );
+	drawImageEvent( currEvent, 1.0f, buffer );
+	drawImageEvent( nextEvent, nextImageAlpha, buffer );
 }
 
 void spriteAnimationEditor_IMGUIProcess( void )
@@ -652,6 +692,23 @@ void spriteAnimationEditor_IMGUIProcess( void )
 					if( nk_button_label( ctx, "Reset Scale" ) ) {
 						spriteScale = 1.0f;
 					}
+
+					// onion skinning opacity
+					nk_layout_row_begin( ctx, NK_DYNAMIC, STANDARD_ROW_HEIGHT, 1 );
+					nk_layout_row_push( ctx, 1.0f );
+					nk_labelf( ctx, NK_TEXT_ALIGN_LEFT | NK_TEXT_ALIGN_MIDDLE, "Prev Image Alpha: %.2f", prevImageAlpha );
+
+					nk_layout_row_begin( ctx, NK_DYNAMIC, STANDARD_ROW_HEIGHT, 1 );
+					nk_layout_row_push( ctx, 1.0f );
+					nk_slider_float( ctx, 0.0f, &prevImageAlpha, 1.0f, 0.01f );
+
+					nk_layout_row_begin( ctx, NK_DYNAMIC, STANDARD_ROW_HEIGHT, 1 );
+					nk_layout_row_push( ctx, 1.0f );
+					nk_labelf( ctx, NK_TEXT_ALIGN_LEFT | NK_TEXT_ALIGN_MIDDLE, "Next Image Alpha: %.2f", nextImageAlpha );
+
+					nk_layout_row_begin( ctx, NK_DYNAMIC, STANDARD_ROW_HEIGHT, 1 );
+					nk_layout_row_push( ctx, 1.0f );
+					nk_slider_float( ctx, 0.0f, &nextImageAlpha, 1.0f, 0.01f );
 
 					// background color
 					nk_layout_row_begin( ctx, NK_DYNAMIC, STANDARD_ROW_HEIGHT, 1 );

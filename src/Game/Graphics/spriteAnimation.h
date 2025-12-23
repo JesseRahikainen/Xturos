@@ -6,6 +6,9 @@
 
 #include "Math/vector2.h"
 
+#define INVALID_ANIM_FRAME UINT32_MAX
+#define INVALID_ANIM_EVENT_IDX UINT32_MAX
+
 /*
 * Animation tool:
 *  This will be able to be used to create the animations to be used in the game. Will be stored in an external file which can be loaded and played.
@@ -126,6 +129,12 @@ typedef struct {
 void sprAnim_StartAnim( PlayingSpriteAnimation* playingAnim, SpriteAnimation* anim, AnimEventHandler* handler );
 void sprAnim_ProcessAnim( PlayingSpriteAnimation* playingAnim, AnimEventHandler* handler, float dt );
 uint32_t sprAnim_GetCurrentFrame( PlayingSpriteAnimation* playingAnim );
+
+//************************************
+// some general querying functionality
+
+// returns the index of the next event from a starting frame that's a set image event
+uint32_t sprAnim_NextImageEvent( SpriteAnimation* anim, uint32_t startingFrame, bool forward, bool inclusive );
 
 //************************************
 // treating the animation as a resource, allowing us to better manage it and access it from script
