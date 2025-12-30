@@ -405,7 +405,7 @@ static void bordersTestScreen_Enter( void )
 	for( size_t i = 0; i < sb_Count( sbTiles ); ++i ) {
 		char id[64];
 		SDL_snprintf( id, ARRAY_SIZE( id ), "bt%02i.png", (int)i );
-		sbTiles[i] = img_GetExistingByID( id );
+		sbTiles[i] = img_GetExistingByStrID( id );
 	}
 
 	// set the map to empty

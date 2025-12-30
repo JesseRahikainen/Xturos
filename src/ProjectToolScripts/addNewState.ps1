@@ -76,8 +76,8 @@ $project = $IDE.Solution.Projects | ? { $_.FullName -eq $projectPath }
 
 Write-Output("Finding filters...");
 #Need to go down through the project items until we find where we want to add things
-$headerFilterPath = @("Header Files", "Game", "States")
-$sourceFilterPath = @("Source Files", "Game", "States")
+$headerFilterPath = @("Header Files", "Game", "TestScreens")
+$sourceFilterPath = @("Source Files", "Game", "TestScreens")
 
 $headerFilter = $project
 for($i = 0; $i -lt $headerFilterPath.Count; $i++)

@@ -2,7 +2,7 @@
 #define VECTOR_3_H
 
 #include <stdbool.h>
-#include "Others/cmp.h"
+#include "System/serializer.h"
 
 typedef struct {
 	union {
@@ -47,7 +47,6 @@ Vector3 vec3( float x, float y, float z );
 
 void vec3_Dump( const Vector3* vec, const char* extra );
 
-bool vec3_Serialize( cmp_ctx_t* cmp, const Vector3* vec );
-bool vec3_Deserialize( cmp_ctx_t* cmp, Vector3* outVec );
+bool vec3_Serialize( Serializer* s, const char* name, Vector3* vec );
 
 #endif // inclusion guard

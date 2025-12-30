@@ -5,7 +5,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-#include "Others/cmp.h"
+#include "System/serializer.h"
 
 typedef int32_t fixed32;
 
@@ -19,7 +19,6 @@ fixed32 f32_Subtract( fixed32 lhs, fixed32 rhs );
 fixed32 f32_Multiply( fixed32 lhs, fixed32 rhs );
 fixed32 f32_Divide( fixed32 lhs, fixed32 hrs );
 
-bool f32_Serialize( cmp_ctx_t* cmp, fixed32 fp );
-bool f32_Deserialize( cmp_ctx_t* cmp, fixed32* outFp );
+bool f32_Serialize( Serializer* s, const char* name, fixed32* fp );
 
 #endif /* inclusion guard */

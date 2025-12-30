@@ -31,7 +31,7 @@ void initialChoice_RegisterState( const char* name, GameState* state, bool pushe
 
 static void initialChoiceState_Enter( void )
 {
-	whiteImg = img_GetExistingByID( "default_white_square" );
+	whiteImg = img_GetExistingByStrID( "default_white_square" );
 
 	gfx_SetClearColor( CLR_BLUE );
 	cam_SetFlags( 0, 1 );

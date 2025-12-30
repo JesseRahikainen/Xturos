@@ -3,6 +3,7 @@
 #include <SDL3/SDL_assert.h>
 #include "System/platformLog.h"
 #include "vector3.h"
+#include "Utils/helpers.h"
 
 // component-wise operations
 Vector3* vec3_Add( const Vector3* v1, const Vector3* v2, Vector3* out )
@@ -223,50 +224,33 @@ void vec3_Dump( const Vector3* vec, const char* extra )
 	llog( LOG_DEBUG,  "%s = %3.3f %3.3f %3.3f\n", extra == NULL ? "v3" : extra, vec->v[0], vec->v[1], vec->v[2] );
 }
 
-bool vec3_Serialize( cmp_ctx_t* cmp, const Vector3* vec )
+bool vec3_Serialize( Serializer* s, const char* name, Vector3* vec )
 {
-	SDL_assert( vec != NULL );
-	SDL_assert( cmp != NULL );
+	ASSERT_AND_IF_NOT( s != NULL ) return false;
+	ASSERT_AND_IF_NOT( vec != NULL ) return false;
 
-	if( !cmp_write_float( cmp, vec->x ) ) {
-		llog( LOG_ERROR, "Unable to write x coordinate of Vector3." );
+	if( !s->startStructure( s, name ) ) {
+		llog( LOG_ERROR, "Issue starting Vector3 serialization." );
 		return false;
 	}
 
-	if( !cmp_write_float( cmp, vec->y ) ) {
-		llog( LOG_ERROR, "Unable to write y coordinate of Vector3." );
+	if( !s->flt( s, "x", &( vec->x ) ) ) {
+		llog( LOG_ERROR, "Unable to serialize x coordinate of Vector3." );
 		return false;
 	}
 
-	if( !cmp_write_float( cmp, vec->z ) ) {
-		llog( LOG_ERROR, "Unable to write z coordinate of Vector3." );
+	if( !s->flt( s, "y", &( vec->y ) ) ) {
+		llog( LOG_ERROR, "Unable to serialize y coordinate of Vector3." );
 		return false;
 	}
 
-	return true;
-}
-
-bool vec3_Deserialize( cmp_ctx_t* cmp, Vector3* outVec )
-{
-	SDL_assert( outVec != NULL );
-	SDL_assert( cmp != NULL );
-
-	outVec->x = 0.0f;
-	outVec->y = 0.0f;
-	outVec->z = 0.0f;
-
-	if( !cmp_read_float( cmp, &( outVec->x ) ) ) {
-		llog( LOG_ERROR, "Unable to load x coordinate of Vector3." );
+	if( !s->flt( s, "z", &( vec->z ) ) ) {
+		llog( LOG_ERROR, "Unable to serialize z coordinate of Vector3." );
 		return false;
 	}
 
-	if( !cmp_read_float( cmp, &( outVec->y ) ) ) {
-		llog( LOG_ERROR, "Unable to load y coordinate of Vector3." );
-		return false;
-	}
-
-	if( !cmp_read_float( cmp, &( outVec->z ) ) ) {
-		llog( LOG_ERROR, "Unable to load z coordinate of Vector3." );
+	if( !s->endStructure( s, name ) ) {
+		llog( LOG_ERROR, "Issue ending Vector3 serialization." );
 		return false;
 	}
 

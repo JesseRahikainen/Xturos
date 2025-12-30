@@ -5,7 +5,7 @@
 
 #include "Utils/helpers.h"
 #include "System/platformLog.h"
-#include "System/ECPS/ecps_serialization.h"
+#include "System/ECPS/ecps_fileSerialization.h"
 #include "Math/mathUtil.h"
 #include "System/memory.h"
 #include "System/luaInterface.h"
@@ -38,16 +38,16 @@ ComponentID gcAnimSpriteCompID = INVALID_COMPONENT_ID;
 
 // serialization and deserialization functions
 //====
-static bool serializeGeneralCallback( cmp_ctx_t* cmp, SerializedEntityInfo* sbEntityInfo, GeneralCallback* callback, const char* type, const char* desc )
+static bool serializeGeneralCallback( Serializer* s, GeneralCallback* callback, const char* type, const char* desc )
 {
-	SDL_assert( callback != NULL );
+	ASSERT_AND_IF_NOT( callback != NULL ) return false;
+	ASSERT_AND_IF_NOT( s != NULL ) return false;
 
-	CMP_WRITE( cmp, callback->type, cmp_write_int, type, desc, return false );
+	SERIALIZE_ENUM( s, type, "callbackType", callback->type, CallbackType, return false );
 	if( callback->type == CBT_SOURCE ) {
-		const char* functionID = ecps_GetTrackedIDFromECPSCallback( callback->source.callback );
-		CMP_WRITE_STR( cmp, functionID, type, desc, return false );
+		SERIALIZE_CHECK( s->trackedECPSCallback( s, "sourceFuncID", &( callback->source.callback ) ), type, desc, return false );
 	} else if( callback->type == CBT_LUA ) {
-		CMP_WRITE_STR( cmp, callback->script.callback, type, desc, return false );
+		SERIALIZE_CHECK( s->cString( s, "scriptFunc", &( callback->script.callback ) ), type, "scriptFunc", return false );
 	} else {
 		llog( LOG_ERROR, "Unknown callback type when saving %s for %s.", desc, type );
 		return false;
@@ -56,264 +56,130 @@ static bool serializeGeneralCallback( cmp_ctx_t* cmp, SerializedEntityInfo* sbEn
 	return true;
 }
 
-static bool deserializeGeneralCallback( cmp_ctx_t* cmp, SerializedEntityInfo* sbEntityInfo, GeneralCallback* callback, const char* type, const char* desc )
-{
-	SDL_assert( callback != NULL );
-
-	int readType;
-	CMP_READ( cmp, readType, cmp_read_int, type, desc, return false );
-	callback->type = (CallbackType)readType;
-
-	if( callback->type == CBT_SOURCE ) {
-		char idBuffer[128];
-		uint32_t bufferSize = ARRAY_SIZE( idBuffer );
-		CMP_READ_STR( cmp, idBuffer, bufferSize, type, desc, return false; );
-		callback->source.callback = ecps_GetTrackedECPSCallbackFromID( idBuffer );
-	} else if( callback->type == CBT_LUA ) {
-		char idBuffer[128];
-		uint32_t bufferSize = ARRAY_SIZE( idBuffer );
-		CMP_READ_STR( cmp, idBuffer, bufferSize, "GCPointerResponseData", "overResponse", return false; );
-		callback->script.callback = createStringCopy( idBuffer );
-	} else {
-		llog( LOG_ERROR, "Unknown callback type when loading %s for %s.", desc, type );
-		return false;
-	}
-
-	return true;
-}
-
 //====
-static bool serializeColorComp( cmp_ctx_t* cmp, void* data, SerializedEntityInfo* sbEntityInfo )
+static bool serializeColorComp( Serializer* s, void* data )
 {
-	SDL_assert( cmp != NULL );
-	SDL_assert( data != NULL );
+	ASSERT_AND_IF_NOT( s != NULL ) return false;
+	ASSERT_AND_IF_NOT( data != NULL ) return false;
 
 	GCColorData* clr = (GCColorData*)data;
 
-	CMP_WRITE( cmp, &( clr->currClr ), clr_Serialize, "GCColorData", "currClr", return false );
-	CMP_WRITE( cmp, &( clr->futureClr ), clr_Serialize, "GCColorData", "futureClr", return false );
-
-	return true;
-}
-
-static bool deserializeColorComp( cmp_ctx_t* cmp, void* data, SerializedEntityInfo* sbEntityInfo )
-{
-	SDL_assert( cmp != NULL );
-	SDL_assert( data != NULL );
-
-	GCColorData* clr = (GCColorData*)data;
-
-	CMP_READ( cmp, clr->currClr, clr_Deserialize, "GCColorData", "currClr", return false );
-	CMP_READ( cmp, clr->futureClr, clr_Deserialize, "GCColorData", "futureClr", return false );
+	SERIALIZE_CHECK( s->startStructure( s, "" ), "GCColorData", "starting", return false );
+	SERIALIZE_CHECK( clr_Serialize( s, "currClr", &( clr->currClr ) ), "GCColorData", "currClr", return false );
+	SERIALIZE_CHECK( clr_Serialize( s, "futureClr", &( clr->futureClr ) ), "GCColorData", "futureClr", return false );
+	SERIALIZE_CHECK( s->endStructure( s, "" ), "GCColorData", "ending", return false );
 
 	return true;
 }
 
 //====
-static bool serializeSpriteComp( cmp_ctx_t* cmp, void* data, SerializedEntityInfo* sbEntityInfo )
+static bool serializeSpriteComp( Serializer* s, void* data )
 {
-	SDL_assert( cmp != NULL );
-	SDL_assert( data != NULL );
+	ASSERT_AND_IF_NOT( s != NULL ) return false;
+	ASSERT_AND_IF_NOT( data != NULL ) return false;
 
 	GCSpriteData* sprite = (GCSpriteData*)data;
 
-	CMP_WRITE( cmp, sprite->camFlags, cmp_write_u32, "GCSpriteData", "camFlags", return false );
-	CMP_WRITE( cmp, sprite->depth, cmp_write_s8, "GCSpriteData", "depth", return false );
-	const char* imgID = img_GetImgStringID( sprite->img );
-	CMP_WRITE_STR( cmp, imgID, "GCSpriteData", "img", return false );
-
-	return true;
-}
-
-static bool deserializeSpriteComp( cmp_ctx_t* cmp, void* data, SerializedEntityInfo* sbEntityInfo )
-{
-	SDL_assert( cmp != NULL );
-	SDL_assert( data != NULL );
-
-	GCSpriteData* sprite = (GCSpriteData*)data;
-
-	CMP_READ( cmp, sprite->camFlags, cmp_read_u32, "GCSpriteData", "camFlags", return false );
-	CMP_READ( cmp, sprite->depth, cmp_read_s8, "GCSpriteData", "depth", return false );
-
-	char idBuffer[128];
-	uint32_t bufferSize = ARRAY_SIZE( idBuffer );
-	CMP_READ_STR( cmp, idBuffer, bufferSize, "GCSpriteData", "img", return false );
-	sprite->img = img_GetExistingByID( idBuffer );
-	if( sprite->img == -1 ) {
-		llog( LOG_ERROR, "Unable to find img with id %s for GCSpriteData.", idBuffer );
-	}
+	SERIALIZE_CHECK( s->startStructure( s, "" ), "GCSpriteData", "starting", return false );
+	SERIALIZE_CHECK( s->u32( s, "camFlags", &( sprite->camFlags ) ), "GCSpriteData", "camFlags", return false );
+	SERIALIZE_CHECK( s->s8( s, "depth", &( sprite->depth ) ), "GCSpriteData", "depth", return false );
+	SERIALIZE_CHECK( s->imageID( s, "img", &( sprite->img ) ), "GCSpriteData", "img", return false );
+	SERIALIZE_CHECK( s->endStructure( s, "" ), "GCSpriteData", "ending", return false );
 
 	return true;
 }
 
 //====
-static bool serialize3x3Comp( cmp_ctx_t* cmp, void* data, SerializedEntityInfo* sbEntityInfo )
+static bool serialize3x3Comp( Serializer* s, void* data )
 {
-	SDL_assert( cmp != NULL );
-	SDL_assert( data != NULL );
+	ASSERT_AND_IF_NOT( s != NULL ) return false;
+	ASSERT_AND_IF_NOT( data != NULL ) return false;
 
 	GC3x3SpriteData* sprite = (GC3x3SpriteData*)data;
 
-	CMP_WRITE( cmp, sprite->camFlags, cmp_write_u32, "GC3x3SpriteData", "camFlags", return false );
-	CMP_WRITE( cmp, sprite->depth, cmp_write_s8, "GC3x3SpriteData", "depth", return false );
-	CMP_WRITE( cmp, &sprite->size, vec2_Serialize, "GC3x3SpriteData", "size", return false );
-
-	const char* imgID = img_GetImgStringID( sprite->img );
-	CMP_WRITE_STR( cmp, imgID, "GCSpriteData", "img", return false );
-
-	CMP_WRITE( cmp, sprite->topBorder, cmp_write_u32, "GC3x3SpriteData", "topBorder", return false );
-	CMP_WRITE( cmp, sprite->bottomBorder, cmp_write_u32, "GC3x3SpriteData", "bottomBorder", return false );
-	CMP_WRITE( cmp, sprite->leftBorder, cmp_write_u32, "GC3x3SpriteData", "leftBorder", return false );
-	CMP_WRITE( cmp, sprite->rightBorder, cmp_write_u32, "GC3x3SpriteData", "rightBorder", return false );
-
-	return true;
-}
-
-static bool deserialize3x3Comp( cmp_ctx_t* cmp, void* data, SerializedEntityInfo* sbEntityInfo )
-{
-	SDL_assert( cmp != NULL );
-	SDL_assert( data != NULL );
-
-	GC3x3SpriteData* sprite = (GC3x3SpriteData*)data;
-
-	CMP_READ( cmp, sprite->camFlags, cmp_read_u32, "GC3x3SpriteData", "camFlags", return false );
-	CMP_READ( cmp, sprite->depth, cmp_read_s8, "GC3x3SpriteData", "depth", return false );
-	CMP_READ( cmp, sprite->size, vec2_Deserialize, "GC3x3SpriteData", "size", return false );
-
-	char idBuffer[128];
-	uint32_t bufferSize = ARRAY_SIZE( idBuffer );
-	CMP_READ_STR( cmp, idBuffer, bufferSize, "GC3x3SpriteData", "img", return false );
-	sprite->img = img_GetExistingByID( idBuffer );
-	if( sprite->img == -1 ) {
-		llog( LOG_ERROR, "Unable to find img with id %s for GC3x3SpriteData.", idBuffer );
-	}
-
-	CMP_READ( cmp, sprite->topBorder, cmp_read_u32, "GC3x3SpriteData", "topBorder", return false );
-	CMP_READ( cmp, sprite->bottomBorder, cmp_read_u32, "GC3x3SpriteData", "bottomBorder", return false );
-	CMP_READ( cmp, sprite->leftBorder, cmp_read_u32, "GC3x3SpriteData", "leftBorder", return false );
-	CMP_READ( cmp, sprite->rightBorder, cmp_read_u32, "GC3x3SpriteData", "rightBorder", return false );
+	SERIALIZE_CHECK( s->startStructure( s, "" ), "GC3x3SpriteData", "starting", return false );
+	SERIALIZE_CHECK( s->u32( s, "camFlags", &( sprite->camFlags ) ), "GC3x3SpriteData", "camFlags", return false );
+	SERIALIZE_CHECK( s->s8( s, "depth", &( sprite->depth ) ), "GC3x3SpriteData", "depth", return false );
+	SERIALIZE_CHECK( vec2_Serialize( s, "size", &( sprite->size ) ), "GC3x3SpriteData", "size", return false );
+	SERIALIZE_CHECK( s->imageID( s, "img", &( sprite->img ) ), "GC3x3SpriteData", "img", return false );
+	SERIALIZE_CHECK( s->u32( s, "topBorder", &( sprite->topBorder ) ), "GC3x3SpriteData", "topBorder", return false );
+	SERIALIZE_CHECK( s->u32( s, "bottomBorder", &( sprite->bottomBorder ) ), "GC3x3SpriteData", "bottomBorder", return false );
+	SERIALIZE_CHECK( s->u32( s, "leftBorder", &( sprite->leftBorder ) ), "GC3x3SpriteData", "leftBorder", return false );
+	SERIALIZE_CHECK( s->u32( s, "rightBorder", &( sprite->rightBorder ) ), "GC3x3SpriteData", "rightBorder", return false );
+	SERIALIZE_CHECK( s->endStructure( s, "" ), "GC3x3SpriteData", "ending", return false );
 
 	return true;
 }
 
 //====
-static bool serializeCollComp( cmp_ctx_t* cmp, void* data, SerializedEntityInfo* sbEntityInfo )
+static bool serializeCollComp( Serializer* s, void* data )
 {
-	SDL_assert( cmp != NULL );
-	SDL_assert( data != NULL );
+	ASSERT_AND_IF_NOT( s != NULL ) return false;
+	ASSERT_AND_IF_NOT( data != NULL ) return false;
 
 	GCColliderData* coll = (GCColliderData*)data;
 
-	CMP_WRITE( cmp, coll->base.type, cmp_write_int, "GCColliderData", "base type", return false );
-
-	switch( coll->base.type )
-	{
-	case CT_AAB:
-		CMP_WRITE( cmp, &(coll->aab.halfDim), vec2_Serialize, "GCColliderData", "halfDim", return false; );
-		break;
-	case CT_CIRCLE:
-		CMP_WRITE( cmp, coll->circle.radius, cmp_write_float, "GCColliderData", "radius", return false; );
-		break;
-	case CT_HALF_SPACE:
-		CMP_WRITE( cmp, &( coll->halfSpace.normal ), vec2_Serialize, "GCColliderData", "normal", return false; );
-		break;
+	SERIALIZE_CHECK( s->startStructure( s, "" ), "GCColliderData", "starting", return false );
+	SERIALIZE_ENUM( s, "GCColliderData", "callbackType", coll->base.type, enum ColliderType, return false );
+	switch( coll->base.type ) {
+		case CT_AAB:
+			SERIALIZE_CHECK( vec2_Serialize( s, "halfDim", &( coll->aab.halfDim ) ), "GCColliderData", "halfDim", return false );
+			break;
+		case CT_CIRCLE:
+			SERIALIZE_CHECK( s->flt( s, "radius", &( coll->circle.radius ) ), "GCColliderData", "radius", return false );
+			break;
+		case CT_HALF_SPACE:
+			SERIALIZE_CHECK( vec2_Serialize( s, "normal", &( coll->halfSpace.normal ) ), "GCColliderData", "normal", return false );
+			break;
+		default:
+			ASSERT_ALWAYS( "Attempting to serialize unsupported collision type." );
+			return false;
 	}
-
-	return true;
-}
-
-static bool deserializeCollComp( cmp_ctx_t* cmp, void* data, SerializedEntityInfo* sbEntityInfo )
-{
-	SDL_assert( cmp != NULL );
-	SDL_assert( data != NULL );
-
-	GCColliderData* coll = (GCColliderData*)data;
-
-	int32_t readType;
-	CMP_READ( cmp, readType, cmp_read_int, "GCColliderData", "base type", return false );
-	coll->base.type = (enum ColliderType)readType;
-
-	switch( coll->base.type )
-	{
-	case CT_AAB:
-		CMP_READ( cmp, coll->aab.halfDim, vec2_Deserialize, "GCColliderData", "halfDim", return false; );
-		break;
-	case CT_CIRCLE:
-		CMP_READ( cmp, coll->circle.radius, cmp_read_float, "GCColliderData", "radius", return false; );
-		break;
-	case CT_HALF_SPACE:
-		CMP_READ( cmp, coll->halfSpace.normal, vec2_Deserialize, "GCColliderData", "normal", return false; );
-		break;
-	}
+	SERIALIZE_CHECK( s->endStructure( s, "" ), "GCColliderData", "ending", return false );
 
 	return true;
 }
 
 //====
-static bool serializeClickCollisionComp( cmp_ctx_t* cmp, void* data, SerializedEntityInfo* sbEntityInfo )
+static bool serializeClickCollisionComp( Serializer* s, void* data )
 {
-	SDL_assert( cmp != NULL );
-	SDL_assert( data != NULL );
+	ASSERT_AND_IF_NOT( s != NULL ) return false;
+	ASSERT_AND_IF_NOT( data != NULL ) return false;
 
 	GCPointerCollisionData* click = (GCPointerCollisionData*)data;
 
-	CMP_WRITE( cmp, &( click->collisionHalfDim ), vec2_Serialize, "GCPointerResponseData", "collisionHalfDim", return false );
-	CMP_WRITE( cmp, click->camFlags, cmp_write_uint, "GCPointerResponseData", "camFlags", return false );
-	CMP_WRITE( cmp, click->priority, cmp_write_s32, "GCPointerResponseData", "priority", return false );
-
-	return true;
-}
-
-static bool deserializeClickCollisionComp( cmp_ctx_t* cmp, void* data, SerializedEntityInfo* sbEntityInfo )
-{
-	SDL_assert( cmp != NULL );
-	SDL_assert( data != NULL );
-
-	GCPointerCollisionData* click = (GCPointerCollisionData*)data;
-
-	CMP_READ( cmp, click->collisionHalfDim, vec2_Deserialize, "GCPointerResponseData", "collisionHalfDim", return false );
-	CMP_READ( cmp, click->camFlags, cmp_read_uint, "GCPointerResponseData", "camFlags", return false );
-	CMP_READ( cmp, click->priority, cmp_read_s32, "GCPointerResponseData", "priority", return false );
+	SERIALIZE_CHECK( s->startStructure( s, "" ), "GCClickCollisionData", "starting", return false );
+	SERIALIZE_CHECK( vec2_Serialize( s, "halfDim", &( click->collisionHalfDim ) ), "GCClickCollisionData", "collisionHalfDim", return false );
+	SERIALIZE_CHECK( s->u32( s, "camFlags", &( click->camFlags ) ), "GCClickCollisionData", "camFlags", return false );
+	SERIALIZE_CHECK( s->s32( s, "priority", &( click->priority ) ), "GCClickCollisionData", "priority", return false );
+	SERIALIZE_CHECK( s->endStructure( s, "" ), "GCClickCollisionData", "ending", return false );
 
 	return true;
 }
 
 //====
-static bool serializeClickFuncResponseComp( cmp_ctx_t* cmp, void* data, SerializedEntityInfo* sbEntityInfo )
+static bool serializeClickFuncResponseComp( Serializer* s, void* data )
 {
-	SDL_assert( cmp != NULL );
-	SDL_assert( data != NULL );
+	ASSERT_AND_IF_NOT( s != NULL ) return false;
+	ASSERT_AND_IF_NOT( data != NULL ) return false;
 
 	GCPointerResponseData* response = (GCPointerResponseData*)data;
 
-	if( !serializeGeneralCallback( cmp, sbEntityInfo, &response->overResponse, "GCPointerResponseData", "overResponse" ) ) return false;
-	if( !serializeGeneralCallback( cmp, sbEntityInfo, &response->leaveResponse, "GCPointerResponseData", "leaveResponse" ) ) return false;
-	if( !serializeGeneralCallback( cmp, sbEntityInfo, &response->pressResponse, "GCPointerResponseData", "pressResponse" ) ) return false;
-	if( !serializeGeneralCallback( cmp, sbEntityInfo, &response->releaseResponse, "GCPointerResponseData", "releaseResponse" ) ) return false;
-
-	return true;
-}
-
-static bool deserializeClickFuncResponseComp( cmp_ctx_t* cmp, void* data, SerializedEntityInfo* sbEntityInfo )
-{
-	SDL_assert( cmp != NULL );
-	SDL_assert( data != NULL );
-
-	GCPointerResponseData* response = (GCPointerResponseData*)data;
-
-	if( !deserializeGeneralCallback( cmp, sbEntityInfo, &response->overResponse, "GCPointerResponseData", "overResponse" ) ) return false;
-	if( !deserializeGeneralCallback( cmp, sbEntityInfo, &response->leaveResponse, "GCPointerResponseData", "leaveResponse" ) ) return false;
-	if( !deserializeGeneralCallback( cmp, sbEntityInfo, &response->pressResponse, "GCPointerResponseData", "pressResponse" ) ) return false;
-	if( !deserializeGeneralCallback( cmp, sbEntityInfo, &response->releaseResponse, "GCPointerResponseData", "releaseResponse" ) ) return false;
+	SERIALIZE_CHECK( s->startStructure( s, "" ), "GCPointerResponseData", "starting", return false );
+	if( !serializeGeneralCallback( s, &response->overResponse, "GCPointerResponseData", "overResponse" ) ) return false;
+	if( !serializeGeneralCallback( s, &response->leaveResponse, "GCPointerResponseData", "leaveResponse" ) ) return false;
+	if( !serializeGeneralCallback( s, &response->pressResponse, "GCPointerResponseData", "pressResponse" ) ) return false;
+	if( !serializeGeneralCallback( s, &response->releaseResponse, "GCPointerResponseData", "releaseResponse" ) ) return false;
+	SERIALIZE_CHECK( s->endStructure( s, "" ), "CPointerResponseData", "ending", return false );
 
 	return true;
 }
 
 //====
-static bool serializeTextComp( cmp_ctx_t* cmp, void* data, SerializedEntityInfo* sbEntityInfo )
+static bool serializeTextComp( Serializer* s, void* data )
 {
-	SDL_assert( cmp != NULL );
-	SDL_assert( data != NULL );
+	ASSERT_AND_IF_NOT( s != NULL ) return false;
+	ASSERT_AND_IF_NOT( data != NULL ) return false;
 
 	GCTextData* text = (GCTextData*)data;
 
@@ -329,311 +195,170 @@ static bool serializeTextComp( cmp_ctx_t* cmp, void* data, SerializedEntityInfo*
 	return true;
 }
 
-static bool deserializeTextComp( cmp_ctx_t* cmp, void* data, SerializedEntityInfo* sbEntityInfo )
-{
-	SDL_assert( cmp != NULL );
-	SDL_assert( data != NULL );
-
-	GCTextData* text = (GCTextData*)data;
-
-	// TODO: Need to be able to save out a font.
-	SDL_assert_always( false && "deserializeTextComp: Not implemented yet." );
-
-	return true;
-}
-
 //====
-static bool serializeVal0Comp( cmp_ctx_t* cmp, void* data, SerializedEntityInfo* sbEntityInfo )
+static bool serializeVal0Comp( Serializer* s, void* data )
 {
-	SDL_assert( cmp != NULL );
-	SDL_assert( data != NULL );
+	ASSERT_AND_IF_NOT( s != NULL ) return false;
+	ASSERT_AND_IF_NOT( data != NULL ) return false;
 
 	GCFloatVal0Data* val = (GCFloatVal0Data*)data;
 
-	CMP_WRITE( cmp, val->currValue, cmp_write_float, "GCFloatVal0Data", "currValue", return false );
-	CMP_WRITE( cmp, val->futureValue, cmp_write_float, "GCFloatVal0Data", "futureValue", return false );
-
-	return true;
-}
-
-static bool deserializeVal0Comp( cmp_ctx_t* cmp, void* data, SerializedEntityInfo* sbEntityInfo )
-{
-	SDL_assert( cmp != NULL );
-	SDL_assert( data != NULL );
-
-	GCFloatVal0Data* val = (GCFloatVal0Data*)data;
-
-	CMP_READ( cmp, val->currValue, cmp_read_float, "GCFloatVal0Data", "currValue", return false );
-	CMP_READ( cmp, val->futureValue, cmp_read_float, "GCFloatVal0Data", "futureValue", return false );
+	SERIALIZE_CHECK( s->startStructure( s, "" ), "GCFloatVal0Data", "starting", return false );
+	SERIALIZE_CHECK( s->flt( s, "currValue", &( val->currValue ) ), "GCFloatVal0Data", "currValue", return false );
+	SERIALIZE_CHECK( s->flt( s, "futureValue", &( val->futureValue ) ), "GCFloatVal0Data", "futureValue", return false );
+	SERIALIZE_CHECK( s->endStructure( s, "" ), "GCFloatVal0Data", "ending", return false );
 
 	return true;
 }
 
 //====
-static bool serializeStencilComp( cmp_ctx_t* cmp, void* data, SerializedEntityInfo* sbEntityInfo )
+static bool serializeStencilComp( Serializer* s, void* data )
 {
-	SDL_assert( cmp != NULL );
-	SDL_assert( data != NULL );
+	ASSERT_AND_IF_NOT( s != NULL ) return false;
+	ASSERT_AND_IF_NOT( data != NULL ) return false;
 
 	GCStencilData* val = (GCStencilData*)data;
 
-	CMP_WRITE( cmp, val->isStencil, cmp_write_bool, "GCStencilData", "isStencil", return false );
-	CMP_WRITE( cmp, val->stencilID, cmp_write_int, "GCStencilData", "stencilID", return false );
-
-	return true;
-}
-
-static bool deserializeStencilComp( cmp_ctx_t* cmp, void* data, SerializedEntityInfo* sbEntityInfo )
-{
-	SDL_assert( cmp != NULL );
-	SDL_assert( data != NULL );
-
-	GCStencilData* val = (GCStencilData*)data;
-
-	CMP_READ( cmp, val->isStencil, cmp_read_bool, "GCStencilData", "isStencil", return false );
-	CMP_READ( cmp, val->stencilID, cmp_read_int, "GCStencilData", "stencilID", return false );
+	SERIALIZE_CHECK( s->startStructure( s, "" ), "GCStencilData", "starting", return false );
+	SERIALIZE_CHECK( s->boolean( s, "isStencil", &( val->isStencil ) ), "GCStencilData", "isStencil", return false );
+	SERIALIZE_CHECK( s->s8( s, "stencilID", &( val->stencilID ) ), "GCStencilData", "stencilID", return false );
+	SERIALIZE_CHECK( s->endStructure( s, "" ), "GCStencilData", "ending", return false );
 
 	return true;
 }
 
 //====
-static bool serializeVec2TweenComp( cmp_ctx_t* cmp, void* data, SerializedEntityInfo* sbEntityInfo )
+static bool serializeVec2TweenComp( Serializer* s, void* data )
 {
-	SDL_assert( cmp != NULL );
-	SDL_assert( data != NULL );
+	ASSERT_AND_IF_NOT( s != NULL ) return false;
+	ASSERT_AND_IF_NOT( data != NULL ) return false;
 
 	GCVec2TweenData* val = (GCVec2TweenData*)data;
 
-	CMP_WRITE( cmp, val->duration, cmp_write_float, "GCVec2TweenData", "duration", return false );
-	CMP_WRITE( cmp, val->timePassed, cmp_write_float, "GCVec2TweenData", "timePassed", return false );
-	CMP_WRITE( cmp, val->preDelay, cmp_write_float, "GCVec2TweenData", "preDelay", return false );
-	CMP_WRITE( cmp, val->postDelay, cmp_write_float, "GCVec2TweenData", "postDelay", return false );
-	CMP_WRITE( cmp, &(val->startState), vec2_Serialize, "GCVec2TweenData", "startState", return false );
-	CMP_WRITE( cmp, &(val->endState), vec2_Serialize, "GCVec2TweenData", "endState", return false );
-	
-	const char* easingID = ecps_GetTrackedIDFromTweenFunc( val->easing );
-	CMP_WRITE_STR( cmp, easingID, "GCVec2TweenData", "easing", return false );
-
-	return true;
-}
-
-static bool deserializeVec2TweenComp( cmp_ctx_t* cmp, void* data, SerializedEntityInfo* sbEntityInfo )
-{
-	SDL_assert( cmp != NULL );
-	SDL_assert( data != NULL );
-
-	GCVec2TweenData* val = (GCVec2TweenData*)data;
-
-	CMP_READ( cmp, val->duration, cmp_read_float, "GCVec2TweenData", "duration", return false );
-	CMP_READ( cmp, val->timePassed, cmp_read_float, "GCVec2TweenData", "timePassed", return false );
-	CMP_READ( cmp, val->preDelay, cmp_read_float, "GCVec2TweenData", "preDelay", return false );
-	CMP_READ( cmp, val->postDelay, cmp_read_float, "GCVec2TweenData", "postDelay", return false );
-	CMP_READ( cmp, val->startState, vec2_Deserialize, "GCVec2TweenData", "startState", return false );
-	CMP_READ( cmp, val->endState, vec2_Deserialize, "GCVec2TweenData", "endState", return false );
-
-	char idBuffer[128];
-	uint32_t bufferSize = ARRAY_SIZE( idBuffer );
-	CMP_READ_STR( cmp, idBuffer, bufferSize, "GCVec2TweenData", "easing", return false );
-	val->easing = ecps_GetTrackedTweenFuncFromID( idBuffer );
+	SERIALIZE_CHECK( s->startStructure( s, "" ), "GCStencilData", "starting", return false );
+	SERIALIZE_CHECK( s->flt( s, "duration", &( val->duration ) ), "GCVec2TweenData", "duration", return false );
+	SERIALIZE_CHECK( s->flt( s, "timePassed", &( val->timePassed ) ), "GCVec2TweenData", "timePassed", return false );
+	SERIALIZE_CHECK( s->flt( s, "preDelay", &( val->preDelay ) ), "GCVec2TweenData", "preDelay", return false );
+	SERIALIZE_CHECK( s->flt( s, "postDelay", &( val->postDelay ) ), "GCVec2TweenData", "postDelay", return false );
+	SERIALIZE_CHECK( vec2_Serialize( s, "startState", &( val->startState ) ), "GCVec2TweenData", "startState", return false );
+	SERIALIZE_CHECK( vec2_Serialize( s, "endState", &( val->endState ) ), "GCVec2TweenData", "endState", return false );
+	SERIALIZE_CHECK( s->trackedEaseFunc( s, "easing", &( val->easing ) ), "GCVec2TweenData", "easing", return false );
+	SERIALIZE_CHECK( s->endStructure( s, "" ), "GCVec2TweenData", "ending", return false );
 
 	return true;
 }
 
 //====
-static bool serializeFloatTweenComp( cmp_ctx_t* cmp, void* data, SerializedEntityInfo* sbEntityInfo )
+static bool serializeFloatTweenComp( Serializer* s, void* data )
 {
-	SDL_assert( cmp != NULL );
-	SDL_assert( data != NULL );
+	ASSERT_AND_IF_NOT( s != NULL ) return false;
+	ASSERT_AND_IF_NOT( data != NULL ) return false;
 
 	GCFloatTweenData* val = (GCFloatTweenData*)data;
 
-
-	CMP_WRITE( cmp, val->duration, cmp_write_float, "GCFloatTweenData", "duration", return false );
-	CMP_WRITE( cmp, val->timePassed, cmp_write_float, "GCFloatTweenData", "timePassed", return false );
-	CMP_WRITE( cmp, val->preDelay, cmp_write_float, "GCFloatTweenData", "preDelay", return false );
-	CMP_WRITE( cmp, val->postDelay, cmp_write_float, "GCFloatTweenData", "postDelay", return false );
-	CMP_WRITE( cmp, val->startState, cmp_write_float, "GCFloatTweenData", "startState", return false );
-	CMP_WRITE( cmp, val->endState, cmp_write_float, "GCFloatTweenData", "endState", return false );
-
-	const char* easingID = ecps_GetTrackedIDFromTweenFunc( val->easing );
-	CMP_WRITE_STR( cmp, easingID, "GCFloatTweenData", "easing", return false );
-
-	return true;
-}
-
-static bool deserializeFloatTweenComp( cmp_ctx_t* cmp, void* data, SerializedEntityInfo* sbEntityInfo )
-{
-	SDL_assert( cmp != NULL );
-	SDL_assert( data != NULL );
-
-	GCFloatTweenData* val = (GCFloatTweenData*)data;
-
-	CMP_READ( cmp, val->duration, cmp_read_float, "GCFloatTweenData", "duration", return false );
-	CMP_READ( cmp, val->timePassed, cmp_read_float, "GCFloatTweenData", "timePassed", return false );
-	CMP_READ( cmp, val->preDelay, cmp_read_float, "GCFloatTweenData", "preDelay", return false );
-	CMP_READ( cmp, val->postDelay, cmp_read_float, "GCFloatTweenData", "postDelay", return false );
-	CMP_READ( cmp, val->startState, cmp_read_float, "GCFloatTweenData", "startState", return false );
-	CMP_READ( cmp, val->endState, cmp_read_float, "GCFloatTweenData", "endState", return false );
-
-	char idBuffer[128];
-	uint32_t bufferSize = ARRAY_SIZE( idBuffer );
-	CMP_READ_STR( cmp, idBuffer, bufferSize, "GCFloatTweenData", "easing", return false );
-	val->easing = ecps_GetTrackedTweenFuncFromID( idBuffer );
+	SERIALIZE_CHECK( s->startStructure( s, "" ), "GCFloatTweenData", "starting", return false );
+	SERIALIZE_CHECK( s->flt( s, "duration", &( val->duration ) ), "GCFloatTweenData", "duration", return false );
+	SERIALIZE_CHECK( s->flt( s, "timePassed", &( val->timePassed ) ), "GCFloatTweenData", "timePassed", return false );
+	SERIALIZE_CHECK( s->flt( s, "preDelay", &( val->preDelay ) ), "GCFloatTweenData", "preDelay", return false );
+	SERIALIZE_CHECK( s->flt( s, "postDelay", &( val->postDelay ) ), "GCFloatTweenData", "postDelay", return false );
+	SERIALIZE_CHECK( s->flt( s, "startState", &( val->startState ) ), "GCFloatTweenData", "startState", return false );
+	SERIALIZE_CHECK( s->flt( s, "endState", &( val->endState ) ), "GCFloatTweenData", "endState", return false );
+	SERIALIZE_CHECK( s->trackedEaseFunc( s, "easing", &( val->easing ) ), "GCFloatTweenData", "easing", return false );
+	SERIALIZE_CHECK( s->endStructure( s, "" ), "GCFloatTweenData", "ending", return false );
 
 	return true;
 }
 
 //====
-static bool serializeGroupIDComp( cmp_ctx_t* cmp, void* data, SerializedEntityInfo* sbEntityInfo )
+static bool serializeGroupIDComp( Serializer* s, void* data )
 {
-	SDL_assert( cmp != NULL );
-	SDL_assert( data != NULL );
+	ASSERT_AND_IF_NOT( s != NULL ) return false;
+	ASSERT_AND_IF_NOT( data != NULL ) return false;
 
 	GCGroupIDData* val = (GCGroupIDData*)data;
 
-	CMP_WRITE( cmp, val->groupID, cmp_write_u32, "GCGroupIDData", "groupID", return false );
-
-	return true;
-}
-
-static bool deserializeGroupdIDComp( cmp_ctx_t* cmp, void* data, SerializedEntityInfo* sbEntityInfo )
-{
-	SDL_assert( cmp != NULL );
-	SDL_assert( data != NULL );
-
-	GCGroupIDData* val = (GCGroupIDData*)data;
-
-	CMP_READ( cmp, val->groupID, cmp_read_u32, "GCGroupIDData", "groupID", return false );
+	SERIALIZE_CHECK( s->startStructure( s, "" ), "GCGroupIDData", "starting", return false );
+	SERIALIZE_CHECK( s->u32( s, "groupID", &( val->groupID ) ), "GCGroupIDData", "groupID", return false );
+	SERIALIZE_CHECK( s->endStructure( s, "" ), "GCGroupIDData", "ending", return false );
 
 	return true;
 }
 
 //====
-static bool serializeTranformComp( cmp_ctx_t* cmp, void* data, SerializedEntityInfo* sbEntityInfo )
+static bool serializeTranformComp( Serializer* s, void* data )
 {
-	SDL_assert( cmp != NULL );
-	SDL_assert( data != NULL );
+	ASSERT_AND_IF_NOT( s != NULL ) return false;
+	ASSERT_AND_IF_NOT( data != NULL ) return false;
 
 	GCTransformData* val = (GCTransformData*)data;
 
-	CMP_WRITE( cmp, &( val->currState.pos ), vec2_Serialize, "GCTransformData", "currState pos", return false );
-	CMP_WRITE( cmp, &( val->currState.scale ), vec2_Serialize, "GCTransformData", "currState scale", return false );
-	CMP_WRITE( cmp, val->currState.rotRad, cmp_write_float, "GCTransformData", "currState rotRad", return false );
+	SERIALIZE_CHECK( s->startStructure( s, "" ), "GCTransformData", "starting", return false );
 
-	CMP_WRITE( cmp, &( val->futureState.pos ), vec2_Serialize, "GCTransformData", "futureState pos", return false );
-	CMP_WRITE( cmp, &( val->futureState.scale ), vec2_Serialize, "GCTransformData", "futureState scale", return false );
-	CMP_WRITE( cmp, val->futureState.rotRad, cmp_write_float, "GCTransformData", "futureState rotRad", return false );
+	SERIALIZE_CHECK( vec2_Serialize( s, "currPos", &( val->currState.pos ) ), "GCTransformData", "currPos", return false );
+	SERIALIZE_CHECK( vec2_Serialize( s, "currScale", &( val->currState.scale ) ), "GCTransformData", "currScale", return false );
+	SERIALIZE_CHECK( s->flt( s, "currRotRad", &( val->currState.rotRad ) ), "GCTransformData", "currRotRad", return false );
 
-	uint32_t localParentID = ecps_GetLocalIDFromSerializeEntityID( sbEntityInfo, val->parentID );
-	CMP_WRITE( cmp, localParentID, cmp_write_u32, "GCTransformData", "parentID", return false );
+	SERIALIZE_CHECK( vec2_Serialize( s, "futurePos", &( val->futureState.pos ) ), "GCTransformData", "futurePos", return false );
+	SERIALIZE_CHECK( vec2_Serialize( s, "futureScale", &( val->futureState.scale ) ), "GCTransformData", "futureScale", return false );
+	SERIALIZE_CHECK( s->flt( s, "futureRotRad", &( val->futureState.rotRad ) ), "GCTransformData", "futureRotRad", return false );
 
-	uint32_t localFirstChildID = ecps_GetLocalIDFromSerializeEntityID( sbEntityInfo, val->firstChildID );
-	CMP_WRITE( cmp, localFirstChildID, cmp_write_u32, "GCTransformData", "firstChildID", return false );
-
-	uint32_t localNextSiblingID = ecps_GetLocalIDFromSerializeEntityID( sbEntityInfo, val->nextSiblingID );
-	CMP_WRITE( cmp, localNextSiblingID, cmp_write_u32, "GCTransformData", "nextSiblingID", return false );
-
-	return true;
-}
-
-static bool deserializeTranformComp( cmp_ctx_t* cmp, void* data, SerializedEntityInfo* sbEntityInfo )
-{
-	SDL_assert( cmp != NULL );
-	SDL_assert( data != NULL );
-
-	GCTransformData* val = (GCTransformData*)data;
-
-	CMP_READ( cmp, val->currState.pos, vec2_Deserialize, "GCTransformData", "currState pos", return false );
-	CMP_READ( cmp, val->currState.scale, vec2_Deserialize, "GCTransformData", "currState scale", return false );
-	CMP_READ( cmp, val->currState.rotRad, cmp_read_float, "GCTransformData", "currState rotRad", return false );
-
-	CMP_READ( cmp, val->futureState.pos, vec2_Deserialize, "GCTransformData", "futureState pos", return false );
-	CMP_READ( cmp, val->futureState.scale, vec2_Deserialize, "GCTransformData", "futureState scale", return false );
-	CMP_READ( cmp, val->futureState.rotRad, cmp_read_float, "GCTransformData", "futureState rotRad", return false );
-
-	uint32_t localParentID;
-	CMP_READ( cmp, localParentID, cmp_read_u32, "GCTransformData", "parentID", return false );
-	val->parentID = ecps_GetEntityIDfromSerializedLocalID( sbEntityInfo, localParentID );
-
-	uint32_t localFirstChildID;
-	CMP_READ( cmp, localFirstChildID, cmp_read_u32, "GCTransformData", "firstChildID", return false );
-	val->firstChildID = ecps_GetEntityIDfromSerializedLocalID( sbEntityInfo, localFirstChildID );
-
-	uint32_t localNextSiblingID;
-	CMP_READ( cmp, localNextSiblingID, cmp_read_u32, "GCTransformData", "nextSiblingID", return false );
-	val->nextSiblingID = ecps_GetEntityIDfromSerializedLocalID( sbEntityInfo, localNextSiblingID );
+	SERIALIZE_CHECK( s->entityID( s, "parentID", &( val->parentID ) ), "GCTransformData", "parentID", return false );
+	SERIALIZE_CHECK( s->entityID( s, "firstChildID", &( val->firstChildID ) ), "GCTransformData", "firstChildID", return false );
+	SERIALIZE_CHECK( s->entityID( s, "nextSiblingID", &( val->nextSiblingID ) ), "GCTransformData", "nextSiblingID", return false );
 
 	return true;
 }
 
 //=====================================================================================================
 
-static bool serializeSizeComp( cmp_ctx_t* cmp, void* data, SerializedEntityInfo* sbEntityInfo )
+static bool serializeSizeComp( Serializer* s, void* data )
 {
-	SDL_assert( cmp != NULL );
-	SDL_assert( data != NULL );
+	ASSERT_AND_IF_NOT( s != NULL ) return false;
+	ASSERT_AND_IF_NOT( data != NULL ) return false;
 
 	GCSizeData* val = (GCSizeData*)data;
 
-	CMP_WRITE( cmp, &( val->currentSize ), vec2_Serialize, "GCSizeData", "currentSize", return false );
-	CMP_WRITE( cmp, &( val->futureSize ), vec2_Serialize, "GCSizeData", "futureSize", return false );
-
-	return true;
-}
-
-static bool deserializeSizeComp( cmp_ctx_t* cmp, void* data, SerializedEntityInfo* sbEntityInfo )
-{
-	SDL_assert( cmp != NULL );
-	SDL_assert( data != NULL );
-
-	GCSizeData* val = (GCSizeData*)data;
-
-	CMP_READ( cmp, val->currentSize, vec2_Deserialize, "GCSizeData", "currentSize", return false );
-	CMP_READ( cmp, val->futureSize, vec2_Deserialize, "GCSizeData", "futureSize", return false );
+	SERIALIZE_CHECK( s->startStructure( s, "" ), "GCSizeData", "starting", return false );
+	SERIALIZE_CHECK( vec2_Serialize( s, "currentSize", &( val->currentSize ) ), "GCSizeData", "currentSize", return false );
+	SERIALIZE_CHECK( vec2_Serialize( s, "futureSize", &( val->futureSize ) ), "GCSizeData", "futureSize", return false );
+	SERIALIZE_CHECK( s->endStructure( s, "" ), "GCSizeData", "ending", return false );
 
 	return true;
 }
 
 //====
-static bool serializeShortLivedComp( cmp_ctx_t* cmp, void* data, SerializedEntityInfo* sbEntityInfo )
+static bool serializeShortLivedComp( Serializer* s, void* data )
 {
-	SDL_assert( cmp != NULL );
-	SDL_assert( data != NULL );
+	ASSERT_AND_IF_NOT( s != NULL ) return false;
+	ASSERT_AND_IF_NOT( data != NULL ) return false;
 
-	SDL_assert_always( false && "serializeShortLivedComp: Not implemented yet." );
+	GCShortLivedData* val = (GCShortLivedData*)data;
 
-	return true;
-}
+	SERIALIZE_CHECK( s->startStructure( s, "" ), "GCShortLivedData", "starting", return false );
+	SERIALIZE_CHECK( s->flt( s, "duration", &( val->duration ) ), "GCShortLivedData", "duration", return false );
+	SERIALIZE_CHECK( s->flt( s, "timePassed", &( val->duration ) ), "GCShortLivedData", "timePassed", return false );
+	if( !serializeGeneralCallback( s, &( val->onDestroyedCallback ), "GCShortLivedData", "onDestroyedCallback" ) ) return false;
+	SERIALIZE_CHECK( s->endStructure( s, "" ), "GCShortLivedData", "ending", return false );
 
-static bool deserializeShortLivedComp( cmp_ctx_t* cmp, void* data, SerializedEntityInfo* sbEntityInfo )
-{
-	SDL_assert( cmp != NULL );
-	SDL_assert( data != NULL );
-
-	SDL_assert_always( false && "deserializeShortLivedComp: Not implemented yet." );
-
-	return true;
+	return false;
 }
 
 //====
-static bool serializeAnimatedSpriteComp( cmp_ctx_t* cmp, void* data, SerializedEntityInfo* sbEntityInfo )
+static bool serializeAnimatedSpriteComp( Serializer* s, void* data )
 {
-	SDL_assert( cmp != NULL );
-	SDL_assert( data != NULL );
+	ASSERT_AND_IF_NOT( s != NULL ) return false;
+	ASSERT_AND_IF_NOT( data != NULL ) return false;
 
-	SDL_assert_always( false && "serializeAnimatedSpriteComp: Not implemented yet." );
+	GCAnimatedSpriteData* val = (GCAnimatedSpriteData*)data;
 
-	return true;
-}
+	// the playingAnim and eventHandler are going to be very difficult to serialize
+	//PlayingSpriteAnimation playingAnim;
+	//AnimEventHandler eventHandler;
+	//float playSpeedScale;
 
-static bool deserializeAnimatedSpriteComp( cmp_ctx_t* cmp, void* data, SerializedEntityInfo* sbEntityInfo )
-{
-	SDL_assert( cmp != NULL );
-	SDL_assert( data != NULL );
+	ASSERT_ALWAYS( "serializeAnimatedSpriteComp: Not implemented yet." );
 
-	SDL_assert_always( false && "deserializeAnimatedSpriteComp: Not implemented yet." );
-
-	return true;
+	return false;
 }
 
 //=====================================================================================================
@@ -1054,27 +779,27 @@ static void pointerScriptCleanUp( ECPS* ecps, const Entity* entity, void* compDa
 
 void gc_Register( ECPS* ecps )
 {
-	gcTransformCompID = ecps_AddComponentType( ecps, "GC_TF", 0, sizeof( GCTransformData ), ALIGN_OF( GCTransformData ), transformCleanUp, NULL, serializeTranformComp, deserializeTranformComp );
-	gcClrCompID = ecps_AddComponentType( ecps, "GC_CLR", 0, sizeof( GCColorData ), ALIGN_OF( GCColorData ), NULL, NULL, serializeColorComp, deserializeColorComp );
-	gcSpriteCompID = ecps_AddComponentType( ecps, "GC_SPRT", 0, sizeof( GCSpriteData ), ALIGN_OF( GCSpriteData ), NULL, NULL, serializeSpriteComp, deserializeSpriteComp );
-	gc3x3SpriteCompID = ecps_AddComponentType( ecps, "GC_3x3", 0, sizeof( GC3x3SpriteData ), ALIGN_OF( GC3x3SpriteData ), NULL, NULL, serialize3x3Comp, deserialize3x3Comp );
-	gcColliderCompID = ecps_AddComponentType( ecps, "GC_COLL", 0, sizeof( GCColliderData ), ALIGN_OF( GCColliderData ), NULL, NULL, serializeCollComp, deserializeCollComp );
-	gcPointerCollisionCompID = ecps_AddComponentType( ecps, "GC_CLICK", 0, sizeof( GCPointerCollisionData ), ALIGN_OF( GCPointerCollisionData ), NULL, NULL, serializeClickCollisionComp, deserializeClickCollisionComp );
-	gcPointerResponseCompID = ecps_AddComponentType( ecps, "GC_CLK", 0, sizeof( GCPointerResponseData ), ALIGN_OF( GCPointerResponseData ), pointerScriptCleanUp, NULL, serializeClickFuncResponseComp, deserializeClickFuncResponseComp );
-	gcCleanUpFlagCompID = ecps_AddComponentType( ecps, "GC_DEAD", 0, 0, 0, NULL, NULL, NULL, NULL );
-	gcTextCompID = ecps_AddComponentType( ecps, "GC_TXT", 0, sizeof( GCTextData ), ALIGN_OF( GCTextData ), textCleanUp, NULL, serializeTextComp, deserializeTextComp );
-	gcFloatVal0CompID = ecps_AddComponentType( ecps, "GC_VAL0", 0, sizeof( GCFloatVal0Data ), ALIGN_OF( GCFloatVal0Data ), NULL, NULL, serializeVal0Comp, deserializeVal0Comp );
-	gcWatchCompID = ecps_AddComponentType( ecps, "GC_WATCH", 0, 0, 0, NULL, NULL, NULL, NULL );
-	gcStencilCompID = ecps_AddComponentType( ecps, "GC_STENCIL", 0, sizeof( GCStencilData ), ALIGN_OF( GCStencilData ), NULL, NULL, serializeStencilComp, deserializeStencilComp );
-	gcSizeCompID = ecps_AddComponentType( ecps, "GC_SIZE", 0, sizeof( GCSizeData ), ALIGN_OF( GCSizeData ), NULL, NULL, serializeSizeComp, deserializeSizeComp );
+	gcTransformCompID = ecps_AddComponentType( ecps, "GC_TF", 0, sizeof( GCTransformData ), ALIGN_OF( GCTransformData ), transformCleanUp, NULL, serializeTranformComp );
+	gcClrCompID = ecps_AddComponentType( ecps, "GC_CLR", 0, sizeof( GCColorData ), ALIGN_OF( GCColorData ), NULL, NULL, serializeColorComp );
+	gcSpriteCompID = ecps_AddComponentType( ecps, "GC_SPRT", 0, sizeof( GCSpriteData ), ALIGN_OF( GCSpriteData ), NULL, NULL, serializeSpriteComp );
+	gc3x3SpriteCompID = ecps_AddComponentType( ecps, "GC_3x3", 0, sizeof( GC3x3SpriteData ), ALIGN_OF( GC3x3SpriteData ), NULL, NULL, serialize3x3Comp );
+	gcColliderCompID = ecps_AddComponentType( ecps, "GC_COLL", 0, sizeof( GCColliderData ), ALIGN_OF( GCColliderData ), NULL, NULL, serializeCollComp );
+	gcPointerCollisionCompID = ecps_AddComponentType( ecps, "GC_CLICK", 0, sizeof( GCPointerCollisionData ), ALIGN_OF( GCPointerCollisionData ), NULL, NULL, serializeClickCollisionComp );
+	gcPointerResponseCompID = ecps_AddComponentType( ecps, "GC_CLK", 0, sizeof( GCPointerResponseData ), ALIGN_OF( GCPointerResponseData ), pointerScriptCleanUp, NULL, serializeClickFuncResponseComp );
+	gcCleanUpFlagCompID = ecps_AddComponentType( ecps, "GC_DEAD", 0, 0, 0, NULL, NULL, NULL );
+	gcTextCompID = ecps_AddComponentType( ecps, "GC_TXT", 0, sizeof( GCTextData ), ALIGN_OF( GCTextData ), textCleanUp, NULL, serializeTextComp );
+	gcFloatVal0CompID = ecps_AddComponentType( ecps, "GC_VAL0", 0, sizeof( GCFloatVal0Data ), ALIGN_OF( GCFloatVal0Data ), NULL, NULL, serializeVal0Comp );
+	gcWatchCompID = ecps_AddComponentType( ecps, "GC_WATCH", 0, 0, 0, NULL, NULL, NULL );
+	gcStencilCompID = ecps_AddComponentType( ecps, "GC_STENCIL", 0, sizeof( GCStencilData ), ALIGN_OF( GCStencilData ), NULL, NULL, serializeStencilComp );
+	gcSizeCompID = ecps_AddComponentType( ecps, "GC_SIZE", 0, sizeof( GCSizeData ), ALIGN_OF( GCSizeData ), NULL, NULL, serializeSizeComp );
 
-	gcPosTweenCompID = ecps_AddComponentType( ecps, "P_TWN", 0, sizeof( GCVec2TweenData ), ALIGN_OF( GCVec2TweenData ), NULL, NULL, serializeVec2TweenComp, deserializeVec2TweenComp );
-	gcScaleTweenCompID = ecps_AddComponentType( ecps, "S_TWN", 0, sizeof( GCVec2TweenData ), ALIGN_OF( GCVec2TweenData ), NULL, NULL, serializeVec2TweenComp, deserializeVec2TweenComp );
-	gcAlphaTweenCompID = ecps_AddComponentType( ecps, "A_TWN", 0, sizeof( GCFloatTweenData ), ALIGN_OF( GCFloatTweenData ), NULL, NULL, serializeFloatTweenComp, deserializeFloatTweenComp );
-	gcShortLivedCompID = ecps_AddComponentType( ecps, "GC_LIFE", 0, sizeof( GCShortLivedData ), ALIGN_OF( GCShortLivedData ), NULL, NULL, serializeShortLivedComp, deserializeShortLivedComp );
-	gcAnimSpriteCompID = ecps_AddComponentType( ecps, "ANIM_SPR", 0, sizeof( GCAnimatedSpriteData ), ALIGN_OF( GCAnimatedSpriteData ), NULL, NULL, serializeAnimatedSpriteComp, deserializeAnimatedSpriteComp );
+	gcPosTweenCompID = ecps_AddComponentType( ecps, "P_TWN", 0, sizeof( GCVec2TweenData ), ALIGN_OF( GCVec2TweenData ), NULL, NULL, serializeVec2TweenComp );
+	gcScaleTweenCompID = ecps_AddComponentType( ecps, "S_TWN", 0, sizeof( GCVec2TweenData ), ALIGN_OF( GCVec2TweenData ), NULL, NULL, serializeVec2TweenComp );
+	gcAlphaTweenCompID = ecps_AddComponentType( ecps, "A_TWN", 0, sizeof( GCFloatTweenData ), ALIGN_OF( GCFloatTweenData ), NULL, NULL, serializeFloatTweenComp );
+	gcShortLivedCompID = ecps_AddComponentType( ecps, "GC_LIFE", 0, sizeof( GCShortLivedData ), ALIGN_OF( GCShortLivedData ), NULL, NULL, serializeShortLivedComp );
+	gcAnimSpriteCompID = ecps_AddComponentType( ecps, "ANIM_SPR", 0, sizeof( GCAnimatedSpriteData ), ALIGN_OF( GCAnimatedSpriteData ), NULL, NULL, serializeAnimatedSpriteComp );
 
-	gcGroupIDCompID = ecps_AddComponentType( ecps, "GRP", 0, sizeof( GCGroupIDData ), ALIGN_OF( GCGroupIDData ), NULL, NULL, serializeGroupIDComp, deserializeGroupdIDComp );
+	gcGroupIDCompID = ecps_AddComponentType( ecps, "GRP", 0, sizeof( GCGroupIDData ), ALIGN_OF( GCGroupIDData ), NULL, NULL, serializeGroupIDComp );
 }
 
 void gc_SwapTransformStates( GCTransformData* tf )
@@ -1111,7 +836,7 @@ GCTransformData gc_CreateTransformPosRotScale( Vector2 pos, float rotRad, Vector
 	return data;
 }
 
-static void generalComponentHandleSwitchImg( void* data, int imgID, const Vector2* offset )
+static void generalComponentHandleSwitchImg( void* data, ImageID imgID, const Vector2* offset )
 {
 	SDL_assert( data != NULL );
 
@@ -1119,7 +844,7 @@ static void generalComponentHandleSwitchImg( void* data, int imgID, const Vector
 
 	GCSpriteData* spriteData = NULL;
 	if( !ecps_GetComponentFromEntityByID( handlerData->ecps, handlerData->id, gcSpriteCompID, &spriteData ) ) {
-		SDL_assert_always( false && "Unable to retrieve sprite component." );
+		ASSERT_ALWAYS( "Unable to retrieve sprite component." );
 		return;
 	}
 
@@ -1127,19 +852,19 @@ static void generalComponentHandleSwitchImg( void* data, int imgID, const Vector
 	// TODO: handle the offset, probably include it in the sprite data
 }
 
-static void generalComponentHandleSetAABCollider( void* data, int colliderID, float centerX, float centerY, float width, float height )
+static void generalComponentHandleSetAABCollider( void* data, int32_t colliderID, float centerX, float centerY, float width, float height )
 {
-	SDL_assert_always( false && "Not implemented yet." );
+	ASSERT_ALWAYS( "Not implemented yet." );
 }
 
-static void generalComponentHandleSetCircleCollider( void* data, int colliderID, float centerX, float centerY, float radius )
+static void generalComponentHandleSetCircleCollider( void* data, int32_t colliderID, float centerX, float centerY, float radius )
 {
-	SDL_assert_always( false && "Not implemented yet." );
+	ASSERT_ALWAYS( "Not implemented yet." );
 }
 
-static void generalComponentHandleDeactivateCollider( void* data, int colliderID )
+static void generalComponentHandleDeactivateCollider( void* data, int32_t colliderID )
 {
-	SDL_assert_always( false && "Not implemented yet." );
+	ASSERT_ALWAYS( "Not implemented yet." );
 }
 
 GCAnimatedSpriteData gc_CreateDefaultAnimSpriteData( )

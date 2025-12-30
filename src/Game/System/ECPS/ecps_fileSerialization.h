@@ -6,6 +6,8 @@
 
 #include "ecps_dataTypes.h"
 
+// TODO: Get this working with the lua serializer as well
+
 void ecps_InitSerialized( SerializedECPS * serializedECPS );
 void ecps_CleanSerialized( SerializedECPS * serializedECPS );
 

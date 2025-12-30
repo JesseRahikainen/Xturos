@@ -2,6 +2,7 @@
 #include <SDL3/SDL_assert.h>
 #include "Math/mathUtil.h"
 #include "System/platformLog.h"
+#include "Utils/helpers.h"
 
 Color clr( float r, float g, float b, float a )
 {
@@ -147,56 +148,38 @@ Color* clr_AddScaled( const Color* base, const Color* scaled, float scale, Color
 	return out;
 }
 
-bool clr_Serialize( cmp_ctx_t* cmp, const Color* clr )
+bool clr_Serialize( Serializer* s, const char* name, Color* clr )
 {
-	SDL_assert( cmp != NULL );
-	SDL_assert( clr != NULL );
+	ASSERT_AND_IF_NOT( s != NULL ) return false;
+	ASSERT_AND_IF_NOT( clr != NULL ) return false;
 
-	if( !cmp_write_float( cmp, clr->r ) ) {
-		llog( LOG_ERROR, "Unable to write red component of Color." );
+	if( !s->startStructure( s, name ) ) {
+		llog( LOG_ERROR, "Unable to start serializing Color." );
 		return false;
 	}
 
-	if( !cmp_write_float( cmp, clr->g ) ) {
-		llog( LOG_ERROR, "Unable to write green component of Color." );
+	if( !s->flt( s, "r", &( clr->r ) ) ) {
+		llog( LOG_ERROR, "Unable to serialize red component of Color." );
 		return false;
 	}
 
-	if( !cmp_write_float( cmp, clr->b ) ) {
-		llog( LOG_ERROR, "Unable to write blue component of Color." );
+	if( !s->flt( s, "g", &( clr->g ) ) ) {
+		llog( LOG_ERROR, "Unable to serialize green component of Color." );
 		return false;
 	}
 
-	if( !cmp_write_float( cmp, clr->a ) ) {
-		llog( LOG_ERROR, "Unable to write alpha component of Color." );
+	if( !s->flt( s, "b", &( clr->b ) ) ) {
+		llog( LOG_ERROR, "Unable to serialize blue component of Color." );
 		return false;
 	}
 
-	return true;
-}
-
-bool clr_Deserialize( cmp_ctx_t* cmp, Color* outClr )
-{
-	SDL_assert( cmp != NULL );
-	SDL_assert( outClr != NULL );
-
-	if( !cmp_read_float( cmp, &( outClr->r ) ) ) {
-		llog( LOG_ERROR, "Unable to read red component of Color." );
+	if( !s->flt( s, "a", &( clr->a ) ) ) {
+		llog( LOG_ERROR, "Unable to serialize alpha component of Color." );
 		return false;
 	}
 
-	if( !cmp_read_float( cmp, &( outClr->g ) ) ) {
-		llog( LOG_ERROR, "Unable to read green component of Color." );
-		return false;
-	}
-
-	if( !cmp_read_float( cmp, &( outClr->b ) ) ) {
-		llog( LOG_ERROR, "Unable to read blue component of Color." );
-		return false;
-	}
-
-	if( !cmp_read_float( cmp, &( outClr->a ) ) ) {
-		llog( LOG_ERROR, "Unable to read alpha component of Color." );
+	if( !s->endStructure( s, name ) ) {
+		llog( LOG_ERROR, "Unable to finish serializing Color." );
 		return false;
 	}
 

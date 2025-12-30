@@ -356,7 +356,7 @@ static int lua_GetSpriteSheetImage( lua_State* ls )
 	LUA_GET_INT( ls, imageIdx, p, error );
 	LUA_GET_INT( ls, packageID, p, error );
 
-	int* sbImgs = img_GetPackageImages( packageID );
+	ImageID* sbImgs = img_GetPackageImages( packageID );
 
 	int img = -1;
 	if( imageIdx > 0 && imageIdx < sb_Count( sbImgs ) ) {
@@ -489,6 +489,13 @@ static int lua_LoadAnimation( lua_State* ls )
 	return 1;
 }
 
+static int lua_CreateEntity( lua_State* ls )
+{
+	EntityID entityID = ecps_CreateEntity( &defaultECPS, 0 );
+	lua_pushinteger( ls, (lua_Integer)entityID );
+	return 1;
+}
+
 static int lua_DestroyEntity( lua_State* ls )
 {
 	int p = -1;
@@ -527,7 +534,7 @@ static int lua_GetImageByID( lua_State* ls )
 	int error;
 
 	LUA_GET_STRING( ls, id, p, error );
-	int imageID = img_GetExistingByID( id );
+	int imageID = img_GetExistingByStrID( id );
 
 	lua_pushinteger( ls, imageID );
 	return 1;
@@ -971,6 +978,9 @@ bool xLua_LoadAndDoFile( const char* fileName )
 	}
 #endif
 
+	// TODO: need to cache files that have already been executed and not run them again, should
+	//       return whatever the original file execution returned
+
 	int status = luaL_dofile( luaState, fileName );	
 	if( status != LUA_OK ) {
 		llog( LOG_ERROR, "%s", lua_tostring( luaState, -1 ) );
@@ -1065,13 +1075,19 @@ bool xLua_Init( void )
 	xLua_RegisterCFunction( "clearKeyBinds", lua_ClearKeyBinds );
 	xLua_RegisterCFunction( "clearMouseButtonBinds", lua_ClearMouseButtonBinds );
 	xLua_RegisterCFunction( "getMousePosition", lua_GetMousePosition );
-	xLua_RegisterCFunction( "addGroupID", lua_AddGroupID );
-	xLua_RegisterCFunction( "destroyEntitiesByGroupID", lua_DestroyEntitiesByGroupID );
 	xLua_RegisterCFunction( "loadAnimation", lua_LoadAnimation );
-	xLua_RegisterCFunction( "destroyEntity", lua_DestroyEntity );
 	xLua_RegisterCFunction( "getEntityPosition", lua_GetEntityPosition );
 	xLua_RegisterCFunction( "getImageByID", lua_GetImageByID );
 	xLua_RegisterCFunction( "renderImageAtPos", lua_RenderImagePos );
+
+
+	xLua_RegisterCFunction( "addGroupIDToEntity", lua_AddGroupID );
+	xLua_RegisterCFunction( "createEntity", lua_CreateEntity );
+	xLua_RegisterCFunction( "destroyEntity", lua_DestroyEntity );
+	xLua_RegisterCFunction( "destroyEntitiesByGroupID", lua_DestroyEntitiesByGroupID );
+	xLua_RegisterCFunction( "addComponentToEntity", NULL );
+	xLua_RegisterCFunction( "removeComponentFromEntity", NULL );
+	xLua_RegisterCFunction( "getComponentFromEntity", NULL );
 
 	return true;
 }

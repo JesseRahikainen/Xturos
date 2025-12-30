@@ -367,6 +367,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
     </ClInclude>
     <ClInclude Include="..\..\src\Game\Game\testPointerResponseScreen.h" />
+    <ClInclude Include="..\..\src\Game\Game\testScriptingState.h" />
     <ClInclude Include="..\..\src\Game\Game\testSoundsScreen.h" />
     <ClInclude Include="..\..\src\Game\Game\testSteeringScreen.h" />
     <ClInclude Include="..\..\src\Game\Game\testSynthState.h" />
@@ -375,6 +376,7 @@
     <ClInclude Include="..\..\src\Game\Graphics\debugRendering.h" />
     <ClInclude Include="..\..\src\Game\Graphics\geomTrail.h" />
     <ClInclude Include="..\..\src\Game\Graphics\gfxUtil.h" />
+    <ClInclude Include="..\..\src\Game\Graphics\gfx_commonDataTypes.h" />
     <ClInclude Include="..\..\src\Game\Graphics\graphics.h" />
     <ClInclude Include="..\..\src\Game\Graphics\images.h" />
     <ClInclude Include="..\..\src\Game\Graphics\Platform\debugRenderingPlatform.h" />
@@ -431,11 +433,13 @@
     <ClInclude Include="..\..\src\Game\Others\lua-5.4.3\lzio.h" />
     <ClInclude Include="..\..\src\Game\Others\nuklear.h" />
     <ClInclude Include="..\..\src\Game\particles.h" />
+    <ClInclude Include="..\..\src\Game\System\ECPS\ecps_componentDataType.h" />
+    <ClInclude Include="..\..\src\Game\System\serializer.h" />
     <ClInclude Include="..\..\src\Game\System\shared.h" />
     <ClInclude Include="..\..\src\Game\System\ECPS\ecps_componentBitFlags.h" />
     <ClInclude Include="..\..\src\Game\System\ECPS\ecps_componentTypes.h" />
     <ClInclude Include="..\..\src\Game\System\ECPS\ecps_dataTypes.h" />
-    <ClInclude Include="..\..\src\Game\System\ECPS\ecps_serialization.h" />
+    <ClInclude Include="..\..\src\Game\System\ECPS\ecps_fileSerialization.h" />
     <ClInclude Include="..\..\src\Game\System\ECPS\ecps_trackedCallbacks.h" />
     <ClInclude Include="..\..\src\Game\System\ECPS\ecps_values.h" />
     <ClInclude Include="..\..\src\Game\System\ECPS\entityComponentProcessSystem.h" />
@@ -505,6 +509,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="..\..\src\Game\Game\testPointerResponseScreen.c" />
+    <ClCompile Include="..\..\src\Game\Game\testScriptingState.c" />
     <ClCompile Include="..\..\src\Game\Game\testSoundsScreen.c" />
     <ClCompile Include="..\..\src\Game\Game\testSteeringScreen.c" />
     <ClCompile Include="..\..\src\Game\Game\testSynthState.c" />
@@ -812,7 +817,7 @@
     <ClCompile Include="..\..\src\Game\particles.c" />
     <ClCompile Include="..\..\src\Game\System\ECPS\ecps_componentBitFlags.c" />
     <ClCompile Include="..\..\src\Game\System\ECPS\ecps_componentTypes.c" />
-    <ClCompile Include="..\..\src\Game\System\ECPS\ecps_serialization.c" />
+    <ClCompile Include="..\..\src\Game\System\ECPS\ecps_fileSerialization.c" />
     <ClCompile Include="..\..\src\Game\System\ECPS\ecps_trackedCallbacks.c" />
     <ClCompile Include="..\..\src\Game\System\ECPS\entityComponentProcessSystem.c" />
     <ClCompile Include="..\..\src\Game\System\gameTime.c" />
@@ -824,6 +829,7 @@
     <ClCompile Include="..\..\src\Game\System\platformLog.c" />
     <ClCompile Include="..\..\src\Game\System\platformSpecific.c" />
     <ClCompile Include="..\..\src\Game\System\random.c" />
+    <ClCompile Include="..\..\src\Game\System\serializer.c" />
     <ClCompile Include="..\..\src\Game\System\systems.c" />
     <ClCompile Include="..\..\src\Game\tween.c" />
     <ClCompile Include="..\..\src\Game\UI\checkBox.c" />
@@ -851,6 +857,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\bin\data\Scripts\main.lua" />
+    <None Include="..\..\bin\data\Scripts\testScripting.lua" />
     <None Include="..\..\src\Game\Shaders\GLES\fragAlphaMappedSDF.glsl" />
     <None Include="..\..\src\Game\Shaders\GLES\fragDebug.glsl" />
     <None Include="..\..\src\Game\Shaders\GLES\fragDefault.glsl" />

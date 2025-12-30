@@ -83,10 +83,10 @@ static EditorCollider* sbColliders;
 
 static struct nk_rect windowBounds = { 150.0f, 10.0f, 1000.0f, 1000.f };
 
-static int drawnSprite = -1;
+static ImageID drawnSprite = INVALID_IMAGE_ID;
 static Vector2 drawnOffset = { 0.0f, 0.0f };
 
-static int* sbSpriteSheetImages = NULL;
+static ImageID* sbSpriteSheetImages = NULL;
 
 typedef struct {
 	const char* name;
@@ -115,7 +115,7 @@ static void spriteSheetChosen( void* data )
 {
 	char* filePath = (char*)data;
 	// attempt to load the new sprite sheet 
-	int* sbNewlyLoadedImages = NULL;
+	ImageID* sbNewlyLoadedImages = NULL;
 	int newPackageID = editor_loadSpriteSheetFile( filePath, &sbNewlyLoadedImages );
 
 	if( newPackageID < 0 ) {
@@ -159,7 +159,7 @@ static void loadAndAssociateSpriteSheet( void )
 	}
 }
 
-static void editorSwitchImage( void* data, int imgID, const Vector2* offset )
+static void editorSwitchImage( void* data, ImageID imgID, const Vector2* offset )
 {
 	drawnSprite = imgID;
 	drawnOffset = *offset;
@@ -255,7 +255,7 @@ static void loadCurrentAnimation( const char* filePath )
 	size_t asdf = sb_Count( editorSpriteAnimation.sbEvents );
 	for( size_t i = 0; i < sb_Count( editorSpriteAnimation.sbEvents ); ++i ) {
 		if( editorSpriteAnimation.sbEvents[i].base.type == AET_SWITCH_IMAGE ) {
-			editorSpriteAnimation.sbEvents[i].switchImg.imgID = img_GetExistingByID( editorSpriteAnimation.sbEvents[i].switchImg.frameName );
+			editorSpriteAnimation.sbEvents[i].switchImg.imgID = img_GetExistingByStrID( editorSpriteAnimation.sbEvents[i].switchImg.frameName );
 		}
 	}
 
@@ -300,7 +300,7 @@ void spriteAnimationEditor_Hide( void )
 	sb_Release( sbSpriteSheetImages );
 	mem_Release( currentFileName );
 	currentFileName = NULL;
-	drawnSprite = -1;
+	drawnSprite = INVALID_IMAGE_ID;
 }
 
 static uint32_t* sbHeights = NULL;
@@ -381,7 +381,7 @@ static void displayEventData_SwitchImage( struct nk_context* ctx, AnimEvent* evt
 	sb_Push( sbLoadedImageDisplays, newLoadedImageDisplay( "-- NOT SET --", SIZE_MAX ) );
 
 	for( size_t i = 0; i < sb_Count( sbSpriteSheetImages ); ++i ) {
-		int id = sbSpriteSheetImages[i];
+		ImageID id = sbSpriteSheetImages[i];
 		if( img_IsValidImage( id ) ) {
 			if( id == evt->switchImg.imgID ) {
 				currentSelected = (int)sb_Count( sbLoadedImageDisplays );
@@ -396,7 +396,7 @@ static void displayEventData_SwitchImage( struct nk_context* ctx, AnimEvent* evt
 	if( currentSelected > 0 ) {
 		evt->switchImg.imgID = sbLoadedImageDisplays[currentSelected].imageId;
 	} else {
-		evt->switchImg.imgID = -1;
+		evt->switchImg.imgID = INVALID_IMAGE_ID;
 	}
 }
 

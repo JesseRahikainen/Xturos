@@ -6,6 +6,7 @@
 
 #include "ecps_componentBitFlags.h"
 #include "ecps_dataTypes.h"
+#include "ecps_componentDataType.h"
 
 extern uint32_t sharedComponent_Enabled;
 extern uint32_t sharedComponent_ID;

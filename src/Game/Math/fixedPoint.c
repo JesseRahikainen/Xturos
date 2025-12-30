@@ -4,6 +4,7 @@
 #include <SDL3/SDL_assert.h>
 
 #include "System/platformLog.h"
+#include "Utils/helpers.h"
 
 // will be in the Q16.16 format
 //  https://en.wikipedia.org/wiki/Q_(number_format)
@@ -80,26 +81,23 @@ fixed32 f32_Divide( fixed32 lhs, fixed32 rhs )
 	return (fixed32)( temp / rhs );
 }
 
-bool f32_Serialize( cmp_ctx_t* cmp, fixed32 fp )
+bool f32_Serialize( Serializer* s, const char* name, fixed32* fp )
 {
-	SDL_assert( cmp != NULL );
+	ASSERT_AND_IF_NOT( s != NULL ) return false;
+	ASSERT_AND_IF_NOT( fp != NULL ) return false;
 
-	if( !cmp_write_s32( cmp, fp ) ) {
-		llog( LOG_ERROR, "Unable to write fixed point." );
+	if( !s->startStructure( s, name ) ) {
+		llog( LOG_ERROR, "Unable to start serializing fixed point." );
 		return false;
 	}
 
-	return true;
-}
+	if( !s->s32( s, "fp", fp ) ) {
+		llog( LOG_ERROR, "Unable to serialize fixed point value." );
+		return false;
+	}
 
-bool f32_Deserialize( cmp_ctx_t* cmp, fixed32* outFp )
-{
-	SDL_assert( cmp != NULL );
-
-	*outFp = 0;
-
-	if( !cmp_read_s32( cmp, outFp ) ) {
-		llog( LOG_ERROR, "Unable to load fixed point." );
+	if( !s->endStructure( s, name ) ) {
+		llog( LOG_ERROR, "Unable to end serializing fixed point." );
 		return false;
 	}
 

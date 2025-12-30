@@ -55,9 +55,9 @@ We'll assume the array has three vertices in it.
  Return a value < 0 if there's a problem.
 */
 int triRenderer_AddVertices( TriVert* verts, ShaderType shader, PlatformTexture texture, PlatformTexture extraTexture,
-	float floatVal0, int clippingID, uint32_t camFlags, int8_t depth, TriType type );
+	float floatVal0, int8_t clippingID, uint32_t camFlags, int8_t depth, TriType type );
 int triRenderer_Add( TriVert vert0, TriVert vert1, TriVert vert2, ShaderType shader, PlatformTexture texture, PlatformTexture extraTexture,
-	float floatVal0, int clippingID, uint32_t camFlags, int8_t depth, TriType type );
+	float floatVal0, int8_t clippingID, uint32_t camFlags, int8_t depth, TriType type );
 
 /*
 Clears out all the triangles currently stored.

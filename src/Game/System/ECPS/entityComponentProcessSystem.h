@@ -5,6 +5,7 @@
 #include <stdbool.h>
 
 #include "ecps_dataTypes.h"
+#include "ecps_componentDataType.h"
 
 // Sets up the ecps, ready to have components, processes, and entities created
 void ecps_StartInitialization( ECPS* ecps );
@@ -17,7 +18,10 @@ void ecps_CleanUp( ECPS* ecps );
 
 // adds a component type and returns the id to reference it by
 //  this can only be done before
-ComponentID ecps_AddComponentType( ECPS* ecps, const char* name, uint32_t version, size_t size, size_t align, CleanUpComponent cleanUp, VerifyComponent verify, SerializeComponent serialize, DeserializeComponent deserialize );
+ComponentID ecps_AddComponentType( ECPS* ecps, const char* name, uint32_t version, size_t size, size_t align, CleanUpComponent cleanUp, VerifyComponent verify, SerializeComponent serialize );
+
+// retrieve a ComponentID for a component with a given name
+ComponentID ecps_GetComponentIDByName( ECPS* ecps, const char* name );
 
 // returns the version number, returns if the component type exists
 bool ecps_GetComponentTypeVersion( ECPS* ecps, ComponentID id, uint32_t* outVersion );
@@ -87,7 +91,6 @@ void ecps_DestroyEntityByID( ECPS* ecps, EntityID entityID );
 void ecps_DestroyAllEntities( ECPS* ecps );
 
 SerializeComponent ecps_GetComponentSerializtionFunction( const ECPS* ecps, ComponentID componentID );
-DeserializeComponent ecps_GetComponentDeserializationFunction( const ECPS* ecps, ComponentID componentID );
 
 // debugging stuff
 void ecps_DumpEntityByID( ECPS* ecps, const EntityID id, const char* tag );

@@ -56,11 +56,11 @@ int spr_Init( void )
 
 	ecps_StartInitialization( &spriteECPS ); {
 		// we're not concerned about serializing these as it's meant to just speed up prototyping
-		transformCompID = ecps_AddComponentType( &spriteECPS, "TRNSFRM", 0, sizeof( GCTransformData ), ALIGN_OF( GCTransformData ), NULL, NULL, NULL, NULL );
-		spriteCompID = ecps_AddComponentType( &spriteECPS, "SPRT", 0, sizeof( GCSpriteData ), ALIGN_OF( GCSpriteData ), NULL, NULL, NULL, NULL );
-		clrCompID = ecps_AddComponentType( &spriteECPS, "CLR", 0, sizeof( GCColorData ), ALIGN_OF( GCColorData ), NULL, NULL, NULL, NULL );
-		floatVal0CompID = ecps_AddComponentType( &spriteECPS, "VAL0", 0, sizeof( GCFloatVal0Data ), ALIGN_OF( GCFloatVal0Data ), NULL, NULL, NULL, NULL );
-		stencilCompID = ecps_AddComponentType( &spriteECPS, "STNCL", 0, sizeof( GCStencilData ), ALIGN_OF( GCStencilData ), NULL, NULL, NULL, NULL );
+		transformCompID = ecps_AddComponentType( &spriteECPS, "TRNSFRM", 0, sizeof( GCTransformData ), ALIGN_OF( GCTransformData ), NULL, NULL, NULL );
+		spriteCompID = ecps_AddComponentType( &spriteECPS, "SPRT", 0, sizeof( GCSpriteData ), ALIGN_OF( GCSpriteData ), NULL, NULL, NULL );
+		clrCompID = ecps_AddComponentType( &spriteECPS, "CLR", 0, sizeof( GCColorData ), ALIGN_OF( GCColorData ), NULL, NULL, NULL );
+		floatVal0CompID = ecps_AddComponentType( &spriteECPS, "VAL0", 0, sizeof( GCFloatVal0Data ), ALIGN_OF( GCFloatVal0Data ), NULL, NULL, NULL );
+		stencilCompID = ecps_AddComponentType( &spriteECPS, "STNCL", 0, sizeof( GCStencilData ), ALIGN_OF( GCStencilData ), NULL, NULL, NULL );
 
 		ecps_CreateProcess( &spriteECPS, "DRAW", NULL, runRenderProc, NULL, &renderProc, 2, transformCompID, spriteCompID );
 		ecps_CreateProcess( &spriteECPS, "SWAP", NULL, runSwapProc, NULL, &swapProc, 1, transformCompID );

@@ -12,7 +12,7 @@
 #include "IMGUI/nuklearWrapper.h"
 #include "Audio/sound.h"
 
-// simple options screent that can server as a template, for right now will just have audio and graphics
+// simple options screen that can serve as a template, for right now will just have audio and graphics
 //  uses IMGUI as it's easy to drop in, will assume this state is pushed onto the state stack
 
 static SDL_Window* sdlWindow = NULL;

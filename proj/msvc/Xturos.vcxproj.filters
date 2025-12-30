@@ -363,7 +363,7 @@
     <ClInclude Include="..\..\src\Game\System\ECPS\ecps_trackedCallbacks.h">
       <Filter>Header Files\System\ECPS</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\Game\System\ECPS\ecps_serialization.h">
+    <ClInclude Include="..\..\src\Game\System\ECPS\ecps_fileSerialization.h">
       <Filter>Header Files\System\ECPS</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Game\Others\cmp.h">
@@ -503,6 +503,18 @@
     </ClInclude>
     <ClInclude Include="..\..\src\Game\Game\testGamePadState.h">
       <Filter>Header Files\Game\TestScreens</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Game\Game\testScriptingState.h">
+      <Filter>Header Files\Game\TestScreens</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Game\System\serializer.h">
+      <Filter>Header Files\System</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Game\Graphics\gfx_commonDataTypes.h">
+      <Filter>Header Files\Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Game\System\ECPS\ecps_componentDataType.h">
+      <Filter>Header Files\System\ECPS</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -710,7 +722,7 @@
     <ClCompile Include="..\..\src\Game\System\ECPS\ecps_trackedCallbacks.c">
       <Filter>Source Files\System\ECPS</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\Game\System\ECPS\ecps_serialization.c">
+    <ClCompile Include="..\..\src\Game\System\ECPS\ecps_fileSerialization.c">
       <Filter>Source Files\System\ECPS</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\Game\Others\cmp.c">
@@ -866,6 +878,12 @@
     <ClCompile Include="..\..\src\Game\Game\testGamePadState.c">
       <Filter>Source Files\Game\TestScreens</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\Game\Game\testScriptingState.c">
+      <Filter>Source Files\Game\TestScreens</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Game\System\serializer.c">
+      <Filter>Source Files\System</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Text Include="..\..\readme.txt">
@@ -953,6 +971,9 @@
     </None>
     <None Include="..\..\src\Game\Shaders\GLES\fragNuklear.glsl">
       <Filter>Shaders\GLES</Filter>
+    </None>
+    <None Include="..\..\bin\data\Scripts\testScripting.lua">
+      <Filter>Script Files</Filter>
     </None>
   </ItemGroup>
 </Project>

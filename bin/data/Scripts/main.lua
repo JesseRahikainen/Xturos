@@ -2,11 +2,16 @@
 print( "Loading main functions" )
 print( "The Lua interpreter version is " .. _VERSION )
 
+-- todo: want this cache this in engine eventually
+if not package["main"] == nil then
+    return package["main"]
+end
+
 local main = {}
 
 -- debugging and helper functions
 --  table serialization from here: http://lua-users.org/wiki/TableSerialization
-function main.table_print( tt, indent, done )
+function table_print( tt, indent, done )
     done = done or {}
     indent = indent or 0
     --print("table_print")
@@ -35,11 +40,11 @@ function main.table_print( tt, indent, done )
     end
 end
 
-function main.to_string( tbl )
+function to_string( tbl )
     if "nil" == type( tbl ) then
         return tostring( nil )
     elseif "table" == type( tbl ) then
-        return main.table_print( tbl )
+        return table_print( tbl )
     elseif "string" == type( tbl ) then
         return tbl
     else
@@ -411,3 +416,5 @@ main.MouseButtons = protect( {
 
 -- don't reload this
 package.loaded["main"] = main
+
+return main

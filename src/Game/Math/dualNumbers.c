@@ -4,6 +4,7 @@
 #include <math.h>
 #include "mathUtil.h"
 #include "System/platformLog.h"
+#include "Utils/helpers.h"
 
 DualNumber dual( float r, float d )
 {
@@ -135,39 +136,28 @@ int dual_Compare( const DualNumber* lhs, const DualNumber* rhs )
 	return ( FLT_LT( lhs->real, rhs->real ) ? -1 : ( FLT_GT( lhs->real, rhs->real ) ? 1 : 0 ) );
 }
 
-bool dual_Serialize( cmp_ctx_t* cmp, const DualNumber* dual )
+bool dual_Serialize( Serializer* s, const char* name, DualNumber* dual )
 {
-	SDL_assert( dual != NULL );
-	SDL_assert( cmp != NULL );
+	ASSERT_AND_IF_NOT( s != NULL ) return false;
+	ASSERT_AND_IF_NOT( dual != NULL ) return false;
 
-	if( !cmp_write_float( cmp, dual->real ) ) {
-		llog( LOG_ERROR, "Unable to write real part of DualNumber." );
+	if( !s->startStructure( s, name ) ) {
+		llog( LOG_ERROR, "Unable to start DualNumber." );
 		return false;
 	}
 
-	if( !cmp_write_float( cmp, dual->dual ) ) {
-		llog( LOG_ERROR, "Unable to write dual part of DualNumber." );
+	if( !s->flt( s, "real", &(dual->real) ) ) {
+		llog( LOG_ERROR, "Unable to serialize real part of DualNumber." );
 		return false;
 	}
 
-	return true;
-}
-
-bool dual_Deserialize( cmp_ctx_t* cmp, DualNumber* outDual )
-{
-	SDL_assert( outDual != NULL );
-	SDL_assert( cmp != NULL );
-
-	outDual->real = 0.0f;
-	outDual->dual = 0.0f;
-
-	if( !cmp_read_float( cmp, &( outDual->real ) ) ) {
-		llog( LOG_ERROR, "Unable to load real part of DualNumber." );
+	if( !s->flt( s, "dual", &( dual->dual ) ) ) {
+		llog( LOG_ERROR, "Unable to serialize dual part of DualNumber." );
 		return false;
 	}
 
-	if( !cmp_read_float( cmp, &( outDual->dual ) ) ) {
-		llog( LOG_ERROR, "Unable to load dual part of DualNumber." );
+	if( !s->endStructure( s, name ) ) {
+		llog( LOG_ERROR, "Unable to end DualNumber." );
 		return false;
 	}
 

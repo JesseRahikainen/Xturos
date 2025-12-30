@@ -32,13 +32,13 @@ typedef struct {
 typedef struct {
 	AnimEvent_Base base;
 	char* frameName;
-	int imgID;
+	ImageID imgID;
 	Vector2 offset;
 } AnimEvent_SwitchImage;
 
 typedef struct {
 	AnimEvent_Base base;
-	int colliderID;
+	int32_t colliderID;
 	float centerX;
 	float centerY;
 	float width;
@@ -47,7 +47,7 @@ typedef struct {
 
 typedef struct {
 	AnimEvent_Base base;
-	int colliderID;
+	int32_t colliderID;
 	float centerX;
 	float centerY;
 	float radius;
@@ -55,7 +55,7 @@ typedef struct {
 
 typedef struct {
 	AnimEvent_Base base;
-	int colliderID;
+	int32_t colliderID;
 } AnimEvent_DeactivateCollider;
 
 typedef union {
@@ -68,10 +68,10 @@ typedef union {
 
 typedef struct {
 	void* data;
-	void ( *handleSwitchImg )( void* data, int imgID, const Vector2* offset );
-	void ( *handleSetAABCollider )( void* data, int colliderID, float centerX, float centerY, float width, float height );
-	void ( *handleSetCircleCollider )( void* data, int colliderID, float centerX, float centerY, float radius );
-	void ( *handleDeactivateCollider )( void* data, int colliderID );
+	void ( *handleSwitchImg )( void* data, ImageID imgID, const Vector2* offset );
+	void ( *handleSetAABCollider )( void* data, int32_t colliderID, float centerX, float centerY, float width, float height );
+	void ( *handleSetCircleCollider )( void* data, int32_t colliderID, float centerX, float centerY, float radius );
+	void ( *handleDeactivateCollider )( void* data, int32_t colliderID );
 	void ( *handleAnimationCompleted )( void* data, bool loops );
 } AnimEventHandler;
 

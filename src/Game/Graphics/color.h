@@ -4,11 +4,10 @@
 #include <SDL3/SDL_pixels.h>
 #include <stdint.h>
 #include <stdbool.h>
-#include "Others/cmp.h"
 
-/*
-Standard 32-bit colors. Doesn't handle HDR or any fancy stuff.
-*/
+#include "System/serializer.h"
+
+// Standard 32-bit colors. Doesn't handle HDR or any fancy stuff.
 
 typedef struct {
 	union {
@@ -51,7 +50,6 @@ Color* clr_Lerp( const Color* from, const Color* to, float t, Color* out );
 Color* clr_Scale( const Color* color, float scale, Color* out );
 Color* clr_AddScaled( const Color* base, const Color* scaled, float scale, Color* out );
 
-bool clr_Serialize( cmp_ctx_t* cmp, const Color* clr );
-bool clr_Deserialize( cmp_ctx_t* cmp, Color* outClr );
+bool clr_Serialize( Serializer* s, const char* name, Color* clr );
 
 #endif // inclusion guard

@@ -31,7 +31,7 @@ typedef struct {
 
 	ShaderType shaderType;
 
-	int stencilGroup; // valid values are 0-7, anything else will cause it to be ignored
+	int8_t stencilGroup; // valid values are 0-7, anything else will cause it to be ignored
 } Triangle;
 
 typedef struct {

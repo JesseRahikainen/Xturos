@@ -15,7 +15,6 @@
 #include "System/platformLog.h"
 #include "Utils/helpers.h"
 #include "Utils/stretchyBuffer.h"
-#include "Graphics/images.h"
 #include "Graphics/imageSheets.h"
 
 #ifdef WIN32
@@ -121,7 +120,7 @@ int editor_loadImageFile( const char* filePath )
 }
 
 // returns a stretchybuffer of image ids, you'll need to manage the memory here
-int editor_loadSpriteSheetFile( const char* filePath, int** outImgSB )
+int editor_loadSpriteSheetFile( const char* filePath, ImageID** outImgSB )
 {
 	SDL_assert( filePath != NULL );
 	llog( LOG_DEBUG, "Loading sprite sheet file %s...", filePath );
@@ -134,7 +133,7 @@ int editor_loadSpriteSheetFile( const char* filePath, int** outImgSB )
 }
 
 #ifdef WIN32
-static void handleDialogError( DWORD errorCode )
+/*static void handleDialogError( DWORD errorCode )
 {
 	if(errorCode == 0) {
 		// cancelled out, no error to show
@@ -198,7 +197,7 @@ static void handleDialogError( DWORD errorCode )
 	}
 
 	hub_CreateDialog( "Error", errorText, DT_ERROR, 1, "OK", NULL );
-}
+}//*/
 
 // adapt to the SDL file dialogs where they return a list of things
 void sdlFileDialogCallback( void* userData, const char* const* fileList, int filter )

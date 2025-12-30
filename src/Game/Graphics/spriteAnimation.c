@@ -159,7 +159,7 @@ bool sprAnim_LoadAssociatedData( SpriteAnimation* anim )
 	// set the images associated with all SetImage events
 	for( size_t i = 0; i < sb_Count( anim->sbEvents ); ++i ) {
 		if( anim->sbEvents[i].base.type == AET_SWITCH_IMAGE ) {
-			anim->sbEvents[i].switchImg.imgID = img_GetExistingByID( anim->sbEvents[i].switchImg.frameName );
+			anim->sbEvents[i].switchImg.imgID = img_GetExistingByStrID( anim->sbEvents[i].switchImg.frameName );
 		}
 	}
 
@@ -349,42 +349,40 @@ bool sprAnim_Save( const char* fileName, SpriteAnimation* anim )
 		return false;
 	}
 
+	Serializer s;
+	serializer_CreateWriteCmp( &cmp, &s );
+
 	// write out all the base data first
-	CMP_WRITE( &cmp, anim->fps, cmp_write_float, ioType, "fps", goto clean_up );
-	CMP_WRITE( &cmp, anim->durationFrames, cmp_write_u32, ioType, "duration", goto clean_up );
-	CMP_WRITE( &cmp, anim->loops, cmp_write_bool, ioType, "looping", goto clean_up );
-	CMP_WRITE_STR( &cmp, anim->spriteSheetFile, ioType, "sprite sheet file name", goto clean_up );
+	SERIALIZE_CHECK( s.flt( &s, "fps", &( anim->fps ) ), ioType, "fps", goto clean_up );
+	SERIALIZE_CHECK( s.u32( &s, "duration", &( anim->durationFrames ) ), ioType, "duration", goto clean_up );
+	SERIALIZE_CHECK( s.boolean( &s, "looping", &( anim->loops ) ), ioType, "looping", goto clean_up );
+	SERIALIZE_CHECK( s.cString( &s, "sheetFileName", &( anim->spriteSheetFile ) ), ioType, "sprite sheet file name", goto clean_up );
 
 	uint32_t numEvents = (uint32_t)sb_Count( anim->sbEvents );
-	CMP_WRITE( &cmp, numEvents, cmp_write_array, ioType, "event count", goto clean_up );
-
-	for( size_t i = 0; i < sb_Count( anim->sbEvents ); ++i ) {
-		CMP_WRITE( &cmp, anim->sbEvents[i].base.frame, cmp_write_u32, ioType, "event frame", goto clean_up );
-
-		uint32_t typeAsU32 = (uint32_t)anim->sbEvents[i].base.type;
-		CMP_WRITE( &cmp, typeAsU32, cmp_write_u32, ioType, "event type", goto clean_up );
-
+	SERIALIZE_CHECK( s.arraySize( &s, "eventCount", &( numEvents ) ), ioType, "event count", goto clean_up );
+	for( uint32_t i = 0; i < numEvents; ++i ) {
+		SERIALIZE_CHECK( s.u32( &s, "eventFrame", &( anim->sbEvents[i].base.frame ) ), ioType, "event frame", goto clean_up );
+		SERIALIZE_ENUM( &s, ioType, "eventType", anim->sbEvents[i].base.type, AnimEventTypes, goto clean_up );
 		switch( anim->sbEvents[i].base.type ) {
 		case AET_SWITCH_IMAGE: {
-			const char* imgID = img_GetImgStringID( anim->sbEvents[i].switchImg.imgID );
-			CMP_WRITE_STR( &cmp, imgID, ioType, "image id", goto clean_up );
-			CMP_WRITE( &cmp, &( anim->sbEvents[i].switchImg.offset ), vec2_Serialize, ioType, "switch image offset", goto clean_up );
+			SERIALIZE_CHECK( s.imageID( &s, "imgID", &( anim->sbEvents[i].switchImg.imgID ) ), ioType, "image id", goto clean_up );
+			SERIALIZE_CHECK( vec2_Serialize( &s, "imgOffset", &( anim->sbEvents[i].switchImg.offset )), ioType, "switch image offset", goto clean_up );
 		} break;
 		case AET_SET_AAB_COLLIDER:
-			CMP_WRITE( &cmp, anim->sbEvents[i].setAABCollider.colliderID, cmp_write_int, ioType, "AAB collider id", goto clean_up );
-			CMP_WRITE( &cmp, anim->sbEvents[i].setAABCollider.centerX, cmp_write_float, ioType, "AAB center x", goto clean_up );
-			CMP_WRITE( &cmp, anim->sbEvents[i].setAABCollider.centerY, cmp_write_float, ioType, "AAB center y", goto clean_up );
-			CMP_WRITE( &cmp, anim->sbEvents[i].setAABCollider.width, cmp_write_float, ioType, "AAB width", goto clean_up );
-			CMP_WRITE( &cmp, anim->sbEvents[i].setAABCollider.height, cmp_write_float, ioType, "AAB height", goto clean_up );
+			SERIALIZE_CHECK( s.s32( &s, "collID", &( anim->sbEvents[i].setAABCollider.colliderID ) ), ioType, "AAB collider id", goto clean_up );
+			SERIALIZE_CHECK( s.flt( &s, "aabX", &( anim->sbEvents[i].setAABCollider.centerX ) ), ioType, "AAB collider center x", goto clean_up );
+			SERIALIZE_CHECK( s.flt( &s, "aabY", &( anim->sbEvents[i].setAABCollider.centerY ) ), ioType, "AAB collider center y", goto clean_up );
+			SERIALIZE_CHECK( s.flt( &s, "aabWidth", &( anim->sbEvents[i].setAABCollider.width ) ), ioType, "AAB collider width", goto clean_up );
+			SERIALIZE_CHECK( s.flt( &s, "aabHeight", &( anim->sbEvents[i].setAABCollider.height ) ), ioType, "AAB collider height", goto clean_up );
 			break;
 		case AET_SET_CIRCLE_COLLIDER:
-			CMP_WRITE( &cmp, anim->sbEvents[i].setCircleCollider.colliderID, cmp_write_int, ioType, "circle collider id", goto clean_up );
-			CMP_WRITE( &cmp, anim->sbEvents[i].setCircleCollider.centerX, cmp_write_float, ioType, "circle collider center x", goto clean_up );
-			CMP_WRITE( &cmp, anim->sbEvents[i].setCircleCollider.centerY, cmp_write_float, ioType, "circle collider center y", goto clean_up );
-			CMP_WRITE( &cmp, anim->sbEvents[i].setCircleCollider.radius, cmp_write_float, ioType, "circle collider radius", goto clean_up );
+			SERIALIZE_CHECK( s.s32( &s, "collID", &( anim->sbEvents[i].setCircleCollider.colliderID ) ), ioType, "circle collider id", goto clean_up );
+			SERIALIZE_CHECK( s.flt( &s, "circX", &( anim->sbEvents[i].setCircleCollider.centerX ) ), ioType, "circle collider center x", goto clean_up );
+			SERIALIZE_CHECK( s.flt( &s, "circY", &( anim->sbEvents[i].setCircleCollider.centerY ) ), ioType, "circle collider center y", goto clean_up );
+			SERIALIZE_CHECK( s.flt( &s, "circRad", &( anim->sbEvents[i].setCircleCollider.radius ) ), ioType, "circle collider radius", goto clean_up );
 			break;
 		case AET_DEACTIVATE_COLLIDER:
-			CMP_WRITE( &cmp, anim->sbEvents[i].deactivateCollider.colliderID, cmp_write_int, ioType, "deactivate collider id", goto clean_up );
+			SERIALIZE_CHECK( s.s32( &s, "collID", &( anim->sbEvents[i].deactivateCollider.colliderID ) ), ioType, "deactivate collider id", goto clean_up );
 			break;
 		default:
 			llog( LOG_ERROR, "Unable to write unknown event for animation: %s", cmp_strerror( &cmp ) );
@@ -420,51 +418,43 @@ bool sprAnim_Load( const char* fileName, SpriteAnimation* anim )
 		return false;
 	}
 
-	CMP_READ( &cmp, anim->fps, cmp_read_float, ioType, "fps", goto clean_up );
-	CMP_READ( &cmp, anim->durationFrames, cmp_read_u32, ioType, "duration", goto clean_up );
-	CMP_READ( &cmp, anim->loops, cmp_read_bool, ioType, "looping", goto clean_up );
+	Serializer s;
+	serializer_CreateReadCmp( &cmp, &s );
 
-	char fileNameBuffer[256];
-	uint32_t fileNameBufferSize = ARRAY_SIZE( fileNameBuffer );
-	CMP_READ_STR( &cmp, fileNameBuffer, fileNameBufferSize, ioType, "sprite sheet file name", goto clean_up );
-	anim->spriteSheetFile = createStringCopy( fileNameBuffer );
+	SERIALIZE_CHECK( s.flt( &s, "fps", &( anim->fps ) ), ioType, "fps", goto clean_up );
+	SERIALIZE_CHECK( s.u32( &s, "duration", &( anim->durationFrames ) ), ioType, "duration", goto clean_up );
+	SERIALIZE_CHECK( s.boolean( &s, "looping", &( anim->loops ) ), ioType, "looping", goto clean_up );
+	SERIALIZE_CHECK( s.cString( &s, "sheetFileName", &( anim->spriteSheetFile ) ), ioType, "sprite sheet file name", goto clean_up );
 
+	// TODO: figure out how to do stretchy buffers with the new serialization
 	uint32_t numEvents;
-	CMP_READ( &cmp, numEvents, cmp_read_array, ioType, "event count", goto clean_up );
-
+	SERIALIZE_CHECK( s.arraySize( &s, "eventCount", &( numEvents ) ), ioType, "event count", goto clean_up );
 	for( uint32_t i = 0; i < numEvents; ++i ) {
 		AnimEvent newEvent;
 		SDL_memset( &newEvent, 0, sizeof( newEvent ) );
 
-		CMP_READ( &cmp, newEvent.base.frame, cmp_read_u32, ioType, "event frame", goto clean_up );
-
-		uint32_t typeAsU32;
-		CMP_READ( &cmp, typeAsU32, cmp_read_u32, ioType, "event type", goto clean_up );
-		newEvent.base.type = (AnimEventTypes)typeAsU32;
-
+		SERIALIZE_CHECK( s.u32( &s, "eventFrame", &( newEvent.base.frame ) ), ioType, "event frame", goto clean_up );
+		SERIALIZE_ENUM( &s, ioType, "eventType", newEvent.base.type, AnimEventTypes, goto clean_up );
 		switch( newEvent.base.type ) {
 		case AET_SWITCH_IMAGE: {
-			char imageNameBuffer[256];
-			uint32_t imageNameBufferSize = ARRAY_SIZE( imageNameBuffer );
-			CMP_READ_STR( &cmp, imageNameBuffer, imageNameBufferSize, ioType, "image id", goto clean_up );
-			newEvent.switchImg.frameName = createStringCopy( imageNameBuffer );
-			CMP_READ( &cmp, newEvent.switchImg.offset, vec2_Deserialize, ioType, "switch image offset", goto clean_up );
+			SERIALIZE_CHECK( s.imageID( &s, "imgID", &( newEvent.switchImg.imgID ) ), ioType, "image id", goto clean_up );
+			SERIALIZE_CHECK( vec2_Serialize( &s, "imgOffset", &( newEvent.switchImg.offset ) ), ioType, "switch image offset", goto clean_up );
 		} break;
 		case AET_SET_AAB_COLLIDER:
-			CMP_READ( &cmp, newEvent.setAABCollider.colliderID, cmp_read_int, ioType, "AAB collider id", goto clean_up );
-			CMP_READ( &cmp, newEvent.setAABCollider.centerX, cmp_read_float, ioType, "AAB center x", goto clean_up );
-			CMP_READ( &cmp, newEvent.setAABCollider.centerY, cmp_read_float, ioType, "AAB center y", goto clean_up );
-			CMP_READ( &cmp, newEvent.setAABCollider.width, cmp_read_float, ioType, "AAB width", goto clean_up );
-			CMP_READ( &cmp, newEvent.setAABCollider.height, cmp_read_float, ioType, "AAB height", goto clean_up );
+			SERIALIZE_CHECK( s.s32( &s, "collID", &( newEvent.setAABCollider.colliderID ) ), ioType, "AAB collider id", goto clean_up );
+			SERIALIZE_CHECK( s.flt( &s, "aabX", &( newEvent.setAABCollider.centerX ) ), ioType, "AAB collider center x", goto clean_up );
+			SERIALIZE_CHECK( s.flt( &s, "aabY", &( newEvent.setAABCollider.centerY ) ), ioType, "AAB collider center y", goto clean_up );
+			SERIALIZE_CHECK( s.flt( &s, "aabWidth", &( newEvent.setAABCollider.width ) ), ioType, "AAB collider width", goto clean_up );
+			SERIALIZE_CHECK( s.flt( &s, "aabHeight", &( newEvent.setAABCollider.height ) ), ioType, "AAB collider height", goto clean_up );
 			break;
 		case AET_SET_CIRCLE_COLLIDER:
-			CMP_READ( &cmp, newEvent.setCircleCollider.colliderID, cmp_read_int, ioType, "circle collider id", goto clean_up );
-			CMP_READ( &cmp, newEvent.setCircleCollider.centerX, cmp_read_float, ioType, "circle collider center x", goto clean_up );
-			CMP_READ( &cmp, newEvent.setCircleCollider.centerY, cmp_read_float, ioType, "circle collider center y", goto clean_up );
-			CMP_READ( &cmp, newEvent.setCircleCollider.radius, cmp_read_float, ioType, "circle collider radius", goto clean_up );
+			SERIALIZE_CHECK( s.s32( &s, "collID", &( newEvent.setCircleCollider.colliderID ) ), ioType, "circle collider id", goto clean_up );
+			SERIALIZE_CHECK( s.flt( &s, "circX", &( newEvent.setCircleCollider.centerX ) ), ioType, "circle collider center x", goto clean_up );
+			SERIALIZE_CHECK( s.flt( &s, "circY", &( newEvent.setCircleCollider.centerY ) ), ioType, "circle collider center y", goto clean_up );
+			SERIALIZE_CHECK( s.flt( &s, "circRad", &( newEvent.setCircleCollider.radius ) ), ioType, "circle collider radius", goto clean_up );
 			break;
 		case AET_DEACTIVATE_COLLIDER:
-			CMP_READ( &cmp, newEvent.deactivateCollider.colliderID, cmp_read_int, ioType, "deactivate collider id", goto clean_up );
+			SERIALIZE_CHECK( s.s32( &s, "collID", &( newEvent.deactivateCollider.colliderID ) ), ioType, "deactivate collider id", goto clean_up );
 			break;
 		default:
 			llog( LOG_ERROR, "Unable to read unknown event for animation: %s", cmp_strerror( &cmp ) );

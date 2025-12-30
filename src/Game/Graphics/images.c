@@ -67,30 +67,30 @@ bool img_Init( void )
 
 // Finds the first unused image index.
 //  Returns a postive value on success, a negative on failure.
-static int findAvailableImageIndex( )
+static ImageID findAvailableImageIndex( )
 {
-	int newIdx = 0;
+	ImageID newId = 0;
 
-	while( ( newIdx < MAX_IMAGES ) && ( images[newIdx].flags & IMGFLAG_IN_USE ) ) {
-		++newIdx;
+	while( ( newId < MAX_IMAGES ) && ( images[newId].flags & IMGFLAG_IN_USE ) ) {
+		++newId;
 	}
 
-	if( newIdx >= MAX_IMAGES ) {
-		newIdx = -1;
+	if( newId >= MAX_IMAGES ) {
+		newId = INVALID_IMAGE_ID;
 	}
 
-	return newIdx;
+	return newId;
 }
 
-bool findImageByID( const char* id, int* outIdx )
+bool findImageByStrID( const char* id, ImageID* outId )
 {
-	for( int i = 0; i < MAX_IMAGES; ++i ) {
+	for( ImageID i = 0; i < MAX_IMAGES; ++i ) {
 		if( !( images[i].flags & IMGFLAG_IN_USE ) ) {
 			continue;
 		}
 
 		if( images[i].id != NULL && SDL_strcmp( id, images[i].id ) == 0 ) {
-			( *outIdx ) = i;
+			( *outId ) = i;
 			return true;
 		}
 	}
@@ -101,139 +101,138 @@ bool findImageByID( const char* id, int* outIdx )
 // Loads the image stored at file name.
 //  Returns the index of the image on success.
 //  Returns -1 on failure, and prints a message to the log.
-int img_Load( const char* fileName, ShaderType shaderType )
+ImageID img_Load( const char* fileName, ShaderType shaderType )
 {
-	int newIdx = -1;
+	ImageID newId = INVALID_IMAGE_ID;
 
 	// if we've already loaded the image don't load it again
-	if( findImageByID( fileName, &newIdx ) ) {
-		return newIdx;
+	if( findImageByStrID( fileName, &newId ) ) {
+		return newId;
 	}
 
 	// find the first empty spot, make sure we won't go over our maximum
-	newIdx = findAvailableImageIndex( );
-	if( newIdx < 0 ) {
+	newId = findAvailableImageIndex( );
+	if( newId == INVALID_IMAGE_ID ) {
 		llog( LOG_INFO, "Unable to load image %s! Image storage full.", fileName );
-		return -1;
+		return INVALID_IMAGE_ID;
 	}
 
 	Texture texture;
 	if( gfxUtil_LoadTexture( fileName, &texture ) < 0 ) {
 		llog( LOG_INFO, "Unable to load image %s!", fileName );
-		newIdx = -1;
-		return -1;
+		return INVALID_IMAGE_ID;
 	}
 
-	images[newIdx].textureObj = texture.texture;
-	images[newIdx].size.v[0] = (float)texture.width;
-	images[newIdx].size.v[1] = (float)texture.height;
-	images[newIdx].offset = VEC2_ZERO;
-	images[newIdx].packageID = -1;
-	images[newIdx].flags = IMGFLAG_IN_USE;
-	images[newIdx].nextInPackage = -1;
-	images[newIdx].uvMin = VEC2_ZERO;
-	images[newIdx].uvMax = VEC2_ONE;
-	images[newIdx].shaderType = shaderType;
-	images[newIdx].extraImageObj = -1;
+	images[newId].textureObj = texture.texture;
+	images[newId].size.v[0] = (float)texture.width;
+	images[newId].size.v[1] = (float)texture.height;
+	images[newId].offset = VEC2_ZERO;
+	images[newId].packageID = -1;
+	images[newId].flags = IMGFLAG_IN_USE;
+	images[newId].nextInPackage = -1;
+	images[newId].uvMin = VEC2_ZERO;
+	images[newId].uvMax = VEC2_ONE;
+	images[newId].shaderType = shaderType;
+	images[newId].extraImageObj = -1;
 	if( texture.flags & TF_IS_TRANSPARENT ) {
-		images[newIdx].flags |= IMGFLAG_HAS_TRANSPARENCY;
+		images[newId].flags |= IMGFLAG_HAS_TRANSPARENCY;
 	}
-	images[newIdx].id = createStringCopy( fileName );
-	images[newIdx].allowUnload = true;
+	images[newId].id = createStringCopy( fileName );
+	images[newId].allowUnload = true;
 
-	return newIdx;
+	return newId;
 }
 
 // Returns whether imgIdx points to a valid image.
-bool img_IsValidImage( int imgIdx )
+bool img_IsValidImage( ImageID imgId )
 {
-	if( imgIdx >= MAX_IMAGES ) return false;
-	if( imgIdx < 0 ) return false;
-	return images[imgIdx].flags & IMGFLAG_IN_USE;
+	if( imgId >= MAX_IMAGES ) return false;
+	if( imgId == INVALID_IMAGE_ID ) return false;
+	return images[imgId].flags & IMGFLAG_IN_USE;
 }
 
-int img_CreateFromLoadedImage( LoadedImage* loadedImg, ShaderType shaderType, const char* id )
+ImageID img_CreateFromLoadedImage( LoadedImage* loadedImg, ShaderType shaderType, const char* id )
 {
-	int newIdx = -1;
+	ImageID newId = INVALID_IMAGE_ID;
 
 	// if we've already loaded the image with this id don't load it again
-	if( findImageByID( id, &newIdx ) ) {
-		return newIdx;
+	if( findImageByStrID( id, &newId ) ) {
+		return newId;
 	}
 
-	newIdx = findAvailableImageIndex( );
-	if( newIdx < 0 ) {
+	newId = findAvailableImageIndex( );
+	if( newId == INVALID_IMAGE_ID ) {
 		llog( LOG_INFO, "Unable to create image! Image storage full." );
-		return -1;
+		return INVALID_IMAGE_ID;
 	}
 
 	Texture texture;
 	if( gfxPlatform_CreateTextureFromLoadedImage( TF_RGBA, loadedImg, &texture ) < 0 ) {
 		llog( LOG_INFO, "Unable to create image!" );
-		return -1;
+		return INVALID_IMAGE_ID;
 	}
 
-	images[newIdx].textureObj = texture.texture;
-	images[newIdx].size.v[0] = (float)texture.width;
-	images[newIdx].size.v[1] = (float)texture.height;
-	images[newIdx].offset = VEC2_ZERO;
-	images[newIdx].packageID = -1;
-	images[newIdx].flags = IMGFLAG_IN_USE;
-	images[newIdx].nextInPackage = -1;
-	images[newIdx].uvMin = VEC2_ZERO;
-	images[newIdx].uvMax = VEC2_ONE;
-	images[newIdx].shaderType = shaderType;
-	images[newIdx].extraImageObj = -1;
+	images[newId].textureObj = texture.texture;
+	images[newId].size.v[0] = (float)texture.width;
+	images[newId].size.v[1] = (float)texture.height;
+	images[newId].offset = VEC2_ZERO;
+	images[newId].packageID = -1;
+	images[newId].flags = IMGFLAG_IN_USE;
+	images[newId].nextInPackage = -1;
+	images[newId].uvMin = VEC2_ZERO;
+	images[newId].uvMax = VEC2_ONE;
+	images[newId].shaderType = shaderType;
+	images[newId].extraImageObj = -1;
 	if( texture.flags & TF_IS_TRANSPARENT ) {
-		images[newIdx].flags |= IMGFLAG_HAS_TRANSPARENCY;
+		images[newId].flags |= IMGFLAG_HAS_TRANSPARENCY;
 	}
-	images[newIdx].id = createStringCopy( id );
-	images[newIdx].allowUnload = true;
+	images[newId].id = createStringCopy( id );
+	images[newId].allowUnload = true;
 
-	return newIdx;
+	return newId;
 }
 
-int img_CreateFromTexture( Texture* texture, ShaderType shaderType, const char* id )
+ImageID img_CreateFromTexture( Texture* texture, ShaderType shaderType, const char* id )
 {
-	int newIdx = -1;;
+	ImageID newId = INVALID_IMAGE_ID;
 
 	// if we've already loaded the image with this id don't load it again
-	if( findImageByID( id, &newIdx ) ) {
-		return newIdx;
+	if( findImageByStrID( id, &newId ) ) {
+		return newId;
 	}
 
-	newIdx = findAvailableImageIndex( );
-	if( newIdx < 0 ) {
+	newId = findAvailableImageIndex( );
+	if( newId < 0 ) {
 		llog( LOG_INFO, "Unable to create image! Image storage full." );
-		return -1;
+		return INVALID_IMAGE_ID;
 	}
 
-	images[newIdx].textureObj = texture->texture;
-	images[newIdx].size.v[0] = (float)texture->width;
-	images[newIdx].size.v[1] = (float)texture->height;
-	images[newIdx].offset = VEC2_ZERO;
-	images[newIdx].packageID = -1;
-	images[newIdx].flags = IMGFLAG_IN_USE;
-	images[newIdx].nextInPackage = -1;
-	images[newIdx].uvMin = VEC2_ZERO;
-	images[newIdx].uvMax = VEC2_ONE;
-	images[newIdx].shaderType = shaderType;
-	images[newIdx].extraImageObj = -1;
+	images[newId].textureObj = texture->texture;
+	images[newId].size.v[0] = (float)texture->width;
+	images[newId].size.v[1] = (float)texture->height;
+	images[newId].offset = VEC2_ZERO;
+	images[newId].packageID = -1;
+	images[newId].flags = IMGFLAG_IN_USE;
+	images[newId].nextInPackage = -1;
+	images[newId].uvMin = VEC2_ZERO;
+	images[newId].uvMax = VEC2_ONE;
+	images[newId].shaderType = shaderType;
+	images[newId].extraImageObj = -1;
 	if( texture->flags & TF_IS_TRANSPARENT ) {
-		images[newIdx].flags |= IMGFLAG_HAS_TRANSPARENCY;
+		images[newId].flags |= IMGFLAG_HAS_TRANSPARENCY;
 	}
-	images[newIdx].id = createStringCopy( id );
-	images[newIdx].allowUnload = true;
+	images[newId].id = createStringCopy( id );
+	images[newId].allowUnload = true;
 
-	return newIdx;
+	return newId;
 }
 
 typedef struct {
 	char* fileName;
 	ShaderType shaderType;
-	int* outIdx;
+	ImageID* outId;
 	LoadedImage loadedImage;
-	void ( *onLoadDone )( int );
+	void ( *onLoadDone )( ImageID );
 } ThreadedLoadImageData;
 
 static void bindImageJob( void* data )
@@ -245,7 +244,7 @@ static void bindImageJob( void* data )
 
 	ThreadedLoadImageData* loadData = (ThreadedLoadImageData*)data;
 
-	(*(loadData->outIdx)) = -1;
+	(*(loadData->outId)) = INVALID_IMAGE_ID;
 
 	if( loadData->loadedImage.data == NULL ) {
 		llog( LOG_INFO, "Failed to load image %s", loadData->fileName );
@@ -253,8 +252,8 @@ static void bindImageJob( void* data )
 	}
 
 	// find the first empty spot, make sure we won't go over our maximum
-	int newIdx = findAvailableImageIndex( );
-	if( newIdx < 0 ) {
+	ImageID newId = findAvailableImageIndex( );
+	if( newId < 0 ) {
 		llog( LOG_INFO, "Unable to bind image %s! Image storage full.", loadData->fileName );
 		goto clean_up;
 	}
@@ -267,29 +266,29 @@ static void bindImageJob( void* data )
 
 	//llog( LOG_INFO, "Done loading %s", loadData->fileName );
 
-	images[newIdx].textureObj = texture.texture;
-	images[newIdx].size.v[0] = (float)texture.width;
-	images[newIdx].size.v[1] = (float)texture.height;
-	images[newIdx].offset = VEC2_ZERO;
-	images[newIdx].packageID = -1;
-	images[newIdx].flags = IMGFLAG_IN_USE;
-	images[newIdx].nextInPackage = -1;
-	images[newIdx].uvMin = VEC2_ZERO;
-	images[newIdx].uvMax = VEC2_ONE;
-	images[newIdx].shaderType = loadData->shaderType;
-	images[newIdx].extraImageObj = -1;
+	images[newId].textureObj = texture.texture;
+	images[newId].size.v[0] = (float)texture.width;
+	images[newId].size.v[1] = (float)texture.height;
+	images[newId].offset = VEC2_ZERO;
+	images[newId].packageID = -1;
+	images[newId].flags = IMGFLAG_IN_USE;
+	images[newId].nextInPackage = -1;
+	images[newId].uvMin = VEC2_ZERO;
+	images[newId].uvMax = VEC2_ONE;
+	images[newId].shaderType = loadData->shaderType;
+	images[newId].extraImageObj = -1;
 	if( texture.flags & TF_IS_TRANSPARENT ) {
-		images[newIdx].flags |= IMGFLAG_HAS_TRANSPARENCY;
+		images[newId].flags |= IMGFLAG_HAS_TRANSPARENCY;
 	}
-	images[newIdx].id = createStringCopy( loadData->fileName );
-	images[newIdx].allowUnload = true;
+	images[newId].id = createStringCopy( loadData->fileName );
+	images[newId].allowUnload = true;
 
-	(*(loadData->outIdx)) = newIdx;
+	(*(loadData->outId)) = newId;
 
 	//llog( LOG_INFO, "Setting outIdx to %i", newIdx );
 
 clean_up:
-	if( loadData->onLoadDone != NULL ) loadData->onLoadDone( *(loadData->outIdx) );
+	if( loadData->onLoadDone != NULL ) loadData->onLoadDone( *(loadData->outId) );
 	gfxUtil_ReleaseLoadedImage( &( loadData->loadedImage ) );
 	mem_Release( loadData->fileName );
 	mem_Release( loadData );
@@ -314,17 +313,17 @@ static void loadImageJob( void* data )
 Loads the image in a seperate thread. Puts the resulting image index into outIdx.
  Returns -1 if there was an issue, 0 otherwise.
 */
-void img_ThreadedLoad( const char* fileName, ShaderType shaderType, int* outIdx, void (*onLoadDone)( int ) )
+void img_ThreadedLoad( const char* fileName, ShaderType shaderType, ImageID* outId, void (*onLoadDone)( ImageID ) )
 {
 	SDL_assert( fileName != NULL );
 
 	// if we've already loaded this image don't load it again
-	if( findImageByID( fileName, outIdx ) ) {
+	if( findImageByStrID( fileName, outId ) ) {
 		return;
 	}
 
 	// set it to something that won't draw assert
-	(*outIdx) = -1;
+	(*outId) = INVALID_IMAGE_ID;
 
 	// this isn't something that should be happening all the time, so allocating and freeing
 	//  should be fine, if we want to do continous streaming it would probably be better to
@@ -332,7 +331,7 @@ void img_ThreadedLoad( const char* fileName, ShaderType shaderType, int* outIdx,
 	ThreadedLoadImageData* data = mem_Allocate( sizeof( ThreadedLoadImageData ) );
 	if( data == NULL ) {
 		llog( LOG_WARN, "Unable to create data for threaded image load for file %s", fileName );
-		if( onLoadDone != NULL ) onLoadDone( -1 );
+		if( onLoadDone != NULL ) onLoadDone( INVALID_IMAGE_ID );
 		return;
 	}
 
@@ -341,111 +340,105 @@ void img_ThreadedLoad( const char* fileName, ShaderType shaderType, int* outIdx,
 	if( data->fileName == NULL ) {
 		llog( LOG_WARN, "Unable to create file name storage for threaded image lead for fle %s", fileName );
 		mem_Release( data );
-		if( onLoadDone != NULL ) onLoadDone( -1 );
+		if( onLoadDone != NULL ) onLoadDone( INVALID_IMAGE_ID );
 		return;
 	}
 	SDL_strlcpy( data->fileName, fileName, fileNameLen + 1 );
 
 	data->shaderType = shaderType;
-	data->outIdx = outIdx;
+	data->outId = outId;
 	data->loadedImage.data = NULL;
 	data->onLoadDone = onLoadDone;
 
 	if( !jq_AddJob( loadImageJob, data ) ) {
 		mem_Release( data );
-		if( onLoadDone != NULL ) onLoadDone( -1 );
+		if( onLoadDone != NULL ) onLoadDone( INVALID_IMAGE_ID );
 	}
 }
 
 /*
 Creates an image from a surface.
 */
-int img_Create( SDL_Surface* surface, ShaderType shaderType, const char* id )
+ImageID img_Create( SDL_Surface* surface, ShaderType shaderType, const char* id )
 {
-	int newIdx;
+	ImageID newId;
 
 	// if we've already loaded the image with this id don't load it again
-	if( findImageByID( id, &newIdx ) ) {
-		return newIdx;
+	if( findImageByStrID( id, &newId ) ) {
+		return newId;
 	}
 
-	SDL_assert( surface != NULL );
+	ASSERT_AND_IF_NOT( surface != NULL ) return INVALID_IMAGE_ID;
 
-	newIdx = findAvailableImageIndex( );
-	if( newIdx < 0 ) {
+	newId = findAvailableImageIndex( );
+	if( newId < 0 ) {
 		llog( LOG_INFO, "Unable to create image from surface! Image storage full." );
-		return -1;
+		return INVALID_IMAGE_ID;
 	}
 
 	Texture texture;
 	if( gfxPlatform_CreateTextureFromSurface( surface, &texture ) ) {
 		llog( LOG_INFO, "Unable to convert surface to texture! SDL Error: %s", SDL_GetError( ) );
-		return -1;
+		return INVALID_IMAGE_ID;
 	} else {
-		images[newIdx].size.v[0] = (float)texture.width;
-		images[newIdx].size.v[1] = (float)texture.height;
-		images[newIdx].offset = VEC2_ZERO;
-		images[newIdx].packageID = -1;
-		images[newIdx].flags = IMGFLAG_IN_USE;
-		images[newIdx].nextInPackage = -1;
-		images[newIdx].uvMin = VEC2_ZERO;
-		images[newIdx].uvMax = VEC2_ONE;
-		images[newIdx].shaderType = shaderType;
-		images[newIdx].extraImageObj = -1;
+		images[newId].size.v[0] = (float)texture.width;
+		images[newId].size.v[1] = (float)texture.height;
+		images[newId].offset = VEC2_ZERO;
+		images[newId].packageID = -1;
+		images[newId].flags = IMGFLAG_IN_USE;
+		images[newId].nextInPackage = -1;
+		images[newId].uvMin = VEC2_ZERO;
+		images[newId].uvMax = VEC2_ONE;
+		images[newId].shaderType = shaderType;
+		images[newId].extraImageObj = -1;
 		if( texture.flags & TF_IS_TRANSPARENT ) {
-			images[newIdx].flags |= IMGFLAG_HAS_TRANSPARENCY;
+			images[newId].flags |= IMGFLAG_HAS_TRANSPARENCY;
 		}
-		images[newIdx].id = createStringCopy( id );
-		images[newIdx].allowUnload = true;
+		images[newId].id = createStringCopy( id );
+		images[newId].allowUnload = true;
 	}
 
-	return newIdx;
+	return newId;
 }
 
-/*
-Cleans up an image at the specified index, trying to render with it after this won't work.
-*/
-void img_Clean( int idx )
+// Cleans up an image at the specified index, trying to render with it after this won't work.
+void img_Clean( ImageID id )
 {
-	SDL_assert( idx < MAX_IMAGES );
-	SDL_assert( idx >= 0 );
-	SDL_assert( images[idx].flags & IMGFLAG_IN_USE );
-
-	if( ( idx < 0 ) || ( ( images[idx].size.v[0] == 0.0f ) && ( images[idx].size.v[1] == 0.0f ) ) || ( idx >= MAX_IMAGES ) ) {
+	if( ( id == INVALID_IMAGE_ID ) ||
+		( ( images[id].size.v[0] == 0.0f ) && ( images[id].size.v[1] == 0.0f ) ) ||
+		( id >= MAX_IMAGES ) ||
+		( !( images[id].flags & IMGFLAG_IN_USE ) ) ) {
 		return;
 	}
 
-	if( !images[idx].allowUnload ) {
+	if( !images[id].allowUnload ) {
 		llog( LOG_WARN, "Attempting to unload an image that is not unloadable." );
 		return;
 	}
 
 	// see if this is the last image using that texture
-	//  TODO: See if this needs to be sped up
-	int deleteTexture = 1;
+	bool deleteTexture = true;
 	for( int i = 0; ( i < MAX_IMAGES ) && deleteTexture; ++i ) {
-		if( ( images[i].flags & IMGFLAG_IN_USE ) && ( gfxPlatform_ComparePlatformTextures( images[i].textureObj, images[idx].textureObj ) == 0 ) ) {
-			deleteTexture = 0;
+		if( ( images[i].flags & IMGFLAG_IN_USE ) && ( gfxPlatform_ComparePlatformTextures( images[i].textureObj, images[id].textureObj ) == 0 ) ) {
+			deleteTexture = false;
 		}
 	}
 
 	if( deleteTexture ) {
-		gfxPlatform_DeletePlatformTexture( images[idx].textureObj );
+		gfxPlatform_DeletePlatformTexture( images[id].textureObj );
 		
 	}
-	images[idx].size = VEC2_ZERO;
-	images[idx].flags = 0;
-	images[idx].packageID = -1;
-	images[idx].nextInPackage = -1;
-	images[idx].uvMin = VEC2_ZERO;
-	images[idx].uvMax = VEC2_ZERO;
-	images[idx].shaderType = ST_DEFAULT;
-	mem_Release( images[idx].id );
+	images[id].size = VEC2_ZERO;
+	images[id].flags = 0;
+	images[id].packageID = -1;
+	images[id].nextInPackage = -1;
+	images[id].uvMin = VEC2_ZERO;
+	images[id].uvMax = VEC2_ZERO;
+	images[id].shaderType = ST_DEFAULT;
+	mem_Release( images[id].id );
 }
 
-/*
-Finds the next unused package ID.
-*/
+// Finds the next unused package ID.
 int findUnusedPackage( void )
 {
 	int packageID = 0;
@@ -457,50 +450,48 @@ int findUnusedPackage( void )
 	return packageID;
 }
 
-/*
-Splits the texture. Returns a negative number if there's a problem.
-*/
-static int split( Texture* texture, int packageID, ShaderType shaderType, int count, Vector2* mins, Vector2* maxes, char** imgIDs, int* retIDs )
+// Splits the texture. Returns a negative number if there's a problem.
+static int split( Texture* texture, int packageID, ShaderType shaderType, int count, Vector2* mins, Vector2* maxes, char** imgIDs, ImageID* retIDs )
 {
 	Vector2 inverseSize;
 	inverseSize.x = 1.0f / (float)texture->width;
 	inverseSize.y = 1.0f / (float)texture->height;
 
 	for( int i = 0; i < count; ++i ) {
-		int newIdx = findAvailableImageIndex( );
-		if( newIdx < 0 ) {
+		ImageID newId = findAvailableImageIndex( );
+		if( newId == INVALID_IMAGE_ID ) {
 			llog( LOG_ERROR, "Problem finding available image to split into." );
 			img_CleanPackage( packageID );
 			return -1;
 		}
 
-		images[newIdx].textureObj = texture->texture;
-		vec2_Subtract( &( maxes[i] ), &( mins[i] ), &( images[newIdx].size ) );
-		images[newIdx].offset = VEC2_ZERO;
-		images[newIdx].packageID = packageID;
-		images[newIdx].flags = IMGFLAG_IN_USE;
-		vec2_HadamardProd( &( mins[i] ), &inverseSize, &( images[newIdx].uvMin ) );
-		vec2_HadamardProd( &( maxes[i] ), &inverseSize, &( images[newIdx].uvMax ) );
-		images[newIdx].shaderType = shaderType;
+		images[newId].textureObj = texture->texture;
+		vec2_Subtract( &( maxes[i] ), &( mins[i] ), &( images[newId].size ) );
+		images[newId].offset = VEC2_ZERO;
+		images[newId].packageID = packageID;
+		images[newId].flags = IMGFLAG_IN_USE;
+		vec2_HadamardProd( &( mins[i] ), &inverseSize, &( images[newId].uvMin ) );
+		vec2_HadamardProd( &( maxes[i] ), &inverseSize, &( images[newId].uvMax ) );
+		images[newId].shaderType = shaderType;
 		if( texture->flags & TF_IS_TRANSPARENT ) {
-			images[newIdx].flags |= IMGFLAG_HAS_TRANSPARENCY;
+			images[newId].flags |= IMGFLAG_HAS_TRANSPARENCY;
 		}
 		if( imgIDs != NULL ) {
-			images[newIdx].id = createStringCopy( imgIDs[i] );
+			images[newId].id = createStringCopy( imgIDs[i] );
 		} else {
-			images[newIdx].id = NULL; // TODO: Create a random UUID to use.
+			images[newId].id = NULL; // TODO: Create a random UUID to use.
 		}
-		images[newIdx].allowUnload = true;
+		images[newId].allowUnload = true;
 
 		if( retIDs != NULL ) {
-			retIDs[i] = newIdx;
+			retIDs[i] = newId;
 		}
 	}
 
 	return 0;
 }
 
-int img_SplitTexture( Texture* texture, int count, ShaderType shaderType, Vector2* mins, Vector2* maxes, char** imgIDs, int packageID, int* retIDs )
+int img_SplitTexture( Texture* texture, int count, ShaderType shaderType, Vector2* mins, Vector2* maxes, char** imgIDs, int packageID, ImageID* retIDs )
 {
 	int currentPackageID = packageID;
 	if( currentPackageID < 0 ) {
@@ -518,7 +509,7 @@ int img_SplitTexture( Texture* texture, int count, ShaderType shaderType, Vector
 Takes in a file name and some rectangles. It's assumed the length of mins, maxes, and retIDs equals count.
  Returns package ID used to clean up later, returns -1 if there's a problem.
 */
-int img_SplitImageFile( char* fileName, int count, ShaderType shaderType, Vector2* mins, Vector2* maxes, char** imgIDs, int* retIDs )
+int img_SplitImageFile( char* fileName, int count, ShaderType shaderType, Vector2* mins, Vector2* maxes, char** imgIDs, ImageID* retIDs )
 {
 	int currPackageID = findUnusedPackage( );
 
@@ -539,7 +530,7 @@ int img_SplitImageFile( char* fileName, int count, ShaderType shaderType, Vector
 Takes in an RGBA bitmap and some rectangles. It's assumed the length of mins, maxes, and retIDs equals count.
  Returns package ID used to clean up later, returns -1 if there's a problem.
 */
-int img_SplitRGBABitmap( uint8_t* data, int width, int height, int count, ShaderType shaderType, Vector2* mins, Vector2* maxes, int* retIDs )
+int img_SplitRGBABitmap( uint8_t* data, int width, int height, int count, ShaderType shaderType, Vector2* mins, Vector2* maxes, ImageID* retIDs )
 {
 	int currPackageID = findUnusedPackage( );
 
@@ -560,7 +551,7 @@ int img_SplitRGBABitmap( uint8_t* data, int width, int height, int count, Shader
 Takes in a one channel bitmap and some rectangles. It's assume the length of the mins, maxes, and retIDs equal scount.
  Returns package ID used to clean up later, returns -1 if there's a problem.
 */
-int img_SplitAlphaBitmap( uint8_t* data, int width, int height, int count, ShaderType shaderType, Vector2* mins, Vector2* maxes, int* retIDs )
+int img_SplitAlphaBitmap( uint8_t* data, int width, int height, int count, ShaderType shaderType, Vector2* mins, Vector2* maxes, ImageID* retIDs )
 {
 	int currPackageID = findUnusedPackage( );
 
@@ -578,10 +569,10 @@ int img_SplitAlphaBitmap( uint8_t* data, int width, int height, int count, Shade
 }
 
 // Gets all the images associated with the packageID and returns a stretchy buffer containing them.
-int* img_GetPackageImages( int packageID )
+ImageID* img_GetPackageImages( int packageID )
 {
-	int* sbImgs = NULL;
-	for( int i = 0; i < MAX_IMAGES; ++i ) {
+	ImageID* sbImgs = NULL;
+	for( ImageID i = 0; i < MAX_IMAGES; ++i ) {
 		if( ( images[i].flags & IMGFLAG_IN_USE ) && ( images[i].packageID == packageID ) ) {
 			sb_Push( sbImgs, i );
 		}
@@ -616,119 +607,111 @@ void img_CleanPackage( int packageID )
 /*
 Sets an offset to render the image from. The default is the center of the image.
 */
-void img_SetOffset( int idx, Vector2 offset )
+void img_SetOffset( ImageID id, Vector2 offset )
 {
-	SDL_assert( idx < MAX_IMAGES );
-	SDL_assert( idx >= 0 );
-
-	if( ( idx < 0 ) || ( !( images[idx].flags & IMGFLAG_IN_USE ) ) || ( idx >= MAX_IMAGES ) ) {
+	if( ( id >= MAX_IMAGES ) || ( !( images[id].flags & IMGFLAG_IN_USE ) ) ) {
 		return;
 	}
-
-	images[idx].offset = offset;
+	images[id].offset = offset;
 }
 
 // Sets an offset based on a vector with the ranges [0,1], default is <0.5, 0.5>, 0 is left and top, 1 is right and bottom
 //  padding is for if you want some changes based on pixels and not a ratio
-void img_SetRatioOffset( int idx, Vector2 offsetRatio, Vector2 padding )
+void img_SetRatioOffset( ImageID id, Vector2 offsetRatio, Vector2 padding )
 {
-	if( ( idx < 0 ) || ( !( images[idx].flags & IMGFLAG_IN_USE ) ) || ( idx >= MAX_IMAGES ) ) {
+	if( ( id >= MAX_IMAGES ) || ( !( images[id].flags & IMGFLAG_IN_USE ) ) ) {
 		return;
 	}
 
 	offsetRatio.x = ( 1.0f - offsetRatio.x ) - 0.5f;
 	offsetRatio.y = ( 1.0f - offsetRatio.y ) - 0.5f;
-	Vector2 size = images[idx].size;
+	Vector2 size = images[id].size;
 	Vector2 offset;
 	vec2_HadamardProd( &size, &offsetRatio, &offset );
 	vec2_Add( &offset, &padding, &offset );
-	images[idx].offset = offset;
+	images[id].offset = offset;
 }
 
-void img_GetOffset( int idx, Vector2* out )
+void img_GetOffset( ImageID id, Vector2* out )
 {
-	SDL_assert( out != NULL );
+	ASSERT_AND_IF_NOT( out != NULL ) return;
 
-	if( ( idx < 0 ) || ( !( images[idx].flags & IMGFLAG_IN_USE ) ) || ( idx >= MAX_IMAGES ) ) {
+	if( ( id >= MAX_IMAGES ) || ( !( images[id].flags & IMGFLAG_IN_USE ) ) ) {
 		return;
 	}
 
-	(*out) = images[idx].offset;
+	(*out) = images[id].offset;
 }
 
-void img_ForceTransparency( int idx, bool transparent )
+void img_ForceTransparency( ImageID id, bool transparent )
 {
-	SDL_assert( idx < MAX_IMAGES );
-	SDL_assert( idx >= 0 );
-
-	if( !( images[idx].flags & IMGFLAG_IN_USE ) ) {
+	if( ( id >= MAX_IMAGES ) || ( !( images[id].flags & IMGFLAG_IN_USE ) ) ) {
 		return;
 	}
 
 	if( transparent ) {
-		TURN_ON_BITS( images[idx].flags, IMGFLAG_HAS_TRANSPARENCY );
+		TURN_ON_BITS( images[id].flags, IMGFLAG_HAS_TRANSPARENCY );
 	} else {
-		TURN_OFF_BITS( images[idx].flags, IMGFLAG_HAS_TRANSPARENCY );
+		TURN_OFF_BITS( images[id].flags, IMGFLAG_HAS_TRANSPARENCY );
 	}
 }
 
-/*
-Gets the size of the image, putting it into the out Vector2. Returns a negative number if there's an issue.
-*/
-bool img_GetSize( int idx, Vector2* out )
+// Gets the size of the image, putting it into the out Vector2. Returns if it succeeds.
+bool img_GetSize( ImageID id, Vector2* out )
 {
 	SDL_assert( out != NULL );
 
-	if( ( idx < 0 ) || ( !( images[idx].flags & IMGFLAG_IN_USE ) ) || ( idx >= MAX_IMAGES ) ) {
+	if( ( id >= MAX_IMAGES ) || ( !( images[id].flags & IMGFLAG_IN_USE ) ) ) {
 		return false;
 	}
 
-	(*out) = images[idx].size;
+	(*out) = images[id].size;
 	return true;
 }
 
 // returns the ShaderType of the image
-ShaderType img_GetShaderType( int idx )
+ShaderType img_GetShaderType( ImageID id )
 {
-	if( ( idx < 0 ) || ( !( images[idx].flags & IMGFLAG_IN_USE ) ) || ( idx >= MAX_IMAGES ) ) {
+	if( ( id >= MAX_IMAGES ) || ( !( images[id].flags & IMGFLAG_IN_USE ) ) ) {
 		return NUM_SHADERS;
 	}
-	return images[idx].shaderType;
+	return images[id].shaderType;
 }
 
 // used to override the ShaderType value used when the image was loaded, helpful for sprite sheets
-void img_SetShaderType( int idx, ShaderType shaderType )
+void img_SetShaderType( ImageID id, ShaderType shaderType )
 {
-	if( ( idx < 0 ) || ( !( images[idx].flags & IMGFLAG_IN_USE ) ) || ( idx >= MAX_IMAGES ) ) {
+	if( ( id >= MAX_IMAGES ) || ( !( images[id].flags & IMGFLAG_IN_USE ) ) ) {
 		return;
 	}
-	images[idx].shaderType = shaderType;
+	images[id].shaderType = shaderType;
 }
 
 // Gets the the min and max uv coordinates used by the image.
-int img_GetUVCoordinates( int idx, Vector2* outMin, Vector2* outMax )
+bool img_GetUVCoordinates( ImageID id, Vector2* outMin, Vector2* outMax )
 {
-	SDL_assert( outMin != NULL );
-	SDL_assert( outMax != NULL );
+	ASSERT_AND_IF_NOT( outMin != NULL ) return false;
+	ASSERT_AND_IF_NOT( outMax != NULL ) return false;
 
-	if( !img_IsValidImage( idx ) ) {
+	if( !img_IsValidImage( id ) ) {
 		return -1;
 	}
 
-	( *outMin ) = images[idx].uvMin;
-	( *outMax ) = images[idx].uvMax;
+	( *outMin ) = images[id].uvMin;
+	( *outMax ) = images[id].uvMax;
 	return 0;
 }
 
 // Gets a scale to use for the image to get a desired size.
-int img_GetDesiredScale( int idx, Vector2 desiredSize, Vector2* outScale )
+bool img_GetDesiredScale( ImageID id, Vector2 desiredSize, Vector2* outScale )
 {
-	SDL_assert( outScale != NULL );
-	if( ( idx < 0 ) || ( !( images[idx].flags & IMGFLAG_IN_USE ) ) || ( idx >= MAX_IMAGES ) ) {
-		return -1;
+	ASSERT_AND_IF_NOT( outScale != NULL ) return false;
+
+	if( !img_IsValidImage( id ) ) {
+		return false;
 	}
 
-	(*outScale) = images[idx].size;
+	(*outScale) = images[id].size;
 
 	outScale->x = desiredSize.x / outScale->x;
 	outScale->y = desiredSize.y / outScale->y;
@@ -736,57 +719,55 @@ int img_GetDesiredScale( int idx, Vector2 desiredSize, Vector2* outScale )
 	return 0;
 }
 
-/*
-Gets the texture id for the image, used if you need to render it directly instead of going through this.
- Returns whether out was successfully set or not.
-*/
-int img_GetTextureID( int idx, PlatformTexture* out )
+// Gets the texture id for the image, used if you need to render it directly instead of going through this.
+//  Returns whether out was successfully set or not.
+bool img_GetTextureID( ImageID id, PlatformTexture* out )
 {
-	SDL_assert( out != NULL );
+	ASSERT_AND_IF_NOT( out != NULL ) return false;
 
-	if( ( idx < 0 ) || ( !( images[idx].flags & IMGFLAG_IN_USE ) ) || ( idx >= MAX_IMAGES ) ) {
-		return -1;
+	if( !img_IsValidImage( id ) ) {
+		return false;
 	}
 
-	(*out) = images[idx].textureObj;
-	return 0;
+	(*out) = images[id].textureObj;
+	return true;
 }
 
 // Retrieves a loaded image by it's id, for images loaded from files this will be the local path, for sprite sheet images 
-int img_GetExistingByID( const char* id )
+ImageID img_GetExistingByStrID( const char* id )
 {
-	int imgID;
-	if( findImageByID( id, &imgID ) ) {
+	ImageID imgID;
+	if( findImageByStrID( id, &imgID ) ) {
 		return imgID;
 	}
-	return -1;
+	return INVALID_IMAGE_ID;
 }
 
 // Sets the image at colorIdx to use use alphaIdx as a signed distance field alpha map
-int img_SetSDFAlphaMap( int colorIdx, int alphaIdx )
+bool img_SetSDFAlphaMap( ImageID colorId, ImageID alphaId )
 {
-	if( ( colorIdx < 0 ) || ( !( images[colorIdx].flags & IMGFLAG_IN_USE ) ) || ( colorIdx >= MAX_IMAGES ) ) {
-		return -1;
+	if( !img_IsValidImage( colorId ) ) {
+		return false;
 	}
 
-	if( ( alphaIdx < 0 ) || ( !( images[alphaIdx].flags & IMGFLAG_IN_USE ) ) || ( alphaIdx >= MAX_IMAGES ) ) {
-		return -1;
+	if( !img_IsValidImage( alphaId ) ) {
+		return false;
 	}
 
-	images[colorIdx].shaderType = ST_ALPHA_MAPPED_SDF;
-	images[colorIdx].extraImageObj = alphaIdx;
-	images[colorIdx].flags |= IMGFLAG_HAS_TRANSPARENCY;
+	images[colorId].shaderType = ST_ALPHA_MAPPED_SDF;
+	images[colorId].extraImageObj = alphaId;
+	images[colorId].flags |= IMGFLAG_HAS_TRANSPARENCY;
 
-	return 0;
+	return true;
 }
 
-const char* img_GetImgStringID( int imgID )
+const char* img_GetImgStringID( ImageID imgID )
 {
 	if( !img_IsValidImage( imgID ) ) return NULL;
 	return images[imgID].id;
 }
 
-static void createRenderTransform( Vector2* pos, Vector2* scale, float rot,  Vector2* offset, Matrix4* out )
+static void createRenderTransform( Vector2* pos, Vector2* scale, float rot, Vector2* offset, Matrix4* out )
 {
 	memcpy( out, &IDENTITY_MATRIX, sizeof( Matrix4 ) );
 	// this is the fully multiplied out multiplication of the transform, scale, and z-rotation
@@ -818,34 +799,34 @@ static void createRenderTransform( Vector2* pos, Vector2* scale, float rot,  Vec
 }
 
 // Get the id of the first valid image. Returns -1 if there are none.
-int img_FirstValidID( void )
+ImageID img_FirstValidID( void )
 {
-	for( int i = 0; i < MAX_IMAGES; ++i ) {
+	for( ImageID i = 0; i < MAX_IMAGES; ++i ) {
 		if( img_IsValidImage( i ) ) {
 			return i;
 		}
 	}
 
-	return -1;
+	return INVALID_IMAGE_ID;
 }
 
 // Gets the next valid image after the one passed in. Returns -1 if there are none.
-int img_NextValidID( int id )
+ImageID img_NextValidID( ImageID id )
 {
-	for( int i = id + 1; i < MAX_IMAGES; ++i ) {
+	for( ImageID i = id + 1; i < MAX_IMAGES; ++i ) {
 		if( img_IsValidImage( i ) ) {
 			return i;
 		}
 	}
 
-	return -1;
+	return INVALID_IMAGE_ID;
 }
 
 ImageRenderInstruction img_CreateDefaultRenderInstruction( void )
 {
 	ImageRenderInstruction ri;
 
-	ri.imgID = -1;
+	ri.imgID = INVALID_IMAGE_ID;
 	ri.camFlags = 0;
 	ri.depth = 0;
 	ri.mat = IDENTITY_MATRIX_3;
@@ -1023,7 +1004,7 @@ bool img_SetRenderInstructionBorders( ImageRenderInstruction* instruction, uint3
 	return true;
 }
 
-void img_Render_Pos( int imgID, uint32_t camFlags, int8_t depth, const Vector2* pos )
+void img_Render_Pos( ImageID imgID, uint32_t camFlags, int8_t depth, const Vector2* pos )
 {
 	SDL_assert( pos != NULL );
 
@@ -1038,7 +1019,7 @@ void img_Render_Pos( int imgID, uint32_t camFlags, int8_t depth, const Vector2* 
 	img_ImmediateRender( &ri );
 }
 
-void img_Render_PosClr( int imgID, uint32_t camFlags, int8_t depth, const Vector2* pos, const Color* clr )
+void img_Render_PosClr( ImageID imgID, uint32_t camFlags, int8_t depth, const Vector2* pos, const Color* clr )
 {
 	SDL_assert( pos != NULL );
 	SDL_assert( clr != NULL );
@@ -1055,7 +1036,7 @@ void img_Render_PosClr( int imgID, uint32_t camFlags, int8_t depth, const Vector
 	img_ImmediateRender( &ri );
 }
 
-void img_Render_PosRot( int imgID, uint32_t camFlags, int8_t depth, const Vector2* pos, float rotRad )
+void img_Render_PosRot( ImageID imgID, uint32_t camFlags, int8_t depth, const Vector2* pos, float rotRad )
 {
 	SDL_assert( pos != NULL );
 
@@ -1070,7 +1051,7 @@ void img_Render_PosRot( int imgID, uint32_t camFlags, int8_t depth, const Vector
 	img_ImmediateRender( &ri );
 }
 
-void img_Render_PosRotClr( int imgID, uint32_t camFlags, int8_t depth, const Vector2* pos, float rotRad, const Color* clr )
+void img_Render_PosRotClr( ImageID imgID, uint32_t camFlags, int8_t depth, const Vector2* pos, float rotRad, const Color* clr )
 {
 	SDL_assert( pos != NULL );
 	SDL_assert( clr != NULL );
@@ -1087,7 +1068,7 @@ void img_Render_PosRotClr( int imgID, uint32_t camFlags, int8_t depth, const Vec
 	img_ImmediateRender( &ri );
 }
 
-void img_Render_PosScaleVClr( int imgID, uint32_t camFlags, int8_t depth, const Vector2* pos, const Vector2* scale, const Color* clr )
+void img_Render_PosScaleVClr( ImageID imgID, uint32_t camFlags, int8_t depth, const Vector2* pos, const Vector2* scale, const Color* clr )
 {
 	SDL_assert( pos != NULL );
 	SDL_assert( clr != NULL );
@@ -1105,7 +1086,7 @@ void img_Render_PosScaleVClr( int imgID, uint32_t camFlags, int8_t depth, const 
 	img_ImmediateRender( &ri );
 }
 
-void img_Render_PosSizeVClr( int imgID, uint32_t camFlags, int8_t depth, const Vector2* pos, const Vector2* size, const Color* clr )
+void img_Render_PosSizeVClr( ImageID imgID, uint32_t camFlags, int8_t depth, const Vector2* pos, const Vector2* size, const Color* clr )
 {
 	SDL_assert( pos != NULL );
 	SDL_assert( clr != NULL );
@@ -1126,7 +1107,7 @@ void img_Render_PosSizeVClr( int imgID, uint32_t camFlags, int8_t depth, const V
 	img_ImmediateRender( &ri );
 }
 
-void img_Render_PosRotScaleClr( int imgID, uint32_t camFlags, int8_t depth, const Vector2* pos, float rotRad, float scale, const Color* clr )
+void img_Render_PosRotScaleClr( ImageID imgID, uint32_t camFlags, int8_t depth, const Vector2* pos, float rotRad, float scale, const Color* clr )
 {
 	SDL_assert( pos != NULL );
 	SDL_assert( clr != NULL );

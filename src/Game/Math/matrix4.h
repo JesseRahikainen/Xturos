@@ -68,7 +68,6 @@ int mat4_Compare( Matrix4* m, Matrix4* n );
 
 void mat4_Dump( Matrix4* m, const char* extra  );
 
-bool mat4_Serialize( cmp_ctx_t* cmp, const Matrix4* mat );
-bool mat4_Deserialize( cmp_ctx_t* cmp, Matrix4* outMat );
+bool mat4_Serialize( Serializer* s, const char* name, Matrix4* mat );
 
 #endif // inclusion guard

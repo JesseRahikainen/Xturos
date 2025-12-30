@@ -5,6 +5,7 @@
 #include <string.h>
 #include <SDL3/SDL_assert.h>
 
+#include "Utils/helpers.h"
 #include "Utils/stretchyBuffer.h"
 
 #include "Utils/idSet.h"
@@ -309,14 +310,14 @@ void ecps_CleanUp( ECPS* ecps )
 
 // adds a component type and returns the id to reference it by
 //  this can only be done before
-ComponentID ecps_AddComponentType( ECPS* ecps, const char* name, uint32_t version, size_t size, size_t align, CleanUpComponent cleanUp, VerifyComponent verify, SerializeComponent serialize, DeserializeComponent deserialize )
+ComponentID ecps_AddComponentType( ECPS* ecps, const char* name, uint32_t version, size_t size, size_t align, CleanUpComponent cleanUp, VerifyComponent verify, SerializeComponent serialize )
 {
-	SDL_assert( ecps != NULL );
+	ASSERT_AND_IF_NOT( ecps != NULL ) return INVALID_COMPONENT_ID;
 
 	// component types can only be added before we've started running
-	SDL_assert( !( ecps->isRunning ) );
-	SDL_assert( sb_Count( ecps->componentTypes.sbTypes ) < MAX_NUM_COMPONENT_TYPES );
-	SDL_assert( sb_Count( ecps->componentTypes.sbTypes ) < INVALID_COMPONENT_ID );
+	ASSERT_AND_IF_NOT( !( ecps->isRunning ) )  return INVALID_COMPONENT_ID;
+	ASSERT_AND_IF_NOT( sb_Count( ecps->componentTypes.sbTypes ) < MAX_NUM_COMPONENT_TYPES )  return INVALID_COMPONENT_ID;
+	ASSERT_AND_IF_NOT( sb_Count( ecps->componentTypes.sbTypes ) < INVALID_COMPONENT_ID )  return INVALID_COMPONENT_ID;
 
 	ComponentType newType;
 
@@ -326,18 +327,17 @@ ComponentID ecps_AddComponentType( ECPS* ecps, const char* name, uint32_t versio
 	newType.cleanUp = cleanUp;
 	newType.version = version;
 	newType.serialize = serialize;
-	newType.deserialize = deserialize;
 
 	if( name != NULL ) {
 		strncpy( newType.name, name, MAX_COMPONENT_NAME_SIZE );
 		newType.name[sizeof( newType.name ) - 1] = 0;
 	}
 
-#ifdef _DEBUG
+#ifdef _DEBUG // TODO: Enable this in release mode once we add the ability to add component types via script
 	// check to make sure the name is unique
 	for( size_t i = 0; i < sb_Count( ecps->componentTypes.sbTypes ); ++i ) {
 		bool isUnique = SDL_strcmp( newType.name, ecps->componentTypes.sbTypes[i].name ) != 0;
-		SDL_assert( isUnique );
+		ASSERT_AND_IF_NOT( isUnique ) return INVALID_COMPONENT_ID;
 	}
 #endif
 
@@ -345,6 +345,20 @@ ComponentID ecps_AddComponentType( ECPS* ecps, const char* name, uint32_t versio
 	sb_Push( ecps->componentTypes.sbTypes, newType );
 
 	return id;
+}
+
+ComponentID ecps_GetComponentIDByName( ECPS* ecps, const char* name )
+{
+	ASSERT_AND_IF_NOT( ecps != NULL ) return INVALID_COMPONENT_ID;
+	ASSERT_AND_IF_NOT( name != NULL ) return INVALID_COMPONENT_ID;
+
+	for( size_t i = 0; i < sb_Count( ecps->componentTypes.sbTypes ); ++i ) {
+		if( SDL_strcmp( ecps->componentTypes.sbTypes[i].name, name ) == 0 ) {
+			return (ComponentID)i;
+		}
+	}
+
+	return INVALID_COMPONENT_ID;
 }
 
 // returns the version number, returns 0xFFFFFFFF if the type wasn't found
@@ -1215,17 +1229,6 @@ SerializeComponent ecps_GetComponentSerializtionFunction( const ECPS* ecps, Comp
 		return NULL;
 	}
 	return ecps->componentTypes.sbTypes[componentID].serialize;
-}
-
-DeserializeComponent ecps_GetComponentDeserializationFunction( const ECPS* ecps, ComponentID componentID )
-{
-	SDL_assert( ecps != NULL );
-	SDL_assert( componentID < sb_Count( ecps->componentTypes.sbTypes ) );
-
-	if( componentID >= sb_Count( ecps->componentTypes.sbTypes ) ) {
-		return NULL;
-	}
-	return ecps->componentTypes.sbTypes[componentID].deserialize;
 }
 
 // list out the components of one entity

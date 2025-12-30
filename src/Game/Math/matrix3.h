@@ -58,8 +58,7 @@ Vector2* mat3_TransformVec2Pos_InPlace( const Matrix3* m, Vector2* v );
 
 bool mat3_Inverse( const Matrix3* m, Matrix3* out );
 
-bool mat3_Serialize( cmp_ctx_t* cmp, const Matrix3* vec );
-bool mat3_Deserialize( cmp_ctx_t* cmp, Matrix3* outVec );
+bool mat3_Serialize( Serializer* s, const char* name, Matrix3* mat );
 
 void mat3_Dump( Matrix3* m, const char* extra );
 

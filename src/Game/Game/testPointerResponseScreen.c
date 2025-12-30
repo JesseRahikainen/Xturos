@@ -51,7 +51,7 @@ static void onButtonRelease( ECPS* btnEcps, Entity* btn )
 }
 ADD_TRACKED_ECPS_CALLBACK( "TEST_ON_BUTTON_RELEASE", onButtonRelease );
 
-static void createTestButton( Vector2 position, Vector2 size )
+static EntityID createTestButton( Vector2 position, Vector2 size )
 {
 	Vector2 scale = vec2( size.x / imgSize.x, size.y / imgSize.y );
 	GCTransformData tf = gc_CreateTransformPosScale( position, scale );
@@ -78,7 +78,7 @@ static void createTestButton( Vector2 position, Vector2 size )
 	GCGroupIDData group;
 	group.groupID = 1;
 
-	ecps_CreateEntity( &defaultECPS, 6,
+	return ecps_CreateEntity( &defaultECPS, 6,
 		gcTransformCompID, &tf,
 		gcClrCompID, &clr,
 		gcPointerCollisionCompID, &ptr,
@@ -87,7 +87,7 @@ static void createTestButton( Vector2 position, Vector2 size )
 		gcGroupIDCompID, &group );
 }
 
-#include "System/ECPS/ecps_serialization.h"
+#include "System/ECPS/ecps_fileSerialization.h"
 #include "Utils/stretchyBuffer.h"
 
 static size_t buttonCount = 0;
@@ -99,6 +99,16 @@ void countButtonsStart( ECPS* gameECPS )
 void countButtons( ECPS* gameECPS, const Entity* entity )
 {
 	++buttonCount;
+}
+
+void rotateButtons( ECPS* gameECPS, const Entity* entity )
+{
+	GCTransformData* tf;
+	if( !ecps_GetComponentFromEntity( entity, gcTransformCompID, &tf ) ) return;
+
+	if( tf->parentID != INVALID_ENTITY_ID ) return;
+
+	gc_AdjustLocalRot( tf, 0.01f );
 }
 
 static void testPointerResponseScreen_Enter( void )
@@ -118,10 +128,14 @@ static void testPointerResponseScreen_Enter( void )
 	SerializedECPS serializedECPS;
 	ecps_InitSerialized( &serializedECPS );
 
-	createTestButton( vec2( 400.0f, 300.0f ), vec2( 100.0f, 100.0f ) );
-	createTestButton( vec2( 375.0f, 275.0f ), vec2( 100.0f, 100.0f ) );
-	createTestButton( vec2( 350.0f, 250.0f ), vec2( 100.0f, 100.0f ) );
-	createTestButton( vec2( 325.0f, 225.0f ), vec2( 100.0f, 100.0f ) );
+	EntityID btn0 = createTestButton( vec2( 400.0f, 300.0f ), vec2( 100.0f, 100.0f ) );
+	EntityID btn1 = createTestButton( vec2( 375.0f, 275.0f ), vec2( 100.0f, 100.0f ) );
+	EntityID btn2 = createTestButton( vec2( 350.0f, 250.0f ), vec2( 100.0f, 100.0f ) );
+	EntityID btn3 = createTestButton( vec2( 325.0f, 225.0f ), vec2( 100.0f, 100.0f ) );
+
+	gc_MountEntity( &defaultECPS, btn0, btn1 );
+	gc_MountEntity( &defaultECPS, btn1, btn2 );
+	gc_MountEntity( &defaultECPS, btn1, btn3 );
 
 	// serialize the buttons
 	ecps_GenerateSerializedECPS( &defaultECPS, &serializedECPS );
@@ -144,10 +158,10 @@ static void testPointerResponseScreen_Enter( void )
 	ecps_LoadSerializedECPS( "test.pkg", &serializedECPS );
 
 	// add some more buttons
-	createTestButton( vec2( 200.0f, 300.0f ), vec2( 100.0f, 100.0f ) );
-	createTestButton( vec2( 175.0f, 275.0f ), vec2( 100.0f, 100.0f ) );
-	createTestButton( vec2( 150.0f, 250.0f ), vec2( 100.0f, 100.0f ) );
-	createTestButton( vec2( 125.0f, 225.0f ), vec2( 100.0f, 100.0f ) );
+	EntityID btn4 = createTestButton( vec2( 200.0f, 300.0f ), vec2( 100.0f, 100.0f ) );
+	EntityID btn5 = createTestButton( vec2( 175.0f, 275.0f ), vec2( 100.0f, 100.0f ) );
+	EntityID btn6 = createTestButton( vec2( 150.0f, 250.0f ), vec2( 100.0f, 100.0f ) );
+	EntityID btn7 = createTestButton( vec2( 125.0f, 225.0f ), vec2( 100.0f, 100.0f ) );
 
 	// deserialize the buttons
 	ecps_CreateEntitiesFromSerializedComponents( &defaultECPS, &serializedECPS );
@@ -183,5 +197,10 @@ static void testPointerResponseScreen_PhysicsTick( float dt )
 {
 }
 
+static void testPointerResponseScreen_Render( float normRenderTime )
+{
+	//ecps_RunCustomProcess( &defaultECPS, NULL, rotateButtons, NULL, 1, gcTransformCompID );
+}
+
 GameState testPointerResponseScreenState = { testPointerResponseScreen_Enter, testPointerResponseScreen_Exit, testPointerResponseScreen_ProcessEvents,
-	testPointerResponseScreen_Process, testPointerResponseScreen_Draw, testPointerResponseScreen_PhysicsTick };
+	testPointerResponseScreen_Process, testPointerResponseScreen_Draw, testPointerResponseScreen_PhysicsTick, testPointerResponseScreen_Render };

@@ -24,7 +24,7 @@
 static int font;
 static int whiteImg;
 
-static int testImg;
+static ImageID testImg;
 static int testFont;
 
 static int testSound;
@@ -189,7 +189,7 @@ static void testProduceConsumer( ECPS* ecps, Entity* btn )
 static void testJobQueueScreen_Enter( void )
 {
 	//testImg = img_Load( "Images/tile.png", ST_DEFAULT );
-	testImg = -1;
+	testImg = INVALID_IMAGE_ID;
 	testFont = -1;
 	testSound = -1;
 

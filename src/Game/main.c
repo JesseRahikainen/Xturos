@@ -45,6 +45,7 @@
 #include "Game/optionsState.h"
 #include "Game/testGamePadState.h"
 #include "Game/initialChoiceState.h"
+#include "Game/testScriptingState.h"
 
 #include "System/memory.h"
 #include "System/systems.h"
@@ -836,6 +837,7 @@ int main( int argc, char** argv )
 	initialChoice_RegisterState( "Test Collisions", &testCollisionsState, false );
 	initialChoice_RegisterState( "Test Gamepad", &testGamePadState, false );
 	initialChoice_RegisterState( "Options Dialog", &optionsState, true );
+	initialChoice_RegisterState( "Test Scripting", &testScriptingState, false );
 
 	GameState* startState = &initialChoiceState;
 	gsm_EnterState( &globalFSM, startState );

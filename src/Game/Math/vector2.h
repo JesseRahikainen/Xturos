@@ -4,7 +4,7 @@
 
 #include <stdbool.h>
 
-#include "Others/cmp.h"
+#include "System/serializer.h"
 
 typedef struct {
 	union {
@@ -69,7 +69,6 @@ bool vec2_Comp( const Vector2* lhs, const Vector2* rhs );
 
 void vec2_Dump( const Vector2* vec, const char* extra );
 
-bool vec2_Serialize( cmp_ctx_t* cmp, const Vector2* vec );
-bool vec2_Deserialize( cmp_ctx_t* cmp, Vector2* outVec );
+bool vec2_Serialize( Serializer* s, const char* name, Vector2* vec );
 
-#endif /* end inclusion guard */
+#endif // end inclusion guard

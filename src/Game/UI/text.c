@@ -61,7 +61,7 @@ typedef struct {
 	//  could also preprocess strings to just be a list of indices into the buffer
 	// will be a stretchy buffer
 	Glyph* glyphsBuffer;
-	int packageID;
+	ImageID packageID;
 
 	size_t missingCharGlyphIdx;
 
@@ -145,7 +145,7 @@ int txt_LoadFont( const char* fileName, int pixelHeight )
 	int newFont = 0;
 	Vector2* mins = NULL;
 	Vector2* maxes = NULL;
-	int* retIDs;
+	ImageID* retIDs;
 	Glyph* glyphStorage = NULL; // temporary storage, used to reduce memory fragmentation
 	SDL_IOStream* ioStream = NULL;
 
@@ -338,7 +338,7 @@ static void bindFontTask( void* data )
 	int newFont = 0;
 	Vector2* mins = NULL;
 	Vector2* maxes = NULL;
-	int* retIDs = NULL;
+	ImageID* retIDs = NULL;
 	LoadFontData* fontData = NULL;
 
 	if( data == NULL ) {
@@ -1082,7 +1082,7 @@ static int loadSDFFont( const char* fileName )
 
 	int fontID = -1;
 	uint8_t* pngBuffer = NULL;
-	int* retIDs = NULL;
+	ImageID* retIDs = NULL;
 	Glyph* sbGlyphs = NULL;
 	Vector2* mins = NULL;
 	Vector2* maxes = NULL;
@@ -1289,7 +1289,7 @@ int txt_CreateSDFFont( const char* fileName )
 	Vector2* mins = NULL;
 	Vector2* maxes = NULL;
 	Vector2* offsets = NULL;
-	int* retIDs = NULL;
+	ImageID* retIDs = NULL;
 
 #define OUT_ERROR( s ) \
 	{ \

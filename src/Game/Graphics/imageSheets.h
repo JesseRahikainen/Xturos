@@ -2,6 +2,7 @@
 #define IMAGE_SHEETS_H
 
 #include "triRendering.h"
+#include "Graphics/gfx_commonDataTypes.h"
 
 typedef struct {
 	char* sbPath;
@@ -12,7 +13,7 @@ typedef struct {
 //  the size of it.
 // The returned integers are ids for the images source files.
 // Returns the package id for the sprite sheet if it was successful, otherwise returns -1.
-int img_LoadSpriteSheet( const char* fileName, ShaderType shaderType, int** sbImgOutArray );
+int img_LoadSpriteSheet( const char* fileName, ShaderType shaderType, ImageID** sbImgOutArray );
 
 // Decrements and checks the loaded count for the sprite sheet that uses this package, if it's
 //  <= 0 it unloads all the images associated with the package.

@@ -19,10 +19,10 @@
 // just a simple test of mounting and dismounting things. pressing the mouse button will cause a circle to expand from the player
 //  and mount any entities hit onto them. wasd to move, 'q' and 'e' keys to rotate, 'o' to start mounting, 'p' to release all attached
 
-static int playerImg = INVALID_IMAGE_ID;
-static int objectImg = INVALID_IMAGE_ID;
-static int* buttonImgs = NULL;
-static int buttonImg = INVALID_IMAGE_ID;
+static ImageID playerImg = INVALID_IMAGE_ID;
+static ImageID objectImg = INVALID_IMAGE_ID;
+static ImageID* buttonImgs = NULL;
+static ImageID buttonImg = INVALID_IMAGE_ID;
 
 #define NUM_MOUNTABLES 100
 

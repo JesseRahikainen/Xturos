@@ -54,6 +54,9 @@ char* createStretchyStringCopy( const char* str );
 // does a null test on str and returns 0 if it's NULL
 size_t strlenNullTest( const char* str );
 
+// just to match the naming conventions of the other asserts
+#define ASSERT( x ) SDL_assert( x );
+
 // useful when wanting to test and early out if the test fails
 #define ASSERT_AND_IF_NOT( x ) SDL_assert( x ); if( !( x ) )
 
@@ -72,26 +75,6 @@ char* wideCharToUTF8SB( const wchar_t* wideStr );
 #endif
 
 SDL_IOStream* openRWopsCMPFile( const char* filePath, const char* mode, cmp_ctx_t * cmpCtx );
-
-#define CMP_WRITE( cmpPtr, val, write, type, desc, onFail ) \
-	if( !write( (cmpPtr), (val) ) ) { \
-		llog( LOG_ERROR, "Unable to write %s for %s: %s", (desc), (type), cmp_strerror( cmpPtr ) ); \
-		onFail; }
-
-#define CMP_WRITE_STR( cmpPtr, val, type, desc, onFail ) \
-	if( !cmp_write_str( (cmpPtr), (val), (uint32_t)SDL_strlen((val)) ) ) { \
-		llog( LOG_ERROR, "Unable to write %s for %s: %s", (desc), (type), cmp_strerror( cmpPtr ) ); \
-		onFail; }
-
-#define CMP_READ( cmpPtr, val, read, type, desc, onFail ) \
-	if( !read( (cmpPtr), &(val) ) ) { \
-		llog( LOG_ERROR, "Unable to read %s for %s: %s", (desc), (type), cmp_strerror( cmpPtr ) ); \
-		onFail; }
-
-#define CMP_READ_STR( cmpPtr, val, bufferSize, type, desc, onFail ) \
-	if( !cmp_read_str( (cmpPtr), (val), &(bufferSize) ) ) { \
-		llog( LOG_ERROR, "Unable to read %s for %s: %s", (desc), (type), cmp_strerror( cmpPtr ) ); \
-		onFail; }
 
 int nextHighestPowerOfTwo( int v );
 

@@ -8,7 +8,6 @@
 #include <stdlib.h>
 #include <math.h>
 
-#include "Others/stb_vorbis_sdl.c"
 #include "System/platformLog.h"
 #include "Math/mathUtil.h"
 #include "System/memory.h"
@@ -17,6 +16,8 @@
 #include "Utils/cfgFile.h"
 #include "System/jobQueue.h"
 #include "Utils/hashMap.h"
+
+#include "Others/stb_vorbis_sdl.c"
 
 #define MAX_SAMPLES 256
 #define MAX_PLAYING_SOUNDS 32

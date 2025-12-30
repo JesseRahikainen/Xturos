@@ -4,6 +4,7 @@
 #include <string.h>
 #include <SDL3/SDL_assert.h>
 #include "System/platformLog.h"
+#include "Utils/helpers.h"
 
 Vector2 vec2( float x, float y )
 {
@@ -235,39 +236,28 @@ void vec2_Dump( const Vector2* vec, const char* extra )
 	llog( LOG_DEBUG, "%s = %3.3f %3.3f\n", extra == NULL ? "v2" : extra, vec->v[0], vec->v[1] );
 }
 
-bool vec2_Serialize( cmp_ctx_t* cmp, const Vector2* vec )
+bool vec2_Serialize( Serializer* s, const char* name, Vector2* vec )
 {
-	SDL_assert( vec != NULL );
-	SDL_assert( cmp != NULL );
+	ASSERT_AND_IF_NOT( s != NULL ) return false;
+	ASSERT_AND_IF_NOT( vec != NULL ) return false;
 
-	if( !cmp_write_float( cmp, vec->x ) ) {
-		llog( LOG_ERROR, "Unable to write x coordinate of Vector2." );
+	if( !s->startStructure( s, name ) ) {
+		llog( LOG_ERROR, "Issue starting Vector2 serialization." );
 		return false;
 	}
 
-	if( !cmp_write_float( cmp, vec->y ) ) {
-		llog( LOG_ERROR, "Unable to write y coordinate of Vector2." );
+	if( !s->flt( s, "x", &( vec->x ) ) ) {
+		llog( LOG_ERROR, "Unable to serialize x coordinate of Vector2." );
 		return false;
 	}
 
-	return true;
-}
-
-bool vec2_Deserialize( cmp_ctx_t* cmp, Vector2* outVec )
-{
-	SDL_assert( outVec != NULL );
-	SDL_assert( cmp != NULL );
-
-	outVec->x = 0.0f;
-	outVec->y = 0.0f;
-
-	if( !cmp_read_float( cmp, &( outVec->x ) ) ) {
-		llog( LOG_ERROR, "Unable to load x coordinate of Vector2." );
+	if( !s->flt( s, "y", &( vec->y ) ) ) {
+		llog( LOG_ERROR, "Unable to serialize y coordinate of Vector2." );
 		return false;
 	}
 
-	if( !cmp_read_float( cmp, &( outVec->y ) ) ) {
-		llog( LOG_ERROR, "Unable to load y coordinate of Vector2." );
+	if( !s->endStructure( s, name ) ) {
+		llog( LOG_ERROR, "Issue ending Vector2 serialization." );
 		return false;
 	}
 

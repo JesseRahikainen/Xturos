@@ -6,6 +6,7 @@
 
 #include "mathUtil.h"
 #include "System/platformLog.h"
+#include "Utils/helpers.h"
 
 Matrix3* mat3_Multiply( const Matrix3* m, const Matrix3* n, Matrix3* out )
 {
@@ -274,33 +275,31 @@ bool mat3_Inverse( const Matrix3* m, Matrix3* out )
 	return true;
 }
 
-bool mat3_Serialize( cmp_ctx_t* cmp, const Matrix3* mat )
+bool mat3_Serialize( Serializer* s, const char* name, Matrix3* mat )
 {
-	SDL_assert( mat != NULL );
-	SDL_assert( cmp != NULL );
+	ASSERT_AND_IF_NOT( s != NULL ) return false;
+	ASSERT_AND_IF_NOT( s != NULL ) return false;
 
-	for( int i = 0; i < 16; ++i ) {
-		if( !cmp_write_float( cmp, mat->m[i] ) ) {
-			llog( LOG_ERROR, "Unable to write entry %i in Matrix4.", i );
-			return false;
-		}
+	if( !s->startStructure( s, name ) ) {
+		llog( LOG_ERROR, "Issue starting Matrix3 serialization." );
+		return false;
 	}
 
-	return true;
-}
+#define WRITE_INDEX( i ) if( !s->flt( s, #i, &( mat->m[i] ) ) ) { llog( LOG_ERROR, "Issue writing out index %i in Matrix3 serialization.", i ); return false; }
+	WRITE_INDEX( 0 );
+	WRITE_INDEX( 1 );
+	WRITE_INDEX( 2 );
+	WRITE_INDEX( 3 );
+	WRITE_INDEX( 4 );
+	WRITE_INDEX( 5 );
+	WRITE_INDEX( 6 );
+	WRITE_INDEX( 7 );
+	WRITE_INDEX( 8 );
+#undef WRITE_INDEX
 
-bool mat3_Deserialize( cmp_ctx_t* cmp, Matrix3* outMat )
-{
-	SDL_assert( outMat != NULL );
-	SDL_assert( cmp != NULL );
-
-	*outMat = ZERO_MATRIX_3;
-
-	for( int i = 0; i < 16; ++i ) {
-		if( !cmp_read_float( cmp, &( outMat->m[i] ) ) ) {
-			llog( LOG_ERROR, "Unable to read entry %i in Matrix4.", i );
-			return false;
-		}
+	if( !s->endStructure( s, name ) ) {
+		llog( LOG_ERROR, "Issue ending Matrix3 serialization." );
+		return false;
 	}
 
 	return true;

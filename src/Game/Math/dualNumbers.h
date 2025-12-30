@@ -2,7 +2,7 @@
 #define DUAL_NUMBERS_H
 
 #include <stdbool.h>
-#include "Others/cmp.h"
+#include "System/serializer.h"
 
 // http://www.dtecta.com/files/GDC13_vandenBergen_Gino_Math_Tut.pdf
 // https://github.com/dtecta/motion-toolkit/blob/master/moto/Dual.hpp
@@ -31,7 +31,6 @@ DualNumber* dual_Tan( const DualNumber* in, DualNumber* out );
 
 int dual_Compare( const DualNumber* lhs, const DualNumber* rhs );
 
-bool dual_Serialize( cmp_ctx_t* cmp, const DualNumber* dual );
-bool dual_Deserialize( cmp_ctx_t* cmp, DualNumber* outDual );
+bool dual_Serialize( Serializer* s, const char* name, DualNumber* dual );
 
 #endif

@@ -26,7 +26,6 @@ ComponentID ecps_ct_AddType( ComponentTypeCollection* ctc, const char* name, uin
 	newType.cleanUp = cleanUp;
 	newType.version = version;
 	newType.serialize = NULL;
-	newType.deserialize = NULL;
 
 	if( name != NULL ) {
 		strncpy( newType.name, name, sizeof( newType.name ) - 1 );

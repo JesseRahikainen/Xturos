@@ -68,7 +68,7 @@ typedef struct {
 extern ComponentID gcFloatVal0CompID;
 
 typedef struct {
-	int img;
+	ImageID img;
 	int8_t depth;
 	uint32_t camFlags;
 } GCSpriteData;
@@ -76,12 +76,12 @@ extern ComponentID gcSpriteCompID;
 
 typedef struct {
 	bool isStencil;
-	int stencilID;
+	int8_t stencilID;
 } GCStencilData;
 extern ComponentID gcStencilCompID;
 
 typedef struct {
-	int img;
+	ImageID img;
 
 	// borders represented by offset in pixels, all from the top left
 	//   ------->r

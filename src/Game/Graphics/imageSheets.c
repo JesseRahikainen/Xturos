@@ -17,6 +17,7 @@
 #include "Math/mathUtil.h"
 
 #include "Others/cmp.h"
+#include "System/serializer.h"
 
 #include <stb_rect_pack.h>
 
@@ -72,38 +73,36 @@ static bool loadSpriteSheetData( const char* fileName, TempSpriteSheetData** out
 	SDL_IOStream* ioStream = openRWopsCMPFile( fileName, "rb", &cmp );
 	if( ioStream == NULL ) goto clean_up;
 
-	int version;
-	CMP_READ( &cmp, version, cmp_read_int, ioType, "version number", goto clean_up );
+	Serializer s;
+	serializer_CreateWriteCmp( &cmp, &s );
+
+	uint32_t version;
+	SERIALIZE_CHECK( s.u32( &s, "version", &version ), ioType, "version number", goto clean_up );
 	if( version != 3 ) {
 		llog( LOG_ERROR, "Unknown version for sprite sheet %s", fileName );
 		goto clean_up;
 	}
 
-	uint32_t numGroups;
-	CMP_READ( &cmp, numGroups, cmp_read_array, ioType, "group count", goto clean_up );
-	for( uint32_t i = 0; i < numGroups; ++i ) {
+	uint32_t numImages;
+	SERIALIZE_CHECK( s.arraySize( &s, "rectArraySize", &numImages ), ioType, "rect set array size", goto clean_up );
+	for( uint32_t i = 0; i < numImages; ++i ) {
 		TempSpriteSheetData data;
 		data.sbMins = NULL;
 		data.sbMaxes = NULL;
 		data.sbIDs = NULL;
+				
+		SERIALIZE_CHECK( s.cStrBuffer( &s, "setFileName", data.imageFileName, ARRAY_SIZE( data.imageFileName ) ), ioType, "rect set image file name", goto clean_up );
 
-		uint32_t imageFileNameSize = ARRAY_SIZE( data.imageFileName );
-		CMP_READ_STR( &cmp, data.imageFileName, imageFileNameSize, ioType, "group image file", goto clean_up );
-
-		CMP_READ( &cmp, data.numSpritesRead, cmp_read_array, ioType, "sprite count", goto clean_up );
+		SERIALIZE_CHECK( s.arraySize( &s, "rectSpriteCount", &( data.numSpritesRead ) ), ioType, "rect set sprite count", goto clean_up );
 		for( uint32_t a = 0; a < data.numSpritesRead; ++a ) {
-			char id[256];
+			char* id;
 			int x, y, w, h;
 
-			uint32_t spriteIDSize = ARRAY_SIZE( id );
-			CMP_READ_STR( &cmp, id, spriteIDSize, ioType, "sprite id", goto clean_up );
-			CMP_READ( &cmp, x, cmp_read_int, ioType, "sprite x-coordinate", goto clean_up );
-			CMP_READ( &cmp, y, cmp_read_int, ioType, "sprite y-coordinate", goto clean_up );
-			CMP_READ( &cmp, w, cmp_read_int, ioType, "sprite width", goto clean_up );
-			CMP_READ( &cmp, h, cmp_read_int, ioType, "sprite height", goto clean_up );
-
-			// copy the id and push it onto the data
-			char* idCopy = createStringCopy( id );
+			SERIALIZE_CHECK( s.cString( &s, "spriteID", &id ), ioType, "sprite id", goto clean_up );
+			SERIALIZE_CHECK( s.s32( &s, "spriteX", &x ), ioType, "sprite x-coordinate", goto clean_up );
+			SERIALIZE_CHECK( s.s32( &s, "spriteY", &y ), ioType, "sprite y-coordinate", goto clean_up );
+			SERIALIZE_CHECK( s.s32( &s, "spriteW", &w ), ioType, "sprite width", goto clean_up );
+			SERIALIZE_CHECK( s.s32( &s, "spriteH", &h ), ioType, "sprite height", goto clean_up );
 
 			// add the mins and maxes for cutting up the sprites
 			Vector2 min = vec2( (float)x, (float)y );
@@ -111,7 +110,7 @@ static bool loadSpriteSheetData( const char* fileName, TempSpriteSheetData** out
 
 			sb_Push( data.sbMins, min );
 			sb_Push( data.sbMaxes, max );
-			sb_Push( data.sbIDs, idCopy );
+			sb_Push( data.sbIDs, id );
 		}
 
 		sb_Push( *outSBData, data );
@@ -141,7 +140,7 @@ clean_up:
 //  uses the stretchy buffer file, so you can use that to find the size, but you shouldn't do anything that modifies
 //   the size of it. imgOutArray is optional, if you don't pass it in you'll have to retrieve the images by id.
 // Returns the package id for the sprite sheet if it was successful, otherwise returns -1.
-int img_LoadSpriteSheet( const char* fileName, ShaderType shaderType, int** sbImgOutArray )
+int img_LoadSpriteSheet( const char* fileName, ShaderType shaderType, ImageID** sbImgOutArray )
 {
 	bool done = false;
 	TempSpriteSheetData* sbTempData = NULL;
@@ -159,7 +158,7 @@ int img_LoadSpriteSheet( const char* fileName, ShaderType shaderType, int** sbIm
 	}
 
 	for( size_t i = 0; i < sb_Count( sbTempData ); ++i ) {
-		int* outStart = NULL;
+		ImageID* outStart = NULL;
 		if( sbImgOutArray != NULL ) {
 			outStart = sb_Add( *sbImgOutArray, sbTempData[i].numSpritesRead );
 		}
@@ -283,21 +282,25 @@ static bool saveSpriteSheetDefinition( const char* fileName, SpriteSheetEntry* e
 		goto clean_up;
 	}
 
+	Serializer s;
+	serializer_CreateWriteCmp( &cmp, &s );
+
 	// write out version number
-	CMP_WRITE( &cmp, 3, cmp_write_int, ioType, "version number", goto clean_up );
+	uint32_t version = 3;
+	SERIALIZE_CHECK( s.u32( &s, "version", &version ), ioType, "version number", goto clean_up );
 
 	//  write out all the image names
 	uint32_t numImages = (uint32_t)numRectSets;
-	CMP_WRITE( &cmp, numImages, cmp_write_array, ioType, "rect set array size", goto clean_up );
+	SERIALIZE_CHECK( s.arraySize( &s, "rectArraySize", &numImages ), ioType, "rect set array size", goto clean_up );
 	for( uint32_t i = 0; i < numImages; ++i ) {
 		RectSet* set = &( rectSets[i] );
 
-		CMP_WRITE_STR( &cmp, set->fileName, ioType, "rect set image file name", goto clean_up );
+		SERIALIZE_CHECK( s.cString( &s, "setFileName", &( set->fileName ) ), ioType, "rect set image file name", goto clean_up );
 
 		// write out the entries for each sprite stored in this image
 		//  want to right out the id and rect
 		uint32_t numSprites = (uint32_t)sb_Count( set->sbRects );
-		CMP_WRITE( &cmp, numSprites, cmp_write_array, ioType, "rect set sprite count", goto clean_up );
+		SERIALIZE_CHECK( s.arraySize( &s, "rectSpriteCount", &numSprites ), ioType, "rect set sprite count", goto clean_up );
 		for( uint32_t a = 0; a < numSprites; ++a ) {
 			stbrp_rect* rect = &( set->sbRects[a] );
 			char* id = SDL_strrchr( entries[rect->id].sbPath, '/' );
@@ -306,12 +309,12 @@ static bool saveSpriteSheetDefinition( const char* fileName, SpriteSheetEntry* e
 			} else {
 				++id; // advance past the '/'
 			}
-			CMP_WRITE_STR( &cmp, id, ioType, "sprite id", goto clean_up );
 
-			CMP_WRITE( &cmp, rect->x, cmp_write_int, ioType, "sprite x-coordinate", goto clean_up );
-			CMP_WRITE( &cmp, rect->y, cmp_write_int, ioType, "sprite y-coordinate", goto clean_up );
-			CMP_WRITE( &cmp, rect->w, cmp_write_int, ioType, "sprite width", goto clean_up );
-			CMP_WRITE( &cmp, rect->h, cmp_write_int, ioType, "sprite height", goto clean_up );
+			SERIALIZE_CHECK( s.cString( &s, "spriteID", &id ), ioType, "sprite id", goto clean_up );
+			SERIALIZE_CHECK( s.s32( &s, "spriteX", &( rect->x ) ), ioType, "sprite x-coordinate", goto clean_up );
+			SERIALIZE_CHECK( s.s32( &s, "spriteY", &( rect->y ) ), ioType, "sprite y-coordinate", goto clean_up );
+			SERIALIZE_CHECK( s.s32( &s, "spriteW", &( rect->w ) ), ioType, "sprite width", goto clean_up );
+			SERIALIZE_CHECK( s.s32( &s, "spriteH", &( rect->h ) ), ioType, "sprite height", goto clean_up );
 		}
 	}
 
