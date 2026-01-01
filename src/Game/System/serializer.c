@@ -622,6 +622,23 @@ void serializer_CreateWriteLua( void* ctx, Serializer* outSerializer )
 // pops off the value pushed on from STANDARD_READ_START
 #define STANDARD_READ_END( luaState ) lua_pop( (luaState), 1 );
 
+// returns the new value
+static lua_Integer changeRegisteryValue( lua_State* ls, const char* key, lua_Integer delta )
+{
+	lua_pushstring( ls, key );
+	lua_gettable( ls, LUA_REGISTRYINDEX );
+	lua_Integer v = lua_tointeger( ls, -1 );
+	lua_pop( ls, 1 );
+
+	v += delta;
+
+	lua_pushstring( ls, key );
+	lua_pushinteger( ls, v );
+	lua_settable( ls, LUA_REGISTRYINDEX );
+
+	return v;
+}
+
 // gets the table entry onto the top of the stack
 static bool getTableEntry( lua_State* ls, const char* entryName )
 {
@@ -633,16 +650,15 @@ static bool getTableEntry( lua_State* ls, const char* entryName )
 
 static bool luaSerializer_startReadStructure( struct Serializer* s, const char* name )
 {
-	LUA_STANDARD_START( 3 );
+	LUA_STANDARD_START( 5 );
 
 	// make sure top most thing is a table
 	ASSERT_AND_IF_NOT( lua_istable( ls, -1 ) ) return false;
 
-	if( lua_gettop( ls ) == 1 ) {
-		// there is only the initial table on the stack
-		lua_pushnil( ls );
-		lua_insert( ls, 1 ); // move the nil to the bottom of the stack, this is a marker used to indicate that we already started
-	} else {
+	lua_Integer val = changeRegisteryValue( ls, "StructDepth", 1 );
+
+	// if we're not the root table get it
+	if( val != 1 ) {
 		// the marker value has been pushed onto the stack
 		STANDARD_READ_START( ls, name );
 	}
@@ -652,16 +668,11 @@ static bool luaSerializer_startReadStructure( struct Serializer* s, const char* 
 
 static bool luaSerializer_endReadStructure( struct Serializer* s, const char* name )
 {
-	LUA_STANDARD_START( 0 );
+	LUA_STANDARD_START( 2 );
 
-	if( lua_gettop( ls ) == 2 ) {
-		// only the table and marker nil should be on the stack
-		ASSERT_AND_IF_NOT( lua_istable( ls, -1 ) ) return false;
-		ASSERT_AND_IF_NOT( lua_isnil( ls, -2 ) ) return false;
+	lua_Integer val = changeRegisteryValue( ls, "StructDepth", -1 );
 
-		// remove the marker
-		lua_remove( ls, 1 );
-	} else {
+	if( val != 0 ) {
 		// pop the embedded table off so we can access the base table again
 		STANDARD_READ_END( ls );
 	}
@@ -744,6 +755,7 @@ static bool luaSerializer_readU32( struct Serializer* s, const char* name, uint3
 {
 	ASSERT_AND_IF_NOT( i != NULL ) return false;
 	LUA_STANDARD_START( 1 );
+
 	STANDARD_READ_START( ls, name );
 	bool ret = false;
 

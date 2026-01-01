@@ -306,6 +306,8 @@ static bool serializeTranformComp( Serializer* s, void* data )
 	SERIALIZE_CHECK( s->entityID( s, "firstChildID", &( val->firstChildID ) ), "GCTransformData", "firstChildID", return false );
 	SERIALIZE_CHECK( s->entityID( s, "nextSiblingID", &( val->nextSiblingID ) ), "GCTransformData", "nextSiblingID", return false );
 
+	SERIALIZE_CHECK( s->endStructure( s, "" ), "GCTransformData", "ending", return false );
+
 	return true;
 }
 

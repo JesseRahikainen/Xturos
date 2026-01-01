@@ -566,6 +566,118 @@ static int lua_RenderImagePos( lua_State* ls )
 
 	return 0;
 }
+
+static int lua_AddComponentToEntity( lua_State* ls )
+{
+	// read in component type and entity id, popping them off the stack, all that should be left is the component table
+	//  ensure entity and component ids are valid
+	//  get size of type, allocate that much data to a void pointer
+	//  deserialize data into allocated data
+	//  add/set the data for the component type
+
+	int entityIDIsInt;
+	lua_Integer eidAsLuaInt = lua_tointegerx( ls, -3, &entityIDIsInt );
+	ASSERT_AND_IF_NOT( entityIDIsInt ) {
+		lua_pushstring( ls, "invalid type for entity id" );
+		lua_error( ls );
+		return 0;
+	}
+	Entity entity;
+	if( !ecps_GetEntityByID( &defaultECPS, (EntityID)eidAsLuaInt, &entity ) ) {
+		lua_pushstring( ls, "entity does not exist" );
+		lua_error( ls );
+		return 0;
+	}
+	
+	int componentNameIsString = lua_isstring( ls, -2 );
+	ASSERT_AND_IF_NOT( componentNameIsString ) {
+		lua_pushstring( ls, "invalid type for component name" );
+		lua_error( ls );
+		return 0;
+	}
+	const char* compName = lua_tostring( ls, -2 );
+	ComponentID compID = ecps_GetComponentIDByName( &defaultECPS, compName );
+	ASSERT_AND_IF_NOT( compID != INVALID_COMPONENT_ID ) {
+		lua_pushfstring( ls, "component type \"%s\" doesn't exist", compName );
+		lua_error( ls );
+		return 0;
+	}
+
+	// pop both of those off the stack so we only have the table left
+	lua_remove( ls, -2 );
+	lua_remove( ls, -2 );
+
+	size_t compSize;
+	ecps_GetComponentTypeSize( &defaultECPS, compID, &compSize );
+
+	void* compData = mem_Allocate( compSize );
+
+	Serializer luaDeserializer;
+	serializer_CreateReadLua( ls, &luaDeserializer );
+	SerializeComponent compSerialize = ecps_GetComponentSerializationFunction( &defaultECPS, compID );
+	ASSERT_AND_IF_NOT( compSerialize != NULL ) {
+		lua_pushfstring( ls, "component cannot be deserialized" );
+		lua_error( ls );
+		mem_Release( compData );
+		return 0;
+	}
+	if( !compSerialize( &luaDeserializer, compData ) ) {
+		lua_pushfstring( ls, "error deserializing component" );
+		lua_error( ls );
+		mem_Release( compData );
+		return 0;
+	}
+
+	// this will add the component, or if it already exists on the entity overwrite the data with compData
+	if( ecps_AddComponentToEntity( &defaultECPS, &entity, compID, compData ) < 0 ) {
+		lua_pushfstring( ls, "issue adding component to entity" );
+		lua_error( ls );
+		mem_Release( compData );
+		return 0;
+	}
+
+	mem_Release( compData );
+	return 0;
+}
+
+static int lua_RemoveComponentFromEntity( lua_State* ls )
+{
+	int entityIDIsInt;
+	lua_Integer eidAsLuaInt = lua_tointegerx( ls, -3, &entityIDIsInt );
+	ASSERT_AND_IF_NOT( entityIDIsInt ) {
+		lua_pushstring( ls, "invalid type for entity id" );
+		lua_error( ls );
+		return 0;
+	}
+	Entity entity;
+	if( !ecps_GetEntityByID( &defaultECPS, (EntityID)eidAsLuaInt, &entity ) ) {
+		lua_pushstring( ls, "entity does not exist" );
+		lua_error( ls );
+		return 0;
+	}
+
+	int componentNameIsString = lua_isstring( ls, -2 );
+	ASSERT_AND_IF_NOT( componentNameIsString ) {
+		lua_pushstring( ls, "invalid type for component name" );
+		lua_error( ls );
+		return 0;
+	}
+	const char* compName = lua_tostring( ls, -2 );
+	ComponentID compID = ecps_GetComponentIDByName( &defaultECPS, compName );
+	ASSERT_AND_IF_NOT( compID != INVALID_COMPONENT_ID ) {
+		lua_pushfstring( ls, "component type \"%s\" doesn't exist", compName );
+		lua_error( ls );
+		return 0;
+	}
+
+	if( ecps_RemoveComponentFromEntity( &defaultECPS, &entity, compID ) == 0 ) {
+		lua_pushfstring( ls, "issue removing component from entity" );
+		lua_error( ls );
+		return 0;
+	}
+
+	return 0;
+}
 //************************************************************************************
 
 //************************************************************************************
@@ -1085,8 +1197,8 @@ bool xLua_Init( void )
 	xLua_RegisterCFunction( "createEntity", lua_CreateEntity );
 	xLua_RegisterCFunction( "destroyEntity", lua_DestroyEntity );
 	xLua_RegisterCFunction( "destroyEntitiesByGroupID", lua_DestroyEntitiesByGroupID );
-	xLua_RegisterCFunction( "addComponentToEntity", NULL );
-	xLua_RegisterCFunction( "removeComponentFromEntity", NULL );
+	xLua_RegisterCFunction( "addComponentToEntity", lua_AddComponentToEntity );
+	xLua_RegisterCFunction( "removeComponentFromEntity", lua_RemoveComponentFromEntity );
 	xLua_RegisterCFunction( "getComponentFromEntity", NULL );
 
 	return true;

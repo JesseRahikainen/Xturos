@@ -1,5 +1,6 @@
 #include "testScriptingState.h"
 
+#include "Graphics/camera.h"
 #include "Graphics/graphics.h"
 #include "Graphics/debugRendering.h"
 #include "System/ECPS/entityComponentProcessSystem.h"

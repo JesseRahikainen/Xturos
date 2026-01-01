@@ -90,7 +90,7 @@ void ecps_DestroyEntityByID( ECPS* ecps, EntityID entityID );
 // clears out all entities, not ids will be valid after this is called
 void ecps_DestroyAllEntities( ECPS* ecps );
 
-SerializeComponent ecps_GetComponentSerializtionFunction( const ECPS* ecps, ComponentID componentID );
+SerializeComponent ecps_GetComponentSerializationFunction( const ECPS* ecps, ComponentID componentID );
 
 // debugging stuff
 void ecps_DumpEntityByID( ECPS* ecps, const EntityID id, const char* tag );

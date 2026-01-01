@@ -1220,7 +1220,7 @@ void ecps_DestroyAllEntities( ECPS* ecps )
 	ecps->componentData.sbEntityDirectory = NULL;
 }
 
-SerializeComponent ecps_GetComponentSerializtionFunction( const ECPS* ecps, ComponentID componentID )
+SerializeComponent ecps_GetComponentSerializationFunction( const ECPS* ecps, ComponentID componentID )
 {
 	SDL_assert( ecps != NULL );
 	SDL_assert( componentID < sb_Count( ecps->componentTypes.sbTypes ) );

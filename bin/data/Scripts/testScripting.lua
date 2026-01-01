@@ -8,14 +8,37 @@ local groupID = 2
 function createTestEntity()
 	print("Creating test entity")
 	local entityID = createEntity()
-	addGroupIDToEntity(entityID, groupID)
 
 	-- add some components to the entity
+	local groupIDData = { ["groupID"] = groupID };
+	addComponentToEntity( entityID, "GRP", groupIDData )
+
+	local xPos = 400.0 + ( ( math.random() * 2.0 ) - 1.0 ) * 200.0
+	local yPos = 300.0 + ( ( math.random() * 2.0 ) - 1.0 ) * 150.0
+	local rot = math.random() * 2.0 * 3.14
+	local scale = math.random() + 0.5
+	local transformData = {
+		["currPos"] = { ["x"] = xPos, ["y"] = yPos },
+		["futurePos"] = { ["x"] = xPos, ["y"] = yPos },
+		["currRotRad"] = rot,
+		["futureRotRad"] = rot,
+		["currScale"] = { ["x"] = scale, ["y"] = scale },
+		["futureScale"] = { ["x"] = scale, ["y"] = scale },
+		["parentID"] = 0, ["firstChildID"] = 0, ["nextSiblingID"] = 0,
+	}
+	addComponentToEntity( entityID, "GC_TF", transformData )
+
+	local spriteData = {
+		["camFlags"] = 1,
+		["depth"] = 0,
+		["img"] = testImgID
+	}
+	addComponentToEntity( entityID, "GC_SPRT", spriteData )
 
 end
 
 function destroyAllTestEntities()
-	print("Destroing all test entities")
+	print("Destroying all test entities")
 	destroyEntitiesByGroupID(groupID)
 end
 
