@@ -72,6 +72,26 @@ static uint32_t ecpsCurrID = 0;
 
 //*************************************************************************************
 
+static bool setComponentBitsVA( ECPS* ecps, ComponentBitFlags* bitFlags, size_t numComponents, va_list list )
+{
+	// verify all the components are valid
+	memset( bitFlags, 0, sizeof( ComponentBitFlags ) );
+	for( size_t i = 0; i < numComponents; ++i ) {
+		ComponentID compID = va_arg( list, ComponentID );
+		if( !ecps_ct_IsComponentTypeValid( &( ecps->componentTypes ), compID ) ) {
+			llog( LOG_ERROR, "Invalid component type %i attempting to be used for a process.", compID );
+		}
+		SDL_assert( ecps_ct_IsComponentTypeValid( &( ecps->componentTypes ), compID ) );
+		ecps_cbf_SetFlagOn( bitFlags, compID );
+	}
+
+	// all processes require the ID and enabled components
+	ecps_cbf_SetFlagOn( bitFlags, sharedComponent_Enabled );
+	ecps_cbf_SetFlagOn( bitFlags, sharedComponent_ID );
+
+	return true;
+}
+
 static bool createProcessVA( ECPS* ecps,
 	const char* name, PreProcFunc preProc, ProcFunc proc, PostProcFunc postProc,
 	Process* outProcess, size_t numComponents, va_list list )
@@ -84,15 +104,8 @@ static bool createProcessVA( ECPS* ecps,
 		strncpy( outProcess->name, name, sizeof( outProcess->name ) );
 	}
 
-	// verify all the components are valid
-	memset( &( outProcess->bitFlags ), 0, sizeof( ComponentBitFlags ) );
-	for( size_t i = 0; i < numComponents; ++i ) {
-		ComponentID compID = va_arg( list, ComponentID );
-		if( !ecps_ct_IsComponentTypeValid( &( ecps->componentTypes ), compID ) ) {
-			llog( LOG_ERROR, "Invalid component type %i attempting to be used for process %s", compID, name );
-		}
-		SDL_assert( ecps_ct_IsComponentTypeValid( &( ecps->componentTypes ), compID ) );
-		ecps_cbf_SetFlagOn( &( outProcess->bitFlags ), compID );
+	if( !setComponentBitsVA( ecps, &( outProcess->bitFlags ), numComponents, list ) ) {
+		llog( LOG_ERROR, "Issue setting component bit flags for process %s.", name );
 	}
 
 	// all processes require the ID and enabled components
@@ -408,53 +421,23 @@ bool ecps_CreateProcess( ECPS* ecps,
 	return success;
 }
 
-// run a process using the defined functions and components, is slower then ecsp_RunProcess( ), use primarily for prototyping
-//  or one off processes that you don't always need access to
-void ecps_RunCustomProcess( ECPS* ecps, PreProcFunc preProc, ProcFunc proc, PostProcFunc postProc, size_t numComponents, ... )
+static void internalRunProcess( ECPS* ecps, PreProcFunc preProc, ProcFunc proc, PostProcFunc postProc, ComponentBitFlags* compBitFlags )
 {
-	SDL_assert( ecps != NULL );
-
-	// we'll create a temporary Process to use and just run it through ecps_RunProcess, hopefully won't cause any serious issues
-	Process tempProc;
-	bool success = false;
-
-	va_list list;
-	va_start( list, numComponents );
-	success = createProcessVA( ecps, NULL, preProc, proc, postProc, &tempProc, numComponents, list );
-	va_end( list );
-
-	if( !success ) {
-		llog( LOG_ERROR, "Unable to createt temporary process in ecps_RunCustomProcess( )." );
-		return;
-	}
-
-	ecps_RunProcess( ecps, &tempProc );
-}
-
-// run a process, must have been created with the associated entity-component-process system
-void ecps_RunProcess( ECPS* ecps, Process* process )
-{
-	// TODO: do we want to be able to schedule a process to be run if it's in the middle of another process?
-	SDL_assert( ecps != NULL );
-	SDL_assert( ecps->isRunning );
-
-	size_t presize = sb_Count( ecps->sbCommandBuffer );
-
-	// verify the process is part of the entity-component-process system
-	SDL_assert( ( ecps->id ) == ( process->ecpsID ) );
+	ASSERT_AND_IF_NOT( ecps != NULL ) return;
+	ASSERT_AND_IF_NOT( ecps->isRunning ) return;
 
 	// then run the process, looping through all the entities
-	if( process->preProc != NULL ) {
-		process->preProc( ecps );
+	if( preProc != NULL ) {
+		preProc( ecps );
 	}
 
 	ecps->isRunningProcess = true;
-	if( process->proc != NULL ) {
+	if( proc != NULL ) {
 		// will need to iterate through all entities that have the components the process is looking for
 		size_t numCompArrays = sb_Count( ecps->componentData.sbComponentArrays );
 		for( size_t cai = 0; cai < numCompArrays; ++cai ) {
 			ComponentBitFlags* cbf = &( ecps->componentData.sbBitFlags[cai] );
-			if( ecps_cbf_CompareContains( &( process->bitFlags ), cbf ) ) {
+			if( ecps_cbf_CompareContains( compBitFlags, cbf ) ) {
 				// component data array matches, iterate through entities
 				PackagedComponentArray* pca = &( ecps->componentData.sbComponentArrays[cai] );
 				size_t dataIdx = 0;
@@ -468,7 +451,7 @@ void ecps_RunProcess( ECPS* ecps, Process* process )
 						entity.id = entityID;
 						entity.data = data;
 						entity.structure = &( pca->structure );
-						process->proc( ecps, &entity );
+						proc( ecps, &entity );
 					}
 					dataIdx += pca->entitySize;
 				}
@@ -477,8 +460,8 @@ void ecps_RunProcess( ECPS* ecps, Process* process )
 	}
 	ecps->isRunningProcess = false;
 
-	if( process->postProc != NULL ) {
-		process->postProc( ecps );
+	if( postProc != NULL ) {
+		postProc( ecps );
 	}
 
 	if( sb_Count( ecps->sbCommandBuffer ) > 0 ) {
@@ -515,6 +498,37 @@ void ecps_RunProcess( ECPS* ecps, Process* process )
 
 		sb_Clear( ecps->sbCommandBuffer );
 	}
+}
+
+// run a process using the defined functions and components, is slower then ecsp_RunProcess( ), use primarily for prototyping
+//  or one off processes that you don't always need access to
+void ecps_RunCustomProcess( ECPS* ecps, PreProcFunc preProc, ProcFunc proc, PostProcFunc postProc, size_t numComponents, ... )
+{
+	ASSERT_AND_IF_NOT( ecps != NULL ) return;
+
+	bool success = false;
+
+	va_list list;
+	va_start( list, numComponents );
+	ComponentBitFlags bitFlags;
+	success = setComponentBitsVA( ecps, &bitFlags, numComponents, list );
+	va_end( list );
+
+	if( !success ) {
+		llog( LOG_ERROR, "Issue setting bit flags in ecps_RunCustomProcess( )." );
+		return;
+	}
+
+	internalRunProcess( ecps, preProc, proc, postProc, &bitFlags );
+}
+
+// run a process, must have been created with the associated entity-component-process system
+void ecps_RunProcess( ECPS* ecps, Process* process )
+{
+	// verify the process is part of the entity-component-process system
+	ASSERT_AND_IF_NOT( ( ecps->id ) == ( process->ecpsID ) ) return;
+
+	internalRunProcess( ecps, process->preProc, process->proc, process->postProc, &( process->bitFlags ) );
 }
 
 static void createEntityVA( ECPS* ecps, EntityID entityID, size_t numComponents, va_list va )
