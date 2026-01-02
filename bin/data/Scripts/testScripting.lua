@@ -1,3 +1,8 @@
+-- todo: want this cache this in engine eventually
+if not package["testing"] == nil then
+    return package["testing"]
+end
+
 local testing = {}
 
 local testImgID = loadImage("Images/gear.png")
@@ -13,8 +18,8 @@ function createTestEntity()
 	local groupIDData = { ["groupID"] = groupID };
 	addComponentToEntity( entityID, "GRP", groupIDData )
 
-	local xPos = 400.0 + ( ( math.random() * 2.0 ) - 1.0 ) * 200.0
-	local yPos = 300.0 + ( ( math.random() * 2.0 ) - 1.0 ) * 150.0
+	local xPos = 400.0 + ( ( math.random() * 2.0 ) - 1.0 ) * 250.0
+	local yPos = 300.0 + ( ( math.random() * 2.0 ) - 1.0 ) * 200.0
 	local rot = math.random() * 2.0 * 3.14
 	local scale = math.random() + 0.5
 	local transformData = {
@@ -34,7 +39,6 @@ function createTestEntity()
 		["img"] = testImgID
 	}
 	addComponentToEntity( entityID, "GC_SPRT", spriteData )
-
 end
 
 function destroyAllTestEntities()
@@ -63,6 +67,29 @@ function testStructureDeserialize()
 	print("---")
 
 	sendTestStructure(test)
+end
+
+function testScriptProcess_Start()
+	print("starting test process")
+end
+
+function testScriptProcess_Run(entityID)
+	print("testing entity", entityID)
+	local tf = getComponentFromEntity(entityID, "GC_TF")
+	print(table_print(tf))
+
+	-- just move around randomly
+	local x = tf["futurePos"]["x"]
+	local y = tf["futurePos"]["y"]
+	x = x + (((random()*2.0) - 1.0) * 100)
+	y = y + (((random()*2.0) - 1.0) * 100)
+	tf["futurePos"]["x"] = x
+	tf["futurePos"]["y"] = y
+	addComponentToEntity( entityID, "GC_TF", transformData )
+end
+
+function testScriptProcess_End()
+	print("ending test process")
 end
 
 -- don't reload this
