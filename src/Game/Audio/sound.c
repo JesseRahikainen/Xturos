@@ -977,9 +977,15 @@ void snd_UnloadStream( int streamID )
 		return;
 	}
     
-	SDL_assert( ( streamID >= 0 ) && ( streamID < MAX_STREAMING_SOUNDS ) );
-	if( streamingSounds[streamID].timesLoaded >= 1 ) {
+	ASSERT_AND_IF_NOT( ( streamID >= 0 ) && ( streamID < MAX_STREAMING_SOUNDS ) ) {
+		// trying to unload an invalid sound
+		return;
+	}
+
+	if( streamingSounds[streamID].timesLoaded > 1 ) {
 		--streamingSounds[streamID].timesLoaded;
+	} else if( streamingSounds[streamID].timesLoaded == 1 ) {
+		streamingSounds[streamID].timesLoaded = 0;
 		SDL_LockAudioStream( mainAudioStream ); {
 			streamingSounds[streamID].playing = false;
 			stb_vorbis_close( streamingSounds[streamID].access );
