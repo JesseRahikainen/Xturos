@@ -89,6 +89,7 @@ static SDL_Window* sdlWindow;
 static SDL_IOStream* logFile;
 static const char* windowName = "Xturos";
 static bool canResize;
+static bool startWindowed;
 static bool isEditorMode;
 
 typedef struct {
@@ -97,29 +98,29 @@ typedef struct {
 } AvailableResolution;
 
 static AvailableResolution resolutions[] = {
-	{ 1920, 1080 },
-	{ 1366, 768 },
-	{ 2560, 1440 },
-	{ 1440, 900 },
-	{ 1600, 900 },
-	{ 3840, 2160 },
-	{ 1680, 1050 },
-	{ 1360, 1050 },
-	{ 1280, 1024 },
-	{ 2560, 1080 },
-	{ 3440, 1440 },
-	{ 1920, 1200 },
-	{ 1280, 800 },
-	{ 1024, 768 },
-	{ 1280, 720 },
 	{ 640, 360 },
 	{ 640, 480 },
 	{ 800, 600 },
+	{ 1280, 720 },
+	{ 1024, 768 },
+	{ 1280, 800 },
+	{ 1280, 1024 },
+	{ 1360, 1050 },
+	{ 1366, 768 },
+	{ 1440, 900 },
 	{ 1536, 864 },
-	{ 2048, 1152 },
+	{ 1600, 900 },
 	{ 1600, 1200 },
+	{ 1680, 1050 },
+	{ 1920, 1080 },
+	{ 1920, 1200 },
+	{ 2048, 1152 },
 	{ 2048, 1536 },
+	{ 2560, 1080 },
+	{ 2560, 1440 },
 	{ 2560, 1600 },
+	{ 3440, 1440 },
+	{ 3840, 2160 },
 	{ 5120, 2880 },
 	{ 6144, 3456 },
 	{ 7680, 2160 },
@@ -336,6 +337,25 @@ int initEverything( void )
 
 	if( canResize ) {
 		windowFlags |= SDL_WINDOW_RESIZABLE;
+	}
+
+	if( startWindowed ) {
+		// prefer the desired window width and height, but go the next lowest one in the list with the same ratio
+		SDL_DisplayID primaryDisp = SDL_GetPrimaryDisplay( );
+		const SDL_DisplayMode* dispMode = SDL_GetCurrentDisplayMode( primaryDisp );
+
+		if( ( windowWidth >= dispMode->w ) || ( windowHeight >= dispMode->h ) ) {
+			float ratio = (float)dispMode->w / (float)dispMode->h;
+			int bestDiff = INT_MAX;
+			for( size_t i = 0; i < ARRAY_SIZE( resolutions ); ++i ) {
+				int diff = ( dispMode->w - resolutions[i].width ) + ( dispMode->h - resolutions[i].height );
+				if( ( diff > 0 ) && ( diff < bestDiff ) ) {
+					bestDiff = diff;
+					windowWidth = resolutions[i].width;
+					windowHeight = resolutions[i].height;
+				}
+			}
+		}
 	}
  #endif
 
@@ -798,11 +818,17 @@ void mainLoop( void* v )
 int main( int argc, char** argv )
 {
 	isEditorMode = false;
+#if defined(_DEBUG)
+	startWindowed = true;
+#else
+	startWindowed = false;
+#endif
 	canResize = false;
 	for( int i = 1; i < argc; ++i ) {
 		if( SDL_strcmp( argv[i], "-e" ) == 0 ) {
 			isEditorMode = true;
 			canResize = true;
+			startWindowed = true;
 		}
 	}
 

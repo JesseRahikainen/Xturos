@@ -9,7 +9,6 @@ local testImgID = loadImage("Images/gear.png")
 
 local groupID = 2
 
-
 function createTestEntity()
 	print("Creating test entity")
 	local entityID = createEntity()
@@ -69,28 +68,28 @@ function testStructureDeserialize()
 	sendTestStructure(test)
 end
 
-function testScriptProcess_Start()
-	print("starting test process")
-end
-
-function testScriptProcess_Run(entityID)
-	print("testing entity", entityID)
-	local tf = getComponentFromEntity(entityID, "GC_TF")
-	print(table_print(tf))
-
-	-- just move around randomly
-	local x = tf["futurePos"]["x"]
-	local y = tf["futurePos"]["y"]
-	x = x + (((random()*2.0) - 1.0) * 100)
-	y = y + (((random()*2.0) - 1.0) * 100)
-	tf["futurePos"]["x"] = x
-	tf["futurePos"]["y"] = y
-	addComponentToEntity( entityID, "GC_TF", transformData )
-end
-
-function testScriptProcess_End()
-	print("ending test process")
-end
+--function testScriptProcess_Start()
+--	print("starting test process")
+--end
+--
+--function testScriptProcess_Run(entityID)
+--	print("testing entity", entityID)
+--	local tf = getComponentFromEntity(entityID, "GC_TF")
+--	print(table_print(tf))
+--
+--	-- just move around randomly
+--	local x = tf["futurePos"]["x"]
+--	local y = tf["futurePos"]["y"]
+--	x = x + (((random()*2.0) - 1.0) * 100)
+--	y = y + (((random()*2.0) - 1.0) * 100)
+--	tf["futurePos"]["x"] = x
+--	tf["futurePos"]["y"] = y
+--	addComponentToEntity( entityID, "GC_TF", transformData )
+--end
+--
+--function testScriptProcess_End()
+--	print("ending test process")
+--end
 
 -- don't reload this
 package.loaded["testing"] = testing
