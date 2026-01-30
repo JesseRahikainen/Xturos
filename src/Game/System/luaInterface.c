@@ -567,6 +567,8 @@ static int lua_RenderImagePos( lua_State* ls )
 	return 0;
 }
 
+#pragma warning( push )
+#pragma warning( disable : 4702 )
 static int lua_AddComponentToEntity( lua_State* ls )
 {
 	// read in component type and entity id, popping them off the stack, all that should be left is the component table
@@ -639,7 +641,10 @@ static int lua_AddComponentToEntity( lua_State* ls )
 	mem_Release( compData );
 	return 0;
 }
+#pragma warning( pop )
 
+#pragma warning( push )
+#pragma warning( disable : 4702 )
 static int lua_RemoveComponentFromEntity( lua_State* ls )
 {
 	int entityIDIsInt;
@@ -678,7 +683,10 @@ static int lua_RemoveComponentFromEntity( lua_State* ls )
 
 	return 0;
 }
+#pragma warning( pop )
 
+#pragma warning( push )
+#pragma warning( disable : 4702 )
 static int lua_GetComponentFromEntity( lua_State* ls )
 {
 	int entityIDIsInt;
@@ -738,6 +746,7 @@ static int lua_GetComponentFromEntity( lua_State* ls )
 
 	return 1;
 }
+#pragma warning( pop )
 //************************************************************************************
 
 //************************************************************************************
