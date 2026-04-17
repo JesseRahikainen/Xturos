@@ -1,10 +1,8 @@
-/*
-A simple wrapper that allows us to more quickly create entities in an ecps that can be rendered.
- For right now it will use it's own ECPS as this is meant for speeding up prototyping. In actual
- development you'd want to have the rendering be part of the standard ECPS being used in the game.
- This will let use just work with arrays of data directly instead of going through the ECPS which
- has been a point of lag in Ludum Dare.
-*/
+// A simple wrapper that allows us to more quickly create entities in an ecps that can be rendered.
+//  For right now it will use it's own ECPS as this is meant for speeding up prototyping. In actual
+//  development you'd want to have the rendering be part of the standard ECPS being used in the game.
+//  This will let use just work with arrays of data directly instead of going through the ECPS which
+//  has been a point of lag in Ludum Dare.
 
 #ifndef SPRITES_H
 #define SPRITES_H

@@ -31,5 +31,5 @@
 int checkAndLogErrors( const char* extraInfo );
 int checkAndLogFrameBufferCompleteness( GLenum target, const char* extraInfo );
 
-#endif /* inclusion guard */
+#endif // inclusion guard
 #endif // OPENGL_GFX

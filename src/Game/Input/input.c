@@ -486,9 +486,7 @@ static void processMouseMovementEvent( SDL_Event* e )
 					  ( mousePosition.y <= mouseInputArea.y ) );
 }
 
-/*
-Handles a mouse button event.
-*/
+// Handles a mouse button event.
 void handleMouseButtonEvent( Uint8 button, MouseButtonBindings* bindingsList )
 {
 	for( int i = 0; i < MAX_BINDINGS; ++i ) {

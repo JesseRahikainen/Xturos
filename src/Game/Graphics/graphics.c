@@ -389,25 +389,19 @@ void gfx_CleanUp( void )
 	gfxPlatform_CleanUp( );
 }
 
-/*
-Sets clearing color.
-*/
+// Sets clearing color.
 void gfx_SetClearColor( Color newClearColor )
 {
 	gameClearColor = newClearColor;
 }
 
-/*
-Sets the non render area clearing color.
-*/
+// Sets the non render area clearing color.
 void gfx_SetWindowClearColor( Color newClearColor )
 {
 	windowClearColor = newClearColor;
 }
 
-/*
-Clears all the drawing instructions.
-*/
+// Clears all the drawing instructions.
 void gfx_ClearDrawCommands( )
 {
 	debugRenderer_ClearVertices( );
@@ -444,10 +438,8 @@ void gfx_MakeRenderCalls( float dt, float t )
 	debugRenderer_Render( );
 }
 
-/*
-Goes through everything in the render buffer and does the actual rendering.
-Resets the render buffer.
-*/
+// Goes through everything in the render buffer and does the actual rendering.
+// Resets the render buffer.
 void gfx_Render( float dt )
 {
 	float t;

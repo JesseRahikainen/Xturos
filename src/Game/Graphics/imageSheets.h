@@ -24,4 +24,4 @@ bool img_SaveSpriteSheet( const char* fileName, SpriteSheetEntry* sbEntries, int
 
 void img_ThreadedLoadSpriteSheet( const char* fileName, ShaderType shaderType, void ( *onLoadDone )( int ) );
 
-#endif /* inclusion guard */
+#endif // inclusion guard

@@ -244,7 +244,7 @@ void nk_xu_handleEvent( NuklearWrapper* xu, SDL_Event* evt )
 	}
 
     if (evt->type == SDL_EVENT_KEY_UP || evt->type == SDL_EVENT_KEY_DOWN) {
-        /* key events */
+        // key events
         int down = evt->type == SDL_EVENT_KEY_DOWN;
         const bool* state = SDL_GetKeyboardState( NULL );
         SDL_Keycode sym = evt->key.key;
@@ -293,7 +293,7 @@ void nk_xu_handleEvent( NuklearWrapper* xu, SDL_Event* evt )
 			nk_input_char( ctx, (char)sym );
 		}
     } else if( ( evt->type == SDL_EVENT_MOUSE_BUTTON_DOWN ) || ( evt->type == SDL_EVENT_MOUSE_BUTTON_UP ) ) {
-        /* mouse button */
+        // mouse button
         int down = evt->type == SDL_EVENT_MOUSE_BUTTON_DOWN;
         if( evt->button.button == SDL_BUTTON_LEFT )		nk_input_button( ctx, NK_BUTTON_LEFT, mX, mY, down );
         if( evt->button.button == SDL_BUTTON_MIDDLE )	nk_input_button( ctx, NK_BUTTON_MIDDLE, mX, mY, down );

@@ -108,4 +108,4 @@ char* printUUID( const xtUUID* uuid );
 			static void f(void)
 #endif
 
-#endif /* inclusion guard */
+#endif // inclusion guard

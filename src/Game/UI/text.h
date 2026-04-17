@@ -64,4 +64,4 @@ int txt_GetCharacterImage( int fontID, int c );
 //  can either use it non-SDF, or convert it to a TTF font.
 int txt_CreateSDFFont( const char* fileName );
 
-#endif /* inclusion guard */
+#endif // inclusion guard

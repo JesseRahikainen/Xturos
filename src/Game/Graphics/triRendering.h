@@ -39,34 +39,24 @@ typedef struct {
 
 TriVert triVert( Vector2 pos, Vector2 uv, Color col );
 
-/*
-Makes all the shaders reload.
-*/
+// Makes all the shaders reload.
 int triRenderer_LoadShaders( void );
 
-/*
-Initializes all the stuff needed for rendering the triangles.
- Returns a value < 0 if there's a problem.
-*/
+// Initializes all the stuff needed for rendering the triangles.
+//  Returns a value < 0 if there's a problem.
 int triRenderer_Init( );
 
-/*
-We'll assume the array has three vertices in it.
- Return a value < 0 if there's a problem.
-*/
+// We'll assume the array has three vertices in it.
+//  Return a value < 0 if there's a problem.
 int triRenderer_AddVertices( TriVert* verts, ShaderType shader, PlatformTexture texture, PlatformTexture extraTexture,
 	float floatVal0, int8_t clippingID, uint32_t camFlags, int8_t depth, TriType type );
 int triRenderer_Add( TriVert vert0, TriVert vert1, TriVert vert2, ShaderType shader, PlatformTexture texture, PlatformTexture extraTexture,
 	float floatVal0, int8_t clippingID, uint32_t camFlags, int8_t depth, TriType type );
 
-/*
-Clears out all the triangles currently stored.
-*/
+// Clears out all the triangles currently stored.
 void triRenderer_Clear( void );
 
-/*
-Draws out all the triangles.
-*/
+// Draws out all the triangles.
 void triRenderer_Render( void );
 
-#endif /* inclusion guard */
+#endif // inclusion guard

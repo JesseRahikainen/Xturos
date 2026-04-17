@@ -13,12 +13,10 @@
 #include "System/gameTime.h"
 
 
-/*
-Ok, so what do we want to optimize for?
-I'd think transferring memory.
-So we have the vertices we transfer at the beginning of the rendering
-Once that is done we generate index buffers to represent what each camera can see
-*/
+// Ok, so what do we want to optimize for?
+// I'd think transferring memory.
+// So we have the vertices we transfer at the beginning of the rendering
+// Once that is done we generate index buffers to represent what each camera can see
 #define MAX_SOLID_TRIS 2048
 #define MAX_TRANSPARENT_TRIS 2048
 #define MAX_STENCIL_TRIS 32
@@ -61,10 +59,8 @@ static int initTriList( TriangleList* triList, TriType listType )
 	return 0;
 }
 
-/*
-Initializes all the stuff needed for rendering the triangles.
- Returns a value < 0 if there's a problem.
-*/
+// Initializes all the stuff needed for rendering the triangles.
+//  Returns a value < 0 if there's a problem.
 int triRenderer_Init( )
 {
 	if( triRenderer_LoadShaders( ) < 0 ) {
@@ -207,10 +203,8 @@ static int addTriangle( TriangleList* triList, TriVert vert0, TriVert vert1, Tri
 	return 0;
 }
 
-/*
-We'll assume the array has three vertices in it.
- Return a value < 0 if there's a problem.
-*/
+// We'll assume the array has three vertices in it.
+//  Return a value < 0 if there's a problem.
 int triRenderer_AddVertices( TriVert* verts, ShaderType shader, PlatformTexture texture, PlatformTexture extraTexture,
 	float floatVal0, int8_t clippingID, uint32_t camFlags, int8_t depth, TriType type )
 {
@@ -231,9 +225,7 @@ int triRenderer_Add( TriVert vert0, TriVert vert1, TriVert vert2, ShaderType sha
 	return 0;
 }
 
-/*
-Clears out all the triangles currently stored.
-*/
+// Clears out all the triangles currently stored.
 void triRenderer_Clear( void )
 {
 	transparentTriangles.lastTriIndex = -1;
@@ -266,9 +258,7 @@ static int sortByDepth( const void* p1, const void* p2 )
 	return ( ( ( tri1->zPos ) - ( tri2->zPos ) ) > 0.0f ) ? 1 : -1;
 }
 
-/*
-Draws out all the triangles.
-*/
+// Draws out all the triangles.
 void triRenderer_Render( )
 {
 	// SDL_qsort appears to break some times, so fall back onto the standard library qsort for right now, and implement our own when we have time

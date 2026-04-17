@@ -1,13 +1,11 @@
 #ifndef NUKLEAR_WRAPPER_H
 #define NUKLEAR_WRAPPER_H
 
-/*
-We should only need this file in the main game loop, anything that wants to use the ui stuff
-should only need to include nuklear.h and use that.
-This is just an adaptation of the nuklear_sdl_gl3 example.
-In a screen state you should draw the UI every frame in the Process function instead of in
-the Draw function.
-*/
+// We should only need this file in the main game loop, anything that wants to use the ui stuff
+// should only need to include nuklear.h and use that.
+// This is just an adaptation of the nuklear_sdl_gl3 example.
+// In a screen state you should draw the UI every frame in the Process function instead of in
+// the Draw function.
 
 #include <stdbool.h>
 #include <SDL3/SDL_events.h>

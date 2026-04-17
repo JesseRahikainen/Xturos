@@ -62,4 +62,4 @@ bool mat3_Serialize( Serializer* s, const char* name, Matrix3* mat );
 
 void mat3_Dump( Matrix3* m, const char* extra );
 
-#endif /* inclusion guard */
+#endif // inclusion guard

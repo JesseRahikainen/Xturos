@@ -9,7 +9,7 @@
 static float pi = 3.14159265358979323846f;
 static float twoPi = 6.283185307179586476925286766559f;
 
-/* Sets the values for the tween. If no ease function is set it treats it as linear. */
+// Sets the values for the tween. If no ease function is set it treats it as linear.
 void setTween( Tween* tween, float start, float end, float duration, float(*easeFunc)(float) )
 {
 	SDL_assert( tween );
@@ -24,7 +24,7 @@ void setTween( Tween* tween, float start, float end, float duration, float(*ease
 	tween->active = 1;
 }
 
-/* Resets everything for the tween. */
+// Resets everything for the tween.
 void resetTween( Tween* tween )
 {
 	SDL_assert( tween );
@@ -34,7 +34,7 @@ void resetTween( Tween* tween )
 	tween->active = 1;
 }
 
-/* Resets everything in the tween but swaps the start end end values. */
+// Resets everything in the tween but swaps the start end end values.
 void resetAndReverseTween( Tween* tween )
 {
 	SDL_assert( tween );
@@ -46,7 +46,7 @@ void resetAndReverseTween( Tween* tween )
 	resetTween( tween );
 }
 
-/* Processes the tween, advancing the amount elapsed. */
+// Processes the tween, advancing the amount elapsed.
 bool processTween( Tween* tween, float delta )
 {
 	float t;
@@ -70,7 +70,7 @@ bool processTween( Tween* tween, float delta )
 	return isDone;
 }
 
-/* Some general tween functions. */
+// Some general tween functions.
 float easeInSin( float t )
 {
 	return ( -SDL_cosf( twoPi * t ) + 1.0f );

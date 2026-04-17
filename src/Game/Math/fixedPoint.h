@@ -21,4 +21,4 @@ fixed32 f32_Divide( fixed32 lhs, fixed32 hrs );
 
 bool f32_Serialize( Serializer* s, const char* name, fixed32* fp );
 
-#endif /* inclusion guard */
+#endif // inclusion guard

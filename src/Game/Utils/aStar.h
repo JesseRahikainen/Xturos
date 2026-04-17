@@ -66,4 +66,4 @@ bool aStar_ProcessPath( AStarSearchState* state, int numSteps, int** sbOutPaths 
 // cleans up all the extra data created by the search state
 void aStar_CleanUpSearchState( AStarSearchState* state );
 
-#endif /* inclusion guard */
+#endif // inclusion guard

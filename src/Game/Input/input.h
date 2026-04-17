@@ -90,4 +90,4 @@ int input_BindOnSwipe( Vector2 dir, KeyResponse response );
 // Process events.
 void input_ProcessEvents( SDL_Event* e );
 
-#endif /* inclusion guard */
+#endif // inclusion guard

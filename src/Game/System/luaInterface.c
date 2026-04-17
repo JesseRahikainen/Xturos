@@ -1300,19 +1300,19 @@ void xLua_StackDump( void )
 		int t = lua_type( luaState, i );
 		switch( t ) {
 
-		case LUA_TSTRING:  /* strings */
+		case LUA_TSTRING:  // strings
 			llog( LOG_DEBUG, "`%s'", lua_tostring( luaState, i ) );
 			break;
 
-		case LUA_TBOOLEAN:  /* booleans */
+		case LUA_TBOOLEAN:  // booleans
 			llog( LOG_DEBUG, lua_toboolean( luaState, i ) ? "true" : "false" );
 			break;
 
-		case LUA_TNUMBER:  /* numbers */
+		case LUA_TNUMBER:  // numbers
 			llog( LOG_DEBUG, "%g", lua_tonumber( luaState, i ) );
 			break;
 
-		default:  /* other values */
+		default:  // other values
 			llog( LOG_DEBUG, "%s", lua_typename( luaState, t ) );
 			break;
 

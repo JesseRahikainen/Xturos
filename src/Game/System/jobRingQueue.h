@@ -27,4 +27,4 @@ bool jrq_ProcessNext( JobRingQueue* queue );
 bool jrq_IsEmpty( JobRingQueue* queue );
 bool jrq_IsBusy( JobRingQueue* queue );
 
-#endif /* inclusion guard */
+#endif // inclusion guard

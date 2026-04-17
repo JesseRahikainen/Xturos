@@ -74,4 +74,4 @@ void gfxUtil_TakeScreenShot( const char* outputPath );
 // Writes out an image.
 void gfxUtil_SaveImage( const char* filePath, uint8_t* data, int width, int height, int numComponents );
 
-#endif /* inclusion guard */
+#endif // inclusion guard

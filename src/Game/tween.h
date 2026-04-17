@@ -22,19 +22,19 @@ typedef struct {
 } Tween;
 
 
-/* Sets the values for the tween. If no ease function is set it treats it as linear. */
+// Sets the values for the tween. If no ease function is set it treats it as linear.
 void setTween( Tween* tween, float start, float end, float duration, EaseFunc easeFunc );
 
 /* Resets everything for the tween. */
 void resetTween( Tween* tween );
 
-/* Resets everything in the tween but swaps the start end end values. */
+// Resets everything in the tween but swaps the start end end values.
 void resetAndReverseTween( Tween* tween );
 
-/* Processes the tween, advancing the amount elapsed. Returns if the tween is done. */
+// Processes the tween, advancing the amount elapsed. Returns if the tween is done.
 bool processTween( Tween* tween, float delta );
 
-/* Some general tween functions. */
+// Some general tween functions.
 float easeInSin( float t );
 float easeOutSin( float t );
 float easeInOutSin( float t );

@@ -65,4 +65,4 @@ void hashMap_Report( HashMap* hashMap, size_t* capacity );
 // Runs tests on the hash map functions
 void hashMap_Test( void );
 
-#endif /* inclusion guard */
+#endif // inclusion guard

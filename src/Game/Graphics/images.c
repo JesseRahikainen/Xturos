@@ -16,7 +16,7 @@
 #include "Utils/stretchyBuffer.h"
 #include "Utils/helpers.h"
 
-/* Image loading types and variables */
+// Image loading types and variables
 #define MAX_IMAGES 512
 
 enum {
@@ -309,10 +309,8 @@ static void loadImageJob( void* data )
 	jq_AddMainThreadJob( bindImageJob, data );
 }
 
-/*
-Loads the image in a seperate thread. Puts the resulting image index into outIdx.
- Returns -1 if there was an issue, 0 otherwise.
-*/
+// Loads the image in a seperate thread. Puts the resulting image index into outIdx.
+//  Returns -1 if there was an issue, 0 otherwise.
 void img_ThreadedLoad( const char* fileName, ShaderType shaderType, ImageID* outId, void (*onLoadDone)( ImageID ) )
 {
 	SDL_assert( fileName != NULL );
@@ -356,9 +354,7 @@ void img_ThreadedLoad( const char* fileName, ShaderType shaderType, ImageID* out
 	}
 }
 
-/*
-Creates an image from a surface.
-*/
+// Creates an image from a surface.
 ImageID img_Create( SDL_Surface* surface, ShaderType shaderType, const char* id )
 {
 	ImageID newId;
@@ -505,10 +501,8 @@ int img_SplitTexture( Texture* texture, int count, ShaderType shaderType, Vector
 	return currentPackageID;
 }
 
-/*
-Takes in a file name and some rectangles. It's assumed the length of mins, maxes, and retIDs equals count.
- Returns package ID used to clean up later, returns -1 if there's a problem.
-*/
+// Takes in a file name and some rectangles. It's assumed the length of mins, maxes, and retIDs equals count.
+//  Returns package ID used to clean up later, returns -1 if there's a problem.
 int img_SplitImageFile( char* fileName, int count, ShaderType shaderType, Vector2* mins, Vector2* maxes, char** imgIDs, ImageID* retIDs )
 {
 	int currPackageID = findUnusedPackage( );
@@ -526,10 +520,8 @@ int img_SplitImageFile( char* fileName, int count, ShaderType shaderType, Vector
 	return currPackageID;
 }
 
-/*
-Takes in an RGBA bitmap and some rectangles. It's assumed the length of mins, maxes, and retIDs equals count.
- Returns package ID used to clean up later, returns -1 if there's a problem.
-*/
+// Takes in an RGBA bitmap and some rectangles. It's assumed the length of mins, maxes, and retIDs equals count.
+//  Returns package ID used to clean up later, returns -1 if there's a problem.
 int img_SplitRGBABitmap( uint8_t* data, int width, int height, int count, ShaderType shaderType, Vector2* mins, Vector2* maxes, ImageID* retIDs )
 {
 	int currPackageID = findUnusedPackage( );
@@ -547,10 +539,8 @@ int img_SplitRGBABitmap( uint8_t* data, int width, int height, int count, Shader
 	return currPackageID;
 }
 
-/*
-Takes in a one channel bitmap and some rectangles. It's assume the length of the mins, maxes, and retIDs equal scount.
- Returns package ID used to clean up later, returns -1 if there's a problem.
-*/
+// Takes in a one channel bitmap and some rectangles. It's assume the length of the mins, maxes, and retIDs equal scount.
+//  Returns package ID used to clean up later, returns -1 if there's a problem.
 int img_SplitAlphaBitmap( uint8_t* data, int width, int height, int count, ShaderType shaderType, Vector2* mins, Vector2* maxes, ImageID* retIDs )
 {
 	int currPackageID = findUnusedPackage( );
@@ -592,9 +582,7 @@ size_t img_GetPackageImageCount( int packageID )
 	return count;
 }
 
-/*
-Cleans up all the images in an image package.
-*/
+// Cleans up all the images in an image package.
 void img_CleanPackage( int packageID )
 {
 	for( int i = 0; i < MAX_IMAGES; ++i ) {
@@ -604,9 +592,7 @@ void img_CleanPackage( int packageID )
 	}
 }
 
-/*
-Sets an offset to render the image from. The default is the center of the image.
-*/
+// Sets an offset to render the image from. The default is the center of the image.
 void img_SetOffset( ImageID id, Vector2 offset )
 {
 	if( ( id >= MAX_IMAGES ) || ( !( images[id].flags & IMGFLAG_IN_USE ) ) ) {

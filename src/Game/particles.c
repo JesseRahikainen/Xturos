@@ -37,7 +37,7 @@ void physicsTick( float dt )
 	int i;
 	float fadeAmt;
 
-	/* update the positions of all the particles */
+	// update the positions of all the particles
 	for( i = 0; i <= lastParticle; ++i ) {
 		particles[i].lifeElapsed += dt;
 
@@ -50,8 +50,8 @@ void physicsTick( float dt )
 		vec2_AddScaled( &particles[i].futureRenderPos, &particles[i].velocity, dt, &particles[i].futureRenderPos );
 	}
 
-	/* destroy all the dead particles, we won't worry about preserving order but should do some tests to see
-	    if doing so will make it more efficient */
+	// destroy all the dead particles, we won't worry about preserving order but should do some tests to see
+	//  if doing so will make it more efficient
 	for( i = 0; i <= lastParticle; ++i ) {
 		if( particles[i].lifeElapsed >= particles[i].lifeTime ) {
 			particles[i] = particles[lastParticle];

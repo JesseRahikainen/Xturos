@@ -90,7 +90,7 @@ static void process( void )
 	Vector2 diff;
 	enum CheckBoxState prevState;
 
-	/* see if the mouse is positioned over any buttons */
+	// see if the mouse is positioned over any buttons
 	Vector2 mouse2DPos;
 	if( !input_GetMousePosition( &mouse2DPos ) ) {
 		return;
@@ -112,7 +112,7 @@ static void process( void )
 				continue;
 			}
 
-			/* see if mouse pos is within the buttons borders */
+			// see if mouse pos is within the buttons borders
 			prevState = checkBoxes[i].state;
 			diff.x = checkBoxes[i].position.x - transMousePos.x;
 			diff.y = checkBoxes[i].position.y - transMousePos.y;
@@ -150,7 +150,7 @@ static void processEvents( SDL_Event* sdlEvent )
 #endif
 }
 
-/* Call this before trying to use any check boxes. */
+// Call this before trying to use any check boxes.
 void chkBox_Init( )
 {
 	SDL_assert( false && "Need to move this over to the ECPS." );
@@ -174,9 +174,7 @@ void chkBox_CleanUp( )
 #endif
 }
 
-/*
-Creates a button. All image ids must be valid.
-*/
+// Creates a button. All image ids must be valid.
 int chkBox_Create( Vector2 position, Vector2 size, const char* text, int fontID, int normalImg, int checkMarkImg,
 	unsigned int camFlags, char depth, CheckBoxResponse response )
 {

@@ -63,4 +63,4 @@ typedef struct {
 void infiniteListSelector_Init( InfiniteListSelector* selector, RandomGroup* rg, int invalidId );
 void infiniteListSelector_Choose( InfiniteListSelector* selector, int itemId, uint32_t itemWeight );
 
-#endif /* inclusion guard */
+#endif // inclusion guard

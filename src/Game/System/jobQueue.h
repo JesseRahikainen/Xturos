@@ -27,4 +27,4 @@ bool jq_AllJobsDone( void );
 //  If there is no threading support then all other jobs are processed here as well
 void jq_ProcessMainThreadJobs( void );
 
-#endif /* inclusion guard */
+#endif // inclusion guard

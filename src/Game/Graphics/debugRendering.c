@@ -28,18 +28,14 @@ int debugRenderer_Init( void )
 	return 0;
 }
 
-/*
-Empties the list of debug things to draw.
-*/
+// Empties the list of debug things to draw.
 void debugRenderer_ClearVertices( void )
 {
 	lastDebugVert = -1;
 }
 
-/*
-Some basic debug drawing functions.
-  Returns 0 on success. Prints an error message to the log if it fails and returns -1.
-*/
+// Some basic debug drawing functions.
+//   Returns 0 on success. Prints an error message to the log if it fails and returns -1.
 static int queueDebugVert( unsigned int camFlags, Vector2 pos, Color color )
 {
 	if( lastDebugVert >= ( MAX_DEBUG_VERTS - 1 ) ) {

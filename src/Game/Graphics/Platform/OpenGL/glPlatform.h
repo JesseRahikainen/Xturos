@@ -4,9 +4,7 @@
 
 #include <SDL3/SDL_video.h>
 
-/*
-Handles the platform specific OpenGL stuff.
-*/
+// Handles the platform specific OpenGL stuff.
 #if defined( __ANDROID__ ) || defined( __EMSCRIPTEN__ ) || defined( __IPHONEOS__ )
   #if defined( __ANDROID__ ) || defined( __EMSCRIPTEN__ )
     #include <GLES3/gl3.h>
