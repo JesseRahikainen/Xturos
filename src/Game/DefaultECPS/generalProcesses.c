@@ -328,8 +328,8 @@ static void pointerResponseDetectState( ECPS* ecps, const Entity* entity )
 
 		// see if any of the local mouse pointer is in this entity
 		//prevState = responseData->state;
-		diff.x = tfData->currState.pos.x - sbResponseMousePos[i].adjPos.x;
-		diff.y = tfData->currState.pos.y - sbResponseMousePos[i].adjPos.y;
+		diff.x = tfData->futureState.pos.x - sbResponseMousePos[i].adjPos.x;
+		diff.y = tfData->futureState.pos.y - sbResponseMousePos[i].adjPos.y;
 		if( ( fabsf( diff.x ) <= responseData->collisionHalfDim.x ) && ( fabsf( diff.y ) <= responseData->collisionHalfDim.y ) ) {
 			currChosenPriority = responseData->priority;
 			currChosenPointerResponseID = entity->id;
@@ -715,7 +715,7 @@ static void addCollider( ECPS* ecps, const Entity* entity )
 static void exampleCollisionResponse( Entity* eOne, Entity* eTwo )
 {
 	// eOne will have firstCompID, eTwo will have secondCompID
-	SDL_assert( false && "Example only, make you're own." );
+	SDL_assert( false && "Example only, make your own." );
 }
 
 bool collisionTestAndResponse( Entity* eOne, Entity* eTwo, ComponentID firstCompID, ComponentID secondCompID, void ( *response )( Entity*, Entity* ) )
@@ -794,6 +794,27 @@ static void animSpriteUpdate( ECPS* ecps, const Entity* entity )
 	sprAnim_ProcessAnim( &(anim->playingAnim), &(anim->eventHandler), dt );
 
 	anim->eventHandler.data = NULL;
+}
+
+// ***** Follow mouse process
+Process gpFollowMouseProc;
+static void followMouseUpdate( ECPS* ecps, const Entity* entity )
+{
+	GCTransformData* tfData = NULL;
+	GCFollowMouseData* followData = NULL;
+
+	ecps_GetComponentFromEntity( entity, gcTransformCompID, &tfData );
+	ecps_GetComponentFromEntity( entity, gcFollowMouseCompID, &followData );
+
+	Vector2 newPos;
+	if( input_GetCamMousePos( followData->associatedCamera, &newPos ) ) {
+
+		if( followData->keepInBounds ) {
+			newPos.x = clamp( followData->boundsTopLeft.x, followData->boundsTopLeft.x + followData->boundsSize.w, newPos.x );
+			newPos.y = clamp( followData->boundsTopLeft.y, followData->boundsTopLeft.y + followData->boundsSize.h, newPos.y );
+		}
+		gc_SetTransformLocalPos( tfData, newPos );
+	}
 }
 
 // ***** Helper functions for dealing with groups
@@ -906,4 +927,8 @@ void gp_RegisterProcesses( ECPS* ecps )
 
 	SDL_assert( gcAnimSpriteCompID != INVALID_COMPONENT_ID );
 	ecps_CreateProcess( ecps, "ANIM_SPRITE", NULL, animSpriteUpdate, NULL, &gpAnimSpriteProc, 1, gcAnimSpriteCompID );
+
+	SDL_assert( gcTransformCompID != INVALID_COMPONENT_ID );
+	SDL_assert( gcFollowMouseCompID != INVALID_COMPONENT_ID );
+	ecps_CreateProcess( ecps, "FOLLOW_MOUSE", NULL, followMouseUpdate, NULL, &gpFollowMouseProc, 2, gcFollowMouseCompID, gcTransformCompID );
 }

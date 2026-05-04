@@ -225,6 +225,14 @@ typedef struct {
 } GCAnimatedSpriteData;
 extern ComponentID gcAnimSpriteCompID;
 
+typedef struct {
+	Vector2 boundsTopLeft;
+	Vector2 boundsSize;
+	bool keepInBounds;
+	int associatedCamera;
+} GCFollowMouseData;
+extern ComponentID gcFollowMouseCompID;
+
 // TODO: a general UI component with size, anchors, and such
 
 // swaps over the values in the future state of a transform to the current state. call once rendering of the transition from current to future is finished.

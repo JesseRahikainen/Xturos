@@ -22,6 +22,7 @@ extern Process gpAlphaTweenProc;
 extern Process gpCollisionProc;
 extern Process gpShortLivedProc;
 extern Process gpAnimSpriteProc;
+extern Process gpFollowMouseProc;
 
 void gp_RegisterProcesses( ECPS* ecps );
 

@@ -35,6 +35,7 @@ ComponentID gcGroupIDCompID = INVALID_COMPONENT_ID;
 ComponentID gcSizeCompID = INVALID_COMPONENT_ID;
 ComponentID gcShortLivedCompID = INVALID_COMPONENT_ID;
 ComponentID gcAnimSpriteCompID = INVALID_COMPONENT_ID;
+ComponentID gcFollowMouseCompID = INVALID_COMPONENT_ID;
 
 // serialization and deserialization functions
 //====
@@ -794,6 +795,7 @@ void gc_Register( ECPS* ecps )
 	gcWatchCompID = ecps_AddComponentType( ecps, "GC_WATCH", 0, 0, 0, NULL, NULL, NULL );
 	gcStencilCompID = ecps_AddComponentType( ecps, "GC_STENCIL", 0, sizeof( GCStencilData ), ALIGN_OF( GCStencilData ), NULL, NULL, serializeStencilComp );
 	gcSizeCompID = ecps_AddComponentType( ecps, "GC_SIZE", 0, sizeof( GCSizeData ), ALIGN_OF( GCSizeData ), NULL, NULL, serializeSizeComp );
+	gcFollowMouseCompID = ecps_AddComponentType( ecps, "FLW_MS", 0, sizeof( GCFollowMouseData ), ALIGN_OF( GCFollowMouseData ), NULL, NULL, NULL );
 
 	gcPosTweenCompID = ecps_AddComponentType( ecps, "P_TWN", 0, sizeof( GCVec2TweenData ), ALIGN_OF( GCVec2TweenData ), NULL, NULL, serializeVec2TweenComp );
 	gcScaleTweenCompID = ecps_AddComponentType( ecps, "S_TWN", 0, sizeof( GCVec2TweenData ), ALIGN_OF( GCVec2TweenData ), NULL, NULL, serializeVec2TweenComp );
@@ -802,6 +804,7 @@ void gc_Register( ECPS* ecps )
 	gcAnimSpriteCompID = ecps_AddComponentType( ecps, "ANIM_SPR", 0, sizeof( GCAnimatedSpriteData ), ALIGN_OF( GCAnimatedSpriteData ), NULL, NULL, serializeAnimatedSpriteComp );
 
 	gcGroupIDCompID = ecps_AddComponentType( ecps, "GRP", 0, sizeof( GCGroupIDData ), ALIGN_OF( GCGroupIDData ), NULL, NULL, serializeGroupIDComp );
+
 }
 
 void gc_SwapTransformStates( GCTransformData* tf )

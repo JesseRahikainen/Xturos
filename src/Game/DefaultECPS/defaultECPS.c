@@ -193,6 +193,7 @@ void defaultECPS_Setup( void )
 	// set up the initial default process and handler lists
 	defaultECPS_AddEventHandler( gp_PointerResponseEventHandler, 0 );
 
+	defaultECPS_AddToProcessPhase( &gpFollowMouseProc, 0 );
 	defaultECPS_AddToProcessPhase( &gpPointerResponseProc, 0 );
 
 	defaultECPS_AddToDrawPhase( &gpDebugDrawPointerReponsesProc, 0 );
@@ -209,6 +210,7 @@ void defaultECPS_Setup( void )
 	defaultECPS_AddToRenderPhase( &gpTextRenderProc, 0 );
 
 	defaultECPS_AddToDrawClearPhase( &gpRenderSwapProc, 0 );
+
 
 	// set up the functions to be called by the various parts of the engines main loop
 	sys_Register( handleEvent, process, draw, physicsTick, render );

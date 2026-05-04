@@ -1005,6 +1005,7 @@ static bool saveSDFFont( const char* fileName,
 		goto clean_up;
 	}
 
+	llog( LOG_INFO, "  Writing out font info." );
 	// write out the font data
 	CHECK_WRITE( SDL_WriteU32BE( ioStream, *(Uint32*)( &descent ) ), "writing out descent", 1 );
 	CHECK_WRITE( SDL_WriteU32BE( ioStream, *(Uint32*)( &linegap ) ), "writing out line gap", 1 );
@@ -1012,6 +1013,7 @@ static bool saveSDFFont( const char* fileName,
 	CHECK_WRITE( SDL_WriteU32BE( ioStream, *(Uint32*)( &baseSize ) ), "writing out base size", 1 );
 
 	// write out the glyphs
+	llog( LOG_INFO, "  Writing out glyphs." );
 	CHECK_WRITE( SDL_WriteU64BE( ioStream, (Uint64)sb_Count( sbGlyphs ) ), "writing out glyph count", 1 );
 	for( size_t i = 0; i < sb_Count( sbGlyphs ); ++i ) {
 		CHECK_WRITE( SDL_WriteU32BE( ioStream, *(Uint32*)( &( sbGlyphs[i].codepoint ) ) ), "writing out glyph codepoint", 1 );
@@ -1043,6 +1045,7 @@ static bool saveSDFFont( const char* fileName,
 	// write out the image
 	//  encode to png first
 	// TODO: Find a way to write out an even more compressed version of the png
+	llog( LOG_INFO, "  Writing out image." );
 	if( stbi_write_png_to_func( stbiWriteFunc, NULL, image->width, image->height, image->comp, image->data, 0 ) == 0 ) {
 		llog( LOG_ERROR, "Error creating png for file: %s", fileName );
 		goto clean_up;

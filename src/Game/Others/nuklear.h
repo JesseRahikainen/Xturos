@@ -1950,6 +1950,9 @@ NK_API void nk_window_set_scroll(struct nk_context*, nk_uint offset_x, nk_uint o
 /// __name__    | Identifier of the window to close
 */
 NK_API void nk_window_close(struct nk_context *ctx, const char *name);
+
+NK_API void nk_window_hide( struct nk_context* ctx, const char* name ); // fixing their fucking issues, nobody who works on this library seems to fucking use it at all for anything beyond toy projects
+
 /*/// #### nk_window_collapse
 /// Updates collapse state of a window with given name
 /// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~c
@@ -20454,6 +20457,21 @@ nk_window_close(struct nk_context *ctx, const char *name)
     win->flags |= NK_WINDOW_HIDDEN;
     win->flags |= NK_WINDOW_CLOSED;
 }
+
+// because apparently using nk_window_close() will cause the window to be garbage collected
+NK_API void
+nk_window_hide( struct nk_context* ctx, const char* name )
+{
+    struct nk_window* win;
+    NK_ASSERT( ctx );
+    if( !ctx ) return;
+    win = nk_window_find( ctx, name );
+    if( !win ) return;
+    NK_ASSERT( ctx->current != win && "You cannot hide a currently active window" );
+    if( ctx->current == win ) return;
+    win->flags |= NK_WINDOW_HIDDEN;
+}
+
 NK_API void
 nk_window_set_bounds(struct nk_context *ctx,
     const char *name, struct nk_rect bounds)

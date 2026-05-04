@@ -69,9 +69,11 @@ size_t img_GetPackageImageCount( int packageID );
 void img_CleanPackage( int packageID );
 
 // Sets an offset to render the image from. The default is the center of the image.
+// TODO: THE SET OFFSETS AREN'T WORKING CORRECTLY
 void img_SetOffset( ImageID id, Vector2 offset );
 
 // Sets an offset based on a vector with elements in the ranges [0,1], default is <0.5, 0.5>.
+// TODO: THE SET OFFSETS AREN'T WORKING CORRECTLY
 void img_SetRatioOffset( ImageID id, Vector2 offsetRatio, Vector2 padding );
 
 void img_GetOffset( ImageID id, Vector2* out );

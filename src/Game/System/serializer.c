@@ -374,6 +374,8 @@ void serializer_CreateReadCmp( void* ctx, Serializer* outSerializer )
 
 //**********************************
 // lua serializer
+#if SCRIPTING_ENABLED
+
 #pragma region LUA SERIALIZERS
 #define LUA_STANDARD_START( stackUsed ) \
 	ASSERT_AND_IF_NOT( s != NULL ) return false; \
@@ -963,6 +965,8 @@ void serializer_CreateReadLua( void* ctx, Serializer* outSerializer )
 	serializer_SetRawEntityID( outSerializer );
 }
 #pragma endregion
+
+#endif // SCRIPTING_ENABLED
 
 static bool rawGetEntityID( struct EntityAccessor* a, uint32_t localID, EntityID* outID )
 {

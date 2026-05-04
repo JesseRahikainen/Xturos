@@ -319,7 +319,7 @@ EntityID button_CreateTextButton( ECPS* ecps, Vector2 position, Vector2 size,
 	return buttonID;
 }
 
-EntityID button_CreateImageOnlyButton( ECPS* ecps, Vector2 position, Vector2 normalSize, Vector2 clickedSize,
+EntityID button_CreateImageOnlyButton( ECPS* ecps, Vector2 position, Vector2 normalSize,
 	int imgID, Color imgColor, uint32_t camFlags, int8_t depth, TrackedCallback pressResponse, TrackedCallback releaseResponse, TrackedCallback overResponse, TrackedCallback leaveResponse )
 {
 	Vector2 scale;
