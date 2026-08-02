@@ -79,7 +79,7 @@ char* createStringCopy( const char* str )
 
 	size_t len = SDL_strlen( str ) + 1;
 	char* newStr = mem_Allocate( len );
-	SDL_assert( newStr != NULL );
+	ASSERT( newStr != NULL );
 	if( newStr != NULL ) {
 		SDL_strlcpy( newStr, str, len );
 	}
@@ -93,7 +93,7 @@ char* createStretchyStringCopy( const char* str )
 	size_t len = SDL_strlen( str ) + 1;
 	char* newStr = NULL;
 	sb_Add( newStr, len );
-	SDL_assert( newStr != NULL );
+	ASSERT( newStr != NULL );
 	if( newStr != NULL ) {
 		SDL_strlcpy( newStr, str, len );
 	}

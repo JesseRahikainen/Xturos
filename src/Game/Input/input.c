@@ -62,12 +62,12 @@ static MouseButtonBindings mouseButtonUpBindings[MAX_BINDINGS];
 
 static void runResponse( Response* response )
 {
-	SDL_assert( response != NULL );
+	ASSERT( response != NULL );
 
 	if( response->type == CBT_SOURCE ) {
 		if( response->sourceResponse.response != NULL ) response->sourceResponse.response( );
 	} else if( response->type == CBT_LUA ) {
-		SDL_assert( false && "Doesn't work in this version of the engine." );
+		ASSERT( false && "Doesn't work in this version of the engine." );
 		//if( response->scriptResponse.response[0] != 0 ) xLua_CallLuaFunction( response->scriptResponse.response, "" );
 	} else {
 		llog( LOG_ERROR, "Unknown callback type." );
@@ -76,7 +76,7 @@ static void runResponse( Response* response )
 
 static void clearResponse( Response* response )
 {
-	SDL_assert( response != NULL );
+	ASSERT( response != NULL );
 	response->type = CBT_NONE;
 }
 
@@ -520,7 +520,7 @@ void input_ClearAllSwipeBinds( void )
 int input_BindOnSwipe( Vector2 dir, KeyResponse response )
 {
 	vec2_Normalize( &dir );
-	SDL_assert( vec2_Mag( &dir ) > 0.01f );
+	ASSERT( vec2_Mag( &dir ) > 0.01f );
 
 	for( int i = 0; i < MAX_BINDINGS; ++i ) {
 		if( swipeBindings[i].response == NULL ) {

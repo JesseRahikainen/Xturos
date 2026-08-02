@@ -10,7 +10,7 @@
 #define malloc(size) mem_Allocate(size)
 #define STB_IMAGE_IMPLEMENTATION
 #define STBI_FAILURE_USERMSG
-#define STBI_ASSERT(x) SDL_assert(x)
+#define STBI_ASSERT(x) ASSERT(x)
 #pragma warning( push )
 #pragma warning( disable : 4244 )
 #include <stb_image.h>
@@ -42,7 +42,7 @@
 // Clean up anything that was created in a loaded image.
 void gfxUtil_ReleaseLoadedImage( LoadedImage* image )
 {
-	SDL_assert( image != NULL );
+	ASSERT( image != NULL );
 
 	stbi_image_free( image->data );
 }
@@ -113,7 +113,7 @@ int gfxUtil_LoadImageInfo( const char* fileName, LoadedImage* outLoadedImage )
 	outLoadedImage->data = NULL;
 
 #if defined( __ANDROID__ )
-	SDL_assert( false && "Not implemented for this platform yet." );
+	ASSERT( false && "Not implemented for this platform yet." );
 #else
 	if( !stbi_info( fileName, &( outLoadedImage->width ), &( outLoadedImage->height ), &( outLoadedImage->comp ) ) ) {
 		llog( LOG_ERROR, "Unable to load image info for %s! STB Error: %s", fileName, stbi_failure_reason( ) );
@@ -179,9 +179,9 @@ clean_up:
 //  Returns >= 0 on success, < 0 on failure.
 int gfxUtil_CreateTextureFromRGBABitmap( uint8_t* data, int width, int height, Texture* outTexture )
 {
-	SDL_assert( data != NULL );
-	SDL_assert( width > 0 );
-	SDL_assert( height > 0 );
+	ASSERT( data != NULL );
+	ASSERT( width > 0 );
+	ASSERT( height > 0 );
 
 	int returnCode = 0;
 
@@ -209,9 +209,9 @@ clean_up:
 //  Returns >= 0 on success, < 0 on failure.
 int gfxUtil_CreateTextureFromAlphaBitmap( uint8_t* data, int width, int height, Texture* outTexture )
 {
-	SDL_assert( data != NULL );
-	SDL_assert( width > 0 );
-	SDL_assert( height > 0 );
+	ASSERT( data != NULL );
+	ASSERT( width > 0 );
+	ASSERT( height > 0 );
 
 	int returnCode = 0;
 

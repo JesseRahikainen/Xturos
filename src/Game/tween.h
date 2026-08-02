@@ -70,5 +70,6 @@ float easePerlinQuintic( float t );
 float easeSlowMiddle( float t );
 float easeFullSinWave( float t );
 float easeArc( float t );
+float easeTimeOut( float t );
 
 #endif

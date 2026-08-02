@@ -11,19 +11,20 @@
 #include "Math/vector2.h"
 #include "color.h"
 
+#include "Graphics/images.h"
 #include "System/ECPS/ecps_dataTypes.h"
 
 // returns -1 is there was a problem
 int spr_Init( void );
 void spr_CleanUp( void );
 
-EntityID spr_CreateSprite( int image, uint32_t camFlags, Vector2 pos, Vector2 scale, float rotRad, Color col, int8_t depth );
+EntityID spr_CreateSprite( ImageID image, uint32_t camFlags, Vector2 pos, Vector2 scale, float rotRad, Color col, int8_t depth );
 void spr_DestroySprite( EntityID sprite );
 
 void spr_Update( EntityID sprite, const Vector2* newPos, const Vector2* newScale, float newRot );
 
-void spr_SwitchImage( EntityID sprite, int newImage );
-int spr_GetImage( EntityID sprite );
+void spr_SwitchImage( EntityID sprite, ImageID newImage );
+ImageID spr_GetImage( EntityID sprite );
 
 void spr_UpdatePos( EntityID sprite, const Vector2* newPos );
 void spr_UpdateColor( EntityID sprite, const Color* clr );
@@ -36,5 +37,8 @@ void spr_UpdateRot_Delta( EntityID sprite, float rotOffset );
 
 void spr_SnapPos( EntityID sprite, const Vector2* newPos );
 void spr_SnapCurrentPos( EntityID sprite );
+
+void spr_SnapScale( EntityID sprite, const Vector2* newScale );
+void spr_SnapCurrentScale( EntityID sprite );
 
 #endif // inclusion guard

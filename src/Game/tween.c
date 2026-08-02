@@ -12,7 +12,7 @@ static float twoPi = 6.283185307179586476925286766559f;
 // Sets the values for the tween. If no ease function is set it treats it as linear.
 void setTween( Tween* tween, float start, float end, float duration, float(*easeFunc)(float) )
 {
-	SDL_assert( tween );
+	ASSERT( tween );
 
 	tween->start = start;
 	tween->end = end;
@@ -27,7 +27,7 @@ void setTween( Tween* tween, float start, float end, float duration, float(*ease
 // Resets everything for the tween.
 void resetTween( Tween* tween )
 {
-	SDL_assert( tween );
+	ASSERT( tween );
 
 	tween->current = tween->start;
 	tween->elapsed = 0.0f;
@@ -37,7 +37,7 @@ void resetTween( Tween* tween )
 // Resets everything in the tween but swaps the start end end values.
 void resetAndReverseTween( Tween* tween )
 {
-	SDL_assert( tween );
+	ASSERT( tween );
 
 	float temp = tween->start;
 	tween->start = tween->end;
@@ -50,7 +50,7 @@ void resetAndReverseTween( Tween* tween )
 bool processTween( Tween* tween, float delta )
 {
 	float t;
-	SDL_assert( tween );
+	ASSERT( tween );
 
 	bool isDone = false;
 
@@ -334,3 +334,9 @@ float easeArc( float t )
 	return ( -4.0f * ( t * t ) ) + ( 4.0f * t );
 }
 ADD_TRACKED_TWEEN_FUNC( "easeArc", easeArc );
+
+float easeTimeOut( float t )
+{
+	return t >= 1.0f ? 1.0f : 0.0f;
+}
+ADD_TRACKED_TWEEN_FUNC( "easeTimeOut", easeTimeOut );

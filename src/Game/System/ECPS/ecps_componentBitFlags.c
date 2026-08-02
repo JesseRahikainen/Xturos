@@ -3,10 +3,12 @@
 #include <stdlib.h>
 #include <SDL3/SDL_assert.h>
 
+#include "Utils/helpers.h"
+
 void ecps_cbf_SetFlagOn( ComponentBitFlags* flags, uint32_t flagToSet )
 {
-	SDL_assert( flags != NULL );
-	SDL_assert( flagToSet < MAX_NUM_COMPONENT_TYPES );
+	ASSERT( flags != NULL );
+	ASSERT( flagToSet < MAX_NUM_COMPONENT_TYPES );
 
 	uint32_t idx = flagToSet / 32;
 	uint32_t idxBit = flagToSet - ( idx * 32 );
@@ -16,8 +18,8 @@ void ecps_cbf_SetFlagOn( ComponentBitFlags* flags, uint32_t flagToSet )
 
 void ecps_cbf_SetFlagOff( ComponentBitFlags* flags, uint32_t flagToUnset )
 {
-	SDL_assert( flags != NULL );
-	SDL_assert( flagToUnset < MAX_NUM_COMPONENT_TYPES );
+	ASSERT( flags != NULL );
+	ASSERT( flagToUnset < MAX_NUM_COMPONENT_TYPES );
 
 	uint32_t idx = flagToUnset / 32;
 	uint32_t idxBit = flagToUnset - ( idx * 32 );
@@ -27,8 +29,8 @@ void ecps_cbf_SetFlagOff( ComponentBitFlags* flags, uint32_t flagToUnset )
 
 bool ecps_cbf_IsFlagOn( const ComponentBitFlags* flags, uint32_t flagToTest )
 {
-	SDL_assert( flags != NULL );
-	SDL_assert( flagToTest < MAX_NUM_COMPONENT_TYPES );
+	ASSERT( flags != NULL );
+	ASSERT( flagToTest < MAX_NUM_COMPONENT_TYPES );
 
 	uint32_t idx = flagToTest / 32;
 	uint32_t idxBit = flagToTest - ( idx * 32 );
@@ -38,8 +40,8 @@ bool ecps_cbf_IsFlagOn( const ComponentBitFlags* flags, uint32_t flagToTest )
 
 bool ecps_cbf_CompareExact( const ComponentBitFlags* test, const ComponentBitFlags* against )
 {
-	SDL_assert( test != NULL );
-	SDL_assert( against != NULL );
+	ASSERT( test != NULL );
+	ASSERT( against != NULL );
 
 	for( int i = 0; i < FLAGS_ARRAY_SIZE; ++i ) {
 		if( test->bits[i] != against->bits[i] ) {
@@ -52,8 +54,8 @@ bool ecps_cbf_CompareExact( const ComponentBitFlags* test, const ComponentBitFla
 
 bool ecps_cbf_CompareContains( const ComponentBitFlags* test, const ComponentBitFlags* against )
 {
-	SDL_assert( test != NULL );
-	SDL_assert( against != NULL );
+	ASSERT( test != NULL );
+	ASSERT( against != NULL );
 
 	for( int i = 0; i < FLAGS_ARRAY_SIZE; ++i ) {
 		if( ( test->bits[i] & against->bits[i] ) != test->bits[i] ) {

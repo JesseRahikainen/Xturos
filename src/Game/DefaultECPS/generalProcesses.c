@@ -95,8 +95,8 @@ static void render3x3( ECPS* ecps, const Entity* entity )
 	Vector2 imgSize;
 	img_GetSize( sprite->img, &imgSize );
 
-	SDL_assert( sprite->rightBorder <= imgSize.w );
-	SDL_assert( sprite->bottomBorder <= imgSize.h );
+	ASSERT( sprite->rightBorder <= imgSize.w );
+	ASSERT( sprite->bottomBorder <= imgSize.h );
 
 	// get the sub-sections used for rendering
 	uint32_t lefts[9];
@@ -715,7 +715,7 @@ static void addCollider( ECPS* ecps, const Entity* entity )
 static void exampleCollisionResponse( Entity* eOne, Entity* eTwo )
 {
 	// eOne will have firstCompID, eTwo will have secondCompID
-	SDL_assert( false && "Example only, make your own." );
+	ASSERT( false && "Example only, make your own." );
 }
 
 bool collisionTestAndResponse( Entity* eOne, Entity* eTwo, ComponentID firstCompID, ComponentID secondCompID, void ( *response )( Entity*, Entity* ) )
@@ -878,57 +878,57 @@ void gp_DeleteAllOfGroup( ECPS* ecps, uint32_t groupID )
 // ***** Register the processes
 void gp_RegisterProcesses( ECPS* ecps )
 {
-	SDL_assert( gcTransformCompID != INVALID_COMPONENT_ID );
-	SDL_assert( gcSpriteCompID != INVALID_COMPONENT_ID );
+	ASSERT( gcTransformCompID != INVALID_COMPONENT_ID );
+	ASSERT( gcSpriteCompID != INVALID_COMPONENT_ID );
 	ecps_CreateProcess( ecps, "DRAW", NULL, render, NULL, &gpRenderProc, 2, gcTransformCompID, gcSpriteCompID );
 
-	SDL_assert( gcTransformCompID != INVALID_COMPONENT_ID );
-	SDL_assert( gc3x3SpriteCompID != INVALID_COMPONENT_ID );
+	ASSERT( gcTransformCompID != INVALID_COMPONENT_ID );
+	ASSERT( gc3x3SpriteCompID != INVALID_COMPONENT_ID );
 	ecps_CreateProcess( ecps, "3x3", NULL, render3x3, NULL, &gp3x3RenderProc, 2, gcTransformCompID, gc3x3SpriteCompID );
 
-	SDL_assert( gcTransformCompID != INVALID_COMPONENT_ID );
-	SDL_assert( gcTextCompID != INVALID_COMPONENT_ID );
+	ASSERT( gcTransformCompID != INVALID_COMPONENT_ID );
+	ASSERT( gcTextCompID != INVALID_COMPONENT_ID );
 	ecps_CreateProcess( ecps, "TEXT", NULL, renderText, NULL, &gpTextRenderProc, 3, gcTransformCompID, gcTextCompID, gcSizeCompID );
 
-	SDL_assert( gcTransformCompID != INVALID_COMPONENT_ID );
+	ASSERT( gcTransformCompID != INVALID_COMPONENT_ID );
 	ecps_CreateProcess( ecps, "DRAWSWAP", NULL, renderSwap, NULL, &gpRenderSwapProc, 1, gcTransformCompID );
 
-	SDL_assert( gcTransformCompID != INVALID_COMPONENT_ID );
-	SDL_assert( gcPointerCollisionCompID != INVALID_COMPONENT_ID );
-	SDL_assert( gcPointerResponseCompID != INVALID_COMPONENT_ID );
+	ASSERT( gcTransformCompID != INVALID_COMPONENT_ID );
+	ASSERT( gcPointerCollisionCompID != INVALID_COMPONENT_ID );
+	ASSERT( gcPointerResponseCompID != INVALID_COMPONENT_ID );
 #if defined( __ANDROID__ )
 	ecps_CreateProcess( ecps, "CLICK", pointerResponseGetMouse, pointerResponseDetectState, pointerResponseFinalize_TouchScreen, &gpPointerResponseProc, 3, gcTransformCompID, gcPointerCollisionCompID, gcPointerResponseCompID );
 #else
 	ecps_CreateProcess( ecps, "CLICK", pointerResponseGetMouse, pointerResponseDetectState, pointerResponseFinalize_Mouse, &gpPointerResponseProc, 3, gcTransformCompID, gcPointerCollisionCompID, gcPointerResponseCompID );
 #endif
 
-	SDL_assert( gcTransformCompID != INVALID_COMPONENT_ID );
-	SDL_assert( gcPointerCollisionCompID != INVALID_COMPONENT_ID );
+	ASSERT( gcTransformCompID != INVALID_COMPONENT_ID );
+	ASSERT( gcPointerCollisionCompID != INVALID_COMPONENT_ID );
 	ecps_CreateProcess( ecps, "CLK_DBG", NULL, drawPointerResponse, NULL, &gpDebugDrawPointerReponsesProc, 2, gcTransformCompID, gcPointerCollisionCompID );
 
-	SDL_assert( gcTransformCompID != INVALID_COMPONENT_ID );
-	SDL_assert( gcPosTweenCompID != INVALID_COMPONENT_ID );
+	ASSERT( gcTransformCompID != INVALID_COMPONENT_ID );
+	ASSERT( gcPosTweenCompID != INVALID_COMPONENT_ID );
 	ecps_CreateProcess( ecps, "POS_TWEEN", NULL, posTweenUpdate, NULL, &gpPosTweenProc, 2, gcTransformCompID, gcPosTweenCompID );
 
-	SDL_assert( gcTransformCompID != INVALID_COMPONENT_ID );
-	SDL_assert( gcScaleTweenCompID != INVALID_COMPONENT_ID );
+	ASSERT( gcTransformCompID != INVALID_COMPONENT_ID );
+	ASSERT( gcScaleTweenCompID != INVALID_COMPONENT_ID );
 	ecps_CreateProcess( ecps, "SCALE_TWEEN", NULL, scaleTweenUpdate, NULL, &gpScaleTweenProc, 2, gcTransformCompID, gcScaleTweenCompID );
 
-	SDL_assert( gcClrCompID != INVALID_COMPONENT_ID );
-	SDL_assert( gcAlphaTweenCompID != INVALID_COMPONENT_ID );
+	ASSERT( gcClrCompID != INVALID_COMPONENT_ID );
+	ASSERT( gcAlphaTweenCompID != INVALID_COMPONENT_ID );
 	ecps_CreateProcess( ecps, "ALPHA_TWEEN", NULL, alphaTweenUpdate, NULL, &gpAlphaTweenProc, 2, gcClrCompID, gcAlphaTweenCompID );
 
-	SDL_assert( gcTransformCompID != INVALID_COMPONENT_ID );
-	SDL_assert( gcColliderCompID != INVALID_COMPONENT_ID );
+	ASSERT( gcTransformCompID != INVALID_COMPONENT_ID );
+	ASSERT( gcColliderCompID != INVALID_COMPONENT_ID );
 	ecps_CreateProcess( ecps, "COLLISION", clearColliders, addCollider, runCollisions, &gpCollisionProc, 2, gcTransformCompID, gcColliderCompID );
 
-	SDL_assert( gcShortLivedCompID != INVALID_COMPONENT_ID );
+	ASSERT( gcShortLivedCompID != INVALID_COMPONENT_ID );
 	ecps_CreateProcess( ecps, "SHORT_LIVED", NULL, shortLivedUpdate, NULL, &gpShortLivedProc, 1, gcShortLivedCompID );
 
-	SDL_assert( gcAnimSpriteCompID != INVALID_COMPONENT_ID );
+	ASSERT( gcAnimSpriteCompID != INVALID_COMPONENT_ID );
 	ecps_CreateProcess( ecps, "ANIM_SPRITE", NULL, animSpriteUpdate, NULL, &gpAnimSpriteProc, 1, gcAnimSpriteCompID );
 
-	SDL_assert( gcTransformCompID != INVALID_COMPONENT_ID );
-	SDL_assert( gcFollowMouseCompID != INVALID_COMPONENT_ID );
+	ASSERT( gcTransformCompID != INVALID_COMPONENT_ID );
+	ASSERT( gcFollowMouseCompID != INVALID_COMPONENT_ID );
 	ecps_CreateProcess( ecps, "FOLLOW_MOUSE", NULL, followMouseUpdate, NULL, &gpFollowMouseProc, 2, gcFollowMouseCompID, gcTransformCompID );
 }

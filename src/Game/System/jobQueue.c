@@ -44,7 +44,7 @@ static int jobThread( void* data )
 
 int jq_Initialize( uint8_t numThreads )
 {
-	SDL_assert( numThreads > 0 );
+	ASSERT( numThreads > 0 );
 
 	sbThreadPool = NULL;
 	jobQueue.ringBuffer = NULL;

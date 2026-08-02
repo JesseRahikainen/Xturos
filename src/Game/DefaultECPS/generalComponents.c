@@ -367,9 +367,9 @@ static bool serializeAnimatedSpriteComp( Serializer* s, void* data )
 //=====================================================================================================
 void gc_GetLerpedGlobalMatrix( ECPS* ecps, GCTransformData* tf, const Vector2* imageOffset, float t, Matrix3* outMat )
 {
-	SDL_assert( tf != NULL );
-	SDL_assert( outMat != NULL );
-	SDL_assert( t >= 0.0f && t <= 1.0f );
+	ASSERT( tf != NULL );
+	ASSERT( outMat != NULL );
+	ASSERT( t >= 0.0f && t <= 1.0f );
 
 	if( tf->lastMatVal == t ) {
 		( *outMat ) = tf->mat;
@@ -478,47 +478,47 @@ static bool isDescendantOf( ECPS* ecps, EntityID testID, GCTransformData* tf )
 // // retrieves the local transform stuff
 Vector2 gc_GetLocalPos( GCTransformData* tf )
 {
-	SDL_assert( tf != NULL );
+	ASSERT( tf != NULL );
 	return tf->futureState.pos;
 }
 
 float gc_GetLocalRotRad( GCTransformData* tf )
 {
-	SDL_assert( tf != NULL );
+	ASSERT( tf != NULL );
 	return tf->futureState.rotRad;
 }
 
 Vector2 gc_GetLocalScale( GCTransformData* tf )
 {
-	SDL_assert( tf != NULL );
+	ASSERT( tf != NULL );
 	return tf->futureState.scale;
 }
 
 // sets the local transform stuff
 void gc_SetTransformLocalPos( GCTransformData* tf, Vector2 pos)
 {
-	SDL_assert( tf != NULL );
+	ASSERT( tf != NULL );
 	tf->futureState.pos = pos;
 	tf->lastMatVal = INFINITY;
 }
 
 void gc_SetTransformLocalRot( GCTransformData* tf, float rotRad )
 {
-	SDL_assert( tf != NULL );
+	ASSERT( tf != NULL );
 	tf->futureState.rotRad = rotRad;
 	tf->lastMatVal = INFINITY;
 }
 
 void gc_SetTransformLocalVectorScale( GCTransformData* tf, Vector2 scale )
 {
-	SDL_assert( tf != NULL );
+	ASSERT( tf != NULL );
 	tf->futureState.scale = scale;
 	tf->lastMatVal = INFINITY;
 }
 
 void gc_SetTransformLocalFloatScale( GCTransformData* tf, float scale )
 {
-	SDL_assert( tf != NULL );
+	ASSERT( tf != NULL );
 	tf->futureState.scale = vec2( scale, scale );
 	tf->lastMatVal = INFINITY;
 }
@@ -526,30 +526,30 @@ void gc_SetTransformLocalFloatScale( GCTransformData* tf, float scale )
 // adds an offset to the local transform stuff
 void gc_AdjustLocalPos( GCTransformData* tf, Vector2* adj)
 {
-	SDL_assert( tf != NULL );
-	SDL_assert( adj != NULL );
+	ASSERT( tf != NULL );
+	ASSERT( adj != NULL );
 	vec2_Add( &( tf->futureState.pos ), adj, &( tf->futureState.pos ) );
 	tf->lastMatVal = INFINITY;
 }
 
 void gc_AdjustLocalRot( GCTransformData* tf, float adjRad)
 {
-	SDL_assert( tf != NULL );
+	ASSERT( tf != NULL );
 	tf->futureState.rotRad = radianRotWrap( tf->futureState.rotRad + adjRad );
 	tf->lastMatVal = INFINITY;
 }
 
 void gc_AdjustLocalVectorScale( GCTransformData* tf, Vector2* adj )
 {
-	SDL_assert( tf != NULL );
-	SDL_assert( adj != NULL );
+	ASSERT( tf != NULL );
+	ASSERT( adj != NULL );
 	vec2_Add( &( tf->futureState.scale ), adj, &( tf->futureState.scale ) );
 	tf->lastMatVal = INFINITY;
 }
 
 void gc_AdjustLocalFloatScale( GCTransformData* tf, float adj )
 {
-	SDL_assert( tf != NULL );
+	ASSERT( tf != NULL );
 	tf->futureState.scale.x += adj;
 	tf->futureState.scale.y += adj;
 	tf->lastMatVal = INFINITY;
@@ -558,28 +558,28 @@ void gc_AdjustLocalFloatScale( GCTransformData* tf, float adj )
 // changes everything, making sure there is no lerping during the rendering
 void gc_TeleportToLocalPos( GCTransformData* tf, Vector2 pos )
 {
-	SDL_assert( tf != NULL );
+	ASSERT( tf != NULL );
 	tf->currState.pos = tf->futureState.pos = pos;
 	tf->lastMatVal = INFINITY;
 }
 
 void gc_TeleportToLocalRot( GCTransformData* tf, float rotRad )
 {
-	SDL_assert( tf != NULL );
+	ASSERT( tf != NULL );
 	tf->currState.rotRad = tf->futureState.rotRad = rotRad;
 	tf->lastMatVal = INFINITY;
 }
 
 void gc_TeleportToLocalVectorScale( GCTransformData* tf, Vector2 scale )
 {
-	SDL_assert( tf != NULL );
+	ASSERT( tf != NULL );
 	tf->currState.scale = tf->futureState.scale = scale;
 	tf->lastMatVal = INFINITY;
 }
 
 void gc_TeleportToLocalFloatScale( GCTransformData* tf, float scale )
 {
-	SDL_assert( tf != NULL );
+	ASSERT( tf != NULL );
 	tf->currState.scale = tf->futureState.scale = vec2( scale, scale );
 	tf->lastMatVal = INFINITY;
 }
@@ -703,8 +703,8 @@ void gc_UnWatchEntity( ECPS* ecps, EntityID id )
 
 void gc_ColliderDataToCollider( GCColliderData* colliderData, GCTransformData* tfData, Collider* outCollider )
 {
-	SDL_assert( colliderData != NULL );
-	SDL_assert( outCollider != NULL );
+	ASSERT( colliderData != NULL );
+	ASSERT( outCollider != NULL );
 
 	switch( colliderData->base.type ) {
 	case CT_DEACTIVATED:
@@ -725,7 +725,7 @@ void gc_ColliderDataToCollider( GCColliderData* colliderData, GCTransformData* t
 		collision_CalculateHalfSpace( &(tfData->futureState.pos), &(colliderData->halfSpace.normal), outCollider );
 		break;
 	default:
-		SDL_assert( false && "Invalid collider type." );
+		ASSERT( false && "Invalid collider type." );
 	}
 }
 
@@ -843,7 +843,7 @@ GCTransformData gc_CreateTransformPosRotScale( Vector2 pos, float rotRad, Vector
 
 static void generalComponentHandleSwitchImg( void* data, ImageID imgID, const Vector2* offset )
 {
-	SDL_assert( data != NULL );
+	ASSERT( data != NULL );
 
 	AnimSpriteHandlerData* handlerData = (AnimSpriteHandlerData*)data;
 
@@ -892,13 +892,13 @@ GCAnimatedSpriteData gc_CreateDefaultAnimSpriteData( )
 
 void gc_PlayAnim( ECPS* ecps, EntityID id, SpriteAnimation* anim )
 {
-	SDL_assert( ecps != NULL );
-	SDL_assert( anim != NULL );
+	ASSERT( ecps != NULL );
+	ASSERT( anim != NULL );
 
 	GCAnimatedSpriteData* animSprData = NULL;
 	if( !ecps_GetComponentFromEntityByID( ecps, id, gcAnimSpriteCompID, &animSprData ) )
 	{
-		SDL_assert( false && "Attempting to play an animation on an entity that has no animation component." );
+		ASSERT( false && "Attempting to play an animation on an entity that has no animation component." );
 		return;
 	}
 
@@ -939,9 +939,9 @@ GeneralCallback createScriptCallback( const char* callback )
 
 void callGeneralCallback( GeneralCallback* callback, ECPS* ecps, Entity* entity )
 {
-	SDL_assert( callback != NULL );
-	SDL_assert( ecps != NULL );
-	SDL_assert( entity != NULL );
+	ASSERT( callback != NULL );
+	ASSERT( ecps != NULL );
+	ASSERT( entity != NULL );
 
 	if( callback->type == CBT_SOURCE ) {
 		if( callback->source.callback != NULL ) callback->source.callback( ecps, entity );
@@ -955,7 +955,7 @@ void callGeneralCallback( GeneralCallback* callback, ECPS* ecps, Entity* entity 
 
 void cleanUpGeneralCallback( GeneralCallback* callback )
 {
-	SDL_assert( callback != NULL );
+	ASSERT( callback != NULL );
 	if( callback->type == CBT_LUA ) {
 		mem_Release( callback->script.callback );
 	}

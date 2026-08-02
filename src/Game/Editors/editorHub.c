@@ -49,6 +49,32 @@ static void loadDialogIconImages( void )
 	dialogTypeIconsLoaded = true;
 }
 
+static float calculateNKTextHeight( struct nk_context* ctx, float width, const char* str, int* numLines )
+{
+	float lineWidth;
+	float height = ctx->style.text.padding.y;
+	int fitting = 0;
+	int done = 0;
+	int glyphs = 0;
+	nk_rune seperator[] = { ' ' };
+	int strLen = nk_strlen( str );
+	if( numLines ) ( *numLines ) = 1;
+
+	width = width - 2 * ctx->style.text.padding.x;
+
+	fitting = nk_text_clamp( ctx->style.font, str, strLen, width, &glyphs, &lineWidth, seperator, NK_LEN( seperator ) );
+	while( done < strLen ) {
+		if( numLines ) ++( *numLines );
+		done += fitting;
+		height += ctx->style.font->height + 2 * ctx->style.text.padding.y;
+		fitting = nk_text_clamp( ctx->style.font, &str[done], strLen - done, width, &glyphs, &lineWidth, seperator, NK_LEN( seperator ) );
+	}
+
+	height += 0.01f; // fixes some issues with the height being just under the actual rendered height
+
+	return height;
+}
+
 static void processDialogs( struct nk_context* ctx )
 {
 	loadDialogIconImages( );
@@ -56,10 +82,18 @@ static void processDialogs( struct nk_context* ctx )
 	int width, height;
 	gfx_GetRenderSize( &width, &height );
 
-	const float DIALOG_WIDTH = 300.0f;
-	const float DIALOG_HEIGHT = 150.0f;
+	const float DIALOG_WIDTH = 600.0f;
+	const float DIALOG_HEIGHT = 500.0f;
 	float xPos = ( width / 2.0f ) - ( DIALOG_WIDTH / 2.0f );
 	float yPos = ( height / 2.0f ) - ( DIALOG_HEIGHT / 2.0f );
+	const float ICON_SIZE = 50.0f;
+	const float ICON_PADDING = 20.0f;
+	const float BUTTON_GROUP_PADDING = 15.0f;
+	const float BUTTON_PADDING = 15.0f;
+	const float BUTTON_WIDTH = 120.0f;
+	const float BUTTON_HEIGHT = 35.0f;
+
+	float textWidth = DIALOG_WIDTH - ( ctx->style.window.padding.x * 2 ) - ICON_SIZE - ( ICON_PADDING * 2.0f );
 
 	struct nk_rect dialogBounds = nk_rect( xPos, yPos, DIALOG_WIDTH, DIALOG_HEIGHT );
 	for( size_t i = 0; i < sb_Count( sbDialogs ); ++i ) {
@@ -67,40 +101,47 @@ static void processDialogs( struct nk_context* ctx )
 		SDL_snprintf( dialogID, 31, "Dialog%i", (int)i );
 		bool destroyDialog = false;
 
-		nk_begin_titled( ctx, dialogID, sbDialogs[i].title, dialogBounds, NK_WINDOW_BORDER | NK_WINDOW_MOVABLE | NK_WINDOW_TITLE ); {
-			nk_style_push_float( ctx, &ctx->style.window.spacing.x, 20.0f );
-			nk_layout_row_begin( ctx, NK_STATIC, 50, 2 );
-			nk_layout_row_push( ctx, 50 );
+		// calculate the height of the text and get the bounds height based on that
+		float textHeight = calculateNKTextHeight( ctx, textWidth, sbDialogs[i].text, NULL );
+
+		// header size
+		dialogBounds.h = ctx->style.font->height + 2.0f * ctx->style.window.header.padding.y;
+		dialogBounds.h += 2.0f * ctx->style.window.header.label_padding.y;
+
+		// internal padding
+		dialogBounds.h += ctx->style.window.padding.y * 2.0f;
+
+		// contents height
+		dialogBounds.h += MAX( ICON_SIZE, textHeight ) + ( BUTTON_GROUP_PADDING * 2 ) + BUTTON_HEIGHT;
+
+		nk_begin_titled( ctx, dialogID, sbDialogs[i].title, dialogBounds, NK_WINDOW_BORDER | NK_WINDOW_MOVABLE | NK_WINDOW_TITLE | NK_WINDOW_NO_SCROLLBAR ); {
+
+			float iconY = MAX( 0.0f, ( textHeight / 2.0f ) - ( ICON_SIZE / 2.0f ) );
+			nk_layout_space_begin( ctx, NK_STATIC, 50, INT_MAX );
+			nk_layout_space_push( ctx, nk_rect( ICON_PADDING, iconY, ICON_SIZE, ICON_SIZE ) );
 			nk_image( ctx, dialogTypeIcons[sbDialogs[i].type] );
-			nk_layout_row_push( ctx, 200 );
+
+			float textY = MAX( 0.0f, ( ICON_SIZE / 2.0f ) - ( textHeight / 2.0f ) );
+			nk_layout_space_push( ctx, nk_rect( ICON_SIZE + ( ICON_PADDING * 2.0f ), textY, textWidth, textHeight ) );
 			nk_label_wrap( ctx, sbDialogs[i].text );
-			nk_style_pop_float( ctx );
 
-			// spacing between the text and buttons
-			nk_layout_row_static( ctx, 20, 75, 0 );
-
-			nk_style_push_float( ctx, &ctx->style.window.spacing.x, 15.0f );
-			nk_style_push_float( ctx, &ctx->style.window.padding.x, 15.0f );
-			
 			// figure out how many buttons to show
 			int buttonCnt = 0;
 			for( int a = 0; a < MAX_DIALOG_BUTTONS; ++a ) {
 				if( sbDialogs[i].buttons[a].active ) ++buttonCnt;
 			}
 
-			// TODO: center buttons
-			nk_layout_row_static( ctx, 20, 80, buttonCnt );
+			float buttonTop = MAX( iconY + ICON_SIZE, textY + textHeight ) + BUTTON_GROUP_PADDING;
+			float buttonsLeft = ( DIALOG_WIDTH / 2.0f ) - ( ( ( BUTTON_WIDTH * buttonCnt ) - ( BUTTON_PADDING * ( buttonCnt - 1 ) ) ) / 2.0f );
 			for( int a = 0; a < MAX_DIALOG_BUTTONS; ++a ) {
 				if( sbDialogs[i].buttons[a].active ) {
+					nk_layout_space_push( ctx, nk_rect( buttonsLeft + ( ( BUTTON_WIDTH + BUTTON_PADDING ) * a ), buttonTop, BUTTON_WIDTH, BUTTON_HEIGHT ) );
 					if( nk_button_label( ctx, sbDialogs[i].buttons[a].text ) ) {
 						if( sbDialogs[i].buttons[a].onPress != NULL ) sbDialogs[i].buttons[a].onPress( );
 						destroyDialog = true;
 					}
 				}
 			}
-
-			nk_style_pop_float( ctx );
-			nk_style_pop_float( ctx );
 
 		} nk_end( ctx );
 
@@ -116,8 +157,8 @@ typedef void ( *DialogButtonHandler )( void );
 // parameters are assumed to be const char*, void (*handler)(void) pairs
 void hub_CreateDialog( const char* title, const char* text, DialogType type, int numButtons, ... )
 {
-	SDL_assert( numButtons > 0 );
-	SDL_assert( numButtons <= MAX_DIALOG_BUTTONS );
+	ASSERT( numButtons > 0 );
+	ASSERT( numButtons <= MAX_DIALOG_BUTTONS );
 
 	Dialog* newDialog = sb_Add( sbDialogs, 1 );
 	newDialog->title = title;
@@ -145,9 +186,11 @@ static void testMessageDialogResponse( void )
 
 static void testMessageDialog( void )
 {
+	//hub_CreateDialog( "Test Message", "This is a test message.", DT_MESSAGE, 1, "OK", testMessageDialogResponse );/*
 	hub_CreateDialog( "Test Message",
-		"This is a test message with lots of text to make sure things size correctly or at least test to see how it's handled.",
-		DT_MESSAGE, 1, "OK", testMessageDialogResponse );
+		"This is a test message with lots of text to make sure things size correctly or at least test to see how it's handled. "
+		"Even more text and even more text and even more text and even more text and even more text and even more text and even more text and even more text.",
+		DT_MESSAGE, 1, "OK", testMessageDialogResponse );//*/
 }
 
 static void testChoiceYes( void )
@@ -183,13 +226,14 @@ typedef struct {
 	void ( *hide )( void );
 	void ( *process )( void );
 	void ( *tick )( float );
+	void ( *processEvents )( SDL_Event* e );
 	
 	bool isShown;
 } Editor;
 
 static Editor* sbEditors = NULL;
 
-static void registerEditor( const char* name, void (*show)(void), void (*hide)(void), void (*process)(void), void (*tick)(float) )
+static void registerEditor( const char* name, void (*show)(void), void (*hide)(void), void (*process)(void), void (*tick)(float), void (*processEvents)(SDL_Event*) )
 {
 	Editor newEditor;
 	newEditor.name = name;
@@ -197,6 +241,7 @@ static void registerEditor( const char* name, void (*show)(void), void (*hide)(v
 	newEditor.hide = hide;
 	newEditor.process = process;
 	newEditor.tick = tick;
+	newEditor.processEvents = processEvents;
 
 	newEditor.isShown = false;
 
@@ -205,8 +250,8 @@ static void registerEditor( const char* name, void (*show)(void), void (*hide)(v
 
 void hub_RegisterAllEditors( void )
 {
-	registerEditor( "Sprite Animation", spriteAnimationEditor_Show, spriteAnimationEditor_Hide, spriteAnimationEditor_IMGUIProcess, spriteAnimationEditor_Tick );
-	registerEditor( "Sprite Sheets", spriteSheetEditor_Show, spriteSheetEditor_Hide, spriteSheetEditor_IMGUIProcess, spriteSheetEditor_Tick );
+	registerEditor( "Sprite Animation", spriteAnimationEditor_Show, spriteAnimationEditor_Hide, spriteAnimationEditor_IMGUIProcess, spriteAnimationEditor_Tick, spriteAnimationEditor_ProcessEvents );
+	registerEditor( "Sprite Sheets", spriteSheetEditor_Show, spriteSheetEditor_Hide, spriteSheetEditor_IMGUIProcess, spriteSheetEditor_Tick, NULL );
 
 	// testing stuff
 	//registerEditor( "Test Info Dialog", testMessageDialog, NULL, NULL, NULL );
@@ -221,7 +266,7 @@ void hub_InitAllEditors( )
 
 static void toggleEditor( size_t idx )
 {
-	SDL_assert( idx < sb_Count( sbEditors ) );
+	ASSERT( idx < sb_Count( sbEditors ) );
 
 	if( sbEditors[idx].isShown ) {
 		if( sbEditors[idx].hide != NULL ) sbEditors[idx].hide( );
@@ -249,6 +294,10 @@ static void editorHubScreen_Exit( void )
 
 static void editorHubScreen_ProcessEvents( SDL_Event* e )
 {
+	for( size_t i = 0; i < sb_Count( sbEditors ); ++i ) {
+		if( !sbEditors[i].isShown ) continue;
+		if( sbEditors[i].processEvents != NULL ) sbEditors[i].processEvents( e );
+	}
 }
 
 static void editorHubScreen_Process( void )

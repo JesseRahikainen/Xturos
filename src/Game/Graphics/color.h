@@ -33,6 +33,7 @@ static const Color CLR_DARK_GREY = { 0.25f, 0.25f, 0.25f, 1.0f };
 static const Color CLR_GREY = { 0.5f, 0.5f, 0.5f, 1.0f };
 static const Color CLR_LIGHT_GREY = { 0.75f, 0.75f, 0.75f, 1.0f };
 static const Color CLR_ORANGE = { 1.0f, 0.65f, 0.0f, 1.0f };
+static const Color CLR_BROWN = { 0.5f, 0.2f, 0.0f, 1.0f };
 static const Color CLR_CLEAR_BLACK = { 0.0f, 0.0f, 0.0f, 0.0f };
 static const Color CLR_CLEAR_WHITE = { 1.0f, 1.0f, 1.0f, 0.0f };
 

@@ -26,8 +26,8 @@ typedef union {
 //  Returns 0 if it was a success, a negative number otherwise.
 int idSet_Init( IDSet* set, size_t maxSize )
 {
-	SDL_assert( set != NULL );
-	SDL_assert( maxSize <= (size_t)UINT16_MAX );
+	ASSERT( set != NULL );
+	ASSERT( maxSize <= (size_t)UINT16_MAX );
 
 	sb_Add( set->sbIDData, maxSize );
     idSet_Clear( set );
@@ -40,7 +40,7 @@ int idSet_Init( IDSet* set, size_t maxSize )
 // Releases all the memory in use by an idSet.
 void idSet_Destroy( IDSet* set )
 {
-	SDL_assert( set != NULL );
+	ASSERT( set != NULL );
 	sb_Release( set->sbIDData );
 	set->sbIDData = NULL;
 }
@@ -48,7 +48,7 @@ void idSet_Destroy( IDSet* set )
 // Claims an id and returns it, returns a value of 0 if there were none available.
 EntityID idSet_ClaimID( IDSet* set )
 {
-	SDL_assert( set != NULL );
+	ASSERT( set != NULL );
 	// attempt to find an unused id, 0 is always an invalid id
 	uint16_t idx = 0;
 	size_t count = sb_Count( set->sbIDData );
@@ -80,7 +80,7 @@ EntityID idSet_ClaimID( IDSet* set )
 // Releases an id from use, allowing it to be used by something else.
 void idSet_ReleaseID( IDSet* set, EntityID id )
 {
-	SDL_assert( set != NULL );
+	ASSERT( set != NULL );
 
 	if( id == 0 ) {
 		return;
@@ -99,7 +99,7 @@ void idSet_ReleaseID( IDSet* set, EntityID id )
 // Sets a new maximum number of ids, will not shrink it if the new is less than the current.
 void idSet_IncreaseMaximum( IDSet* set, size_t newMax )
 {
-	SDL_assert( set != NULL );
+	ASSERT( set != NULL );
 
 	if( newMax <= sb_Count( set->sbIDData ) ) {
 		return;
@@ -113,14 +113,14 @@ void idSet_IncreaseMaximum( IDSet* set, size_t newMax )
 // Clears all the ids.
 void idSet_Clear( IDSet* set )
 {
-	SDL_assert( set != NULL );
+	ASSERT( set != NULL );
 	memset( set->sbIDData, 0, sizeof( set->sbIDData[0] ) * sb_Count( set->sbIDData ) );
 }
 
 // Returns whether the id passed in is currently claimed or not.
 bool idSet_IsIDValid( const IDSet* set, EntityID id )
 {
-	SDL_assert( set != NULL );
+	ASSERT( set != NULL );
 
 	if( id == 0 ) {
 		return false;
@@ -156,7 +156,7 @@ EntityID idSet_GetIDFromIndex( const IDSet* set, uint16_t index )
 // Returns the first valid id, returns 0 if there is none.
 EntityID idSet_GetFirstValidID( const IDSet* set )
 {
-	SDL_assert( set != NULL );
+	ASSERT( set != NULL );
 
 	uint16_t cnt = (uint16_t)sb_Count( set->sbIDData );
 	for( uint16_t i = 0; i < cnt; ++i ) {

@@ -127,7 +127,7 @@ void defaultECPS_AddToDrawClearPhase( Process* process, int8_t priority )
 
 void defaultECPS_AddEventHandler( void ( *handler )( SDL_Event* ), int8_t priority )
 {
-	SDL_assert( handler != NULL );
+	ASSERT( handler != NULL );
 
 	PrioritizedEventHandler newHandler = { handler, priority };
 

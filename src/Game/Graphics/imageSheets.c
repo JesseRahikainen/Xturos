@@ -64,8 +64,8 @@ static void cleanTempSpriteSheetData( TempSpriteSheetData* data )
 
 static bool loadSpriteSheetData( const char* fileName, TempSpriteSheetData** outSBData )
 {
-	SDL_assert( fileName != NULL );
-	SDL_assert( outSBData != NULL );
+	ASSERT( fileName != NULL );
+	ASSERT( outSBData != NULL );
 
 	bool ret = false;
 
@@ -74,7 +74,7 @@ static bool loadSpriteSheetData( const char* fileName, TempSpriteSheetData** out
 	if( ioStream == NULL ) goto clean_up;
 
 	Serializer s;
-	serializer_CreateWriteCmp( &cmp, &s );
+	serializer_CreateReadCmp( &cmp, &s );
 
 	uint32_t version;
 	SERIALIZE_CHECK( s.u32( &s, "version", &version ), ioType, "version number", goto clean_up );
@@ -95,7 +95,7 @@ static bool loadSpriteSheetData( const char* fileName, TempSpriteSheetData** out
 
 		SERIALIZE_CHECK( s.arraySize( &s, "rectSpriteCount", &( data.numSpritesRead ) ), ioType, "rect set sprite count", goto clean_up );
 		for( uint32_t a = 0; a < data.numSpritesRead; ++a ) {
-			char* id;
+			char* id = NULL;
 			int x, y, w, h;
 
 			SERIALIZE_CHECK( s.cString( &s, "spriteID", &id ), ioType, "sprite id", goto clean_up );

@@ -8,18 +8,14 @@
 
 Vector2 vec2( float x, float y )
 {
-	Vector2 v;
-	v.x = x;
-	v.y = y;
-
-	return v;
+	return (Vector2){ .x = x, .y = y };
 }
 
 Vector2* vec2_Add( const Vector2* v1, const Vector2* v2, Vector2* out )
 {
-	SDL_assert( v1 != NULL );
-	SDL_assert( v2 != NULL );
-	SDL_assert( out != NULL );
+	ASSERT( v1 != NULL );
+	ASSERT( v2 != NULL );
+	ASSERT( out != NULL );
 
 	out->v[0] = v1->v[0] + v2->v[0];
 	out->v[1] = v1->v[1] + v2->v[1];
@@ -29,9 +25,9 @@ Vector2* vec2_Add( const Vector2* v1, const Vector2* v2, Vector2* out )
 
 Vector2* vec2_Subtract( const Vector2* v1, const Vector2* v2, Vector2* out )
 {
-	SDL_assert( v1 != NULL );
-	SDL_assert( v2 != NULL );
-	SDL_assert( out != NULL );
+	ASSERT( v1 != NULL );
+	ASSERT( v2 != NULL );
+	ASSERT( out != NULL );
 
 	out->v[0] = v1->v[0] - v2->v[0];
 	out->v[1] = v1->v[1] - v2->v[1];
@@ -41,9 +37,9 @@ Vector2* vec2_Subtract( const Vector2* v1, const Vector2* v2, Vector2* out )
 
 Vector2* vec2_HadamardProd( const Vector2* v1, const Vector2* v2, Vector2* out )
 {
-	SDL_assert( v1 != NULL );
-	SDL_assert( v2 != NULL );
-	SDL_assert( out != NULL );
+	ASSERT( v1 != NULL );
+	ASSERT( v2 != NULL );
+	ASSERT( out != NULL );
 
 	out->v[0] = v1->v[0] * v2->v[0];
 	out->v[1] = v1->v[1] * v2->v[1];
@@ -53,8 +49,8 @@ Vector2* vec2_HadamardProd( const Vector2* v1, const Vector2* v2, Vector2* out )
 
 Vector2* vec2_Scale( const Vector2* vec, const float scalar, Vector2* out )
 {
-	SDL_assert( vec != NULL );
-	SDL_assert( out != NULL );
+	ASSERT( vec != NULL );
+	ASSERT( out != NULL );
 
 	out->v[0] = vec->v[0] * scalar;
 	out->v[1] = vec->v[1] * scalar;
@@ -64,9 +60,9 @@ Vector2* vec2_Scale( const Vector2* vec, const float scalar, Vector2* out )
 
 Vector2* vec2_AddScaled( const Vector2* base, const Vector2* scaled, float scale, Vector2* out )
 {
-	SDL_assert( base != NULL );
-	SDL_assert( scaled != NULL );
-	SDL_assert( out != NULL );
+	ASSERT( base != NULL );
+	ASSERT( scaled != NULL );
+	ASSERT( out != NULL );
 
 	out->v[0] = base->v[0] + ( scaled->v[0] * scale );
 	out->v[1] = base->v[1] + ( scaled->v[1] * scale );
@@ -76,9 +72,9 @@ Vector2* vec2_AddScaled( const Vector2* base, const Vector2* scaled, float scale
 
 Vector2* vec2_Lerp( const Vector2* start, const Vector2* end, float t, Vector2* out )
 {
-	SDL_assert( start != NULL );
-	SDL_assert( end != NULL );
-	SDL_assert( out != NULL );
+	ASSERT( start != NULL );
+	ASSERT( end != NULL );
+	ASSERT( out != NULL );
 
 	out->v[0] = start->v[0] + ( ( end->v[0] - start->v[0] ) * t );
 	out->v[1] = start->v[1] + ( ( end->v[1] - start->v[1] ) * t );
@@ -88,8 +84,8 @@ Vector2* vec2_Lerp( const Vector2* start, const Vector2* end, float t, Vector2* 
 
 float vec2_DotProduct( const Vector2* v1, const Vector2* v2 )
 {
-	SDL_assert( v1 != NULL );
-	SDL_assert( v2 != NULL );
+	ASSERT( v1 != NULL );
+	ASSERT( v2 != NULL );
 
 	return ( ( v1->v[0] * v2->v[0] ) + ( v1->v[1] * v2->v[1] ) );
 }
@@ -99,30 +95,30 @@ on the 3d equivilant of the vectors. Absolute value will be the size of the para
 described by the two vectors. */
 float vec2_CrossProduct( const Vector2* v1, const Vector2* v2 )
 {
-	SDL_assert( v1 != NULL );
-	SDL_assert( v2 != NULL );
+	ASSERT( v1 != NULL );
+	ASSERT( v2 != NULL );
 
 	return ( ( v1->v[0] * v2->v[1] ) - ( v1->v[1] * v2->v[0] ) );
 }
 
 float vec2_Mag( const Vector2* vec )
 {
-	SDL_assert( vec != NULL );
+	ASSERT( vec != NULL );
 
 	return sqrtf( ( vec->v[0] * vec->v[0] ) + ( vec->v[1] * vec->v[1] ) );
 }
 
 float vec2_MagSqrd( const Vector2* vec )
 {
-	SDL_assert( vec != NULL );
+	ASSERT( vec != NULL );
 
 	return ( ( vec->v[0] * vec->v[0] ) + ( vec->v[1] * vec->v[1] ) );
 }
 
 float vec2_Dist( const Vector2* v1, const Vector2* v2 )
 {
-	SDL_assert( v1 != NULL );
-	SDL_assert( v2 != NULL );
+	ASSERT( v1 != NULL );
+	ASSERT( v2 != NULL );
 
 	Vector2 diff;
 	diff.v[0] = v1->v[0] - v2->v[0];
@@ -133,8 +129,8 @@ float vec2_Dist( const Vector2* v1, const Vector2* v2 )
 
 float vec2_DistSqrd( const Vector2* v1, const Vector2* v2 )
 {
-	SDL_assert( v1 != NULL );
-	SDL_assert( v2 != NULL );
+	ASSERT( v1 != NULL );
+	ASSERT( v2 != NULL );
 
 	Vector2 diff;
 	diff.v[0] = v1->v[0] - v2->v[0];
@@ -145,7 +141,7 @@ float vec2_DistSqrd( const Vector2* v1, const Vector2* v2 )
 
 float vec2_Normalize( Vector2* vec )
 {
-	SDL_assert( vec != NULL );
+	ASSERT( vec != NULL );
 
 	float mag = sqrtf( ( vec->v[0] * vec->v[0] ) + ( vec->v[1] * vec->v[1] ) );
 
@@ -159,7 +155,7 @@ float vec2_Normalize( Vector2* vec )
 
 Vector2* vec2_NormalFromRot( float rotRad, Vector2* out )
 {
-	SDL_assert( out != NULL );
+	ASSERT( out != NULL );
 
 	out->x = sinf( rotRad );
 	out->y = -cosf( rotRad );
@@ -169,7 +165,7 @@ Vector2* vec2_NormalFromRot( float rotRad, Vector2* out )
 
 Vector2* vec2_FromPolar( float rotRad, float magnitude, Vector2* out )
 {
-	SDL_assert( out != NULL );
+	ASSERT( out != NULL );
 
 	out->x = sinf( rotRad ) * magnitude;
 	out->y = -cosf( rotRad ) * magnitude;
@@ -179,7 +175,7 @@ Vector2* vec2_FromPolar( float rotRad, float magnitude, Vector2* out )
 
 float vec2_RotationRadians( const Vector2* v )
 {
-	SDL_assert( v != NULL );
+	ASSERT( v != NULL );
 
 	float dir = atan2f( -v->y, -v->x ) - ( M_PI_F / 2.0f );
 	return dir;
@@ -187,9 +183,9 @@ float vec2_RotationRadians( const Vector2* v )
 
 Vector2* vec2_ProjOnto( const Vector2* vec, const Vector2* onto, Vector2* out )
 {
-	SDL_assert( vec != NULL );
-	SDL_assert( onto != NULL );
-	SDL_assert( out != NULL );
+	ASSERT( vec != NULL );
+	ASSERT( onto != NULL );
+	ASSERT( out != NULL );
 
 	float mult;
 
@@ -203,9 +199,9 @@ Vector2* vec2_ProjOnto( const Vector2* vec, const Vector2* onto, Vector2* out )
 
 Vector2* vec2_PerpRight( const Vector2* v, Vector2* out )
 {
-	SDL_assert( v != NULL );
-	SDL_assert( out != NULL );
-	SDL_assert( v != out );
+	ASSERT( v != NULL );
+	ASSERT( out != NULL );
+	ASSERT( v != out );
 
 	out->x = -( v->y );
 	out->y = v->x;
@@ -215,9 +211,9 @@ Vector2* vec2_PerpRight( const Vector2* v, Vector2* out )
 
 Vector2* vec2_PerpLeft( const Vector2* v, Vector2* out )
 {
-	SDL_assert( v != NULL );
-	SDL_assert( out != NULL );
-	SDL_assert( v != out );
+	ASSERT( v != NULL );
+	ASSERT( out != NULL );
+	ASSERT( v != out );
 
 	out->x = v->y;
 	out->y = -( v->x );
@@ -232,7 +228,7 @@ bool vec2_Comp( const Vector2* lhs, const Vector2* rhs )
 
 void vec2_Dump( const Vector2* vec, const char* extra )
 {
-	SDL_assert( vec != NULL );
+	ASSERT( vec != NULL );
 	llog( LOG_DEBUG, "%s = %3.3f %3.3f\n", extra == NULL ? "v2" : extra, vec->v[0], vec->v[1] );
 }
 

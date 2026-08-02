@@ -103,20 +103,20 @@ typedef struct {
 
 static void SDL_assertTree( MCTree* tree )
 {
-	SDL_assert( tree != NULL );
+	ASSERT( tree != NULL );
 
 	size_t cnt = sb_Count( tree->sbNodes );
 	size_t invalid = INVALID_NODE;
 	for( size_t i = 0; i < sb_Count( tree->sbNodes ); ++i ) {
-		SDL_assert( ( tree->sbNodes[i].parent < sb_Count( tree->sbNodes ) ) || ( ( tree->sbNodes[i].parent == INVALID_NODE ) && ( i == 0 ) ) );
-		SDL_assert( ( tree->sbNodes[i].firstChild < sb_Count( tree->sbNodes ) ) || ( tree->sbNodes[i].firstChild == INVALID_NODE ) );
-		SDL_assert( ( tree->sbNodes[i].nextSibling < sb_Count( tree->sbNodes ) ) || ( tree->sbNodes[i].nextSibling == INVALID_NODE ) );
+		ASSERT( ( tree->sbNodes[i].parent < sb_Count( tree->sbNodes ) ) || ( ( tree->sbNodes[i].parent == INVALID_NODE ) && ( i == 0 ) ) );
+		ASSERT( ( tree->sbNodes[i].firstChild < sb_Count( tree->sbNodes ) ) || ( tree->sbNodes[i].firstChild == INVALID_NODE ) );
+		ASSERT( ( tree->sbNodes[i].nextSibling < sb_Count( tree->sbNodes ) ) || ( tree->sbNodes[i].nextSibling == INVALID_NODE ) );
 	}
 }
 
 static void initNode( MCTree* tree, size_t idx )
 {
-	SDL_assert( tree != NULL );
+	ASSERT( tree != NULL );
 
 	tree->sbNodes[idx].evalCnt = 0;
 	for( int s = 0; s < MCTS_NUM_PLAYERS; ++s ) {
@@ -130,9 +130,9 @@ static void initNode( MCTree* tree, size_t idx )
 
 static void setChild( MCTree* tree, size_t parentIdx, size_t childIdx )
 {
-	SDL_assert( parentIdx != childIdx );
-	SDL_assert( parentIdx < sb_Count( tree->sbNodes ) );
-	SDL_assert( childIdx < sb_Count( tree->sbNodes ) );
+	ASSERT( parentIdx != childIdx );
+	ASSERT( parentIdx < sb_Count( tree->sbNodes ) );
+	ASSERT( childIdx < sb_Count( tree->sbNodes ) );
 
 	tree->sbNodes[childIdx].parent = parentIdx;
 
@@ -202,7 +202,7 @@ static void mcts_Init( MCTree* tree, MCTSGameDefinition* gameDefinition, MCTS_BO
 #ifdef MCTS_OPEN_LOOP
 static void mcts_Expand( MCTree* tree, size_t idx, MCTS_BOARD_STATE* idxState )
 {
-	SDL_assert( tree != NULL );
+	ASSERT( tree != NULL );
 
 	MCTS_MOVE* moves = NULL;
 	tree->gameDefinition->getPossibleMoveList( idxState, &moves );
@@ -220,7 +220,7 @@ static void mcts_Expand( MCTree* tree, size_t idx, MCTS_BOARD_STATE* idxState )
 #else
 static void mcts_Expand( MCTree* tree, size_t idx )
 {
-	SDL_assert( tree != NULL );
+	ASSERT( tree != NULL );
 
 	MCTS_MOVE* moves = NULL;
 	tree->gameDefinition->getPossibleMoveList( &( tree->sbNodes[idx].state ), &moves );
@@ -250,7 +250,7 @@ static size_t mtcs_BestChild( MCTree* tree, size_t idx, MCTS_BOARD_STATE* idxSta
 static size_t mtcs_BestChild( MCTree* tree, size_t idx )
 #endif
 {
-	SDL_assert( tree != NULL );
+	ASSERT( tree != NULL );
 
 	// go through each child and find the best, if there are multiple best choose a random one
 	//  uses reservoir sampling
@@ -309,7 +309,7 @@ static size_t mcts_TreePolicy( MCTree* tree, MCTS_BOARD_STATE* outState )
 static size_t mcts_TreePolicy( MCTree* tree )
 #endif
 {
-	SDL_assert( tree != NULL );
+	ASSERT( tree != NULL );
 
 #ifdef MCTS_OPEN_LOOP
 	( *outState ) = tree->initialState;
@@ -365,7 +365,7 @@ static void mcts_RollOut( MCTSGameDefinition* gameDefinition, MCTS_BOARD_STATE* 
 	while( ( depth < MCTS_MAX_ROLL_OUT_DEPTH ) && ( winner == -1 ) ) {
 		sb_Clear( sbRolloutMoves );
 		gameDefinition->getPossibleMoveList( &currState, &sbRolloutMoves );
-		SDL_assert( sb_Count( sbRolloutMoves ) > 0 );
+		ASSERT( sb_Count( sbRolloutMoves ) > 0 );
 		gameDefinition->applyMove( &currState, &( sbRolloutMoves[rand_GetArrayEntry( &mctsRandom, sb_Count( sbRolloutMoves ) )] ), &nextState );
 		currState = nextState;
 		winner = gameDefinition->getWinner( &currState );
@@ -387,7 +387,7 @@ static void mcts_RollOut( MCTSGameDefinition* gameDefinition, MCTS_BOARD_STATE* 
 // Go up the tree propagating the score
 static void mcts_BackPropagate( MCTree* tree, size_t idx, int playerIdx, float score )
 {
-	SDL_assert( tree != NULL );
+	ASSERT( tree != NULL );
 
 	while( idx != INVALID_NODE ) {
 		for( int i = 0; i < MCTS_NUM_PLAYERS; ++i ) {
@@ -406,7 +406,7 @@ static void mcts_BackPropagate( MCTree* tree, size_t idx, int playerIdx, float s
 
 static void mcts_Step( MCTree* tree )
 {
-	SDL_assert( tree != NULL );
+	ASSERT( tree != NULL );
 
 	// as of right now only one player wins at a time
 	//  if there is some sort of placing system we may want to adjust it so that instead of one score
@@ -464,7 +464,7 @@ static void monteCarloTreeSearch( MCTSGameDefinition definition, float searchCon
 		node = tree.sbNodes[node].nextSibling;
 	}
 
-	SDL_assert( bestIdx != INVALID_NODE );
+	ASSERT( bestIdx != INVALID_NODE );
 
 	( *outBestMove ) = tree.sbNodes[bestIdx].causingMove;
 

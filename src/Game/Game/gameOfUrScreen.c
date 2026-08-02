@@ -166,9 +166,9 @@ static int8_t rollDice( void )
 
 void ur_applyMove( BoardState* oldState, Move* move, BoardState* newStateOut )
 {
-	SDL_assert( oldState != NULL );
-	SDL_assert( move != NULL );
-	SDL_assert( newStateOut != NULL );
+	ASSERT( oldState != NULL );
+	ASSERT( move != NULL );
+	ASSERT( newStateOut != NULL );
 
 	memcpy( newStateOut, oldState, sizeof( BoardState ) );
 
@@ -205,7 +205,7 @@ void ur_applyMove( BoardState* oldState, Move* move, BoardState* newStateOut )
 
 int ur_getCurrentPlayer( BoardState* state )
 {
-	SDL_assert( state != NULL );
+	ASSERT( state != NULL );
 
 	return state->currPlayer;
 }
@@ -281,8 +281,8 @@ void getPieceMoveList( BoardState* state, Move** sbMoveList_Out )
 // puts the moves into sbMoveList_Out
 void ur_getPossibleMoveList( BoardState* state, Move** sbMoveList_Out )
 {
-	SDL_assert( state != NULL );
-	SDL_assert( sbMoveList_Out != NULL );
+	ASSERT( state != NULL );
+	ASSERT( sbMoveList_Out != NULL );
 
 	if( state->roll < 0 ) {
 		getRollMoveList( state, sbMoveList_Out );
@@ -294,7 +294,7 @@ void ur_getPossibleMoveList( BoardState* state, Move** sbMoveList_Out )
 // returns either 0 or 1 if there is a winner, -1 if there isn't
 int ur_getWinner( BoardState* state )
 {
-	SDL_assert( state != NULL );
+	ASSERT( state != NULL );
 
 	int winner = -1;
 	int count[2] = { 0, 0 };

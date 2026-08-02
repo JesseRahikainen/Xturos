@@ -150,7 +150,7 @@ float inverseLerp( float from, float to, float val )
 
 float clamp( float min, float max, float val )
 {
-	SDL_assert( min <= max );
+	ASSERT( min <= max );
 
 	if( val < min ) {
 		return min;
@@ -170,13 +170,13 @@ float clamp01( float val )
 
 float randFloat( float min, float max )
 {
-	SDL_assert( min <= max );
+	ASSERT( min <= max );
 	return min + ( ( ( (float)rand( ) / (float)RAND_MAX ) ) * ( max - min ) );
 }
 
 float randFloatVar( float mid, float var )
 {
-	SDL_assert( var >= 0.0f );
+	ASSERT( var >= 0.0f );
 	return randFloat( mid - var, mid + var );
 }
 
@@ -192,8 +192,8 @@ int signi( int val )
 
 Vector3* vec2ToVec3( const Vector2* vec2, float z, Vector3* out )
 {
-	SDL_assert( vec2 != NULL );
-	SDL_assert( out != NULL );
+	ASSERT( vec2 != NULL );
+	ASSERT( out != NULL );
 
 	out->v[0] = vec2->v[0];
 	out->v[1] = vec2->v[1];
@@ -216,7 +216,7 @@ float remap( float origMin, float origMax, float val, float newMin, float newMax
 
 int wrapi( int val, int min, int max )
 {
-	SDL_assert( min <= max );
+	ASSERT( min <= max );
 
 	int range = ( max - min ) + 1;
 	int offset = val - min;
@@ -320,9 +320,9 @@ uint32_t divisorForDigitExtractionU32( uint32_t num )
 // finds the squared distance from the point pos to the line segment defined by lineA to lineB
 float sqrdDistToSegment( Vector2* pos, Vector2* lineA, Vector2* lineB )
 {
-	SDL_assert( pos != NULL );
-	SDL_assert( lineA != NULL );
-	SDL_assert( lineB != NULL );
+	ASSERT( pos != NULL );
+	ASSERT( lineA != NULL );
+	ASSERT( lineB != NULL );
 
 	Vector2 ab;
 	vec2_Subtract( lineB, lineA, &ab );
@@ -364,8 +364,8 @@ bool isPointOnPolygon( Vector2* pos, Vector2* polygon, size_t numPoints, float l
 
 void fitRatioInsideSpace( float ratio, Vector2* fitterSize, Vector2* outSize )
 {
-	SDL_assert( fitterSize != NULL );
-	SDL_assert( outSize != NULL );
+	ASSERT( fitterSize != NULL );
+	ASSERT( outSize != NULL );
 
 	float fitterRatio = fitterSize->w / fitterSize->h;
 
@@ -382,10 +382,10 @@ void fitRatioInsideSpace( float ratio, Vector2* fitterSize, Vector2* outSize )
 
 void fitRatioInsideRect( float ratio, Vector2* fitterMins, Vector2* fitterMaxes, Vector2* outMins, Vector2* outMaxes )
 {
-	SDL_assert( fitterMins != NULL );
-	SDL_assert( fitterMaxes != NULL );
-	SDL_assert( outMins != NULL );
-	SDL_assert( outMaxes != NULL );
+	ASSERT( fitterMins != NULL );
+	ASSERT( fitterMaxes != NULL );
+	ASSERT( outMins != NULL );
+	ASSERT( outMaxes != NULL );
 
 	// first find ratio of fitter area
 	Vector2 fitterSize;

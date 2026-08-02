@@ -150,7 +150,7 @@ void cam_SetCustomProjectionMatrix( int cam, Matrix4* mat )
 //  Returns <0 if there's a problem.
 int cam_SetState( int camera, Vector2 pos, float scale )
 {
-	SDL_assert( camera < NUM_CAMERAS );
+	ASSERT( camera < NUM_CAMERAS );
 
 	cameras[camera].start.pos = pos;
 	cameras[camera].start.scale = scale;

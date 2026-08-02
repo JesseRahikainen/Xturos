@@ -71,7 +71,7 @@ static WorkingGeoTrailPoint* sbWorkingPoints = NULL;
 
 static void addNewTrailPoint( GeomTrail* trail, Vector2* pos, float time )
 {
-	SDL_assert( trail != NULL );
+	ASSERT( trail != NULL );
 
 	GeoTrailPoint* newPt = sb_Add( trail->sbTrailPoints, 1 );
 	newPt->pos = ( *pos );
@@ -170,7 +170,7 @@ static void drawGeomTrailPoints( GeomTrail* trail, GeomTrailRenderEntry* trailRe
 
 static void drawGeomTrailTris_Time( GeomTrail* trail, float t )
 {
-	SDL_assert( trail != NULL );
+	ASSERT( trail != NULL );
 	
 	// generate the list of points to use based on the current geom trail, assign the time to currTimeLeft
 	sb_Clear( sbWorkingPoints );
@@ -283,7 +283,7 @@ static void drawGeomTrailTris_Time( GeomTrail* trail, float t )
 
 static void drawGeomTrailTris_Distance( GeomTrail* trail, float t )
 {
-	SDL_assert( trail != NULL );
+	ASSERT( trail != NULL );
 	// generate the list of points to use based on the current geom trail, assign the time to currTimeLeft
 	sb_Clear( sbWorkingPoints );
 	sb_Add( sbWorkingPoints, sb_Count( trail->sbTrailPoints ) );
@@ -492,9 +492,9 @@ void geomTrail_SetTimeScale( float newTimeScale )
 
 void geomTrail_Destroy( int idx )
 {
-	SDL_assert( idx >= 0 );
-	SDL_assert( idx < (int)sb_Count( sbGeomTrails ) );
-	SDL_assert( sbGeomTrails[idx].inUse );
+	ASSERT( idx >= 0 );
+	ASSERT( idx < (int)sb_Count( sbGeomTrails ) );
+	ASSERT( sbGeomTrails[idx].inUse );
 
 	sb_Release( sbGeomTrails[idx].sbTrailPoints );
 	sbGeomTrails[idx].inUse = false;
@@ -502,9 +502,9 @@ void geomTrail_Destroy( int idx )
 
 void geomTrail_SetOriginPoint( int idx, Vector2* pos )
 {
-	SDL_assert( idx >= 0 );
-	SDL_assert( idx < (int)sb_Count( sbGeomTrails ) );
-	SDL_assert( sbGeomTrails[idx].inUse );
+	ASSERT( idx >= 0 );
+	ASSERT( idx < (int)sb_Count( sbGeomTrails ) );
+	ASSERT( sbGeomTrails[idx].inUse );
 
 	sbGeomTrails[idx].futureOriginPos = (*pos);
 	//llog( LOG_DEBUG, "setting origin: %.2f, %.2f", sbGeomTrails[idx].futureOriginPos.x, sbGeomTrails[idx].futureOriginPos.y );
@@ -513,9 +513,9 @@ void geomTrail_SetOriginPoint( int idx, Vector2* pos )
 // sets the current points from which the trail should originate, does not create the new points
 void geomTrail_ClampOriginPoint( int idx, Vector2* pos )
 {
-	SDL_assert( idx >= 0 );
-	SDL_assert( idx < (int)sb_Count( sbGeomTrails ) );
-	SDL_assert( sbGeomTrails[idx].inUse );
+	ASSERT( idx >= 0 );
+	ASSERT( idx < (int)sb_Count( sbGeomTrails ) );
+	ASSERT( sbGeomTrails[idx].inUse );
 
 	sbGeomTrails[idx].currOriginPos = sbGeomTrails[idx].futureOriginPos = ( *pos );
 }
@@ -537,9 +537,9 @@ static void trailPhysicsTick_Time( GeomTrail* trail, float dt )
 
 void geomTrail_DumpTailData( int idx, char* fileName )
 {
-	SDL_assert( idx >= 0 );
-	SDL_assert( idx < (int)sb_Count( sbGeomTrails ) );
-	SDL_assert( sbGeomTrails[idx].inUse );
+	ASSERT( idx >= 0 );
+	ASSERT( idx < (int)sb_Count( sbGeomTrails ) );
+	ASSERT( sbGeomTrails[idx].inUse );
 
 	GeoTrailPoint* sbTrail = sbGeomTrails[idx].sbTrailPoints;
 
@@ -752,9 +752,9 @@ static Vector2* getPoints_DistanceBased( int idx, unsigned int skip )
 // returns a stretchy buffer, goes from the oldest point to the current origin
 Vector2* geomTrail_GetPoints( int idx, unsigned int skip )
 {
-	SDL_assert( idx >= 0 );
-	SDL_assert( idx < (int)sb_Count( sbGeomTrails ) );
-	SDL_assert( sbGeomTrails[idx].inUse );
+	ASSERT( idx >= 0 );
+	ASSERT( idx < (int)sb_Count( sbGeomTrails ) );
+	ASSERT( sbGeomTrails[idx].inUse );
 
 	if( sbGeomTrails[idx].timeBased ) {
 		return getPoints_TimeBased( idx, skip );
@@ -767,10 +767,10 @@ void geomTrail_AdjustTiming( int idx, float start, float end )
 {
 	// go through each point and make it so the last one is at the end of it's life, the first is at the start, and the rest
 	//  are between
-	SDL_assert( idx >= 0 );
-	SDL_assert( idx < (int)sb_Count( sbGeomTrails ) );
-	SDL_assert( sbGeomTrails[idx].inUse );
-	SDL_assert( sbGeomTrails[idx].timeBased );
+	ASSERT( idx >= 0 );
+	ASSERT( idx < (int)sb_Count( sbGeomTrails ) );
+	ASSERT( sbGeomTrails[idx].inUse );
+	ASSERT( sbGeomTrails[idx].timeBased );
 
 	GeomTrail* trail = &( sbGeomTrails[idx] );
 
@@ -784,9 +784,9 @@ void geomTrail_AdjustTiming( int idx, float start, float end )
 
 void geomTrail_SetStartingState( int idx, size_t numPoints, float* prevTimes, float* currTimes, float* yOffset )
 {
-	SDL_assert( idx >= 0 );
-	SDL_assert( idx < (int)sb_Count( sbGeomTrails ) );
-	SDL_assert( sbGeomTrails[idx].inUse );
+	ASSERT( idx >= 0 );
+	ASSERT( idx < (int)sb_Count( sbGeomTrails ) );
+	ASSERT( sbGeomTrails[idx].inUse );
 
 	GeomTrail* trail = &( sbGeomTrails[idx] );
 
@@ -806,12 +806,12 @@ void geomTrail_SetStartingState( int idx, size_t numPoints, float* prevTimes, fl
 // creates a trail from startPoint to the origin pos
 void geomTrail_SetInitialStateDist( int idx, Vector2 dir )
 {
-	SDL_assert( idx >= 0 );
-	SDL_assert( idx < (int)sb_Count( sbGeomTrails ) );
-	SDL_assert( sbGeomTrails[idx].inUse );
-	SDL_assert( !sbGeomTrails[idx].timeBased );
+	ASSERT( idx >= 0 );
+	ASSERT( idx < (int)sb_Count( sbGeomTrails ) );
+	ASSERT( sbGeomTrails[idx].inUse );
+	ASSERT( !sbGeomTrails[idx].timeBased );
 	float dirMagSqrd = vec2_MagSqrd( &dir );
-	SDL_assert( FLT_EQ( dirMagSqrd, 1.0f ) );
+	ASSERT( FLT_EQ( dirMagSqrd, 1.0f ) );
 
 	sb_Clear( sbGeomTrails[idx].sbTrailPoints );
 
@@ -826,9 +826,9 @@ void geomTrail_SetInitialStateDist( int idx, Vector2 dir )
 
 void geomTrail_SetDebugging( int idx, bool debug )
 {
-	SDL_assert( idx >= 0 );
-	SDL_assert( idx < (int)sb_Count( sbGeomTrails ) );
-	SDL_assert( sbGeomTrails[idx].inUse );
+	ASSERT( idx >= 0 );
+	ASSERT( idx < (int)sb_Count( sbGeomTrails ) );
+	ASSERT( sbGeomTrails[idx].inUse );
 
 	sbGeomTrails[idx].debug = debug;
 }

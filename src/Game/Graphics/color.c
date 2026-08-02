@@ -6,26 +6,12 @@
 
 Color clr( float r, float g, float b, float a )
 {
-	Color c;
-
-	c.r = r;
-	c.g = g;
-	c.b = b;
-	c.a = a;
-
-	return c;
+	return (Color){ .r = r, .g = g, .b = b, .a = a };
 }
 
 Color clr_byte( uint8_t r, uint8_t g, uint8_t b, uint8_t a )
 {
-	Color c;
-
-	c.r = r / 255.0f;
-	c.g = g / 255.0f;
-	c.b = b / 255.0f;
-	c.a = a / 255.0f;
-
-	return c;
+	return (Color){ .r = r / 255.0f, .g = g / 255.0f, .b = b / 255.0f, .a = a / 255.0f };
 }
 
 Color clr_hex( uint32_t c )
@@ -40,7 +26,7 @@ Color clr_hex( uint32_t c )
 
 SDL_Color clr_ToSDLColor( const Color* color )
 {
-	SDL_assert( color );
+	ASSERT( color );
 
 	SDL_Color out;
 
@@ -109,9 +95,9 @@ Color clr_hsv( int hue, float saturation, float value )
 
 Color* clr_Lerp( const Color* from, const Color* to, float t, Color* out )
 {
-	SDL_assert( from != NULL );
-	SDL_assert( to != NULL );
-	SDL_assert( out != NULL );
+	ASSERT( from != NULL );
+	ASSERT( to != NULL );
+	ASSERT( out != NULL );
 
 	out->r = lerp( from->r, to->r, t );
 	out->g = lerp( from->g, to->g, t );
@@ -123,8 +109,8 @@ Color* clr_Lerp( const Color* from, const Color* to, float t, Color* out )
 
 Color* clr_Scale( const Color* color, float scale, Color* out )
 {
-	SDL_assert( color != NULL );
-	SDL_assert( out != NULL );
+	ASSERT( color != NULL );
+	ASSERT( out != NULL );
 
 	out->r = color->r * scale;
 	out->g = color->g * scale;
@@ -136,9 +122,9 @@ Color* clr_Scale( const Color* color, float scale, Color* out )
 
 Color* clr_AddScaled( const Color* base, const Color* scaled, float scale, Color* out )
 {
-	SDL_assert( base != NULL );
-	SDL_assert( scaled != NULL );
-	SDL_assert( out != NULL );
+	ASSERT( base != NULL );
+	ASSERT( scaled != NULL );
+	ASSERT( out != NULL );
 
 	out->r = base->r + ( scaled->r * scale );
 	out->g = base->g + ( scaled->g * scale );

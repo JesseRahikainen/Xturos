@@ -13,7 +13,7 @@ static MessageListener* sbListeners = NULL;
 // register a message listener, you can register the same listener more than once
 void mb_RegisterListener( const MessageID message, MessageResponse response )
 {
-	SDL_assert( response != NULL );
+	ASSERT( response != NULL );
 
 	// expand if necessary
 	if( message >= sb_Count( sbListeners ) ) {
@@ -30,7 +30,7 @@ void mb_RegisterListener( const MessageID message, MessageResponse response )
 // unregisters the listener for the message, will unregister all if there are multiple registered instances of the same response
 void mb_UnregisterListener( const MessageID message, MessageResponse response )
 {
-	SDL_assert( response != NULL );
+	ASSERT( response != NULL );
 
 	if( message >= sb_Count( sbListeners ) ) {
 		return;

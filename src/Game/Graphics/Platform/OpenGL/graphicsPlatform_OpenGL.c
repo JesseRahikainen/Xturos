@@ -109,7 +109,7 @@ bool gfxPlatform_Init( SDL_Window* window, VSync desiredVSync )
 		}
 		break;
 	default:
-		SDL_assert( false && "Invalid vsync option. Seting to VS_NONE." );
+		ASSERT( false && "Invalid vsync option. Seting to VS_NONE." );
 		SDL_GL_SetSwapInterval( 0 );
 		break;
 	}
@@ -202,7 +202,7 @@ void gfxPlatform_DynamicSizeRender( float dt, float t,
 #endif
 
 	// editor and debugging ui stuff
-	nk_xu_render( &editorIMGUI );
+	nk_xu_render( &editorIMGUI );// #error this may leak memory?
 
 #if !defined( __IPHONEOS__ ) && !defined( __ANDROID__ ) && !defined( __EMSCRIPTEN__ )
 	GL( glDisable( GL_MULTISAMPLE ) );
@@ -373,9 +373,9 @@ void gfxPlatform_DeletePlatformTexture( PlatformTexture texture )
 #if !defined(__EMSCRIPTEN__)
 void gfxPlatform_GetPlatformTextureSize( PlatformTexture* texture, int* outWidth, int* outHeight )
 {
-	SDL_assert( texture != NULL );
-	SDL_assert( outWidth != NULL );
-	SDL_assert( outHeight != NULL );
+	ASSERT( texture != NULL );
+	ASSERT( outWidth != NULL );
+	ASSERT( outHeight != NULL );
 
 	GL( glBindTexture( GL_TEXTURE_2D, texture->id ) );
 
@@ -385,7 +385,7 @@ void gfxPlatform_GetPlatformTextureSize( PlatformTexture* texture, int* outWidth
 #else
 void gfxPlatform_GetPlatformTextureSize( PlatformTexture* texture, int* outWidth, int* outHeight )
 {
-	SDL_assert( false && "Unsupported by platform" );
+	ASSERT( false && "Unsupported by platform" );
 	( *outWidth ) = 0;
 	( *outHeight ) = 0;
 }
@@ -434,7 +434,7 @@ PlatformTexture gfxPlatform_GetDefaultPlatformTexture( void )
 
 uint8_t* gfxPlatform_GetPlatformSubTextureBytesRGBA( int xOffset, int yOffset, int width, int height, PlatformTexture* texture )
 {
-	SDL_assert( texture != NULL );
+	ASSERT( texture != NULL );
 
 	int numComponents = 4;
 	uint8_t* pixels = mem_Allocate( width * height * numComponents * sizeof( uint8_t ) );

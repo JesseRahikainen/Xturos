@@ -20,6 +20,7 @@
 #include "Utils/helpers.h"
 #include "Graphics/Platform/graphicsPlatform.h"
 #include "System/jobQueue.h"
+#include "Utils/cfgFile.h"
 
 #include "Graphics/Platform/OpenGL/glDebugging.h"
 
@@ -31,8 +32,6 @@ static PlayingSpriteAnimation editorPlayingSprite = { &editorSpriteAnimation, 0.
 
 static size_t selectedEvent = SIZE_MAX;
 
-static int numCollidersToShow = 0;
-
 static struct nk_image playNKImage;
 static struct nk_image pauseNKImage;
 static struct nk_image stopNKImage;
@@ -43,9 +42,15 @@ static bool hitAnimationEnd = false;
 
 static char* currentFileName = NULL;
 
+const float MIN_SCALE = 0.1f;
+const float MAX_SCALE = 5.0f;
+const float SCALE_WHEEL_AMT = 0.1f;
+
 static float spriteScale = 1.0f;
 static float prevImageAlpha = 0.25f;
 static float nextImageAlpha = 0.0f;
+static AnimEvent_SwitchImage preAnimSprite;
+static AnimEvent_SwitchImage postAnimSprite;
 
 static struct nk_colorf spriteBGColor = { 0.25f, 0.25f, 0.25f, 1.0f };
 
@@ -95,7 +100,89 @@ typedef struct {
 
 static LoadedImageDisplay* sbLoadedImageDisplays = NULL;
 
-// TODO: get onion skinning working. will want to split it into previous and/or next image to display, along with a transparency amount to use
+static Vector2 displayOffset = { 0.0f, 0.0f };
+
+static bool overDisplay = false;
+static bool movingDrawnOffset = false;
+
+const float SAVE_CHECK_TIME = 1.0f;
+static float saveCheckCountdown = -1.0f;
+
+static void resetSaveCheckTime( )
+{
+	saveCheckCountdown = SAVE_CHECK_TIME;
+}
+
+static void saveAnimEditorConfig( )
+{
+	void* cfg = cfg_OpenFile( "animEditor.cfg" );
+	if( cfg == NULL ) {
+		hub_CreateDialog( "Error", "Unable to open animEditor.cfg.", DT_ERROR, 1, "OK", NULL );
+		return;
+	}
+
+	cfg_SetFloat( cfg, "Background_Red", spriteBGColor.r );
+	cfg_SetFloat( cfg, "Background_Green", spriteBGColor.g );
+	cfg_SetFloat( cfg, "Background_Blue", spriteBGColor.b );
+
+	cfg_SetFloat( cfg, "Scale", spriteScale );
+
+	cfg_SetFloat( cfg, "Prev_Alpha", prevImageAlpha );
+	cfg_SetFloat( cfg, "Next_Alpha", nextImageAlpha );
+
+	cfg_SetInt( cfg, "Num_Visible_Collisions", (int)sb_Count( sbColliders ) );
+	char buffer[128];
+	for( size_t i = 0; i < sb_Count( sbColliders ); ++i ) {
+		SDL_snprintf( buffer, ARRAY_SIZE( buffer ), "Collider_%i_Red", (int)i );
+		cfg_SetFloat( cfg, buffer, sbColliders[i].color.r );
+		SDL_snprintf( buffer, ARRAY_SIZE( buffer ), "Collider_%i_Green", (int)i );
+		cfg_SetFloat( cfg, buffer, sbColliders[i].color.g );
+		SDL_snprintf( buffer, ARRAY_SIZE( buffer ), "Collider_%i_Blue", (int)i );
+		cfg_SetFloat( cfg, buffer, sbColliders[i].color.b );
+	}
+
+	cfg_SaveFile( cfg );
+	cfg_CloseFile( cfg );
+}
+
+static void loadAnimEditorConfig( )
+{
+	void* cfg = cfg_OpenFile( "animEditor.cfg" );
+	if( cfg == NULL ) {
+		hub_CreateDialog( "Error", "Unable to open animEditor.cfg.", DT_ERROR, 1, "OK", NULL );
+		return;
+	}
+
+	spriteBGColor.r = cfg_GetFloat( cfg, "Background_Red", 0.25f );
+	spriteBGColor.g = cfg_GetFloat( cfg, "Background_Green", 0.25f );
+	spriteBGColor.b = cfg_GetFloat( cfg, "Background_Blue", 0.25f );
+	spriteBGColor.a = 1.0f;
+
+	spriteScale = cfg_SetFloat( cfg, "Scale", 1.0f );
+
+	prevImageAlpha = cfg_GetFloat( cfg, "Prev_Alpha", 0.25f );
+	nextImageAlpha = cfg_GetFloat( cfg, "Next_Alpha", 0.0f );
+
+	int numColliders = cfg_GetInt( cfg, "Num_Visible_Collisions", 0 );
+	sb_Clear( sbColliders );
+	char buffer[128];
+	for( int i = 0; i < numColliders; ++i ) {
+		EditorCollider newCollider;
+		newCollider.collider.type = CT_DEACTIVATED;
+
+		SDL_snprintf( buffer, ARRAY_SIZE( buffer ), "Collider_%i_Red", (int)i );
+		newCollider.color.r = cfg_GetFloat( cfg, buffer, 0.0f );
+		SDL_snprintf( buffer, ARRAY_SIZE( buffer ), "Collider_%i_Green", (int)i );
+		newCollider.color.g = cfg_GetFloat( cfg, buffer, 0.0f );
+		SDL_snprintf( buffer, ARRAY_SIZE( buffer ), "Collider_%i_Blue", (int)i );
+		newCollider.color.b = cfg_GetFloat( cfg, buffer, 1.0f );
+		newCollider.color.a = 1.0f;
+		
+		sb_Push( sbColliders, newCollider );
+	}
+
+	cfg_CloseFile( cfg );
+}
 
 static void unloadCurrentSpriteSheet( )
 {
@@ -109,6 +196,14 @@ static void unloadCurrentSpriteSheet( )
 			editorSpriteAnimation.sbEvents[i].switchImg.imgID = INVALID_IMAGE_ID;
 		}
 	}
+}
+
+static LoadedImageDisplay newLoadedImageDisplay( const char* name, int id )
+{
+	LoadedImageDisplay val;
+	val.name = name;
+	val.imageId = id;
+	return val;
 }
 
 static void spriteSheetChosen( void* data )
@@ -131,6 +226,20 @@ static void spriteSheetChosen( void* data )
 	mem_Release( editorSpriteAnimation.spriteSheetFile );
 	editorSpriteAnimation.spriteSheetFile = filePath; // claiming the string for ourselves, release later
 	sbSpriteSheetImages = sbNewlyLoadedImages; 
+
+	// update the images we can select from
+	sb_Clear( sbLoadedImageDisplays );
+	int currentSelected = 0;
+
+	// add unused
+	sb_Push( sbLoadedImageDisplays, newLoadedImageDisplay( "-- NOT SET --", SIZE_MAX ) );
+
+	for( size_t i = 0; i < sb_Count( sbSpriteSheetImages ); ++i ) {
+		ImageID id = sbSpriteSheetImages[i];
+		if( img_IsValidImage( id ) ) {
+			sb_Push( sbLoadedImageDisplays, newLoadedImageDisplay( img_GetImgStringID( id ), id ) );
+		}
+	}
 }
 
 static void spriteSheetChosenCallback( const char* filePath )
@@ -162,7 +271,6 @@ static void loadAndAssociateSpriteSheet( void )
 static void editorSwitchImage( void* data, ImageID imgID, const Vector2* offset )
 {
 	drawnSprite = imgID;
-	drawnOffset = *offset;
 }
 
 static void editorSetAABCollider( void* data, int colliderID, float centerX, float centerY, float width, float height )
@@ -212,9 +320,10 @@ static AnimEventHandler editorEventHandler = {
 
 static void saveCurrentAnimation( const char* filePath )
 {
-	SDL_assert( filePath != NULL );
+	ASSERT( filePath != NULL );
 	llog( LOG_DEBUG, "Saving out to %s...", filePath );
 
+	//editorSpriteAnimation.sbEvents[0].switchImg.frameName = ? ;
 	if( !sprAnim_Save( filePath, &editorSpriteAnimation ) ) {
 		hub_CreateDialog( "Error Saving Animated Sprite", "Error saving animated sprite. Check error log for more details.", DT_ERROR, 1, "OK", NULL );
 	}
@@ -234,11 +343,26 @@ static void reprocessFrames( void )
 	editorSpriteAnimation.loops = looping;
 }
 
+static void resetPreAndPostAnimSprites( void )
+{
+	preAnimSprite.base.type = AET_SWITCH_IMAGE;
+	preAnimSprite.frameName = NULL;
+	preAnimSprite.imgID = INVALID_IMAGE_ID;
+	preAnimSprite.offset = vec2( 0.0f, 0.0f );
+
+	postAnimSprite.base.type = AET_SWITCH_IMAGE;
+	postAnimSprite.frameName = NULL;
+	postAnimSprite.imgID = INVALID_IMAGE_ID;
+	postAnimSprite.offset = vec2( 0.0f, 0.0f );
+}
+
 static void loadCurrentAnimation( const char* filePath )
 {
-	size_t qwer = sb_Count( sbLoadedImageDisplays );
-	SDL_assert( filePath != NULL );
+	ASSERT( filePath != NULL );
 	llog( LOG_DEBUG, "Loading from %s...", filePath );
+
+	selectedEvent = SIZE_MAX;
+	resetPreAndPostAnimSprites( );
 
 	sprAnim_Clean( &editorSpriteAnimation );
 
@@ -248,14 +372,16 @@ static void loadCurrentAnimation( const char* filePath )
 	}
 
 	if( ( editorSpriteAnimation.spriteSheetFile != NULL ) ) {
-		spriteSheetChosen( editorSpriteAnimation.spriteSheetFile );
+		char* spriteSheetFileCopy = createStringCopy( editorSpriteAnimation.spriteSheetFile );
+		spriteSheetChosen( spriteSheetFileCopy );
 	}
 
 	// hook up the images
-	size_t asdf = sb_Count( editorSpriteAnimation.sbEvents );
 	for( size_t i = 0; i < sb_Count( editorSpriteAnimation.sbEvents ); ++i ) {
 		if( editorSpriteAnimation.sbEvents[i].base.type == AET_SWITCH_IMAGE ) {
 			editorSpriteAnimation.sbEvents[i].switchImg.imgID = img_GetExistingByStrID( editorSpriteAnimation.sbEvents[i].switchImg.frameName );
+			mem_Release( editorSpriteAnimation.sbEvents[i].switchImg.frameName );
+			editorSpriteAnimation.sbEvents[i].switchImg.frameName = NULL;
 		}
 	}
 
@@ -265,16 +391,37 @@ static void loadCurrentAnimation( const char* filePath )
 	reprocessFrames( );
 }
 
+static void mainThreadLoadAnimation( void* data )
+{
+	char* filePath = (char*)data;
+	loadCurrentAnimation( filePath );
+	mem_Release( filePath );
+}
+
+static void loadCurrentAnimation_OffMainThread( const char* filePath )
+{
+	char* filePathCopy = createStringCopy( filePath );
+	jq_AddMainThreadJob( mainThreadLoadAnimation, filePathCopy );
+}
+
 static void newAnimation( void )
 {
 	llog( LOG_DEBUG, "Creating new animation" );
 	sprAnim_Clean( &editorSpriteAnimation );
 	editorSpriteAnimation = spriteAnimation( );
-	selectedEvent = SIZE_MAX;
 	playingAnimation = false;
 
 	editorPlayingSprite.animation = &editorSpriteAnimation;
 	editorPlayingSprite.timePassed = 0.0f;
+
+	selectedEvent = SIZE_MAX;
+	preAnimSprite.imgID = INVALID_IMAGE_ID;
+	preAnimSprite.offset = vec2( 0.0f, 0.0f );
+	postAnimSprite.imgID = INVALID_IMAGE_ID;
+	postAnimSprite.offset = vec2( 0.0f, 0.0f );
+
+	mem_Release( currentFileName );
+	currentFileName = NULL;
 }
 
 static void loadUIImages( void )
@@ -291,11 +438,15 @@ void spriteAnimationEditor_Init( void )
 
 void spriteAnimationEditor_Show( void )
 {
+	overDisplay = false;
+	movingDrawnOffset = false;
+	loadAnimEditorConfig( );
 	newAnimation( );
 }
 
 void spriteAnimationEditor_Hide( void )
 {
+	saveAnimEditorConfig( );
 	sprAnim_Clean( &editorSpriteAnimation );
 	sb_Release( sbSpriteSheetImages );
 	mem_Release( currentFileName );
@@ -348,56 +499,50 @@ static void addDefaultEvent( uint32_t frame )
 
 static void switchImageComboxBoxItemGetter( void* data, int id, const char** outText )
 {
-	*outText = sbLoadedImageDisplays[id].name;
+	if( ( id < 0 ) || ( id >= (int)sb_Count( sbLoadedImageDisplays ) ) )	{
+		*outText = "";
+	} else {
+		*outText = sbLoadedImageDisplays[id].name;
+	}
 }
 
-static LoadedImageDisplay newLoadedImageDisplay( const char* name, int id )
+// show the combobox to select which image to use
+static bool chooseImage( struct nk_context* ctx, ImageID current, ImageID* out )
 {
-	LoadedImageDisplay val;
-	val.name = name;
-	val.imageId = id;
-	return val;
+	int currentSelected = 0;
+	size_t count = sb_Count( sbLoadedImageDisplays );
+	for( size_t i = 0; i < sb_Count( sbLoadedImageDisplays ); ++i ) {
+		ImageID id = sbLoadedImageDisplays[i].imageId;
+		if( img_IsValidImage( id ) && ( id == current ) ) {
+			currentSelected = (int)i;
+		}
+	}
+
+	int lastSelected = currentSelected;
+	nk_combobox_callback( ctx, switchImageComboxBoxItemGetter, NULL, &currentSelected, (int)sb_Count( sbLoadedImageDisplays ), (int)STANDARD_ROW_HEIGHT, nk_vec2( 510.0f, 510.0f ) );
+	
+	if( currentSelected > 0 ) {
+		(*out) = sbLoadedImageDisplays[currentSelected].imageId;
+	} else {
+		(*out) = INVALID_IMAGE_ID;
+	}
+
+	return ( *out ) != current;
+}
+
+static void displayEventData_SwitchImageBase( struct nk_context* ctx, AnimEvent_SwitchImage* evt )
+{
+	nk_property_float( ctx, "#OffsetX", FLOAT_MIN, &evt->offset.x, FLOAT_MAX, 0.1f, 0.01f );
+	nk_property_float( ctx, "#OffsetY", FLOAT_MIN, &evt->offset.y, FLOAT_MAX, 0.1f, 0.01f );
+
+	nk_label( ctx, "Image", NK_TEXT_LEFT );
+
+	chooseImage( ctx, evt->imgID, &( evt->imgID ) );
 }
 
 static void displayEventData_SwitchImage( struct nk_context* ctx, AnimEvent* evt )
 {
-	/*
-	* Need to load an image and then somehow associate it with the frame.
-	* So we'll need something to store all the images we want loaded.
-	* There will have to be a place to store all the images, ids we can use (probably just the file name)
-	*/
-	nk_property_float( ctx, "OffsetX", FLOAT_MIN, &evt->switchImg.offset.x, FLOAT_MAX, 0.1f, 0.01f );
-	nk_property_float( ctx, "OffsetY", FLOAT_MIN, &evt->switchImg.offset.y, FLOAT_MAX, 0.1f, 0.01f );
-
-	nk_label( ctx, "Image", NK_TEXT_LEFT );
-
-	// show the combobox to select which image to use
-	//  known issue with this where if you remove an image, and then load another one while the event will use
-	//  the newly loaded one as it's taking over the old ones spot
-	sb_Clear( sbLoadedImageDisplays );
-	int currentSelected = 0;
-
-	// add unused
-	sb_Push( sbLoadedImageDisplays, newLoadedImageDisplay( "-- NOT SET --", SIZE_MAX ) );
-
-	for( size_t i = 0; i < sb_Count( sbSpriteSheetImages ); ++i ) {
-		ImageID id = sbSpriteSheetImages[i];
-		if( img_IsValidImage( id ) ) {
-			if( id == evt->switchImg.imgID ) {
-				currentSelected = (int)sb_Count( sbLoadedImageDisplays );
-			}
-			sb_Push( sbLoadedImageDisplays, newLoadedImageDisplay( img_GetImgStringID( id ), id ) );
-		}
-	}
-	
-	int lastSelected = currentSelected;
-	nk_combobox_callback( ctx, switchImageComboxBoxItemGetter, NULL, &currentSelected, (int)sb_Count( sbLoadedImageDisplays ), (int)STANDARD_ROW_HEIGHT, nk_vec2( 510.0f, 510.0f ) );
-
-	if( currentSelected > 0 ) {
-		evt->switchImg.imgID = sbLoadedImageDisplays[currentSelected].imageId;
-	} else {
-		evt->switchImg.imgID = INVALID_IMAGE_ID;
-	}
+	displayEventData_SwitchImageBase( ctx, &(evt->switchImg) );
 }
 
 static void displayEventData_SetAABCollider( struct nk_context* ctx, AnimEvent* evt )
@@ -424,7 +569,7 @@ static void displayEventData_DeactivateCollider( struct nk_context* ctx, AnimEve
 
 static bool displayEventData( struct nk_context* ctx, size_t eventIdx )
 {
-	SDL_assert( eventIdx <= sb_Count( editorSpriteAnimation.sbEvents ) );
+	ASSERT( eventIdx <= sb_Count( editorSpriteAnimation.sbEvents ) );
 
 	AnimEvent* evt = &editorSpriteAnimation.sbEvents[eventIdx];
 	AnimEvent oldEvent = *evt;
@@ -497,20 +642,20 @@ static bool displayEventData( struct nk_context* ctx, size_t eventIdx )
 
 static void drawCollisions( struct nk_command_buffer* buffer )
 {
-	float clipCenterX = buffer->clip.x + ( buffer->clip.w / 2.0f );
-	float clipCenterY = buffer->clip.y + ( buffer->clip.h / 2.0f );
+	float clipCenterX = buffer->clip.x + ( buffer->clip.w / 2.0f ) + drawnOffset.x;
+	float clipCenterY = buffer->clip.y + ( buffer->clip.h / 2.0f ) + drawnOffset.y;
 	for( size_t i = 0; i < sb_Count( sbColliders ); ++i ) {
 		switch( sbColliders[i].collider.type ) {
 		case CT_AAB: {
 			ColliderAAB* aab = &sbColliders[i].collider.aabb;
 			nk_stroke_rect( buffer,
-				nk_rect( clipCenterX + aab->center.x - aab->halfDim.w, clipCenterY + aab->center.y - aab->halfDim.h, 2.0f * aab->halfDim.w, 2.0f * aab->halfDim.h ),
+				nk_rect( clipCenterX + ( aab->center.x - aab->halfDim.w ) * spriteScale, clipCenterY + ( aab->center.y - aab->halfDim.h ) * spriteScale, 2.0f * aab->halfDim.w * spriteScale, 2.0f * aab->halfDim.h * spriteScale ),
 				0.0f, 1.0f, nk_rgb_cf( sbColliders[i].color ) );
 		} break;
 		case CT_CIRCLE: {
 			ColliderCircle* circle = &sbColliders[i].collider.circle;
 			nk_stroke_circle( buffer,
-				nk_rect( clipCenterX + circle->center.x - circle->radius, clipCenterY + circle->center.y - circle->radius, circle->radius * 2.0f, circle->radius * 2.0f ),
+				nk_rect( clipCenterX + circle->center.x - ( circle->radius * spriteScale ), clipCenterY + circle->center.y - ( circle->radius * spriteScale ), circle->radius * 2.0f * spriteScale, circle->radius * 2.0f * spriteScale ),
 				1.0f, nk_rgb_cf( sbColliders[i].color ) );
 		} break;
 		case CT_DEACTIVATED:
@@ -523,15 +668,19 @@ static void drawCollisions( struct nk_command_buffer* buffer )
 	}
 }
 
-static void drawImageEvent( uint32_t eventIdx, float alpha, struct nk_command_buffer* buffer )
+static void drawCenterCrossHair( struct nk_command_buffer* buffer )
 {
-	if( eventIdx == INVALID_ANIM_EVENT_IDX ) return;
+	float clipCenterX = buffer->clip.x + ( buffer->clip.w / 2.0f ) + drawnOffset.x;
+	float clipCenterY = buffer->clip.y + ( buffer->clip.h / 2.0f ) + drawnOffset.y;
 
-	ASSERT_AND_IF_NOT( eventIdx < sb_Count( editorSpriteAnimation.sbEvents ) ) return;
-	ASSERT_AND_IF_NOT( editorSpriteAnimation.sbEvents[eventIdx].base.type == AET_SWITCH_IMAGE ) return;
+	nk_stroke_line( buffer, clipCenterX, clipCenterY + 10.0f, clipCenterX, clipCenterY - 10.0f, 1.0f, nk_rgba_f( 1.0f - spriteBGColor.r, 1.0f - spriteBGColor.g, 1.0f - spriteBGColor.b, 0.5f ) );
+	nk_stroke_line( buffer, clipCenterX + 10.0f, clipCenterY, clipCenterX - 10.0f, clipCenterY, 1.0f, nk_rgba_f( 1.0f - spriteBGColor.r, 1.0f - spriteBGColor.g, 1.0f - spriteBGColor.b, 0.5f ) );
+}
 
-	int imgID = editorSpriteAnimation.sbEvents[eventIdx].switchImg.imgID;
-	Vector2 offset = editorSpriteAnimation.sbEvents[eventIdx].switchImg.offset;
+static void drawImage( AnimEvent_SwitchImage* event, float alpha, struct nk_command_buffer* buffer )
+{
+	int imgID = event->imgID;
+	Vector2 offset = event->offset;
 
 	if( !img_IsValidImage( imgID ) ) return;
 
@@ -546,8 +695,16 @@ static void drawImageEvent( uint32_t eventIdx, float alpha, struct nk_command_bu
 	int textureHeight;
 	gfxPlatform_GetPlatformTextureSize( &texture, &textureWidth, &textureHeight );
 
-	float clipCenterX = buffer->clip.x + ( buffer->clip.w / 2.0f ) - ( size.w / 2.0f * spriteScale ) + offset.x;
-	float clipCenterY = buffer->clip.y + ( buffer->clip.h / 2.0f ) - ( size.h / 2.0f * spriteScale ) + offset.y;
+	float clipCenterX = buffer->clip.x + ( buffer->clip.w / 2.0f ) + drawnOffset.x;
+	float clipCenterY = buffer->clip.y + ( buffer->clip.h / 2.0f ) + drawnOffset.y;
+
+	Vector2 renderSize;
+	vec2_Scale( &size, spriteScale, &renderSize );
+
+	Vector2 renderPos;
+	// need the center minus the size to get the top left corner, then add the offset to get it to the right position
+	renderPos.x = clipCenterX - ( size.w / 2.0f * spriteScale ) + ( offset.x * spriteScale );
+	renderPos.y = clipCenterY - ( size.h / 2.0f * spriteScale ) + ( offset.y * spriteScale );
 
 	Vector2 uvMin, uvMax;
 	img_GetUVCoordinates( imgID, &uvMin, &uvMax );
@@ -557,9 +714,18 @@ static void drawImageEvent( uint32_t eventIdx, float alpha, struct nk_command_bu
 	struct nk_rect subImageRect = nk_rect( subImageMin.x, subImageMin.y, subImageMax.x - subImageMin.x, subImageMax.y - subImageMin.y );
 	struct nk_image image = nk_subimage_id( imgID, (nk_ushort)textureWidth, (nk_ushort)textureHeight, subImageRect );
 
-	struct nk_rect drawRect = nk_rect( clipCenterX, clipCenterY, size.x * spriteScale, size.y * spriteScale );
+	struct nk_rect drawRect = nk_rect( renderPos.x, renderPos.y, renderSize.w, renderSize.h );
 
 	nk_draw_image( buffer, drawRect, &image, nk_rgba_f( 1.0f, 1.0f, 1.0f, alpha ) );
+}
+
+static void drawImageEvent( uint32_t eventIdx, float alpha, struct nk_command_buffer* buffer )
+{
+	if( eventIdx == INVALID_ANIM_EVENT_IDX ) return;
+	ASSERT_AND_IF_NOT( editorSpriteAnimation.sbEvents[eventIdx].base.type == AET_SWITCH_IMAGE ) return;
+
+	ASSERT_AND_IF_NOT( eventIdx < sb_Count( editorSpriteAnimation.sbEvents ) ) return;
+	drawImage( &editorSpriteAnimation.sbEvents[eventIdx].switchImg, alpha, buffer );
 }
 
 static void drawCurrentImage( struct nk_command_buffer* buffer )
@@ -576,16 +742,33 @@ static void drawCurrentImage( struct nk_command_buffer* buffer )
 		prevEvent = sprAnim_NextImageEvent( &editorSpriteAnimation, editorSpriteAnimation.sbEvents[currEvent].base.frame, false, false ); // previous image
 	}
 
-	drawImageEvent( prevEvent, prevImageAlpha, buffer );
+	if( prevEvent != INVALID_ANIM_EVENT_IDX ) {
+		drawImageEvent( prevEvent, prevImageAlpha, buffer );
+	} else {
+		drawImage( &preAnimSprite, prevImageAlpha, buffer );
+	}
+
 	drawImageEvent( currEvent, 1.0f, buffer );
-	drawImageEvent( nextEvent, nextImageAlpha, buffer );
+
+	if( nextEvent != INVALID_ANIM_EVENT_IDX ) {
+		drawImageEvent( nextEvent, nextImageAlpha, buffer );
+	} else {
+		drawImage( &postAnimSprite, nextImageAlpha, buffer );
+	}
 }
 
 void spriteAnimationEditor_IMGUIProcess( void )
 {
+	overDisplay = false;
 	//llog( LOG_DEBUG, "Animation editor process" );
 	struct nk_context* ctx = &( editorIMGUI.ctx );
-	if( nk_begin( ctx, "Sprite Animator", windowBounds, NK_WINDOW_MINIMIZABLE | NK_WINDOW_BORDER | NK_WINDOW_MOVABLE | NK_WINDOW_SCALABLE) ) {
+	char titleBuffer[128] = "";
+	if( ( currentFileName == NULL ) || ( SDL_strlen( currentFileName ) <= 0 ) ) {
+		SDL_snprintf( titleBuffer, ARRAY_SIZE( titleBuffer ), "Sprite Animator ()" );
+	} else {
+		SDL_snprintf( titleBuffer, ARRAY_SIZE( titleBuffer ), "Sprite Animator (%s)", currentFileName );
+	}
+	if( nk_begin_titled( ctx, "Sprite Animator", titleBuffer, windowBounds, NK_WINDOW_MINIMIZABLE | NK_WINDOW_BORDER | NK_WINDOW_MOVABLE | NK_WINDOW_SCALABLE) ) {
 
 		windowBounds = nk_window_get_bounds( ctx );
 
@@ -601,7 +784,7 @@ void spriteAnimationEditor_IMGUIProcess( void )
 				}
 
 				if( nk_menu_item_label( ctx, "Load...", NK_TEXT_ALIGN_LEFT | NK_TEXT_ALIGN_MIDDLE ) ) {
-					editor_chooseLoadFileLocation( "Animated Sprite", "aspr", false, loadCurrentAnimation );
+					editor_chooseLoadFileLocation( "Animated Sprite", "aspr", false, loadCurrentAnimation_OffMainThread );
 				}
 
 				if( nk_menu_item_label( ctx, "Save", NK_TEXT_ALIGN_LEFT | NK_TEXT_ALIGN_MIDDLE ) ) {
@@ -654,26 +837,25 @@ void spriteAnimationEditor_IMGUIProcess( void )
 						loadAndAssociateSpriteSheet( );
 					}
 
+					// onion skinning pre and post animation sprites
+					nk_layout_row_begin( ctx, NK_DYNAMIC, STANDARD_ROW_HEIGHT, 1 );
+					nk_layout_row_push( ctx, 1.0f );
+					nk_labelf( ctx, NK_TEXT_ALIGN_LEFT | NK_TEXT_ALIGN_MIDDLE, "-- Pre-Anim Preview --" );
+
+					nk_layout_row_begin( ctx, NK_DYNAMIC, STANDARD_ROW_HEIGHT, 1 );
+					nk_layout_row_push( ctx, 1.0f );
+					displayEventData_SwitchImageBase( ctx, &preAnimSprite );
+
+					nk_layout_row_begin( ctx, NK_DYNAMIC, STANDARD_ROW_HEIGHT, 1 );
+					nk_layout_row_push( ctx, 1.0f );
+					nk_labelf( ctx, NK_TEXT_ALIGN_LEFT | NK_TEXT_ALIGN_MIDDLE, "-- Post-Anim Preview --" );
+
+					nk_layout_row_begin( ctx, NK_DYNAMIC, STANDARD_ROW_HEIGHT, 1 );
+					nk_layout_row_push( ctx, 1.0f );
+					displayEventData_SwitchImageBase( ctx, &postAnimSprite );
+
 					nk_tree_pop( ctx );
 				}
-
-				// draw all the loaded images, let use unload them as well
-				/*if( nk_tree_push( ctx, NK_TREE_TAB, "Loaded Images", NK_MINIMIZED ) ) {
-					for( size_t i = 0; i < sb_Count( sbLoadedImages ); ++i ) {
-						if( sbLoadedImages[i].inUse ) {
-							nk_layout_row_begin( ctx, NK_DYNAMIC, 20, 2 );
-							nk_layout_row_push( ctx, 0.8f );
-							nk_label( ctx, sbLoadedImages[i].sbReadableName, NK_TEXT_ALIGN_LEFT | NK_TEXT_ALIGN_MIDDLE );
-							nk_layout_row_push( ctx, 0.2f );
-							if( nk_button_label( ctx, "-" ) ) {
-								// unload the image
-								removeLoadedImageFile( i );
-							}
-						}
-					}
-
-					nk_tree_pop( ctx );
-				}//*/
 
 				if( nk_tree_push( ctx, NK_TREE_TAB, "Config", NK_MINIMIZED ) ) {
 					// general configuration stuff
@@ -685,12 +867,18 @@ void spriteAnimationEditor_IMGUIProcess( void )
 
 					nk_layout_row_begin( ctx, NK_DYNAMIC, STANDARD_ROW_HEIGHT, 1 );
 					nk_layout_row_push( ctx, 1.0f );
-					nk_slider_float( ctx, 0.1f, &spriteScale, 3.0f, 0.01f );
+					if( nk_slider_float( ctx, MIN_SCALE, &spriteScale, MAX_SCALE, 0.01f ) ) resetSaveCheckTime( );
 
 					nk_layout_row_begin( ctx, NK_DYNAMIC, STANDARD_ROW_HEIGHT, 1 );
 					nk_layout_row_push( ctx, 1.0f );
 					if( nk_button_label( ctx, "Reset Scale" ) ) {
+						resetSaveCheckTime( );
 						spriteScale = 1.0f;
+					}
+
+					if( nk_button_label( ctx, "Reset Center Offset" ) ) {
+						drawnOffset.x = 0.0f;
+						drawnOffset.y = 0.0f;
 					}
 
 					// onion skinning opacity
@@ -700,7 +888,7 @@ void spriteAnimationEditor_IMGUIProcess( void )
 
 					nk_layout_row_begin( ctx, NK_DYNAMIC, STANDARD_ROW_HEIGHT, 1 );
 					nk_layout_row_push( ctx, 1.0f );
-					nk_slider_float( ctx, 0.0f, &prevImageAlpha, 1.0f, 0.01f );
+					if( nk_slider_float( ctx, 0.0f, &prevImageAlpha, 1.0f, 0.01f ) ) resetSaveCheckTime( );
 
 					nk_layout_row_begin( ctx, NK_DYNAMIC, STANDARD_ROW_HEIGHT, 1 );
 					nk_layout_row_push( ctx, 1.0f );
@@ -708,7 +896,7 @@ void spriteAnimationEditor_IMGUIProcess( void )
 
 					nk_layout_row_begin( ctx, NK_DYNAMIC, STANDARD_ROW_HEIGHT, 1 );
 					nk_layout_row_push( ctx, 1.0f );
-					nk_slider_float( ctx, 0.0f, &nextImageAlpha, 1.0f, 0.01f );
+					if( nk_slider_float( ctx, 0.0f, &nextImageAlpha, 1.0f, 0.01f ) ) resetSaveCheckTime( );
 
 					// background color
 					nk_layout_row_begin( ctx, NK_DYNAMIC, STANDARD_ROW_HEIGHT, 1 );
@@ -717,14 +905,14 @@ void spriteAnimationEditor_IMGUIProcess( void )
 
 					nk_layout_row_begin( ctx, NK_DYNAMIC, STANDARD_ROW_HEIGHT * 4.0f, 1 );
 					nk_layout_row_push( ctx, 1.0f );
-					nk_color_pick( ctx, &spriteBGColor, NK_RGB );
+					if( nk_color_pick( ctx, &spriteBGColor, NK_RGB ) ) resetSaveCheckTime( );
 
 					// how many collision bounds we want to display
 					nk_layout_row_begin( ctx, NK_DYNAMIC, STANDARD_ROW_HEIGHT, 1 );
 					nk_layout_row_push( ctx, 1.0f );
 					nk_label( ctx, "Colliders to show:", NK_TEXT_ALIGN_LEFT | NK_TEXT_ALIGN_MIDDLE );
-					int newCollidersToShow;
-					newCollidersToShow = nk_propertyi( ctx, "Colliders", 0, numCollidersToShow, INT_MAX, 1, 1 );
+					int numCollidersToShow = (int)sb_Count( sbColliders );
+					int newCollidersToShow = nk_propertyi( ctx, "Colliders", 0, numCollidersToShow, INT_MAX, 1, 1 );
 					if( newCollidersToShow != numCollidersToShow ) {
 						// resize the colliders list
 						if( newCollidersToShow > numCollidersToShow ) {
@@ -734,16 +922,14 @@ void spriteAnimationEditor_IMGUIProcess( void )
 								newCollider.color = nk_color_cf( nk_rgb( 0, 0, 255 ) );
 
 								sb_Push( sbColliders, newCollider );
+								resetSaveCheckTime( );
 							}
 						} else {
-							if( sb_Count( sbColliders ) > 0 ) {
-								while( newCollidersToShow < (int)sb_Count( sbColliders ) ) {
-									sb_Pop( sbColliders );
-								}
+							while( ( sb_Count( sbColliders ) > 0 ) && ( newCollidersToShow < (int)sb_Count( sbColliders ) ) ) {
+								sb_Pop( sbColliders );
+								resetSaveCheckTime( );
 							}
 						}
-
-						numCollidersToShow = newCollidersToShow;
 					}
 					
 					// what color each of the collision bounds is
@@ -757,7 +943,8 @@ void spriteAnimationEditor_IMGUIProcess( void )
 
 						nk_layout_row_begin( ctx, NK_DYNAMIC, STANDARD_ROW_HEIGHT * 4.0f, 1 );
 						nk_layout_row_push( ctx, 1.0f );
-						nk_color_pick( ctx, &( sbColliders[i].color ), NK_RGB ); // TODO: make the picker bigger, or have it just set RGB instead of using the picker
+						// TODO: make the picker bigger, or have it just set RGB instead of using the picker
+						if( nk_color_pick( ctx, &( sbColliders[i].color ), NK_RGB ) ) resetSaveCheckTime( );
 
 						nk_style_pop_color( ctx );
 					}
@@ -773,8 +960,14 @@ void spriteAnimationEditor_IMGUIProcess( void )
 
 			nk_style_push_style_item( ctx, &ctx->style.window.fixed_background, nk_style_item_color( nk_rgba_cf( spriteBGColor ) ) );
 			if( nk_group_begin( ctx, "Canvas", groupFlags ) ) {
+
+				// this doesn't count the very edges, but that shouldn't cause issues
+				struct nk_rect c = ctx->current->layout->clip;
+				overDisplay = nk_input_is_mouse_hovering_rect( &ctx->input, c );
+
 				drawCurrentImage( nk_window_get_canvas( ctx ) );
 				drawCollisions( nk_window_get_canvas( ctx ) );
+				drawCenterCrossHair( nk_window_get_canvas( ctx ) );
 				nk_group_end( ctx );
 			}
 			nk_style_pop_style_item( ctx );
@@ -811,6 +1004,7 @@ void spriteAnimationEditor_IMGUIProcess( void )
 				if( selectedEvent != SIZE_MAX ) {
 					if( displayEventData( ctx, selectedEvent ) ) {
 						// update the display if there were any updates
+						//  NOTE: collision may display oddly if you're modifying the same collider multiple times in a single frame
 						reprocessFrames( );
 					}
 				}
@@ -923,4 +1117,56 @@ void spriteAnimationEditor_Tick( float dt )
 	if( playingAnimation ) {
 		sprAnim_ProcessAnim( &editorPlayingSprite, &editorEventHandler, dt );
 	}
+
+	if( saveCheckCountdown > 0.0f ) {
+		saveCheckCountdown -= dt;
+		if( saveCheckCountdown <= 0.0f ) {
+			saveAnimEditorConfig( );
+		}
+	}
+}
+
+void spriteAnimationEditor_ProcessEvents( SDL_Event* evt )
+{
+	//movingDrawnOffset = false;
+
+	// if we're hovering over the sprite display then process some inputs
+	if( overDisplay ) {
+		switch( evt->type ) {
+		case SDL_EVENT_MOUSE_WHEEL:
+			spriteScale = clamp( MIN_SCALE, MAX_SCALE, spriteScale + ( evt->wheel.y * SCALE_WHEEL_AMT ) );
+			break;
+		case SDL_EVENT_MOUSE_BUTTON_DOWN:
+			if( evt->button.button == SDL_BUTTON_RIGHT ) {
+				movingDrawnOffset = true;
+			}
+			break;
+		}
+	}
+
+	switch( evt->type ) {
+	case SDL_EVENT_MOUSE_BUTTON_UP:
+		if( evt->button.button == SDL_BUTTON_RIGHT ) {
+			movingDrawnOffset = false;
+		}
+		break;
+	}
+
+	if( movingDrawnOffset && ( evt->type == SDL_EVENT_MOUSE_MOTION ) ) {
+		drawnOffset.x += evt->motion.xrel * 1.5f;
+		drawnOffset.y += evt->motion.yrel * 1.5f;
+	}
+
+	// TODO: undo and redo
+	/*if( evt->type == SDL_EVENT_KEY_DOWN ) {
+		// ctrl-z
+		if( ( evt->key.key == SDLK_Z ) && ( evt->key.mod & SDL_KMOD_CTRL ) ) {
+			// undo
+		}
+
+		// ctrl-y
+		if( ( evt->key.key == SDLK_Y ) && ( evt->key.mod & SDL_KMOD_CTRL ) ) {
+			// redo
+		}
+	}//*/
 }

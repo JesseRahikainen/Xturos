@@ -313,7 +313,7 @@ static void loadImageJob( void* data )
 //  Returns -1 if there was an issue, 0 otherwise.
 void img_ThreadedLoad( const char* fileName, ShaderType shaderType, ImageID* outId, void (*onLoadDone)( ImageID ) )
 {
-	SDL_assert( fileName != NULL );
+	ASSERT( fileName != NULL );
 
 	// if we've already loaded this image don't load it again
 	if( findImageByStrID( fileName, outId ) ) {
@@ -645,7 +645,7 @@ void img_ForceTransparency( ImageID id, bool transparent )
 // Gets the size of the image, putting it into the out Vector2. Returns if it succeeds.
 bool img_GetSize( ImageID id, Vector2* out )
 {
-	SDL_assert( out != NULL );
+	ASSERT( out != NULL );
 
 	if( ( id >= MAX_IMAGES ) || ( !( images[id].flags & IMGFLAG_IN_USE ) ) ) {
 		return false;
@@ -828,7 +828,7 @@ ImageRenderInstruction img_CreateDefaultRenderInstruction( void )
 
 ImageRenderInstruction img_CreateRenderInstruction_Pos( int imgID, uint32_t camFlags, const Vector2* pos, int8_t depth )
 {
-	SDL_assert( pos != NULL );
+	ASSERT( pos != NULL );
 
 	ImageRenderInstruction ri;
 
@@ -851,7 +851,7 @@ ImageRenderInstruction img_CreateRenderInstruction_Pos( int imgID, uint32_t camF
 
 ImageRenderInstruction img_CreateRenderInstruction_PosRot( int imgID, uint32_t camFlags, const Vector2* pos, float rotRad, int8_t depth )
 {
-	SDL_assert( pos != NULL );
+	ASSERT( pos != NULL );
 
 	ImageRenderInstruction ri;
 
@@ -874,8 +874,8 @@ ImageRenderInstruction img_CreateRenderInstruction_PosRot( int imgID, uint32_t c
 
 ImageRenderInstruction img_CreateRenderInstruction_PosVScale( int imgID, uint32_t camFlags, const Vector2* pos, const Vector2* scale, int8_t depth )
 {
-	SDL_assert( pos != NULL );
-	SDL_assert( scale != NULL );
+	ASSERT( pos != NULL );
+	ASSERT( scale != NULL );
 
 	ImageRenderInstruction ri;
 
@@ -992,7 +992,7 @@ bool img_SetRenderInstructionBorders( ImageRenderInstruction* instruction, uint3
 
 void img_Render_Pos( ImageID imgID, uint32_t camFlags, int8_t depth, const Vector2* pos )
 {
-	SDL_assert( pos != NULL );
+	ASSERT( pos != NULL );
 
 	ImageRenderInstruction ri = img_CreateDefaultRenderInstruction( );
 
@@ -1007,8 +1007,8 @@ void img_Render_Pos( ImageID imgID, uint32_t camFlags, int8_t depth, const Vecto
 
 void img_Render_PosClr( ImageID imgID, uint32_t camFlags, int8_t depth, const Vector2* pos, const Color* clr )
 {
-	SDL_assert( pos != NULL );
-	SDL_assert( clr != NULL );
+	ASSERT( pos != NULL );
+	ASSERT( clr != NULL );
 
 	ImageRenderInstruction ri = img_CreateDefaultRenderInstruction( );
 
@@ -1024,7 +1024,7 @@ void img_Render_PosClr( ImageID imgID, uint32_t camFlags, int8_t depth, const Ve
 
 void img_Render_PosRot( ImageID imgID, uint32_t camFlags, int8_t depth, const Vector2* pos, float rotRad )
 {
-	SDL_assert( pos != NULL );
+	ASSERT( pos != NULL );
 
 	ImageRenderInstruction ri = img_CreateDefaultRenderInstruction( );
 
@@ -1039,8 +1039,8 @@ void img_Render_PosRot( ImageID imgID, uint32_t camFlags, int8_t depth, const Ve
 
 void img_Render_PosRotClr( ImageID imgID, uint32_t camFlags, int8_t depth, const Vector2* pos, float rotRad, const Color* clr )
 {
-	SDL_assert( pos != NULL );
-	SDL_assert( clr != NULL );
+	ASSERT( pos != NULL );
+	ASSERT( clr != NULL );
 
 	ImageRenderInstruction ri = img_CreateDefaultRenderInstruction( );
 
@@ -1054,11 +1054,27 @@ void img_Render_PosRotClr( ImageID imgID, uint32_t camFlags, int8_t depth, const
 	img_ImmediateRender( &ri );
 }
 
+void img_Render_PosScaleV( ImageID imgID, uint32_t camFlags, int8_t depth, const Vector2* pos, const Vector2* scale )
+{
+	ASSERT( pos != NULL );
+	ASSERT( scale != NULL );
+
+	ImageRenderInstruction ri = img_CreateDefaultRenderInstruction( );
+
+	ri.imgID = imgID;
+	ri.camFlags = camFlags;
+	ri.depth = depth;
+
+	mat3_CreateRenderTransform( pos, 0.0f, &VEC2_ZERO, scale, &( ri.mat ) );
+
+	img_ImmediateRender( &ri );
+}
+
 void img_Render_PosScaleVClr( ImageID imgID, uint32_t camFlags, int8_t depth, const Vector2* pos, const Vector2* scale, const Color* clr )
 {
-	SDL_assert( pos != NULL );
-	SDL_assert( clr != NULL );
-	SDL_assert( scale != NULL );
+	ASSERT( pos != NULL );
+	ASSERT( clr != NULL );
+	ASSERT( scale != NULL );
 
 	ImageRenderInstruction ri = img_CreateDefaultRenderInstruction( );
 
@@ -1074,9 +1090,9 @@ void img_Render_PosScaleVClr( ImageID imgID, uint32_t camFlags, int8_t depth, co
 
 void img_Render_PosSizeVClr( ImageID imgID, uint32_t camFlags, int8_t depth, const Vector2* pos, const Vector2* size, const Color* clr )
 {
-	SDL_assert( pos != NULL );
-	SDL_assert( clr != NULL );
-	SDL_assert( size != NULL );
+	ASSERT( pos != NULL );
+	ASSERT( clr != NULL );
+	ASSERT( size != NULL );
 
 	ImageRenderInstruction ri = img_CreateDefaultRenderInstruction( );
 
@@ -1095,8 +1111,8 @@ void img_Render_PosSizeVClr( ImageID imgID, uint32_t camFlags, int8_t depth, con
 
 void img_Render_PosRotScaleClr( ImageID imgID, uint32_t camFlags, int8_t depth, const Vector2* pos, float rotRad, float scale, const Color* clr )
 {
-	SDL_assert( pos != NULL );
-	SDL_assert( clr != NULL );
+	ASSERT( pos != NULL );
+	ASSERT( clr != NULL );
 
 	ImageRenderInstruction ri = img_CreateDefaultRenderInstruction( );
 

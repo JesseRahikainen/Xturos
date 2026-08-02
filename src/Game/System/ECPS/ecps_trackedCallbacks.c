@@ -65,10 +65,10 @@ void ecps_VerifyCallbackIDs( void )
 	{
 		if( trackedECPS ) {
 			if( hashMap_Exists( &idHashMap, trackedECPS->id ) ) {
-				SDL_assert( false && "Repeated tracked ECPS callback id" );
+				ASSERT_ALWAYS( "Repeated tracked ECPS callback id" );
 			}
 			if( trackedECPS->id == NULL ) {
-				SDL_assert( false && "NULL ECPS callback id" );
+				ASSERT_ALWAYS( "NULL ECPS callback id" );
 			}
 			hashMap_Set( &idHashMap, trackedECPS->id, 1 );
 		}
@@ -81,10 +81,10 @@ void ecps_VerifyCallbackIDs( void )
 	{
 		if( trackedTween ) {
 			if( hashMap_Exists( &idHashMap, trackedTween->id ) ) {
-				SDL_assert( false && "Repeated tracked tween callback id" );
+				ASSERT_ALWAYS( "Repeated tracked tween callback id" );
 			}
 			if( trackedTween->id == NULL ) {
-				SDL_assert( false && "NULL tween callback id" );
+				ASSERT_ALWAYS( "NULL tween callback id" );
 			}
 			hashMap_Set( &idHashMap, trackedTween->id, 1 );
 		}

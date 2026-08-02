@@ -146,7 +146,7 @@ void nk_xu_init( NuklearWrapper* xu, SDL_Window* win, bool useRelativeMousePos, 
 	progDef.geometryShader = -1;
 
 	size_t numLoaded = shaders_Load( shaderDefs, sizeof( shaderDefs ) / sizeof( shaderDefs[0] ), &progDef, &( xu->platform.prog ), 1 );
-	SDL_assert( numLoaded != 0 );
+	ASSERT( numLoaded != 0 );
 
 	GLsizei vertSize = sizeof( nk_xturos_vertex );
 	size_t vertPos = offsetof( nk_xturos_vertex, position );
@@ -435,6 +435,7 @@ void nk_xu_render( NuklearWrapper* xu )
 			offset += cmd->elem_count;
 		}
 		nk_clear( &( xu->ctx ) );
+		nk_buffer_clear( &( xu->cmds ) );
 	}
 
 	GL( glUseProgram( 0 ) );

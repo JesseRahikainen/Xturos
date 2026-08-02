@@ -85,7 +85,7 @@ void spr_CleanUp( void )
 	initialized = false;
 }
 
-EntityID spr_CreateSprite( int image, uint32_t camFlags, Vector2 pos, Vector2 scale, float rotRad, Color col, int8_t depth )
+EntityID spr_CreateSprite( ImageID image, uint32_t camFlags, Vector2 pos, Vector2 scale, float rotRad, Color col, int8_t depth )
 {
 	// we'll assume entities have every component type
 	GCTransformData tfData = gc_CreateTransformPosRotScale( pos, rotRad, scale );
@@ -112,8 +112,8 @@ void spr_DestroySprite( EntityID sprite )
 
 void spr_Update( EntityID sprite, const Vector2* newPos, const Vector2* newScale, float newRot )
 {
-	SDL_assert( newPos != NULL );
-	SDL_assert( newScale != NULL );
+	ASSERT( newPos != NULL );
+	ASSERT( newScale != NULL );
 
 	Entity entity;
 	if( !ecps_GetEntityByID( &spriteECPS, sprite, &entity ) ) {
@@ -127,9 +127,9 @@ void spr_Update( EntityID sprite, const Vector2* newPos, const Vector2* newScale
 	tf->futureState.scale = *newScale;
 }
 
-void spr_SwitchImage( EntityID sprite, int newImage )
+void spr_SwitchImage( EntityID sprite, ImageID newImage )
 {
-	SDL_assert( img_IsValidImage( newImage ) );
+	ASSERT( img_IsValidImage( newImage ) );
 	Entity entity;
 	if( !ecps_GetEntityByID( &spriteECPS, sprite, &entity ) ) {
 		return;
@@ -140,11 +140,11 @@ void spr_SwitchImage( EntityID sprite, int newImage )
 	spriteData->img = newImage;
 }
 
-int spr_GetImage( EntityID sprite )
+ImageID spr_GetImage( EntityID sprite )
 {
 	Entity entity;
 	if( !ecps_GetEntityByID( &spriteECPS, sprite, &entity ) ) {
-		return -1;
+		return INVALID_IMAGE_ID;
 	}
 
 	GCSpriteData* spriteData = NULL;
@@ -154,7 +154,7 @@ int spr_GetImage( EntityID sprite )
 
 void spr_UpdatePos( EntityID sprite, const Vector2* newPos )
 {
-	SDL_assert( newPos != NULL );
+	ASSERT( newPos != NULL );
 
 	Entity entity;
 	if( !ecps_GetEntityByID( &spriteECPS, sprite, &entity ) ) {
@@ -168,7 +168,7 @@ void spr_UpdatePos( EntityID sprite, const Vector2* newPos )
 
 void spr_UpdateColor( EntityID sprite, const Color* clr )
 {
-	SDL_assert( clr != NULL );
+	ASSERT( clr != NULL );
 
 	Entity entity;
 	if( !ecps_GetEntityByID( &spriteECPS, sprite, &entity ) ) {
@@ -182,7 +182,7 @@ void spr_UpdateColor( EntityID sprite, const Color* clr )
 
 void spr_UpdateScale( EntityID sprite, const Vector2* newScale )
 {
-	SDL_assert( newScale != NULL );
+	ASSERT( newScale != NULL );
 
 	Entity entity;
 	if( !ecps_GetEntityByID( &spriteECPS, sprite, &entity ) ) {
@@ -208,7 +208,7 @@ void spr_UpdateRot( EntityID sprite, float newRot )
 
 void spr_UpdatePos_Delta( EntityID sprite, const Vector2* posOffset )
 {
-	SDL_assert( posOffset != NULL );
+	ASSERT( posOffset != NULL );
 
 	Entity entity;
 	if( !ecps_GetEntityByID( &spriteECPS, sprite, &entity ) ) {
@@ -222,7 +222,7 @@ void spr_UpdatePos_Delta( EntityID sprite, const Vector2* posOffset )
 
 void spr_UpdateScale_Delta( EntityID sprite, const Vector2* scaleOffset )
 {
-	SDL_assert( scaleOffset != NULL );
+	ASSERT( scaleOffset != NULL );
 
 	Entity entity;
 	if( !ecps_GetEntityByID( &spriteECPS, sprite, &entity ) ) {
@@ -248,7 +248,7 @@ void spr_UpdateRot_Delta( EntityID sprite, float rotOffset )
 
 void spr_SnapPos( EntityID sprite, const Vector2* newPos )
 {
-	SDL_assert( newPos != NULL );
+	ASSERT( newPos != NULL );
 
 	Entity entity;
 	if( !ecps_GetEntityByID( &spriteECPS, sprite, &entity ) ) {
@@ -271,4 +271,31 @@ void spr_SnapCurrentPos( EntityID sprite )
 	GCTransformData* tf = NULL;
 	ecps_GetComponentFromEntity( &entity, transformCompID, &tf );
 	tf->currState.pos = tf->futureState.pos;
+}
+
+void spr_SnapScale( EntityID sprite, const Vector2* newScale )
+{
+	ASSERT( newScale != NULL );
+
+	Entity entity;
+	if( !ecps_GetEntityByID( &spriteECPS, sprite, &entity ) ) {
+		return;
+	}
+
+	GCTransformData* tf = NULL;
+	ecps_GetComponentFromEntity( &entity, transformCompID, &tf );
+	tf->currState.scale = *newScale;
+	tf->futureState.scale = *newScale;
+}
+
+void spr_SnapCurrentScale( EntityID sprite )
+{
+	Entity entity;
+	if( !ecps_GetEntityByID( &spriteECPS, sprite, &entity ) ) {
+		return;
+	}
+
+	GCTransformData* tf = NULL;
+	ecps_GetComponentFromEntity( &entity, transformCompID, &tf );
+	tf->currState.scale = tf->futureState.scale;
 }

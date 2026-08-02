@@ -516,7 +516,7 @@ bool collision_LineSegmentCollision( Vector2* l0p0, Vector2* l0p1, Vector2* l1p0
 		if( FLT_EQ( diffDirCross, 0.0f ) ) {
 			// collinear, see if they overlap
 			float rDotr = vec2_DotProduct( &l0m, &l0m );
-			SDL_assert( !FLT_EQ( rDotr, 0.0f ) );
+			ASSERT( !FLT_EQ( rDotr, 0.0f ) );
 			
 			float t0 = vec2_DotProduct( &diffl01p0, &l0m ) / rDotr;
 			float t1 = t0 + ( vec2_DotProduct( &l1m, &l0m ) / rDotr );
@@ -789,24 +789,24 @@ static bool BoxvLineSegment( Collider* primary, Collider* fixed, Vector2* outSep
 // define all the collider functions, the first should always be the responding object, the second the fixed object
 typedef bool(*CollisionCheck)( Collider* primary, Collider* fixed, Vector2* outSeparation );
 CollisionCheck collisionChecks[NUM_COLLIDER_TYPES][NUM_COLLIDER_TYPES] = {
-	{ AABBvAABB, AABBvCircle, AABBvHalfSpace, AABBvLineSegment, AABBvBox },
-	{ CirclevAABB, CirclevCircle, CirclevHalfSpace, CirclevLineSegment, CirclevBox },
-	{ HalfSpacevAABB, HalfSpacevCircle, invalidCollision, HalfSpacevLineSegment, HalfSpacevBox },
+	{ AABBvAABB,        AABBvCircle,        AABBvHalfSpace,        AABBvLineSegment,        AABBvBox },
+	{ CirclevAABB,      CirclevCircle,      CirclevHalfSpace,      CirclevLineSegment,      CirclevBox },
+	{ HalfSpacevAABB,   HalfSpacevCircle,   invalidCollision,      HalfSpacevLineSegment,   HalfSpacevBox },
 	{ LineSegmentvAABB, LineSegmentvCircle, LineSegmentvHalfSpace, LineSegmentvLineSegment, LineSegmentvBox },
-	{ BoxvAABB, BoxvCircle, BoxvHalfSpace, BoxvLineSegment, BoxvBox }
+	{ BoxvAABB,         BoxvCircle,         BoxvHalfSpace,         BoxvLineSegment,         BoxvBox }
 };
 
 // Finds the separation needed for c1 to move and not overlap c2.
 //  Returns 1 if there is any overlap and puts the separation into outSeparation.
 //  Returns 1 if there is no overlap.
-int collision_GetSeparation( Collider* c1, Collider* c2, Vector2* outSeparation )
+bool collision_GetSeparation( Collider* c1, Collider* c2, Vector2* outSeparation )
 {
 	if( ( c1 == NULL ) || ( c2 == NULL ) || ( outSeparation == NULL ) ) {
-		return 0;
+		return false;
 	}
 
 	if( ( c1->type == CT_DEACTIVATED ) || ( c2->type == CT_DEACTIVATED ) ) {
-		return 0;
+		return false;
 	}
 
 	return collisionChecks[c1->type][c2->type]( c1, c2, outSeparation );
@@ -868,8 +868,8 @@ void collision_DetectAll( ColliderCollection firstCollection, ColliderCollection
 	Vector2 separation = VEC2_ZERO;
 	Collider* firstCurrent;
 	Collider* secondCurrent;
-	char* firstData = (char*)firstCollection.firstCollider;
-	char* secondData = (char*)secondCollection.firstCollider;
+	uint8_t* firstData = (uint8_t*)firstCollection.firstCollider;
+	uint8_t* secondData = (uint8_t*)secondCollection.firstCollider;
 
 	// if there's no response then there's no reason to detect any collisions
 	if( ( firstData == NULL ) || ( secondData == NULL ) || ( response == NULL ) ) {
@@ -901,7 +901,7 @@ void collision_DetectAllInternal( ColliderCollection collection, CollisionRespon
 	Vector2 separation = VEC2_ZERO;
 	Collider* firstCurrent;
 	Collider* secondCurrent;
-	char* data = (char*)collection.firstCollider;
+	uint8_t* data = (uint8_t*)collection.firstCollider;
 
 	// if there's no response then there's no reason to detect any collisions
 	if( ( data == NULL ) || ( response == NULL ) ) {
@@ -927,9 +927,9 @@ void collision_DetectAllInternal( ColliderCollection collection, CollisionRespon
 	}
 }
 
-// Finds if the specified line segment hits anything in the list. Returns 1 if it did, 0 otherwise. Puts the
+// Finds if the specified line segment hits anything in the list. Returns if there is a collision. Puts the
 //  collision point into out, if out is NULL it'll exit once it detects any collision instead of finding the first.
-int collision_RayCast( Vector2 start, Vector2 end, ColliderCollection collection, Vector2* out)
+bool collision_RayCast( Vector2 start, Vector2 end, ColliderCollection collection, Vector2* out)
 {
 	int idx;
 	Collider* current;
@@ -938,7 +938,7 @@ int collision_RayCast( Vector2 start, Vector2 end, ColliderCollection collection
 	float t = 0.0f;
 	Vector2 collPt = VEC2_ZERO;
 	float currClosestT = 1.0f;
-	int ret = 0;
+	bool ret = false;
 
 	vec2_Subtract( &end, &start, &dir );
 
@@ -950,7 +950,7 @@ int collision_RayCast( Vector2 start, Vector2 end, ColliderCollection collection
 
 		if( rayCastChecks[current->type]( &start, &dir, current, &t, &collPt ) ) {
 			if( t <= currClosestT ) {
-				ret = 1;
+				ret = true;
 				currClosestT = t;
 				if( out == NULL ) {
 					return 1;

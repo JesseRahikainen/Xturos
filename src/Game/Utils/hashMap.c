@@ -35,7 +35,7 @@ static bool isPowerOfTwoU32( size_t val )
 // we're assuming denom is a power of two
 static size_t powerTwoModulus( size_t num, size_t denom )
 {
-	SDL_assert( isPowerOfTwoU32( denom ) );
+	ASSERT( isPowerOfTwoU32( denom ) );
 	return ( num & ( denom - 1 ) );
 }
 
@@ -144,7 +144,7 @@ static bool findIndex( HashMap* hashMap, const char* key, size_t* outIdx )
 // this is the biggie
 void hashMap_Set( HashMap* hashMap, const char* key, int value )
 {
-	SDL_assert( hashMap != NULL );
+	ASSERT( hashMap != NULL );
 
 	// find the ideal position
 	// from there scan forward until we find an empty spot
@@ -195,7 +195,7 @@ void hashMap_Set( HashMap* hashMap, const char* key, int value )
 // returns whether the find was a success
 bool hashMap_Find( HashMap* hashMap, const char* key, int* outValue )
 {
-	SDL_assert( hashMap != NULL );
+	ASSERT( hashMap != NULL );
 
 	size_t idx;
 	if( !findIndex( hashMap, key, &idx ) ) {
@@ -208,7 +208,7 @@ bool hashMap_Find( HashMap* hashMap, const char* key, int* outValue )
 
 bool hashMap_Exists( HashMap* hashMap, const char* key )
 {
-	SDL_assert( hashMap != NULL );
+	ASSERT( hashMap != NULL );
 	size_t idx;
 	return findIndex( hashMap, key, &idx );
 }
@@ -237,7 +237,7 @@ static void removeAtIdx( HashMap* hashMap, size_t idx )
 
 void hashMap_Remove( HashMap* hashMap, const char* key )
 {
-	SDL_assert( hashMap != NULL );
+	ASSERT( hashMap != NULL );
 
 	// first see if what wants to be removed exists
 	size_t idx;
@@ -250,7 +250,7 @@ void hashMap_Remove( HashMap* hashMap, const char* key )
 
 void hashMap_RemoveFirstByValue( HashMap* hashMap, int value )
 {
-	SDL_assert( hashMap != NULL );
+	ASSERT( hashMap != NULL );
 
 	// just do this the naive way until we run into performance issues
 	for( size_t i = 0; i < hashMap->capacity; ++i ) {
@@ -265,7 +265,7 @@ void hashMap_RemoveFirstByValue( HashMap* hashMap, int value )
 
 void hashMap_Clear( HashMap* hashMap )
 {
-	SDL_assert( hashMap != NULL );
+	ASSERT( hashMap != NULL );
 
 	// clear out keys
 	for( size_t i = 0; i < hashMap->capacity; ++i ) {
@@ -284,7 +284,7 @@ void hashMap_Clear( HashMap* hashMap )
 
 void hashMap_Report( HashMap* hashMap, size_t* capacity )
 {
-	SDL_assert( hashMap != NULL );
+	ASSERT( hashMap != NULL );
 
 	(*capacity) = hashMap->capacity;
 }

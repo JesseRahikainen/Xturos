@@ -8,17 +8,14 @@
 
 DualNumber dual( float r, float d )
 {
-	DualNumber dn;
-	dn.real = r;
-	dn.dual = d;
-	return dn;
+	return (DualNumber){ .real = r, .dual = d };
 }
 
 DualNumber* dual_Add( const DualNumber* lhs, const DualNumber* rhs, DualNumber* out )
 {
-	SDL_assert( lhs != NULL );
-	SDL_assert( rhs != NULL );
-	SDL_assert( out != NULL );
+	ASSERT( lhs != NULL );
+	ASSERT( rhs != NULL );
+	ASSERT( out != NULL );
 
 	out->real = lhs->real + rhs->real;
 	out->dual = lhs->dual + rhs->dual;
@@ -28,9 +25,9 @@ DualNumber* dual_Add( const DualNumber* lhs, const DualNumber* rhs, DualNumber* 
 
 DualNumber* dual_Subtract( const  DualNumber* lhs, const DualNumber* rhs, DualNumber* out )
 {
-	SDL_assert( lhs != NULL );
-	SDL_assert( rhs != NULL );
-	SDL_assert( out != NULL );
+	ASSERT( lhs != NULL );
+	ASSERT( rhs != NULL );
+	ASSERT( out != NULL );
 
 	out->real = lhs->real - rhs->real;
 	out->dual = lhs->dual - rhs->dual;
@@ -40,9 +37,9 @@ DualNumber* dual_Subtract( const  DualNumber* lhs, const DualNumber* rhs, DualNu
 
 DualNumber* dual_Multiply( const  DualNumber* lhs, const DualNumber* rhs, DualNumber* out )
 {
-	SDL_assert( lhs != NULL );
-	SDL_assert( rhs != NULL );
-	SDL_assert( out != NULL );
+	ASSERT( lhs != NULL );
+	ASSERT( rhs != NULL );
+	ASSERT( out != NULL );
 
 	float lr = lhs->real;
 	float rr = rhs->real;
@@ -57,9 +54,9 @@ DualNumber* dual_Multiply( const  DualNumber* lhs, const DualNumber* rhs, DualNu
 
 DualNumber* dual_Divide( const DualNumber* lhs, const DualNumber* rhs, DualNumber* out )
 {
-	SDL_assert( lhs != NULL );
-	SDL_assert( rhs != NULL );
-	SDL_assert( out != NULL );
+	ASSERT( lhs != NULL );
+	ASSERT( rhs != NULL );
+	ASSERT( out != NULL );
 
 	float lr = lhs->real;
 	float rr = rhs->real;
@@ -74,8 +71,8 @@ DualNumber* dual_Divide( const DualNumber* lhs, const DualNumber* rhs, DualNumbe
 
 DualNumber* dual_Negate( const DualNumber* in, DualNumber* out )
 {
-	SDL_assert( in != NULL );
-	SDL_assert( out != NULL );
+	ASSERT( in != NULL );
+	ASSERT( out != NULL );
 
 	out->real = -in->real;
 	out->dual = -in->dual;
@@ -86,8 +83,8 @@ DualNumber* dual_Negate( const DualNumber* in, DualNumber* out )
 // any differentiable function can be extended to dual numbers as f(a + be) = f(a) + b*f'(a)e
 DualNumber* dual_Sin( const DualNumber* in, DualNumber* out )
 {
-	SDL_assert( in != NULL );
-	SDL_assert( out != NULL );
+	ASSERT( in != NULL );
+	ASSERT( out != NULL );
 
 	float r = in->real;
 	float d = in->dual;
@@ -100,8 +97,8 @@ DualNumber* dual_Sin( const DualNumber* in, DualNumber* out )
 
 DualNumber* dual_Cos( const DualNumber* in, DualNumber* out )
 {
-	SDL_assert( in != NULL );
-	SDL_assert( out != NULL );
+	ASSERT( in != NULL );
+	ASSERT( out != NULL );
 
 	float r = in->real;
 	float d = in->dual;
@@ -114,8 +111,8 @@ DualNumber* dual_Cos( const DualNumber* in, DualNumber* out )
 
 DualNumber* dual_Tan( const DualNumber* in, DualNumber* out )
 {
-	SDL_assert( in != NULL );
-	SDL_assert( out != NULL );
+	ASSERT( in != NULL );
+	ASSERT( out != NULL );
 
 	float r = in->real;
 	float d = in->dual;
@@ -130,8 +127,8 @@ DualNumber* dual_Tan( const DualNumber* in, DualNumber* out )
 
 int dual_Compare( const DualNumber* lhs, const DualNumber* rhs )
 {
-	SDL_assert( lhs != NULL );
-	SDL_assert( rhs != NULL );
+	ASSERT( lhs != NULL );
+	ASSERT( rhs != NULL );
 
 	return ( FLT_LT( lhs->real, rhs->real ) ? -1 : ( FLT_GT( lhs->real, rhs->real ) ? 1 : 0 ) );
 }

@@ -2,6 +2,8 @@
 
 #include <SDL3/SDL.h>
 
+#include "Utils/helpers.h"
+
 #if SCRIPTING_ENABLED
 
 #include <stdarg.h>
@@ -788,10 +790,10 @@ static int errorFunction( lua_State* ls )
 #pragma warning( disable : 4702 )
 bool xLua_GetNextInt( lua_State* ls, int* p, int* out, int* errorOut, const char* name )
 {
-	SDL_assert( ls != NULL );
-	SDL_assert( p != NULL );
-	SDL_assert( out != NULL );
-	SDL_assert( errorOut != NULL );
+	ASSERT( ls != NULL );
+	ASSERT( p != NULL );
+	ASSERT( out != NULL );
+	ASSERT( errorOut != NULL );
 
 	if( !lua_isinteger( ls, *p ) ) {
 		// error
@@ -813,10 +815,10 @@ bool xLua_GetNextInt( lua_State* ls, int* p, int* out, int* errorOut, const char
 #pragma warning( disable : 4702 )
 bool xLua_GetNextString( lua_State* ls, int* p, const char** out, int* errorOut, const char* name )
 {
-	SDL_assert( ls != NULL );
-	SDL_assert( p != NULL );
-	SDL_assert( out != NULL );
-	SDL_assert( errorOut != NULL );
+	ASSERT( ls != NULL );
+	ASSERT( p != NULL );
+	ASSERT( out != NULL );
+	ASSERT( errorOut != NULL );
 
 	if( lua_isstring( ls, *p ) ) {
 		( *out ) = lua_tostring( ls, *p );
@@ -842,10 +844,10 @@ bool xLua_GetNextString( lua_State* ls, int* p, const char** out, int* errorOut,
 #pragma warning( disable : 4702 )
 bool xLua_GetNextFloat( lua_State* ls, int* p, float* out, int* errorOut, const char* name )
 {
-	SDL_assert( ls != NULL );
-	SDL_assert( p != NULL );
-	SDL_assert( out != NULL );
-	SDL_assert( errorOut != NULL );
+	ASSERT( ls != NULL );
+	ASSERT( p != NULL );
+	ASSERT( out != NULL );
+	ASSERT( errorOut != NULL );
 	if( !lua_isnumber( ls, *p ) ) {
 		// error
 		( *out ) = 0.0f;
@@ -866,10 +868,10 @@ bool xLua_GetNextFloat( lua_State* ls, int* p, float* out, int* errorOut, const 
 #pragma warning( disable : 4702 )
 bool xLua_GetNextBool( lua_State* ls, int* p, bool* out, int* errorOut, const char* name )
 {
-	SDL_assert( ls != NULL );
-	SDL_assert( p != NULL );
-	SDL_assert( out != NULL );
-	SDL_assert( errorOut != NULL );
+	ASSERT( ls != NULL );
+	ASSERT( p != NULL );
+	ASSERT( out != NULL );
+	ASSERT( errorOut != NULL );
 
 	if( !lua_isboolean( ls, *p ) ) {
 		// error
@@ -907,7 +909,7 @@ bool xLua_GetGlobalFunc( const char* funcName )
 
 void xLua_RegisterCFunction( const char* luaFuncName, lua_CFunction cFunc )
 {
-	SDL_assert( luaState != NULL );
+	ASSERT( luaState != NULL );
 	// todo: error handling
 	lua_register( luaState, luaFuncName, cFunc );
 }
@@ -1125,7 +1127,7 @@ static bool doesStartWith( const char* fullString, const char* possibleStart )
 
 bool xLua_LoadAndDoFile( const char* fileName )
 {
-	SDL_assert( luaState != NULL );
+	ASSERT( luaState != NULL );
 	
 	if( luaState == NULL ) {
 		llog( LOG_ERROR, "Lua not initialized." );
@@ -1341,7 +1343,7 @@ bool xLua_LoadAndDoFile( const char* fileName )
 
 bool xLua_CallLuaFunction( const char* funcName, const char* paramDef, ... )
 {
-	SDL_assert( false && "Scripting not enabled." );
+	ASSERT_ALWAYS( "Scripting not enabled." );
 	return false;
 }
 

@@ -66,7 +66,7 @@ static void* sb__GrowData( void* p, size_t increment, size_t itemSize, const cha
 		np[0] = newCount;
 		return np+2;
 	} else {
-		SDL_assert( "Error allocating stretchy array." );
+		ASSERT( "Error allocating stretchy array." );
 		return p;
 	}
 }

@@ -58,7 +58,7 @@ static double generateNoteHertz( double a4Hertz, int8_t octave, OctaveNote note,
 
 static void setup( Tuning* tuning, double a4Hertz, const double cents[NUM_NOTES] )
 {
-	SDL_assert( tuning != NULL );
+	ASSERT_AND_IF_NOT( tuning != NULL ) return;
 
 	for( int8_t octave = MIN_OCTAVE; octave <= MAX_OCTAVE; ++octave ) {
 		for( OctaveNote note = NOTE_C; note < NUM_NOTES; ++note ) {
@@ -79,7 +79,7 @@ void tuning_Setup( Tuning* tuning, double a4Hertz, TuningIntervals tuningInterva
 		cents = PYTHAGOREAN_TUNING;
 		break;
 	default:
-		SDL_assert( false && "Invalid tuningInterval." );
+		ASSERT( false && "Invalid tuningInterval." );
 		cents = EQUAL_TEMPERAMENT;
 		break;
 	}
@@ -88,7 +88,7 @@ void tuning_Setup( Tuning* tuning, double a4Hertz, TuningIntervals tuningInterva
 
 void tuning_SetupStandard( Tuning* tuning )
 {
-	SDL_assert( tuning != NULL );
+	ASSERT( tuning != NULL );
 	tuning_Setup( tuning, 440.0, TUNING_EQUAL_TEMPERAMENT );
 }
 
@@ -103,9 +103,9 @@ double tuning_GetNoteHertz( const Note* note, const Tuning* tuning )
 
 float tuning_NotePitchAdjustment( const Note* referenceNote, const Note* note, const Tuning* tuning )
 {
-	SDL_assert( referenceNote != NULL );
-	SDL_assert( note != NULL );
-	SDL_assert( tuning != NULL );
+	ASSERT( referenceNote != NULL );
+	ASSERT( note != NULL );
+	ASSERT( tuning != NULL );
 
 	double referenceHertz = tuning_GetNoteHertz( referenceNote, tuning );
 	double hertz = tuning_GetNoteHertz( note, tuning );
@@ -114,8 +114,8 @@ float tuning_NotePitchAdjustment( const Note* referenceNote, const Note* note, c
 
 float tuning_HertzPitchAdjustment( double referenceNoteHertz, const Note* note, const Tuning* tuning )
 {
-	SDL_assert( note != NULL );
-	SDL_assert( tuning != NULL );
+	ASSERT( note != NULL );
+	ASSERT( tuning != NULL );
 
 	double hertz = tuning_GetNoteHertz( note, tuning );
 	return (float)( hertz / referenceNoteHertz );
@@ -158,8 +158,8 @@ Note music_AddStepsToNote( const Note* baseNote, int steps )
 
 static void getScaleSteps( Scales scale, const int** outScaleSteps, size_t* outScaleStepsSize )
 {
-	SDL_assert( outScaleSteps != NULL );
-	SDL_assert( outScaleStepsSize != NULL );
+	ASSERT_AND_IF_NOT( outScaleSteps != NULL ) return;
+	ASSERT_AND_IF_NOT( outScaleStepsSize != NULL ) return;
 
 	switch( scale ) {
 	case SCALE_CHROMATIC: ( *outScaleSteps ) = CHROMATIC_SCALE; ( *outScaleStepsSize ) = ARRAY_SIZE( CHROMATIC_SCALE ); break;
@@ -184,7 +184,7 @@ static void getScaleSteps( Scales scale, const int** outScaleSteps, size_t* outS
 	case SCALE_OCTATONIC_TWO: ( *outScaleSteps ) = OCTATONIC_TWO_SCALE; ( *outScaleStepsSize ) = ARRAY_SIZE( OCTATONIC_TWO_SCALE ); break;
 	case SCALE_WHOLE_TONE: ( *outScaleSteps ) = WHOLE_TONE_SCALE; ( *outScaleStepsSize ) = ARRAY_SIZE( WHOLE_TONE_SCALE ); break;
 	default:
-		SDL_assert( false && "Not a valid scale. Using chromatic." );
+		ASSERT( false && "Not a valid scale. Using chromatic." );
 		( *outScaleSteps ) = CHROMATIC_SCALE;
 		( *outScaleStepsSize ) = ARRAY_SIZE( CHROMATIC_SCALE );
 		break;
@@ -231,8 +231,8 @@ const static int AUGMENTED_SEVENTH_CHORD_STEPS[] = { 0, 4, 8, 11 };
 
 static void getChordSteps( ChordType type, const int** outChordSteps, size_t* outChordStepsSize )
 {
-	SDL_assert( outChordSteps != NULL );
-	SDL_assert( outChordStepsSize != NULL );
+	ASSERT_AND_IF_NOT( outChordSteps != NULL ) return;
+	ASSERT_AND_IF_NOT( outChordStepsSize != NULL ) return;
 
 	switch( type ) {
 	case CHORD_TYPE_MAJOR_TRIAD: (*outChordSteps) = MAJOR_TRIAD_CHORD_STEPS; ( *outChordStepsSize ) = ARRAY_SIZE( MAJOR_TRIAD_CHORD_STEPS ); break;
@@ -248,7 +248,7 @@ static void getChordSteps( ChordType type, const int** outChordSteps, size_t* ou
 	case CHORD_TYPE_AUGMENTED_MAJOR_SEVENTH: ( *outChordSteps ) = AUGMENTED_MAJOR_SEVENTH_CHORD_STEPS; ( *outChordStepsSize ) = ARRAY_SIZE( AUGMENTED_MAJOR_SEVENTH_CHORD_STEPS ); break;
 	case CHORD_TYPE_AUGMENTED_SEVENTH: ( *outChordSteps ) = AUGMENTED_SEVENTH_CHORD_STEPS; ( *outChordStepsSize ) = ARRAY_SIZE( AUGMENTED_SEVENTH_CHORD_STEPS ); break;
 	default:
-		SDL_assert( false && "Not a valid chord. Using major triad." );
+		ASSERT( false && "Not a valid chord. Using major triad." );
 		( *outChordSteps ) = MAJOR_TRIAD_CHORD_STEPS;
 		( *outChordStepsSize ) = ARRAY_SIZE( MAJOR_TRIAD_CHORD_STEPS );
 		break;

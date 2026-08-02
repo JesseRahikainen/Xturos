@@ -23,7 +23,7 @@ typedef struct {
 
 void buffer_Init( ByteBuffer* buffer )
 {
-	SDL_assert( buffer != NULL );
+	ASSERT( buffer != NULL );
 
 	buffer->data = NULL;
 	buffer->size = 0;
@@ -32,7 +32,7 @@ void buffer_Init( ByteBuffer* buffer )
 
 void buffer_Set( ByteBuffer* buffer, void* data, size_t size )
 {
-	SDL_assert( buffer != NULL );
+	ASSERT( buffer != NULL );
 
 	buffer->data = data;
 	buffer->size = size;
@@ -41,7 +41,7 @@ void buffer_Set( ByteBuffer* buffer, void* data, size_t size )
 
 void buffer_Clean( ByteBuffer* buffer )
 {
-	SDL_assert( buffer != NULL );
+	ASSERT( buffer != NULL );
 
 	free( buffer->data );
 	buffer->data = NULL;
@@ -51,8 +51,8 @@ void buffer_Clean( ByteBuffer* buffer )
 
 void buffer_Seek( ByteBuffer* buffer, size_t pos )
 {
-	SDL_assert( buffer != NULL );
-	SDL_assert( pos < buffer->size );
+	ASSERT( buffer != NULL );
+	ASSERT( pos < buffer->size );
 
 	buffer->pos = pos;
 }
@@ -124,9 +124,9 @@ static SerializedComponentInfo* generateSerializedComponentInfo( const ECPS* ecp
 	// loop through each component in the ecps and create the serialized component infos for them
 	ComponentType* sbTypes = ecps->componentTypes.sbTypes;
 
-	SDL_assert( sb_Count( sbTypes ) <= (size_t)UINT32_MAX );
+	ASSERT( sb_Count( sbTypes ) <= (size_t)UINT32_MAX );
 	SerializedComponentInfo testInfo;
-	SDL_assert( ARRAY_SIZE( sbTypes[0].name ) == ARRAY_SIZE( testInfo.externalID ) );
+	ASSERT( ARRAY_SIZE( sbTypes[0].name ) == ARRAY_SIZE( testInfo.externalID ) );
 
 	for( size_t i = 0; i < sb_Count( sbTypes ); ++i ) {
 		SerializedComponentInfo newInfo;

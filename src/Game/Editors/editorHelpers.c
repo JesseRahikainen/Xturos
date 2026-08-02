@@ -27,7 +27,7 @@ static void convertDirDividers( char** sbFilePath )
 #else
 static void convertDirDividers( char** sbFilePath )
 {
-	SDL_assert( false && "Not supported on this platform." );
+	ASSERT( false && "Not supported on this platform." );
 }
 #endif
 
@@ -39,8 +39,8 @@ static void toLocalPath( char** sbFilePath )
 {
 	getWorkingDirectory( );
 
-	SDL_assert( sbRootDirectory != NULL );
-	SDL_assert( sbFilePath != NULL );
+	ASSERT( sbRootDirectory != NULL );
+	ASSERT( sbFilePath != NULL );
 
 	// create local copy of root directory
 	size_t rootPathSize = sb_Count( sbRootDirectory );
@@ -109,7 +109,7 @@ static void toLocalPath( char** sbFilePath )
 // returns the image id loaded
 int editor_loadImageFile( const char* filePath )
 {
-	SDL_assert( filePath != NULL );
+	ASSERT( filePath != NULL );
 	llog( LOG_DEBUG, "Loading image file %s...", filePath );
 
 	int loadedImage = img_Load( filePath, ST_DEFAULT );
@@ -122,7 +122,7 @@ int editor_loadImageFile( const char* filePath )
 // returns a stretchybuffer of image ids, you'll need to manage the memory here
 int editor_loadSpriteSheetFile( const char* filePath, ImageID** outImgSB )
 {
-	SDL_assert( filePath != NULL );
+	ASSERT( filePath != NULL );
 	llog( LOG_DEBUG, "Loading sprite sheet file %s...", filePath );
 
 	int packageID = -1;
@@ -133,72 +133,6 @@ int editor_loadSpriteSheetFile( const char* filePath, ImageID** outImgSB )
 }
 
 #ifdef WIN32
-/*static void handleDialogError( DWORD errorCode )
-{
-	if(errorCode == 0) {
-		// cancelled out, no error to show
-		return;
-	}
-
-	// from here: https://learn.microsoft.com/en-us/windows/win32/api/commdlg/nf-commdlg-commdlgextendederror
-	const char* errorText = "Unknown error.";
-	switch(errorCode) {
-		// general dialog errors
-	case CDERR_DIALOGFAILURE:
-		errorText = "Common dialog box call failed.";
-		break;
-	case CDERR_FINDRESFAILURE:
-		errorText = "Unable to find a specified resource.";
-		break;
-	case CDERR_INITIALIZATION:
-		errorText = "Failed during initialization.";
-		break;
-	case CDERR_LOADRESFAILURE:
-		errorText = "Failed to load a specified resource.";
-		break;
-	case CDERR_LOADSTRFAILURE:
-		errorText = "Failed to load a specified string.";
-		break;
-	case CDERR_LOCKRESFAILURE:
-		errorText = "Failed to lock a specified resource.";
-		break;
-	case CDERR_MEMALLOCFAILURE:
-		errorText = "Unable to allocate memory for internal structures.";
-		break;
-	case CDERR_MEMLOCKFAILURE:
-		errorText = "Unable to lock the memory associated with a handle.";
-		break;
-	case CDERR_NOHINSTANCE:
-		errorText = "ENABLETEMPLATE flag was set but no corresponding instance handle was provided.";
-		break;
-	case CDERR_NOHOOK:
-		errorText = "ENABLEHOOK flag was set but no pointer to a corresponding hook procedure.";
-		break;
-	case CDERR_NOTEMPLATE:
-		errorText = "ENABLETEMPALTE flag was set but no corresponding template was provided.";
-		break;
-	case CDERR_REGISTERMSGFAIL:
-		errorText = "RegisterWindowMessage returned an error when it was called.";
-		break;
-	case CDERR_STRUCTSIZE:
-		errorText = "lStructSize was invalid.";
-		break;
-		// load and save dialog specific errors
-	case FNERR_BUFFERTOOSMALL:
-		// buffer was too small, could increase the size if needed here, first two bytes of the file string will have the needed size
-		errorText = "String buffer was too short for file name.";
-		break;
-	case FNERR_INVALIDFILENAME:
-		errorText = "File name invalid.";
-		break;
-	case FNERR_SUBCLASSFAILURE:
-		errorText = "Subclass failure, insufficient memory.";
-		break;
-	}
-
-	hub_CreateDialog( "Error", errorText, DT_ERROR, 1, "OK", NULL );
-}//*/
-
 // adapt to the SDL file dialogs where they return a list of things
 void sdlFileDialogCallback( void* userData, const char* const* fileList, int filter )
 {
@@ -272,17 +206,17 @@ static void getWorkingDirectory( void )
 // returns a stretchy buffer, be sure to release it
 void editor_chooseLoadFileLocation( const char* fileTypeDesc, const char* fileExtension, bool multiSelect, void ( *callback )( const char* ) )
 {
-	SDL_assert( false && "Not supported on this platform." );
+	ASSERT( false && "Not supported on this platform." );
 }
 
 // returns a stretchy buffer, be sure to release it
 void editor_chooseSaveFileLocation( const char* fileTypeDesc, const char* fileExtension, void ( *callback )( const char* ) )
 {
-	SDL_assert( false && "Not supported on this platform." );
+	ASSERT( false && "Not supported on this platform." );
 }
 
 static void getWorkingDirectory( void )
 {
-	SDL_assert( false && "Not supported on this platform." );
+	ASSERT( false && "Not supported on this platform." );
 }
 #endif

@@ -7,9 +7,9 @@
 
 Matrix4* mat4_Multiply( const Matrix4* m, const Matrix4* n, Matrix4* out )
 {
-	SDL_assert( m != NULL );
-	SDL_assert( n != NULL );
-	SDL_assert( out != NULL );
+	ASSERT( m != NULL );
+	ASSERT( n != NULL );
+	ASSERT( out != NULL );
 
 	// used a temp to make sure if m or n are out we don't override in the middle of doing stuff
 	Matrix4 temp;
@@ -41,7 +41,7 @@ Matrix4* mat4_Multiply( const Matrix4* m, const Matrix4* n, Matrix4* out )
 
 Matrix4* mat4_CreateXRotation( float angleRad, Matrix4* out )
 {
-	SDL_assert( out != NULL );
+	ASSERT( out != NULL );
 
 	float sine = (float)sin( angleRad );
 	float cosine = (float)cos( angleRad );
@@ -57,7 +57,7 @@ Matrix4* mat4_CreateXRotation( float angleRad, Matrix4* out )
 
 Matrix4* mat4_CreateYRotation( float angleRad, Matrix4* out )
 {
-	SDL_assert( out != NULL );
+	ASSERT( out != NULL );
 
 	float sine = (float)sin( angleRad );
 	float cosine = (float)cos( angleRad );
@@ -73,7 +73,7 @@ Matrix4* mat4_CreateYRotation( float angleRad, Matrix4* out )
 
 Matrix4* mat4_CreateZRotation( float angleRad, Matrix4* out )
 {
-	SDL_assert( out != NULL );
+	ASSERT( out != NULL );
 
 	float sine = (float)sin( angleRad );
 	float cosine = (float)cos( angleRad );
@@ -89,7 +89,7 @@ Matrix4* mat4_CreateZRotation( float angleRad, Matrix4* out )
 
 Matrix4* mat4_CreateTranslation( float x, float y, float z, Matrix4* out )
 {
-	SDL_assert( out != NULL );
+	ASSERT( out != NULL );
 
 	memcpy( out, &IDENTITY_MATRIX, sizeof( Matrix4 ) );
 	out->m[12] = x;
@@ -101,15 +101,15 @@ Matrix4* mat4_CreateTranslation( float x, float y, float z, Matrix4* out )
 
 Matrix4* mat4_CreateTranslation_v( const Vector3* v, Matrix4* out )
 {
-	SDL_assert( v != NULL );
-	SDL_assert( out != NULL );
+	ASSERT( v != NULL );
+	ASSERT( out != NULL );
 
 	return mat4_CreateTranslation( v->v[0], v->v[1], v->v[2], out );
 }
 
 Matrix4* mat4_CreateScale( float x, float y, float z, Matrix4* out )
 {
-	SDL_assert( out != NULL );
+	ASSERT( out != NULL );
 
 	memcpy( out, &IDENTITY_MATRIX, sizeof( Matrix4 ) );
 	out->m[0] = x;
@@ -121,15 +121,15 @@ Matrix4* mat4_CreateScale( float x, float y, float z, Matrix4* out )
 
 Matrix4* mat4_CreateScale_v( const Vector3* v, Matrix4* out )
 {
-	SDL_assert( v != NULL );
-	SDL_assert( out != NULL );
+	ASSERT( v != NULL );
+	ASSERT( out != NULL );
 
 	return mat4_CreateScale( v->v[0], v->v[1], v->v[2], out );
 }
 
 Matrix4* mat4_Scale( Matrix4* m, float x, float y, float z )
 {
-	SDL_assert( m != NULL );
+	ASSERT( m != NULL );
 
 	Matrix4 scale, original;
 
@@ -146,15 +146,15 @@ Matrix4* mat4_Scale( Matrix4* m, float x, float y, float z )
 
 Matrix4* mat4_Scale_v( Matrix4* m, Vector3* v )
 {
-	SDL_assert( m != NULL );
-	SDL_assert( v != NULL );
+	ASSERT( m != NULL );
+	ASSERT( v != NULL );
 
 	return mat4_Scale( m, v->v[0], v->v[1], v->v[2] );
 }
 
 Matrix4* mat4_Translate( Matrix4* m, float x, float y, float z )
 {
-	SDL_assert( m != NULL );
+	ASSERT( m != NULL );
 
 	Matrix4 translation, original;
 	
@@ -171,8 +171,8 @@ Matrix4* mat4_Translate( Matrix4* m, float x, float y, float z )
 
 Matrix4* mat4_Translate_v( Matrix4* m, Vector3* v )
 {
-	SDL_assert( m != NULL );
-	SDL_assert( v != NULL );
+	ASSERT( m != NULL );
+	ASSERT( v != NULL );
 
 	return mat4_Translate( m, v->v[0], v->v[1], v->v[2] );
 }
@@ -180,7 +180,7 @@ Matrix4* mat4_Translate_v( Matrix4* m, Vector3* v )
 // The projection formulas are taken from 3-D Computer Graphics: A Mathematical Introduction with OpenGL pg 55
 Matrix4* mat4_CreateOrthographicProjection( float left, float right, float top, float bottom, float near, float far, Matrix4* out )
 {
-	SDL_assert( out != NULL );
+	ASSERT( out != NULL );
 
 	memcpy( out, &IDENTITY_MATRIX, sizeof( Matrix4 ) );
 
@@ -202,7 +202,7 @@ Matrix4* mat4_CreateOrthographicProjection( float left, float right, float top, 
 //  based on the OpenGL.org gluPerspective man page
 Matrix4* mat4_CreatePerspectiveProjection( float fovDeg, float aspectRatio, float near, float far, Matrix4* out )
 {
-	SDL_assert( out != NULL );
+	ASSERT( out != NULL );
 
 	memset( out, 0, sizeof( Matrix4 ) );
 
@@ -219,7 +219,7 @@ Matrix4* mat4_CreatePerspectiveProjection( float fovDeg, float aspectRatio, floa
 
 Matrix4* mat4_LookAtView( const Vector3* eyePos, const Vector3* lookPos, const Vector3* up, Matrix4* out )
 {
-	SDL_assert( out != NULL );
+	ASSERT( out != NULL );
 
 	Vector3 u, f, s;
 
@@ -257,7 +257,7 @@ Matrix4* mat4_LookAtView( const Vector3* eyePos, const Vector3* lookPos, const V
 
 Matrix4* mat4_FPSView( const Vector3* eyePos, float yaw, float pitch, Matrix4* out )
 {
-	SDL_assert( out != NULL );
+	ASSERT( out != NULL );
 
 	while( yaw > 360.0f ) yaw -= 360.0f;
 	while( yaw <= 0.0f ) yaw += 360.0f;
@@ -308,10 +308,10 @@ Matrix4* mat4_FPSView( const Vector3* eyePos, float yaw, float pitch, Matrix4* o
 
 Vector3* mat4_TransformVec3Dir( const Matrix4* m, const Vector3* v, Vector3* out )
 {
-	SDL_assert( m != NULL );
-	SDL_assert( v != NULL );
-	SDL_assert( out != NULL );
-	SDL_assert( v != out );
+	ASSERT( m != NULL );
+	ASSERT( v != NULL );
+	ASSERT( out != NULL );
+	ASSERT( v != out );
 
 	out->v[0] = ( m->m[0] * v->v[0] ) + ( m->m[4] * v->v[1] ) + (  m->m[8] * v->v[2] );
 	out->v[1] = ( m->m[1] * v->v[0] ) + ( m->m[5] * v->v[1] ) + (  m->m[9] * v->v[2] );
@@ -322,10 +322,10 @@ Vector3* mat4_TransformVec3Dir( const Matrix4* m, const Vector3* v, Vector3* out
 
 Vector3* mat4_TransformVec3Pos( const Matrix4* m, const Vector3* v, Vector3* out )
 {
-	SDL_assert( m != NULL );
-	SDL_assert( v != NULL );
-	SDL_assert( out != NULL );
-	SDL_assert( v != out );
+	ASSERT( m != NULL );
+	ASSERT( v != NULL );
+	ASSERT( out != NULL );
+	ASSERT( v != out );
 
 	out->v[0] = ( m->m[0] * v->v[0] ) + ( m->m[4] * v->v[1] ) + (  m->m[8] * v->v[2] ) + m->m[12];
 	out->v[1] = ( m->m[1] * v->v[0] ) + ( m->m[5] * v->v[1] ) + (  m->m[9] * v->v[2] ) + m->m[13];
@@ -336,8 +336,8 @@ Vector3* mat4_TransformVec3Pos( const Matrix4* m, const Vector3* v, Vector3* out
 
 Vector3* mat4_TransformVec3Pos_InPlace( const Matrix4* m, Vector3* v )
 {
-	SDL_assert( m != NULL );
-	SDL_assert( v != NULL );
+	ASSERT( m != NULL );
+	ASSERT( v != NULL );
 
 	Vector3 temp;
 	memcpy( &temp, v, sizeof( Vector3 ) );
@@ -352,10 +352,10 @@ Vector3* mat4_TransformVec3Pos_InPlace( const Matrix4* m, Vector3* v )
 // TODO: Mark it so we know v and out can't be the same
 Vector2* mat4_TransformVec2Pos( const Matrix4* m, const Vector2* v, Vector2* out )
 {
-	SDL_assert( m != NULL );
-	SDL_assert( v != NULL );
-	SDL_assert( out != NULL );
-	SDL_assert( v != out );
+	ASSERT( m != NULL );
+	ASSERT( v != NULL );
+	ASSERT( out != NULL );
+	ASSERT( v != out );
 
 	out->v[0] = ( m->m[0] * v->v[0] ) + ( m->m[4] * v->v[1] ) + m->m[12];
 	out->v[1] = ( m->m[1] * v->v[0] ) + ( m->m[5] * v->v[1] ) + m->m[13];
@@ -365,8 +365,8 @@ Vector2* mat4_TransformVec2Pos( const Matrix4* m, const Vector2* v, Vector2* out
 
 Vector2* mat4_TransformVec2Pos_InPlace( const Matrix4* m, Vector2* v )
 {
-	SDL_assert( m != NULL );
-	SDL_assert( v != NULL );
+	ASSERT( m != NULL );
+	ASSERT( v != NULL );
 
 	Vector2 temp;
 	memcpy( &temp, v, sizeof( Vector2 ) );
@@ -379,8 +379,8 @@ Vector2* mat4_TransformVec2Pos_InPlace( const Matrix4* m, Vector2* v )
 
 bool mat4_Invert( const Matrix4* m, Matrix4* out )
 {
-	SDL_assert( m != NULL );
-	SDL_assert( out != NULL );
+	ASSERT( m != NULL );
+	ASSERT( out != NULL );
 
 	Matrix4 inv;
 	float det;
@@ -529,8 +529,8 @@ bool mat4_Invert( const Matrix4* m, Matrix4* out )
 
 int mat4_Compare( Matrix4* m, Matrix4* n )
 {
-	SDL_assert( m != NULL );
-	SDL_assert( n != NULL );
+	ASSERT( m != NULL );
+	ASSERT( n != NULL );
 
 	for( int i = 0; i < 16; ++i ) {
 		if( fabsf( m->m[i] - n->m[i] ) > 0.0001f ) {
@@ -544,7 +544,7 @@ int mat4_Compare( Matrix4* m, Matrix4* n )
 // For debugging.
 void mat4_Dump( Matrix4* m, const char* extra )
 {
-	SDL_assert( m != NULL );
+	ASSERT( m != NULL );
 
 	if( extra != NULL ) {
 		llog( LOG_DEBUG,  "%s", extra );

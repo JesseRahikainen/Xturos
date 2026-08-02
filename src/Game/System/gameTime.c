@@ -19,7 +19,7 @@ float gt_GetRenderTimeDelta( void )
 
 void gt_SetRenderNormalizedTime( float t )
 {
-	SDL_assert( t >= 0.0f && t <= 1.0f );
+	ASSERT( t >= 0.0f && t <= 1.0f );
 	renderNormalizedTime = clamp01( t );
 }
 

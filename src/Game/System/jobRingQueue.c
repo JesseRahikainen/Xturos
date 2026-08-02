@@ -4,11 +4,12 @@
 #include <string.h>
 
 #include "memory.h"
+#include "Utils/helpers.h"
 
 int jrq_Init( JobRingQueue* queue, size_t size )
 {
-	SDL_assert( queue != NULL );
-	SDL_assert( size > 0 );
+	ASSERT( queue != NULL );
+	ASSERT( size > 0 );
 
 	queue->size = size;
 	queue->ringBuffer = mem_Allocate( sizeof( queue->ringBuffer[0] ) * size );
@@ -25,7 +26,7 @@ int jrq_Init( JobRingQueue* queue, size_t size )
 
 void jrq_CleanUp( JobRingQueue* queue )
 {
-	SDL_assert( queue != NULL );
+	ASSERT( queue != NULL );
 
 	mem_Release( queue->ringBuffer );
 }

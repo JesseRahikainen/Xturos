@@ -106,7 +106,7 @@ void* cfg_OpenFile( const char* fileName )
 // Saves out the file.
 bool cfg_SaveFile( void* cfgFile )
 {
-	SDL_assert( cfgFile != NULL );
+	ASSERT( cfgFile != NULL );
 	bool success = true;
 
 	CFGFile* file = (CFGFile*)cfgFile;
@@ -152,7 +152,7 @@ bool cfg_SaveFile( void* cfgFile )
 // Closes the file and cleans up after it. Should always be called.
 void cfg_CloseFile( void* cfgFile )
 {
-	SDL_assert( cfgFile != NULL );
+	ASSERT( cfgFile != NULL );
 	CFGFile* data = (CFGFile*)cfgFile;
 	if( ( data == NULL ) || ( data->sbAttributes == NULL  ) ) {
 		return;
@@ -233,7 +233,7 @@ static bool addNewAttribute( CFGFile* data, const char* attrName, const char* va
 
 int cfg_GetInt( void* cfgFile, const char* attrName, int defaultVal )
 {
-	SDL_assert( cfgFile != NULL );
+	ASSERT( cfgFile != NULL );
 
 	CFGFile* data = (CFGFile*)cfgFile;
 	int idx = AttributeIndex( data, attrName );
@@ -266,7 +266,7 @@ bool cfg_SetInt( void* cfgFile, const char* attrName, int val )
 
 float cfg_GetFloat( void* cfgFile, const char* attrName, float defaultVal )
 {
-	SDL_assert( cfgFile != NULL );
+	ASSERT( cfgFile != NULL );
 
 	CFGFile* data = (CFGFile*)cfgFile;
 	int idx = AttributeIndex( data, attrName );

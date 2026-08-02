@@ -49,7 +49,7 @@ static int checkBoxSystem;
 
 static void draw( void )
 {
-	SDL_assert( false && "Need to move this over to the ECPS." );
+	ASSERT( false && "Need to move this over to the ECPS." );
 #if 0
 	for( int i = 0; i < MAX_CHECK_BOXES; ++i ) {
 		if( !checkBoxes[i].inUse ) {
@@ -82,7 +82,7 @@ static void draw( void )
 
 static void process( void )
 {
-	SDL_assert( false && "Need to move this over to the ECPS." );
+	ASSERT( false && "Need to move this over to the ECPS." );
 #if 0
 	int i;
 	Vector3 mousePos;
@@ -140,7 +140,7 @@ static void process( void )
 
 static void processEvents( SDL_Event* sdlEvent )
 {
-	SDL_assert( false && "Need to move this over to the ECPS." );
+	ASSERT( false && "Need to move this over to the ECPS." );
 #if 0
 	if( ( sdlEvent->type == SDL_MOUSEBUTTONDOWN ) && ( sdlEvent->button.button == SDL_BUTTON_LEFT ) ) {
 		mouseDown = 1;
@@ -153,7 +153,7 @@ static void processEvents( SDL_Event* sdlEvent )
 // Call this before trying to use any check boxes.
 void chkBox_Init( )
 {
-	SDL_assert( false && "Need to move this over to the ECPS." );
+	ASSERT( false && "Need to move this over to the ECPS." );
 #if 0
 	memset( checkBoxes, 0, sizeof( checkBoxes ) );
 	mouseDown = 0;
@@ -166,7 +166,7 @@ void chkBox_Init( )
 
 void chkBox_CleanUp( )
 {
-	SDL_assert( false && "Need to move this over to the ECPS." );
+	ASSERT( false && "Need to move this over to the ECPS." );
 #if 0
 	chkBox_DestroyAll( );
 	sys_UnRegister( checkBoxSystem );
@@ -178,7 +178,7 @@ void chkBox_CleanUp( )
 int chkBox_Create( Vector2 position, Vector2 size, const char* text, int fontID, int normalImg, int checkMarkImg,
 	unsigned int camFlags, char depth, CheckBoxResponse response )
 {
-	SDL_assert( false && "Need to move this over to the ECPS." );
+	ASSERT( false && "Need to move this over to the ECPS." );
 #if 0
 	int newIdx = 0;
 	while( ( newIdx < MAX_CHECK_BOXES ) && ( checkBoxes[newIdx].inUse == 1 ) ) {
@@ -223,7 +223,7 @@ int chkBox_Create( Vector2 position, Vector2 size, const char* text, int fontID,
 
 void chkBox_Destroy( int idx )
 {
-	SDL_assert( false && "Need to move this over to the ECPS." );
+	ASSERT( false && "Need to move this over to the ECPS." );
 #if 0
 	if( ( idx < 0 ) || ( idx >= MAX_CHECK_BOXES ) ) {
 		return;
@@ -234,7 +234,7 @@ void chkBox_Destroy( int idx )
 
 void chkBox_DestroyAll( void )
 {
-	SDL_assert( false && "Need to move this over to the ECPS." );
+	ASSERT( false && "Need to move this over to the ECPS." );
 #if 0
 	memset( checkBoxes, 0, sizeof( checkBoxes ) );
 #endif
@@ -242,7 +242,7 @@ void chkBox_DestroyAll( void )
 
 bool chkBox_IsChecked( int id )
 {
-	SDL_assert( false && "Need to move this over to the ECPS." );
+	ASSERT( false && "Need to move this over to the ECPS." );
 #if 0
 	if( ( id < 0 ) || ( id >= MAX_CHECK_BOXES ) ) {
 		return -1;
@@ -259,7 +259,7 @@ bool chkBox_IsChecked( int id )
 
 void chkBox_SetChecked( int id, bool val, bool respond )
 {
-	SDL_assert( false && "Need to move this over to the ECPS." );
+	ASSERT( false && "Need to move this over to the ECPS." );
 #if 0
 	if( ( id < 0 ) || ( id >= MAX_CHECK_BOXES ) ) return;
 	if( !checkBoxes[id].inUse ) return;

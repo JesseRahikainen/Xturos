@@ -142,14 +142,14 @@ static void testPointerResponseScreen_Enter( void )
 
 	// make sure the number of buttons is correct
 	ecps_RunCustomProcess( &defaultECPS, countButtonsStart, countButtons, NULL, 1, gcGroupIDCompID );
-	SDL_assert( buttonCount == 4 );
+	ASSERT( buttonCount == 4 );
 
 	// destroy all buttons
 	gp_DeleteAllOfGroup( &defaultECPS, 1 );
 
 	// make sure the number of buttons is correct
 	ecps_RunCustomProcess( &defaultECPS, countButtonsStart, countButtons, NULL, 1, gcGroupIDCompID );
-	SDL_assert( buttonCount == 0 );
+	ASSERT( buttonCount == 0 );
 
 	// try saving out and loading in
 	ecps_SaveSerializedECPS( "test.pkg", &serializedECPS );
@@ -171,7 +171,7 @@ static void testPointerResponseScreen_Enter( void )
 
 	// make sure the number of buttons is correct
 	ecps_RunCustomProcess( &defaultECPS, countButtonsStart, countButtons, NULL, 1, gcGroupIDCompID );
-	SDL_assert( buttonCount == 8 );//*/
+	ASSERT( buttonCount == 8 );//*/
 }
 
 static void testPointerResponseScreen_Exit( void )

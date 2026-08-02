@@ -10,9 +10,9 @@
 
 Matrix3* mat3_Multiply( const Matrix3* m, const Matrix3* n, Matrix3* out )
 {
-	SDL_assert( m != NULL );
-	SDL_assert( n != NULL );
-	SDL_assert( out != NULL );
+	ASSERT( m != NULL );
+	ASSERT( n != NULL );
+	ASSERT( out != NULL );
 	
 	// temporary storage in case out is m or n
 	Matrix3 temp;
@@ -36,10 +36,10 @@ Matrix3* mat3_Multiply( const Matrix3* m, const Matrix3* n, Matrix3* out )
 
 Vector3* mat3_TransformVec3Dir( const Matrix3* m, const Vector3* v, Vector3* out )
 {
-	SDL_assert( m != NULL );
-	SDL_assert( v != NULL );
-	SDL_assert( out != NULL );
-	SDL_assert( v != out );
+	ASSERT( m != NULL );
+	ASSERT( v != NULL );
+	ASSERT( out != NULL );
+	ASSERT( v != out );
 
 	out->v[0] = ( m->m[0] * v->v[0] ) + ( m->m[3] * v->v[1] ) + ( m->m[6] * v->v[2] );
 	out->v[1] = ( m->m[1] * v->v[0] ) + ( m->m[4] * v->v[1] ) + ( m->m[7] * v->v[2] );
@@ -50,9 +50,9 @@ Vector3* mat3_TransformVec3Dir( const Matrix3* m, const Vector3* v, Vector3* out
 
 void mat3_SetColumn( Matrix3* m, int column, const Vector3* col )
 {
-	SDL_assert( m != NULL );
-	SDL_assert( col != NULL );
-	SDL_assert( ( column >= 0 ) && ( column < 3 ) );
+	ASSERT( m != NULL );
+	ASSERT( col != NULL );
+	ASSERT( ( column >= 0 ) && ( column < 3 ) );
 
 	column *= 3;
 	m->m[column+0] = col->v[0];
@@ -63,9 +63,9 @@ void mat3_SetColumn( Matrix3* m, int column, const Vector3* col )
 // sets the top two entries of the column to the passed in vector
 void mat3_SetColumn2( Matrix3* m, int column, const Vector2* col )
 {
-	SDL_assert( m != NULL );
-	SDL_assert( col != NULL );
-	SDL_assert( ( column >= 0 ) && ( column < 3 ) );
+	ASSERT( m != NULL );
+	ASSERT( col != NULL );
+	ASSERT( ( column >= 0 ) && ( column < 3 ) );
 
 	column *= 3;
 	m->m[column + 0] = col->v[0];
@@ -74,9 +74,9 @@ void mat3_SetColumn2( Matrix3* m, int column, const Vector2* col )
 
 Vector3* mat3_GetColumn( const Matrix3* m, int column, Vector3* out )
 {
-	SDL_assert( m != NULL );
-	SDL_assert( out != NULL );
-	SDL_assert( ( column >= 0 ) && ( column < 3 ) );
+	ASSERT( m != NULL );
+	ASSERT( out != NULL );
+	ASSERT( ( column >= 0 ) && ( column < 3 ) );
 
 	column *= 3;
 	out->v[0] = m->m[column+0];
@@ -88,9 +88,9 @@ Vector3* mat3_GetColumn( const Matrix3* m, int column, Vector3* out )
 
 Vector2* mat3_GetColumn_2( const Matrix3* m, int column, Vector2* out )
 {
-	SDL_assert( m != NULL );
-	SDL_assert( out != NULL );
-	SDL_assert( ( column >= 0 ) && ( column < 3 ) );
+	ASSERT( m != NULL );
+	ASSERT( out != NULL );
+	ASSERT( ( column >= 0 ) && ( column < 3 ) );
 
 	column *= 3;
 	out->v[0] = m->m[column+0];
@@ -101,8 +101,8 @@ Vector2* mat3_GetColumn_2( const Matrix3* m, int column, Vector2* out )
 
 Vector2* mat3_GetPosition( const Matrix3* m, Vector2* out )
 {
-	SDL_assert( m != NULL );
-	SDL_assert( out != NULL );
+	ASSERT( m != NULL );
+	ASSERT( out != NULL );
 
 	out->x = m->m[6] / m->m[8];
 	out->y = m->m[7] / m->m[8];
@@ -112,8 +112,8 @@ Vector2* mat3_GetPosition( const Matrix3* m, Vector2* out )
 
 void mat3_SetPosition( Matrix3* m, const Vector2* pos )
 {
-	SDL_assert( m != NULL );
-	SDL_assert( pos != NULL );
+	ASSERT( m != NULL );
+	ASSERT( pos != NULL );
 
 	m->m[6] = pos->x;
 	m->m[7] = pos->y;
@@ -121,7 +121,7 @@ void mat3_SetPosition( Matrix3* m, const Vector2* pos )
 
 Matrix3* mat3_CreateTranslation( float fwd, float side, Matrix3* out )
 {
-	SDL_assert( out != NULL );
+	ASSERT( out != NULL );
 
 	memcpy( out, &IDENTITY_MATRIX_3, sizeof( Matrix3 ) );
 	out->m[6] = fwd;
@@ -132,7 +132,7 @@ Matrix3* mat3_CreateTranslation( float fwd, float side, Matrix3* out )
 
 Matrix3* mat3_CreateScale( float scale, Matrix3* out )
 {
-	SDL_assert( out != NULL );
+	ASSERT( out != NULL );
 
 	memcpy( out, &IDENTITY_MATRIX_3, sizeof( Matrix3 ) );
 	out->m[0] = scale;
@@ -143,8 +143,8 @@ Matrix3* mat3_CreateScale( float scale, Matrix3* out )
 
 Matrix3* mat3_CreateScaleV( const Vector2* scale, Matrix3* out )
 {
-	SDL_assert( scale != NULL );
-	SDL_assert( out != NULL );
+	ASSERT( scale != NULL );
+	ASSERT( out != NULL );
 
 	memcpy( out, &IDENTITY_MATRIX_3, sizeof( Matrix3 ) );
 	out->m[0] = scale->x;
@@ -155,9 +155,9 @@ Matrix3* mat3_CreateScaleV( const Vector2* scale, Matrix3* out )
 
 Vector2* mat3_TransformVec2Dir( const Matrix3* m, const Vector2* v, Vector2* out )
 {
-	SDL_assert( m != NULL );
-	SDL_assert( v != NULL );
-	SDL_assert( out != NULL );
+	ASSERT( m != NULL );
+	ASSERT( v != NULL );
+	ASSERT( out != NULL );
 
 	out->v[0] = ( m->m[0] * v->v[0] ) + ( m->m[3] * v->v[1] );
 	out->v[1] = ( m->m[1] * v->v[0] ) + ( m->m[4] * v->v[1] );
@@ -167,10 +167,10 @@ Vector2* mat3_TransformVec2Dir( const Matrix3* m, const Vector2* v, Vector2* out
 
 Vector2* mat3_TransformVec2Pos( const Matrix3* m, const Vector2* v, Vector2* out )
 {
-	SDL_assert( m != NULL );
-	SDL_assert( v != NULL );
-	SDL_assert( out != NULL );
-	SDL_assert( out != v );
+	ASSERT( m != NULL );
+	ASSERT( v != NULL );
+	ASSERT( out != NULL );
+	ASSERT( out != v );
 
 	out->v[0] = ( m->m[0] * v->v[0] ) + ( m->m[3] * v->v[1] ) + m->m[6];
 	out->v[1] = ( m->m[1] * v->v[0] ) + ( m->m[4] * v->v[1] ) + m->m[7];
@@ -180,8 +180,8 @@ Vector2* mat3_TransformVec2Pos( const Matrix3* m, const Vector2* v, Vector2* out
 
 Vector2* mat3_TransformVec2Pos_InPlace( const Matrix3* m, Vector2* v )
 {
-	SDL_assert( m != NULL );
-	SDL_assert( v != NULL );
+	ASSERT( m != NULL );
+	ASSERT( v != NULL );
 
 	Vector2 temp;
 	memcpy( &temp, v, sizeof( Vector2 ) );
@@ -194,7 +194,7 @@ Vector2* mat3_TransformVec2Pos_InPlace( const Matrix3* m, Vector2* v )
 
 Matrix3* mat3_SetRotation( float rotDeg, Matrix3* out )
 {
-	SDL_assert( out != NULL );
+	ASSERT( out != NULL );
 
 	float sinRot = SDL_sinf( DEG_TO_RAD( rotDeg ) );
 	float cosRot = SDL_cosf( DEG_TO_RAD( rotDeg ) );
@@ -216,7 +216,7 @@ Matrix3* mat3_SetRotation( float rotDeg, Matrix3* out )
 
 float mat3_Determinant( const Matrix3* m )
 {
-	SDL_assert( m != NULL );
+	ASSERT( m != NULL );
 	float det = ( m->m[0] * ( ( m->m[4] * m->m[8] ) - ( m->m[7] * m->m[5] ) ) ) -
 		( m->m[3] * ( ( m->m[1] * m->m[8] ) - ( m->m[7] * m->m[2] ) ) ) -
 		( m->m[6] * ( ( m->m[1] * m->m[5] ) - ( m->m[4] * m->m[2] ) ) );
@@ -225,11 +225,11 @@ float mat3_Determinant( const Matrix3* m )
 
 void mat3_TransformDecompose( const Matrix3* m, Vector2* outPos, float* outRotRad, Vector2* outScale )
 {
-	SDL_assert( m != NULL );
-	SDL_assert( outPos != NULL );
-	SDL_assert( outRotRad != NULL );
-	SDL_assert( outScale != NULL );
-	SDL_assert( m->m[2] == 0.0f && m->m[5] == 0.0f && m->m[8] == 1.0f ); // is affine
+	ASSERT( m != NULL );
+	ASSERT( outPos != NULL );
+	ASSERT( outRotRad != NULL );
+	ASSERT( outScale != NULL );
+	ASSERT( m->m[2] == 0.0f && m->m[5] == 0.0f && m->m[8] == 1.0f ); // is affine
 
 	// this doesn't handle skew
 	// given a 3x3 2d affine transform matrix
@@ -252,8 +252,8 @@ void mat3_TransformDecompose( const Matrix3* m, Vector2* outPos, float* outRotRa
 
 bool mat3_Inverse( const Matrix3* m, Matrix3* out )
 {
-	SDL_assert( m != NULL );
-	SDL_assert( out != NULL );
+	ASSERT( m != NULL );
+	ASSERT( out != NULL );
 
 	float det = mat3_Determinant( m );
 
@@ -307,9 +307,9 @@ bool mat3_Serialize( Serializer* s, const char* name, Matrix3* mat )
 
 Matrix3* mat3_CreateTransform( const Vector2* pos, float rotRad, const Vector2* scale, Matrix3* out )
 {
-	SDL_assert( out != NULL );
-	SDL_assert( pos != NULL );
-	SDL_assert( scale != NULL );
+	ASSERT( out != NULL );
+	ASSERT( pos != NULL );
+	ASSERT( scale != NULL );
 
 	// rotation/scale
 	float sinRot = SDL_sinf( rotRad );
@@ -333,10 +333,10 @@ Matrix3* mat3_CreateTransform( const Vector2* pos, float rotRad, const Vector2* 
 
 Matrix3* mat3_CreateRenderTransform( const Vector2* pos, float rotRad, const Vector2* offset, const Vector2* scale, Matrix3* out )
 {
-	SDL_assert( out != NULL );
-	SDL_assert( pos != NULL );
-	SDL_assert( offset != NULL );
-	SDL_assert( scale != NULL );
+	ASSERT( out != NULL );
+	ASSERT( pos != NULL );
+	ASSERT( offset != NULL );
+	ASSERT( scale != NULL );
 
 	// this is the fully multiplied out multiplication of the position, scale, and rotation
 	// pos * rot * offset * scale
@@ -361,7 +361,7 @@ Matrix3* mat3_CreateRenderTransform( const Vector2* pos, float rotRad, const Vec
 // For debugging.
 void mat3_Dump( Matrix3* m, const char* extra )
 {
-	SDL_assert( m != NULL );
+	ASSERT( m != NULL );
 
 	if( extra != NULL ) {
 		llog( LOG_DEBUG, "%s", extra );

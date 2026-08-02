@@ -547,7 +547,7 @@ void txt_ThreadedLoadFont( const char* fileName, float pixelHeight, int* outFont
 
 void txt_UnloadFont( int fontID )
 {
-	SDL_assert( fontID >= 0 );
+	ASSERT( fontID >= 0 );
 
 	sb_Release( fonts[fontID].glyphsBuffer );
 	fonts[fontID].glyphsBuffer = NULL;
@@ -674,7 +674,7 @@ void positionStringStartY( const uint8_t* str, int fontID, VertTextAlignment ali
 
 void txt_CalculateStringRenderSize( const char* utf8Str, int fontID, float desiredPixelSize, Vector2* outSize )
 {
-	SDL_assert( outSize != NULL );
+	ASSERT( outSize != NULL );
 
 	(*outSize) = VEC2_ZERO;
 
@@ -690,7 +690,7 @@ void txt_CalculateStringRenderSize( const char* utf8Str, int fontID, float desir
 void txt_DisplayString( const uint8_t* utf8Str, Vector2 pos, Color clr, HorizTextAlignment hAlign, VertTextAlignment vAlign,
 	int fontID, int camFlags, int8_t depth, float desiredPixelSize )
 {
-	SDL_assert( utf8Str != NULL );
+	ASSERT( utf8Str != NULL );
 
 	if( fontID < 0 ) return;
 
@@ -769,7 +769,7 @@ bool txt_DisplayTextArea( const uint8_t* utf8Str, const Matrix3* centerTf, Vecto
 	HorizTextAlignment hAlign, VertTextAlignment vAlign, int fontID, size_t storeCharPos, Vector2* outCharPos,
 	uint32_t camFlags, int8_t depth, float desiredPixelSize )
 {
-	SDL_assert( utf8Str != NULL );
+	ASSERT( utf8Str != NULL );
 
 	if( fontID < 0 ) {
 		return false;
@@ -1078,7 +1078,7 @@ clean_up:
 //  Returns -1 if it fails, returns the font id to use otherwise.
 static int loadSDFFont( const char* fileName )
 {
-	SDL_assert( textInitialized );
+	ASSERT( textInitialized );
 	if( !textInitialized ) {
 		return 0;
 	}
@@ -1254,7 +1254,7 @@ clean_up:
 //  can be loaded later much quicker.
 int txt_CreateSDFFont( const char* fileName )
 {
-	SDL_assert( textInitialized );
+	ASSERT( textInitialized );
 	if( !textInitialized ) {
 		return 0;
 	}
@@ -1485,13 +1485,13 @@ clean_up:
 
 int txt_GetBaseSize( int fontID )
 {
-	SDL_assert( fontID >= 0 );
+	ASSERT( fontID >= 0 );
 	return fonts[fontID].baseSize;
 }
 
 int txt_GetCharacterImage( int fontID, int c )
 {
-	SDL_assert( fontID >= 0 );
+	ASSERT( fontID >= 0 );
 	Glyph* glyph = getCodepointGlyph( fontID, c );
 	return glyph->imageID;
 }

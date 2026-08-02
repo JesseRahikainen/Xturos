@@ -488,7 +488,7 @@ int handleIOSEvents( void* userData, SDL_Event* event )
 }
 
 // input processing
-void processEvents( int windowsEventsOnly )
+void processEvents( bool windowsEventsOnly )
 {
 	SDL_Event e;
 	nk_input_begin( &( editorIMGUI.ctx ) );
@@ -687,7 +687,7 @@ void mainLoop( void* v )
 #endif
 		{
 			if( !focused ) {
-				processEvents( 1 );
+				processEvents( true );
 				return;
 			}
 
@@ -699,7 +699,7 @@ void mainLoop( void* v )
 
 			// process input
 			if( skipEvents <= 0 ) {
-				processEvents( 0 );
+				processEvents( false );
 			} else {
 				--skipEvents;
 			}

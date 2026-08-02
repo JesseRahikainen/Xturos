@@ -15,7 +15,7 @@ static const char* ioType = "sprite animation";
 // Helpers for creating events to add to the animation.
 AnimEvent createEvent_SetImage( uint32_t frame, const char* frameName, const Vector2* offset )
 {
-	SDL_assert( offset != NULL );
+	ASSERT( offset != NULL );
 
 	AnimEvent evt;
 
@@ -73,8 +73,8 @@ AnimEvent createEvent_DeactivateCollider( uint32_t frame, int colliderID )
 
 void processAnimationEvent_SetImage( AnimEvent_SwitchImage* evt, AnimEventHandler* handler )
 {
-	SDL_assert( handler != NULL );
-	SDL_assert( evt != NULL );
+	ASSERT( handler != NULL );
+	ASSERT( evt != NULL );
 
 	if( handler->handleSwitchImg != NULL ) {
 		handler->handleSwitchImg( handler->data, evt->imgID, &(evt->offset) );
@@ -83,8 +83,8 @@ void processAnimationEvent_SetImage( AnimEvent_SwitchImage* evt, AnimEventHandle
 
 void processAnimationEvent_SetAABCollider( AnimEvent_SetAABCollider* evt, AnimEventHandler* handler )
 {
-	SDL_assert( handler != NULL );
-	SDL_assert( evt != NULL );
+	ASSERT( handler != NULL );
+	ASSERT( evt != NULL );
 
 	if( handler->handleSetAABCollider != NULL ) {
 		handler->handleSetAABCollider( handler->data, evt->colliderID, evt->centerX, evt->centerY, evt->width, evt->height );
@@ -93,8 +93,8 @@ void processAnimationEvent_SetAABCollider( AnimEvent_SetAABCollider* evt, AnimEv
 
 void processAnimationEvent_SetCircleCollider( AnimEvent_SetCircleCollider* evt, AnimEventHandler* handler )
 {
-	SDL_assert( handler != NULL );
-	SDL_assert( evt != NULL );
+	ASSERT( handler != NULL );
+	ASSERT( evt != NULL );
 
 	if( handler->handleSetCircleCollider != NULL ) {
 		handler->handleSetCircleCollider( handler->data, evt->colliderID, evt->centerX, evt->centerY, evt->radius );
@@ -103,8 +103,8 @@ void processAnimationEvent_SetCircleCollider( AnimEvent_SetCircleCollider* evt, 
 
 void processAnimationEvent_SetDeactivedCollider( AnimEvent_DeactivateCollider* evt, AnimEventHandler* handler )
 {
-	SDL_assert( handler != NULL );
-	SDL_assert( evt != NULL );
+	ASSERT( handler != NULL );
+	ASSERT( evt != NULL );
 
 	if( handler->handleDeactivateCollider != NULL ) {
 		handler->handleDeactivateCollider( handler->data, evt->colliderID );
@@ -113,7 +113,7 @@ void processAnimationEvent_SetDeactivedCollider( AnimEvent_DeactivateCollider* e
 
 void processAnimationEvent( AnimEvent* evt, AnimEventHandler* handler )
 {
-	SDL_assert( evt != NULL );
+	ASSERT( evt != NULL );
 
 	if( handler == NULL ) return;
 
@@ -160,6 +160,8 @@ bool sprAnim_LoadAssociatedData( SpriteAnimation* anim )
 	for( size_t i = 0; i < sb_Count( anim->sbEvents ); ++i ) {
 		if( anim->sbEvents[i].base.type == AET_SWITCH_IMAGE ) {
 			anim->sbEvents[i].switchImg.imgID = img_GetExistingByStrID( anim->sbEvents[i].switchImg.frameName );
+			mem_Release( anim->sbEvents[i].switchImg.frameName );
+			anim->sbEvents[i].switchImg.frameName = NULL;
 		}
 	}
 
@@ -220,7 +222,7 @@ void sprAnim_RemoveEventsPostFrame( SpriteAnimation* anim, size_t* watchedEvent,
 
 void sprAnim_ProcessFrames( SpriteAnimation* anim, AnimEventHandler* handler, uint32_t frame )
 {
-	SDL_assert( anim != NULL );
+	ASSERT( anim != NULL );
 
 	for( size_t i = 0; i < sb_Count( anim->sbEvents ); ++i ) {
 		if( anim->sbEvents[i].base.frame == frame ) {
@@ -240,7 +242,7 @@ void sprAnim_StartAnim( PlayingSpriteAnimation* playingAnim, SpriteAnimation* an
 
 void sprAnim_ProcessAnim( PlayingSpriteAnimation* playingAnim, AnimEventHandler* handler, float dt )
 {
-	SDL_assert( playingAnim != NULL );
+	ASSERT( playingAnim != NULL );
 
 	if( playingAnim->animation == NULL ) {
 		return;
@@ -342,6 +344,8 @@ bool sprAnim_Save( const char* fileName, SpriteAnimation* anim )
 
 	ASSERT_AND_IF_NOT( fileName != NULL ) return false;
 	ASSERT_AND_IF_NOT( anim != NULL ) return false;
+	ASSERT_AND_IF_NOT( anim->spriteSheetFile != NULL ) return false;
+	ASSERT_AND_IF_NOT( SDL_strlen( anim->spriteSheetFile ) > 0 ) return false;
 
 	cmp_ctx_t cmp;
 	SDL_IOStream* ioStream = openRWopsCMPFile( fileName, "wb", &cmp );
@@ -365,7 +369,8 @@ bool sprAnim_Save( const char* fileName, SpriteAnimation* anim )
 		SERIALIZE_ENUM( &s, ioType, "eventType", anim->sbEvents[i].base.type, AnimEventTypes, goto clean_up );
 		switch( anim->sbEvents[i].base.type ) {
 		case AET_SWITCH_IMAGE: {
-			SERIALIZE_CHECK( s.imageID( &s, "imgID", &( anim->sbEvents[i].switchImg.imgID ) ), ioType, "image id", goto clean_up );
+			const char* imgID = img_GetImgStringID( anim->sbEvents[i].switchImg.imgID );
+			SERIALIZE_CHECK( s.cString( &s, "frameName", &imgID ), ioType, "frame name", goto clean_up );
 			SERIALIZE_CHECK( vec2_Serialize( &s, "imgOffset", &( anim->sbEvents[i].switchImg.offset )), ioType, "switch image offset", goto clean_up );
 		} break;
 		case AET_SET_AAB_COLLIDER:
@@ -437,7 +442,7 @@ bool sprAnim_Load( const char* fileName, SpriteAnimation* anim )
 		SERIALIZE_ENUM( &s, ioType, "eventType", newEvent.base.type, AnimEventTypes, goto clean_up );
 		switch( newEvent.base.type ) {
 		case AET_SWITCH_IMAGE: {
-			SERIALIZE_CHECK( s.imageID( &s, "imgID", &( newEvent.switchImg.imgID ) ), ioType, "image id", goto clean_up );
+			SERIALIZE_CHECK( s.cString( &s, "frameName", &( newEvent.switchImg.frameName ) ), ioType, "frame name", goto clean_up );
 			SERIALIZE_CHECK( vec2_Serialize( &s, "imgOffset", &( newEvent.switchImg.offset ) ), ioType, "switch image offset", goto clean_up );
 		} break;
 		case AET_SET_AAB_COLLIDER:

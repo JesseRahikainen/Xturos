@@ -14,7 +14,7 @@ void world_SetSize( int width, int height )
 
 void world_GetSize( Vector2* outVec )
 {
-	SDL_assert( outVec != NULL );
+	ASSERT( outVec != NULL );
 
 	outVec->x = (float)worldWidth;
 	outVec->y = (float)worldHeight;

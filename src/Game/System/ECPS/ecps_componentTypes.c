@@ -16,7 +16,7 @@ uint32_t sharedComponent_ID;
 // TODO: Why is this here when we're doing the same things in entityComponentProcessSystem.c?
 ComponentID ecps_ct_AddType( ComponentTypeCollection* ctc, const char* name, uint32_t version, size_t size, size_t align, CleanUpComponent cleanUp, VerifyComponent verify )
 {
-	SDL_assert( sb_Count( ctc->sbTypes ) < MAX_NUM_COMPONENT_TYPES );
+	ASSERT( sb_Count( ctc->sbTypes ) < MAX_NUM_COMPONENT_TYPES );
 
 	ComponentType newType;
 
@@ -49,7 +49,7 @@ void ecps_ct_Init( ComponentTypeCollection* ctc )
 // helper function to create bit flag sets
 void ecps_ct_CreateBitFlagsVA( ComponentBitFlags* outFlags, int numComponents, va_list list )
 {
-	SDL_assert( outFlags != NULL );
+	ASSERT( outFlags != NULL );
 
 	memset( outFlags, 0, sizeof( ComponentBitFlags ) );
 	for( int i = 0; i < numComponents; ++i ) {
