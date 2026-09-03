@@ -31,10 +31,10 @@ typedef void (*DefaultECPSFunc)( ECPS* );
 
 void registerDefaultECPSComponentCallback( DefaultECPSFunc func );
 // creates a function that is called before main() that will add this function to the list of default ECPS component functions
-#define ADD_DEFAULT_ECPS_COMPONENT_CALLBACK(fn) INITIALIZER( register_fn##ComponentFunction_ ) { registerDefaultECPSComponentCallback( fn ); }
+#define ADD_DEFAULT_ECPS_COMPONENT_CALLBACK(fn) INITIALIZER( register_##fn##ComponentFunction_ ) { registerDefaultECPSComponentCallback( fn ); }
 
 void registerDefaultECPSProcessCallback( DefaultECPSFunc func );
 // creates a function that is called before main() that will add this function to the list of default ECPS process functions
-#define ADD_DEFAULT_ECPS_PROCESS_CALLBACK(fn) INITIALIZER( register_fn##ProcessFunction_ ) { registerDefaultECPSProcessCallback( fn ); }
+#define ADD_DEFAULT_ECPS_PROCESS_CALLBACK(fn) INITIALIZER( register_##fn##ProcessFunction_ ) { registerDefaultECPSProcessCallback( fn ); }
 
 #endif
