@@ -151,7 +151,7 @@ static void handleEvent( SDL_Event* evt )
 static void runAllProcesses( PriortizedProcessList* list )
 {
 	for( size_t i = 0; i < sb_Count( list->sbList ); ++i ) {
-		ecps_RunProcess( &defaultECPS, list->sbList[i].process );
+		ecps_RunProcess( &defaultECPS, list->sbList[i].process, NULL );
 	}
 }
 

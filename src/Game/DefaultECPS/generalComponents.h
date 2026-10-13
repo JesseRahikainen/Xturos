@@ -109,6 +109,9 @@ extern ComponentID gc3x3SpriteCompID;
 //  sped up by caching some things, or having a backing Collider array we could use.
 typedef struct {
 	enum ColliderType type;
+	Color debugColor;
+	uint32_t group; // what collision groups we're part of
+	uint32_t mask;  // what collision groups we can collide with
 } GCBaseCollisionData;
 
 typedef struct {
@@ -244,7 +247,8 @@ GCTransformData gc_CreateTransformPosRot( Vector2 pos, float rotRad );
 GCTransformData gc_CreateTransformPosScale( Vector2 pos, Vector2 scale );
 GCTransformData gc_CreateTransformPosRotScale( Vector2 pos, float rotRad, Vector2 scale );
 
-void gc_ColliderDataToCollider( GCColliderData* colliderData, GCTransformData* posData, Collider* outCollider );
+GCColliderData gc_ColliderToColliderData( const Collider* collider, uint32_t group, uint32_t mask, Color debugColor );
+void gc_ColliderDataToCollider( ECPS* ecps, const GCColliderData* colliderData, GCTransformData* posData, Collider* outCollider );
 
 // attaches the child entity to the parent entity, uses the existing positions to calculate the child transform
 void gc_MountEntity( ECPS* ecps, EntityID parentID, EntityID childID );
@@ -252,10 +256,17 @@ void gc_MountEntity( ECPS* ecps, EntityID parentID, EntityID childID );
 // detaches the entity from it's parent
 void gc_UnmountEntityFromParent( ECPS* ecps, EntityID id );
 
+void gc_DestroySelfAndAllChildren( ECPS* ecps, EntityID id );
+void gc_DestroyAllChildren( ECPS* ecps, EntityID id );
+
 // transform helper functions
 void gc_GetLerpedGlobalMatrix( ECPS* ecps, GCTransformData* tf, const Vector2* imageOffset, float t, Matrix3* outMat );
 void gc_GetCurrGlobalMatrix( ECPS* ecps, GCTransformData* tf, const Vector2* imageOffset, Matrix3* outMat );
 void gc_GetFutureGlobalMatrix( ECPS* ecps, GCTransformData* tf, const Vector2* imageOffset, Matrix3* outMat );
+void gc_GetCurrPosition( ECPS* ecps, GCTransformData* tf, Vector2* outPos );
+void gc_GetFuturePosition( ECPS* ecps, GCTransformData* tf, Vector2* outPos );
+bool gc_GetCurrPositionByID( ECPS* ecps, EntityID id, Vector2* outPos );
+bool gc_GetFuturePositionByID( ECPS* ecps, EntityID id, Vector2* outPos );
 Vector2 gc_GetLocalPos( GCTransformData* tf );
 float gc_GetLocalRotRad( GCTransformData* tf );
 Vector2 gc_GetLocalScale( GCTransformData* tf );
@@ -271,6 +282,8 @@ void gc_TeleportToLocalPos( GCTransformData* tf, Vector2 pos );
 void gc_TeleportToLocalRot( GCTransformData* tf, float rotRad );
 void gc_TeleportToLocalVectorScale( GCTransformData* tf, Vector2 scale );
 void gc_TeleportToLocalFloatScale( GCTransformData* tf, float scale );
+EntityID gc_GetRootMostEntity( ECPS* ecps, EntityID id );
+bool gc_DoesAnyChildHaveComponent( ECPS* ecps, EntityID rootEntity, ComponentID testComponent );
 
 void gc_WatchEntity( ECPS* ecps, EntityID id );
 void gc_UnWatchEntity( ECPS* ecps, EntityID id );
@@ -278,6 +291,9 @@ void gc_UnWatchEntity( ECPS* ecps, EntityID id );
 GCAnimatedSpriteData gc_CreateDefaultAnimSpriteData( );
 void gc_PlayAnim( ECPS* ecps, EntityID id, SpriteAnimation* anim );
 void gc_PlayAnimByID( ECPS* ecps, EntityID id, int animID );
+
+GCVec2TweenData gc_SetupVec2Tween( float duration, Vector2 startVal, Vector2 endVal, float preDelay, float postDelay, EaseFunc ease );
+GCFloatTweenData gc_SetupFloatTween( float duration, float startVal, float endVal, float preDelay, float postDelay, EaseFunc ease );
 
 void gc_Register( ECPS* ecps );
 

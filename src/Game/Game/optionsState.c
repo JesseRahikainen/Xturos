@@ -219,7 +219,7 @@ struct nk_rect createCenteredBounds( float baseWidth, float baseHeight, float bo
 
 static void optionsState_Process( void )
 {
-	struct nk_context* ctx = &( inGameIMGUI.ctx );
+	struct nk_context* ctx = &( inGameIMGUI.base.ctx );
 	int renderWidth, renderHeight;
 	gfx_GetRenderSize( &renderWidth, &renderHeight );
 	struct nk_rect windowBounds = createCenteredBounds( (float)renderWidth, (float)renderHeight, 400.0f, 336.0f );

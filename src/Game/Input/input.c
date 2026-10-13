@@ -43,7 +43,7 @@ typedef union {
 } Response;
 
 typedef struct {
-	SDL_Keycode code;
+	SDL_Scancode code;
 	Response response;
 } KeyBindings;
 
@@ -69,6 +69,8 @@ static void runResponse( Response* response )
 	} else if( response->type == CBT_LUA ) {
 		ASSERT( false && "Doesn't work in this version of the engine." );
 		//if( response->scriptResponse.response[0] != 0 ) xLua_CallLuaFunction( response->scriptResponse.response, "" );
+	} else if( response->type == CBT_NONE ) {
+		// nothing to do
 	} else {
 		llog( LOG_ERROR, "Unknown callback type." );
 	}
@@ -90,7 +92,7 @@ void input_ClearAllKeyBinds( void )
 }
 
 // Clears all key bindings assocated with the passed in key code.
-void input_ClearKeyBinds( SDL_Keycode code )
+void input_ClearKeyBinds( SDL_Scancode code )
 {
 	for( int i = 0; i < MAX_BINDINGS; ++i ) {
 		if( keyDownBindings[i].code == code ) {
@@ -118,7 +120,7 @@ void input_ClearKeyResponse( KeyResponse response )
 
 // Finds the first unused binding in the list.
 //  Return < 0 if we don't find a spot.
-static int bindToList( SDL_Keycode code, KeyResponse response, KeyBindings* bindingsList )
+static int bindToList( SDL_Scancode code, KeyResponse response, KeyBindings* bindingsList )
 {
 	if( response == NULL ) {
 		llog( LOG_DEBUG, "Attempting to bind a key with a NULL response." );
@@ -141,7 +143,7 @@ static int bindToList( SDL_Keycode code, KeyResponse response, KeyBindings* bind
 	return 0;
 }
 
-static int bindScriptToList( SDL_Keycode code, const char* response, KeyBindings* bindingsList )
+static int bindScriptToList( SDL_Scancode code, const char* response, KeyBindings* bindingsList )
 {
 	size_t responseLen = SDL_strlen( response );
 	if( responseLen == 0 ) {
@@ -171,7 +173,7 @@ static int bindScriptToList( SDL_Keycode code, const char* response, KeyBindings
 }
 
 // Binds a function response when a key is pressed down.
-int input_BindOnKeyPress( SDL_Keycode code, KeyResponse response )
+int input_BindOnKeyPress( SDL_Scancode code, KeyResponse response )
 {
 	if( bindToList( code, response, keyDownBindings ) < 0 ) {
 		return -1;
@@ -180,7 +182,7 @@ int input_BindOnKeyPress( SDL_Keycode code, KeyResponse response )
 	return 0;
 }
 
-int input_BindScriptOnKeyPress( SDL_Keycode code, const char* func )
+int input_BindScriptOnKeyPress( SDL_Scancode code, const char* func )
 {
 	if( bindScriptToList( code, func, keyDownBindings ) < 0 ) {
 		return -1;
@@ -190,7 +192,7 @@ int input_BindScriptOnKeyPress( SDL_Keycode code, const char* func )
 }
 
 // Binds a function response when a key is released.
-int input_BindOnKeyRelease( SDL_Keycode code, KeyResponse response )
+int input_BindOnKeyRelease( SDL_Scancode code, KeyResponse response )
 {
 	if( bindToList( code, response, keyUpBindings ) < 0 ) {
 		return -1;
@@ -199,7 +201,7 @@ int input_BindOnKeyRelease( SDL_Keycode code, KeyResponse response )
 	return 0;
 }
 
-int input_BindScriptOnKeyRelease( SDL_Keycode code, const char* func )
+int input_BindScriptOnKeyRelease( SDL_Scancode code, const char* func )
 {
 	if( bindScriptToList( code, func, keyUpBindings ) < 0 ) {
 		return -1;
@@ -210,7 +212,7 @@ int input_BindScriptOnKeyRelease( SDL_Keycode code, const char* func )
 
 // Binds function response when a key is pressed and released.
 //  Returns < 0 if there was a problem binding the key.
-int input_BindOnKey( SDL_Keycode code, KeyResponse onPressResponse, KeyResponse onReleaseResponse )
+int input_BindOnKey( SDL_Scancode code, KeyResponse onPressResponse, KeyResponse onReleaseResponse )
 {
 	int onPress = 0;
 	if( onPressResponse != NULL ) {
@@ -228,7 +230,7 @@ int input_BindOnKey( SDL_Keycode code, KeyResponse onPressResponse, KeyResponse 
 	return 0;
 }
 
-int input_BindScriptOnKey( SDL_Keycode code, const char* onPressFunc, const char* onReleaseFunc )
+int input_BindScriptOnKey( SDL_Scancode code, const char* onPressFunc, const char* onReleaseFunc )
 {
 	int onPress = 0;
 	if( SDL_strlen( onPressFunc ) > 0 ) {
@@ -248,7 +250,7 @@ int input_BindScriptOnKey( SDL_Keycode code, const char* onPressFunc, const char
 
 // Gets the code associated with response function. Puts them into the keyCodes array (which should be no larger than maxKeyCodes).
 //  The rest of the array is filled with SDLK_UNKNOWN.
-void getKeyBindings( KeyResponse response, SDL_Keycode* keyCodes, int maxKeyCodes, KeyBindings* bindingList )
+void getKeyBindings( KeyResponse response, SDL_Scancode* keyCodes, int maxKeyCodes, KeyBindings* bindingList )
 {
 	int keyCodeIdx = 0;
 
@@ -264,18 +266,18 @@ void getKeyBindings( KeyResponse response, SDL_Keycode* keyCodes, int maxKeyCode
 	}
 }
 
-void input_GetKeyPressBindings( KeyResponse response, SDL_Keycode* keyCodes, int maxKeyCodes )
+void input_GetKeyPressBindings( KeyResponse response, SDL_Scancode* keyCodes, int maxKeyCodes )
 {
 	getKeyBindings( response, keyCodes, maxKeyCodes, keyDownBindings );
 }
 
-void input_GetKeyReleaseBindings( KeyResponse response, SDL_Keycode* keyCodes, int maxKeyCodes )
+void input_GetKeyReleaseBindings( KeyResponse response, SDL_Scancode* keyCodes, int maxKeyCodes )
 {
 	getKeyBindings( response, keyCodes, maxKeyCodes, keyUpBindings );
 }
 
 // Handles a key event.
-void handleKeyEvent( SDL_Keycode code, KeyBindings* bindingsList )
+void handleKeyEvent( SDL_Scancode code, KeyBindings* bindingsList )
 {
 	for( int i = 0; i < MAX_BINDINGS; ++i ) {
 		if( ( bindingsList[i].code == code ) && ( bindingsList[i].response.type != CBT_NONE ) ) {
@@ -593,11 +595,11 @@ void input_ProcessEvents( SDL_Event* e )
 		break;
 	case SDL_EVENT_KEY_DOWN:
 		if( !e->key.repeat ) {
-			handleKeyEvent( e->key.key, keyDownBindings );
+			handleKeyEvent( e->key.scancode, keyDownBindings );
 		}
 		break;
 	case SDL_EVENT_KEY_UP:
-		handleKeyEvent( e->key.key, keyUpBindings );
+		handleKeyEvent( e->key.scancode, keyUpBindings );
 		break;
 	case SDL_EVENT_MOUSE_BUTTON_DOWN:
 		handleMouseButtonEvent( e->button.button, mouseButtonDownBindings );

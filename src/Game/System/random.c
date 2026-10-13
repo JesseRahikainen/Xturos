@@ -148,6 +148,7 @@ uint32_t rand_GetRangeU32( RandomGroup* rg, uint32_t min, uint32_t max )
 
 size_t rand_GetArrayEntry( RandomGroup* rg, size_t arraySize )
 {
+	if( arraySize == 0 ) return 0;
 	return (size_t)getBalancedRandom( rg, (uint64_t)arraySize );
 }
 

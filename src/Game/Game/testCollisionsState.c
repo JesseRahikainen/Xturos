@@ -298,7 +298,7 @@ static void showBoxUI( struct nk_context* ctx, Collider* coll )
 
 static void testCollisionsState_Process( void )
 {
-	struct nk_context* ctx = &( inGameIMGUI.ctx );
+	struct nk_context* ctx = &( inGameIMGUI.base.ctx );
 	int renderWidth, renderHeight;
 	gfx_GetRenderSize( &renderWidth, &renderHeight );
 	struct nk_rect windowBounds = { 0.0f, 0.0f, 200.0f, (float)renderHeight };

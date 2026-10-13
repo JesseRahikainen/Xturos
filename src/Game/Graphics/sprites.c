@@ -28,24 +28,24 @@ static Process swapProc;
 
 static bool initialized = false;
 
-static void runRenderProc( ECPS* ecps, const Entity* entity )
+static void runRenderProc( ECPS* ecps, const Entity* entity, void* extraData )
 {
 	gp_GeneralRender( ecps, entity, transformCompID, spriteCompID, clrCompID, floatVal0CompID, stencilCompID );
 }
 
 static void draw( float t )
 {
-	ecps_RunProcess( &spriteECPS, &renderProc );
+	ecps_RunProcess( &spriteECPS, &renderProc, NULL );
 }
 
-static void runSwapProc( ECPS* ecps, const Entity* entity )
+static void runSwapProc( ECPS* ecps, const Entity* entity, void* extraData )
 {
 	gp_GeneralSwap( ecps, entity, transformCompID, clrCompID, floatVal0CompID );
 }
 
 static void swap( void )
 {
-	ecps_RunProcess( &spriteECPS, &swapProc );
+	ecps_RunProcess( &spriteECPS, &swapProc, NULL );
 }
 
 int spr_Init( void )

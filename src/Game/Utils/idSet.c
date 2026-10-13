@@ -45,7 +45,7 @@ void idSet_Destroy( IDSet* set )
 	set->sbIDData = NULL;
 }
 
-// Claims an id and returns it, returns a value of 0 if there were none available.
+// Claims an id and returns it, returns a value of INVALID_ENTITY_ID if there were none available.
 EntityID idSet_ClaimID( IDSet* set )
 {
 	ASSERT( set != NULL );
@@ -58,7 +58,7 @@ EntityID idSet_ClaimID( IDSet* set )
 	}
 
 	if( idx >= count ) {
-		return 0;
+		return INVALID_ENTITY_ID;
 	}
 
 	// found valid id, mark it as in use, advance the generation, and generate the id
@@ -178,4 +178,9 @@ EntityID idSet_GetNextValidID( const IDSet* set, EntityID id )
 	}
 	
 	return 0;
+}
+
+uint16_t idSet_GetMaxCount( const IDSet* set )
+{
+	return set->currMaxCount;
 }

@@ -109,12 +109,26 @@ size_t strlenNullTest( const char* str )
 	return SDL_strlen( str );
 }
 
+bool compareOnlyFileName( const char* filePathOne, const char* filePathTwo )
+{
+	const char* startOne = SDL_strrchr( filePathOne, '/' );
+	if( startOne == NULL ) {
+		startOne = filePathOne;
+	}
+	const char* startTwo = SDL_strrchr( filePathTwo, '/' );
+	if( startTwo == NULL ) {
+		startTwo = filePathTwo;
+	}
+
+	return SDL_strcmp( startOne, startTwo ) == 0;
+}
+
 char* extractFileName( const char* filePath )
 {
 	char* file = NULL;
 
-	const char* lastSlash = strrchr( filePath, '/' );
-	const char* lastPeriod = strrchr( filePath, '.' );
+	const char* lastSlash = SDL_strrchr( filePath, '/' );
+	const char* lastPeriod = SDL_strrchr( filePath, '.' );
 
 	if( lastSlash == NULL ) {
 		lastSlash = filePath;
@@ -246,4 +260,194 @@ char* printUUID( const xtUUID* uuid )
 		uuid->parts[6], uuid->parts[7], uuid->parts[8], uuid->parts[9], uuid->parts[10], uuid->parts[11],
 		uuid->parts[12], uuid->parts[13], uuid->parts[14], uuid->parts[15] );
 	return str;
+}
+
+void testPathFunctions( void )
+{
+	const char* fromAbsolutePath = "C:\\testing/test.dot\\andMore//evenMore";
+	const char* toAbsolutePath = "C:\\testing\\test.dot\\branchback\\somemore//file.txt";
+	const char* otherToAbsolutePath = "C:\\testing/test.dot\\andMore//evenMore\\other.txt";
+
+	char* sbRelativePath = getRelativePathSB( fromAbsolutePath, toAbsolutePath, false );
+	char* sbOtherRelativePath = getRelativePathSB( fromAbsolutePath, otherToAbsolutePath, false );
+	ASSERT( SDL_strcmp( sbRelativePath, ".\\..\\..\\branchback\\somemore\\file.txt" ) == 0 );
+	ASSERT( SDL_strcmp( sbOtherRelativePath, ".\\other.txt" ) == 0 );
+
+	char* sbOrigAbsolutePath = getAbsolutePathSB( fromAbsolutePath, sbRelativePath, false );
+	char* sbOtherAbsolutePath = getAbsolutePathSB( fromAbsolutePath, sbOtherRelativePath, false );
+	ASSERT( SDL_strcmp( sbOrigAbsolutePath, "C:\\testing\\test.dot\\branchback\\somemore\\file.txt" ) == 0 );
+	ASSERT( SDL_strcmp( sbOtherAbsolutePath, "C:\\testing\\test.dot\\andMore\\evenMore\\other.txt" ) == 0 );
+
+	const char* fromAbsolutePathWFile = "C:\\testing/test.dot\\andMore//evenMore\\cutOffFile.txt";
+	char* sbOrigAbsolutePathWFile = getAbsolutePathSB( fromAbsolutePathWFile, sbRelativePath, true );
+	char* sbOtherAbsolutePathWFile = getAbsolutePathSB( fromAbsolutePathWFile, sbOtherRelativePath, true );
+	ASSERT( SDL_strcmp( sbOrigAbsolutePathWFile, "C:\\testing\\test.dot\\branchback\\somemore\\file.txt" ) == 0 );
+	ASSERT( SDL_strcmp( sbOtherAbsolutePathWFile, "C:\\testing\\test.dot\\andMore\\evenMore\\other.txt" ) == 0 );
+
+	const char* fromSameDirPath = "C:\\testing\\more\\fromFile.txt";
+	const char* toSameDirPath = "C:\\testing\\more\\toFile.txt";
+	char* sbSameDirPath = getRelativePathSB( fromSameDirPath, toSameDirPath, true );
+	ASSERT( SDL_strcmp( sbSameDirPath, ".\\toFile.txt" ) == 0 );
+
+	sb_Release( sbRelativePath );
+	sb_Release( sbOtherRelativePath );
+	sb_Release( sbOrigAbsolutePath );
+	sb_Release( sbOtherAbsolutePath );
+}
+
+// used to represent a substring of an existing string
+typedef struct {
+	const char* string;
+	size_t len;
+} StringSpan;
+
+static void appendStringSpanSB( char** sbBaseString, StringSpan span )
+{
+	ASSERT_AND_IF_NOT( sbBaseString != NULL ) return;
+	if( ( span.len == 0 ) || ( span.string == NULL ) ) return;
+
+	char* sbString = *sbBaseString;
+	if( sbString != NULL ) sb_Pop( sbString );
+
+	char* start = sb_Add( sbString, span.len );
+	memcpy( start, span.string, span.len );
+	sb_Push( sbString, 0 );
+	*sbBaseString = sbString;
+}
+
+// returns a stretchy buffer containing the full path
+char* getAbsolutePathSB( const char* absoluteBase, const char* relative, bool ignoreAbsoluteEOS )
+{
+	// so we have the absolute base path, need to split it into separate parts, from there back track
+	//  for each ../ in the relative path, then append the rest of the relative path to it
+
+	// create the list of string spans representing the base path
+	StringSpan* sbBasePathParts = NULL;
+	size_t startPos = 0;
+	for( size_t i = 0; i <= SDL_strlen( absoluteBase ); ++i ) {
+		bool foundSpan = absoluteBase[i] == '\\';
+		foundSpan = foundSpan || ( absoluteBase[i] == '/' );
+		foundSpan = foundSpan || ( ( absoluteBase[i] == 0 ) && !ignoreAbsoluteEOS );
+		if( foundSpan ) {
+			size_t len = i - startPos;
+			if( len > 0 ) {
+				StringSpan newSpan = { .string = &absoluteBase[i - len], .len = len };
+				sb_Push( sbBasePathParts, newSpan );
+			}
+			startPos = i + 1;
+		}
+	}
+	size_t len = sb_Count( sbBasePathParts );
+
+	// create the list of string spans representing the relative path
+	startPos = 0;
+	for( size_t i = 0; i <= SDL_strlen( relative ); ++i ) {
+		bool foundSpan = relative[i] == '\\';
+		foundSpan = foundSpan || ( relative[i] == '/' );
+		foundSpan = foundSpan || ( relative[i] == 0 );
+		if( foundSpan ) {
+			size_t len = i - startPos;
+			if( len > 0 ) {
+				const char* string = &relative[i - len];
+				if( ( len == 2 ) && ( SDL_strncmp( "..", string, 2 ) == 0 ) ) {
+					// go down a level
+					sb_Pop( sbBasePathParts );
+				} else if( ( len == 1 ) && ( SDL_strncmp( ".", string, 1 ) == 0 ) ) {
+					// just ignore this
+				} else {
+					// push onto the path
+					StringSpan newSpan = { .string = &relative[i - len], .len = len };
+					sb_Push( sbBasePathParts, newSpan );
+				}
+			}
+			startPos = i + 1;
+		}
+	}
+
+	// build the final path
+	char* sbRetPath = NULL;
+	for( size_t i = 0; i < sb_Count( sbBasePathParts ); ++i ) {
+		if( sbRetPath != NULL ) {
+			sb_Insert( sbRetPath, sb_Count( sbRetPath ) - 2, '\\' );
+		}
+		appendStringSpanSB( &sbRetPath, sbBasePathParts[i] );
+	}
+
+	sb_Release( sbBasePathParts );
+
+	return sbRetPath;
+}
+
+// returns a stretchy buffer containing the relative path
+//  from is expected to be a directory path
+// NOTE: this assumes you're passing in full paths
+char* getRelativePathSB( const char* from, const char* to, bool fromIsFile )
+{
+	ASSERT_AND_IF_NOT( from != NULL ) return NULL;
+	ASSERT_AND_IF_NOT( to != NULL ) return NULL;
+
+	if( from[0] != to[0] ) {
+		// different drives, so just copy the to path into the result
+		return createStretchyStringCopy( to );
+	}
+
+	// create local copies of strings so we can tokenize them
+	char* sbLocalFrom = createStretchyStringCopy( from );
+	char* sbLocalTo = createStretchyStringCopy( to );
+
+	const char* tokens = "/\\";
+
+	char* fromTokSave = NULL;
+	char* fromToken = SDL_strtok_r( sbLocalFrom, tokens, &fromTokSave );
+
+	char* toTokSave = NULL;
+	char* toToken = SDL_strtok_r( sbLocalTo, tokens, &toTokSave );
+
+	// loop through until we find a spot where the tokens don't match
+	bool tokensMatch = ( strcmp( fromToken, toToken ) == 0 );
+	while( ( fromToken != NULL ) && ( toToken != NULL ) && tokensMatch ) {
+		fromToken = SDL_strtok_r( NULL, tokens, &fromTokSave );
+		toToken = SDL_strtok_r( NULL, tokens, &toTokSave );
+
+		if( ( fromToken != NULL ) && ( toToken != NULL ) ) {
+			tokensMatch = ( strcmp( fromToken, toToken ) == 0 );
+		}
+	}
+
+	// now we want to start building the actual string we'll return
+	// go down the rest of the from path
+	char sep = '\\';
+	char* sbFinalPath = NULL;
+
+	sb_Push( sbFinalPath, '.' );
+	sb_Push( sbFinalPath, sep );
+
+	if( fromIsFile && ( fromToken != NULL ) ) {
+		// cut of the one extra previous token we'd get if we parsed the file
+		fromToken = SDL_strtok_r( NULL, tokens, &fromTokSave );
+	}
+
+	while( fromToken != NULL ) {
+		fromToken = SDL_strtok_r( NULL, tokens, &fromTokSave );
+		sb_Push( sbFinalPath, '.' );
+		sb_Push( sbFinalPath, '.' );
+		sb_Push( sbFinalPath, sep );
+	}
+
+	// grab the rest of the tokens from sbFilePath and append them to a new string
+	while( toToken != NULL ) {
+		if( ( sbFinalPath != NULL ) && ( sb_Last( sbFinalPath ) != sep ) ) sb_Push( sbFinalPath, sep );
+		size_t tokenLen = strlen( toToken );
+		char* strAddSpot = sb_Add( sbFinalPath, tokenLen );
+		memcpy( strAddSpot, toToken, sizeof( char ) * tokenLen );
+
+		toToken = SDL_strtok_r( NULL, tokens, &toTokSave );
+	}
+	// add terminating null
+	sb_Push( sbFinalPath, 0 );
+
+	sb_Release( sbLocalFrom );
+	sb_Release( sbLocalTo );
+
+	return sbFinalPath;
 }

@@ -1,4 +1,3 @@
-#define NK_IMPLEMENTATION
 #include "IMGUI/nuklearWrapper.h"
 
 #include <SDL3/SDL.h>
@@ -35,44 +34,6 @@ typedef struct {
     nk_byte col[4];
 } nk_xturos_vertex;
 
-static void uploadAtlas( NuklearWrapper* xu, const void *image, int width, int height, float fontHeight )
-{
-	Texture texture;
-	gfxUtil_CreateTextureFromRGBABitmap( (uint8_t*)image, width, height, &texture );
-
-	char fontImgID[32];
-	SDL_snprintf( fontImgID, ARRAY_SIZE( fontImgID ), "NuklearFont%f", fontHeight );
-
-	xu->platform.fontImg = img_CreateFromTexture( &texture, ST_DEFAULT, fontImgID );
-	if( xu->platform.fontImg < 0 ) {
-		llog( LOG_ERROR, "Error creating Nuklear font image." );
-		return;
-	}
-}
-
-static void clipboardPaste( nk_handle usr, struct nk_text_edit *edit )
-{
-    const char *text = SDL_GetClipboardText( );
-    if( text ) {
-		nk_textedit_paste( edit, text, nk_strlen( text ) );
-	}
-
-    (void)usr;
-}
-
-static void clipboardCopy( nk_handle usr, const char *text, int len )
-{
-    char *str = 0;
-    (void)usr;
-    if( !len ) return;
-	str = (char*)mem_Allocate( (size_t)( len + 1 ) );
-    if( !str ) return;
-    memcpy( str, text, (size_t)len );
-    str[len] = '\0';
-    SDL_SetClipboardText( str );
-	mem_Release( str );
-}
-
 static void* customAlloc( nk_handle handle, void* old, nk_size size )
 {
 	// this is styled like a realloc, but it's actually just an alloc
@@ -84,106 +45,19 @@ static void customFree( nk_handle handle, void* p )
 	mem_Release( p );
 }
 
-static void handleRenderResize( void* data )
+static void uploadAtlas( NuklearWrapper* wrapper, const void *image, int width, int height, float fontHeight )
 {
-	int renderWidth, renderHeight;
-	gfx_GetRenderSize( &renderWidth, &renderHeight );
-	nk_xu_setRenderSize( &inGameIMGUI, renderWidth, renderHeight );
-}
+	Texture texture;
+	gfxUtil_CreateTextureFromRGBABitmap( (uint8_t*)image, width, height, &texture );
 
-static void handleWindowResize( void* data )
-{
-	int windowWidth, windowHeight;
-	gfx_GetWindowSize( &windowWidth, &windowHeight );
-	nk_xu_setRenderSize( &editorIMGUI, windowWidth, windowHeight );
-}
+	char fontImgID[32];
+	SDL_snprintf( fontImgID, ARRAY_SIZE( fontImgID ), "NuklearFont%f", fontHeight );
 
-void nk_xu_initMessageListeners( void )
-{
-	mb_RegisterListener( MSG_WINDOW_RESIZED, handleWindowResize );
-	mb_RegisterListener( MSG_RENDER_RESIZED, handleRenderResize );
-}
-
-
-void nk_xu_init( NuklearWrapper* xu, SDL_Window* win, bool useRelativeMousePos, int renderWidth, int renderHeight )
-{
-	xu->win = win;
-
-	struct nk_allocator alloc;
-	alloc.userdata.ptr = 0;
-	alloc.alloc = customAlloc;
-	alloc.free = customFree;
-	nk_init( &( xu->ctx ), &alloc, 0 );
-
-	// setup clipboard functionality
-    xu->ctx.clip.copy = clipboardCopy;
-    xu->ctx.clip.paste = clipboardPaste;
-    xu->ctx.clip.userdata = nk_handle_ptr( 0 );
-
-	// setup memory management
-	xu->ctx.memory.pool.alloc = customAlloc;
-	xu->ctx.memory.pool.free = customFree;
-	// no extra user data, may be handy later if we want to separate this out into it's own pool
-	xu->ctx.memory.pool.userdata = nk_handle_ptr( 0 );
-	
-	// device creation
-	nk_buffer_init( &( xu->cmds ), &alloc, INITIAL_CMD_BUFFER_SIZE );
-	//  create the shader, TODO: share this between contexts
-	
-	ShaderDefinition shaderDefs[2];
-	ShaderProgramDefinition progDef;
-
-	shaderDefs[0].type = GL_VERTEX_SHADER;
-	shaderDefs[0].fileName = "Shaders/vertNuklear.glsl";
-	shaderDefs[0].shaderText = NULL;
-
-	shaderDefs[1].type = GL_FRAGMENT_SHADER;
-	shaderDefs[1].fileName = "Shaders/fragNuklear.glsl";
-	shaderDefs[1].shaderText = NULL;
-
-	progDef.vertexShader = 0;
-	progDef.fragmentShader = 1;
-	progDef.geometryShader = -1;
-
-	size_t numLoaded = shaders_Load( shaderDefs, sizeof( shaderDefs ) / sizeof( shaderDefs[0] ), &progDef, &( xu->platform.prog ), 1 );
-	ASSERT( numLoaded != 0 );
-
-	GLsizei vertSize = sizeof( nk_xturos_vertex );
-	size_t vertPos = offsetof( nk_xturos_vertex, position );
-	size_t vertUV = offsetof( nk_xturos_vertex, uv );
-	size_t vertClr = offsetof( nk_xturos_vertex, col );
-
-	GL( glGenBuffers( 1, &( xu->platform.vbo ) ) );
-	GL( glGenBuffers( 1, &( xu->platform.ebo ) ) );
-	GL( glGenVertexArrays( 1, &( xu->platform.vao ) ) );
-
-	GL( glBindVertexArray( xu->platform.vao ) );
-	GL( glBindBuffer( GL_ARRAY_BUFFER, xu->platform.vbo ) );
-	GL( glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, xu->platform.ebo ) );
-
-	GL( glEnableVertexAttribArray( 0 ) ); // vert pos
-	GL( glEnableVertexAttribArray( 1 ) ); // vert uv
-	GL( glEnableVertexAttribArray( 2 ) ); // vert clr
-
-	GL( glVertexAttribPointer( 0, 2, GL_FLOAT, GL_FALSE, vertSize, (void*)vertPos ) );
-	GL( glVertexAttribPointer( 1, 2, GL_FLOAT, GL_FALSE, vertSize, (void*)vertUV ) );
-	GL( glVertexAttribPointer( 2, 4, GL_UNSIGNED_BYTE, GL_TRUE, vertSize, (void*)vertClr ) );
-
-	GL( glBindTexture( GL_TEXTURE_2D, 0 ) );
-	GL( glBindBuffer( GL_ARRAY_BUFFER, 0 ) );
-	GL( glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, 0 ) );
-	GL( glBindVertexArray( 0 ) );
-
-	xu->renderWidth = renderWidth;
-	xu->renderHeight = renderHeight;
-
-	xu->useRelativeMousePos = useRelativeMousePos;
-
-	// slightly different default colors
-	struct nk_color styleTable[SDL_arraysize( nk_default_color_style )];
-	SDL_memcpy( styleTable, nk_default_color_style, sizeof( nk_default_color_style[0] ) * SDL_arraysize( nk_default_color_style ) );
-	styleTable[NK_COLOR_TEXT] = nk_rgb( 255, 255, 255 );
-	nk_style_from_table( &(xu->ctx), styleTable );
+	wrapper->xu.platform.fontImg = img_CreateFromTexture( &texture, ST_DEFAULT, fontImgID );
+	if( wrapper->xu.platform.fontImg < 0 ) {
+		llog( LOG_ERROR, "Error creating Nuklear font image." );
+		return;
+	}
 }
 
 static const nk_rune* defaultGlyphRanges( void )
@@ -193,45 +67,14 @@ static const nk_rune* defaultGlyphRanges( void )
 	return ranges;
 }
 
-void nk_xu_fontStashBegin( NuklearWrapper* xu, struct nk_font_atlas** atlas )
+static void nk_xturos_handleEvent( NuklearWrapper* wrapper, SDL_Event* evt )
 {
-	struct nk_allocator alloc;
-	alloc.userdata.ptr = 0;
-	alloc.alloc = customAlloc;
-	alloc.free = customFree;
-	nk_font_atlas_init( &( xu->fontAtlas ), &alloc );
-	nk_font_atlas_begin( &( xu->fontAtlas ) );
-	*atlas = &( xu->fontAtlas );
-}
-
-void nk_xu_fontStashEnd( NuklearWrapper* xu, float fontHeight )
-{
-	const void *image;
-	int w, h;
-
-	xu->fontAtlas.config->range = defaultGlyphRanges( );
-	image = nk_font_atlas_bake( &( xu->fontAtlas ), &w, &h, NK_FONT_ATLAS_RGBA32 );
-	uploadAtlas( xu, image, w, h, fontHeight );
-	nk_font_atlas_end( &( xu->fontAtlas ), nk_handle_id( xu->platform.fontImg ), &( xu->nullTx ) );
-	if( xu->fontAtlas.default_font ) {
-		nk_style_set_font( &( xu->ctx ), &( xu->fontAtlas.default_font->handle ) );
-	}
-}
-
-void nk_xu_setRenderSize( NuklearWrapper* xu, int renderWidth, int renderHeight )
-{
-	xu->renderWidth = renderWidth;
-	xu->renderHeight = renderHeight;
-}
-
-void nk_xu_handleEvent( NuklearWrapper* xu, SDL_Event* evt )
-{
-	struct nk_context *ctx = &( xu->ctx );
+	struct nk_context* ctx = &( wrapper->base.ctx );
 
 	// mouse position has to be scaled along with the window and render area
 	int mX = 0;
 	int mY = 0;
-	if( xu->useRelativeMousePos ) {
+	if( wrapper->base.useRelativeMousePos ) {
 		Vector2 mousePos;
 		input_GetMousePosition( &mousePos );
 		mX = (int)mousePos.x;
@@ -243,48 +86,48 @@ void nk_xu_handleEvent( NuklearWrapper* xu, SDL_Event* evt )
 		}
 	}
 
-    if (evt->type == SDL_EVENT_KEY_UP || evt->type == SDL_EVENT_KEY_DOWN) {
-        // key events
-        int down = evt->type == SDL_EVENT_KEY_DOWN;
-        const bool* state = SDL_GetKeyboardState( NULL );
-        SDL_Keycode sym = evt->key.key;
-        if( ( sym == SDLK_RSHIFT ) || ( sym == SDLK_LSHIFT ) ) {
-            nk_input_key( ctx, NK_KEY_SHIFT, down );
+	if( evt->type == SDL_EVENT_KEY_UP || evt->type == SDL_EVENT_KEY_DOWN ) {
+		// key events
+		int down = evt->type == SDL_EVENT_KEY_DOWN;
+		const bool* state = SDL_GetKeyboardState( NULL );
+		SDL_Keycode sym = evt->key.key;
+		if( ( sym == SDLK_RSHIFT ) || ( sym == SDLK_LSHIFT ) ) {
+			nk_input_key( ctx, NK_KEY_SHIFT, down );
 		} else if( sym == SDLK_DELETE ) {
-            nk_input_key( ctx, NK_KEY_DEL, down );
+			nk_input_key( ctx, NK_KEY_DEL, down );
 		} else if( sym == SDLK_RETURN ) {
-            nk_input_key( ctx, NK_KEY_ENTER, down );
-        } else if( sym == SDLK_TAB ) {
-            nk_input_key( ctx, NK_KEY_TAB, down );
-        } else if( sym == SDLK_BACKSPACE ) {
-            nk_input_key( ctx, NK_KEY_BACKSPACE, down );
-        } else if( sym == SDLK_HOME ) {
-            nk_input_key( ctx, NK_KEY_TEXT_START, down );
+			nk_input_key( ctx, NK_KEY_ENTER, down );
+		} else if( sym == SDLK_TAB ) {
+			nk_input_key( ctx, NK_KEY_TAB, down );
+		} else if( sym == SDLK_BACKSPACE ) {
+			nk_input_key( ctx, NK_KEY_BACKSPACE, down );
+		} else if( sym == SDLK_HOME ) {
+			nk_input_key( ctx, NK_KEY_TEXT_START, down );
 		} else if( sym == SDLK_END ) {
-            nk_input_key( ctx, NK_KEY_TEXT_END, down );
-        } else if( sym == SDLK_Z && state[SDL_SCANCODE_LCTRL] ) {
-            nk_input_key( ctx, NK_KEY_TEXT_UNDO, down );
-        } else if( sym == SDLK_R && state[SDL_SCANCODE_LCTRL] ) {
-            nk_input_key( ctx, NK_KEY_TEXT_REDO, down );
-        } else if( sym == SDLK_C && state[SDL_SCANCODE_LCTRL] ) {
-            nk_input_key( ctx, NK_KEY_COPY, down );
-        } else if( sym == SDLK_V && state[SDL_SCANCODE_LCTRL] ) {
-            nk_input_key( ctx, NK_KEY_PASTE, down );
+			nk_input_key( ctx, NK_KEY_TEXT_END, down );
+		} else if( sym == SDLK_Z && state[SDL_SCANCODE_LCTRL] ) {
+			nk_input_key( ctx, NK_KEY_TEXT_UNDO, down );
+		} else if( sym == SDLK_R && state[SDL_SCANCODE_LCTRL] ) {
+			nk_input_key( ctx, NK_KEY_TEXT_REDO, down );
+		} else if( sym == SDLK_C && state[SDL_SCANCODE_LCTRL] ) {
+			nk_input_key( ctx, NK_KEY_COPY, down );
+		} else if( sym == SDLK_V && state[SDL_SCANCODE_LCTRL] ) {
+			nk_input_key( ctx, NK_KEY_PASTE, down );
 		} else if( sym == SDLK_X && state[SDL_SCANCODE_LCTRL] ) {
-            nk_input_key( ctx, NK_KEY_CUT, down );
+			nk_input_key( ctx, NK_KEY_CUT, down );
 		} else if( sym == SDLK_B && state[SDL_SCANCODE_LCTRL] ) {
-            nk_input_key( ctx, NK_KEY_TEXT_LINE_START, down );
+			nk_input_key( ctx, NK_KEY_TEXT_LINE_START, down );
 		} else if( sym == SDLK_E && state[SDL_SCANCODE_LCTRL] ) {
-            nk_input_key( ctx, NK_KEY_TEXT_LINE_END, down );
+			nk_input_key( ctx, NK_KEY_TEXT_LINE_END, down );
 		} else if( sym == SDLK_LEFT ) {
-            if( state[SDL_SCANCODE_LCTRL] )
-                nk_input_key( ctx, NK_KEY_TEXT_WORD_LEFT, down);
-            else {
-				nk_input_key( ctx, NK_KEY_LEFT, down);
+			if( state[SDL_SCANCODE_LCTRL] )
+				nk_input_key( ctx, NK_KEY_TEXT_WORD_LEFT, down );
+			else {
+				nk_input_key( ctx, NK_KEY_LEFT, down );
 			}
-        } else if( sym == SDLK_RIGHT ) {
-            if( state[SDL_SCANCODE_LCTRL] ) {
-                nk_input_key( ctx, NK_KEY_TEXT_WORD_RIGHT, down );
+		} else if( sym == SDLK_RIGHT ) {
+			if( state[SDL_SCANCODE_LCTRL] ) {
+				nk_input_key( ctx, NK_KEY_TEXT_WORD_RIGHT, down );
 			} else {
 				nk_input_key( ctx, NK_KEY_RIGHT, down );
 			}
@@ -292,32 +135,63 @@ void nk_xu_handleEvent( NuklearWrapper* xu, SDL_Event* evt )
 			// standard ascii input
 			nk_input_char( ctx, (char)sym );
 		}
-    } else if( ( evt->type == SDL_EVENT_MOUSE_BUTTON_DOWN ) || ( evt->type == SDL_EVENT_MOUSE_BUTTON_UP ) ) {
-        // mouse button
-        int down = evt->type == SDL_EVENT_MOUSE_BUTTON_DOWN;
-        if( evt->button.button == SDL_BUTTON_LEFT )		nk_input_button( ctx, NK_BUTTON_LEFT, mX, mY, down );
-        if( evt->button.button == SDL_BUTTON_MIDDLE )	nk_input_button( ctx, NK_BUTTON_MIDDLE, mX, mY, down );
-        if( evt->button.button == SDL_BUTTON_RIGHT )	nk_input_button( ctx, NK_BUTTON_RIGHT, mX, mY, down );
-    } else if( evt->type == SDL_EVENT_MOUSE_MOTION ) {
+	} else if( ( evt->type == SDL_EVENT_MOUSE_BUTTON_DOWN ) || ( evt->type == SDL_EVENT_MOUSE_BUTTON_UP ) ) {
+		// mouse button
+		int down = evt->type == SDL_EVENT_MOUSE_BUTTON_DOWN;
+		if( evt->button.button == SDL_BUTTON_LEFT )		nk_input_button( ctx, NK_BUTTON_LEFT, mX, mY, down );
+		if( evt->button.button == SDL_BUTTON_MIDDLE )	nk_input_button( ctx, NK_BUTTON_MIDDLE, mX, mY, down );
+		if( evt->button.button == SDL_BUTTON_RIGHT )	nk_input_button( ctx, NK_BUTTON_RIGHT, mX, mY, down );
+	} else if( evt->type == SDL_EVENT_MOUSE_MOTION ) {
 		nk_input_motion( ctx, mX, mY );
-    } else if( evt->type == SDL_EVENT_MOUSE_WHEEL ) {
+	} else if( evt->type == SDL_EVENT_MOUSE_WHEEL ) {
 		struct nk_vec2 scroll;
 		scroll.y = (float)evt->wheel.y;
 		scroll.x = (float)evt->wheel.x;
-        nk_input_scroll( ctx, scroll );
-    }
+		nk_input_scroll( ctx, scroll );
+	}
+}
+
+static void nk_xturos_fontStashBegin( NuklearWrapper* wrapper, struct nk_font_atlas** atlas )
+{
+	struct nk_allocator alloc;
+	alloc.userdata.ptr = 0;
+	alloc.alloc = customAlloc;
+	alloc.free = customFree;
+	nk_font_atlas_init( &( wrapper->base.fontAtlas ), &alloc );
+	nk_font_atlas_begin( &( wrapper->base.fontAtlas ) );
+	*atlas = &( wrapper->base.fontAtlas );
+}
+
+static void nk_xturos_fontStashEnd( NuklearWrapper* wrapper, float fontHeight )
+{
+	const void* image;
+	int w, h;
+
+	wrapper->base.fontAtlas.config->range = defaultGlyphRanges( );
+	image = nk_font_atlas_bake( &( wrapper->base.fontAtlas ), &w, &h, NK_FONT_ATLAS_RGBA32 );
+	uploadAtlas( wrapper, image, w, h, fontHeight );
+	nk_font_atlas_end( &( wrapper->base.fontAtlas ), nk_handle_id( wrapper->xu.platform.fontImg ), &( wrapper->base.nullTx ) );
+	if( wrapper->base.fontAtlas.default_font ) {
+		nk_style_set_font( &( wrapper->base.ctx ), &( wrapper->xu.base.fontAtlas.default_font->handle ) );
+	}
+}
+
+static void nk_xturos_setRenderSize( NuklearWrapper* wrapper, int renderWidth, int renderHeight )
+{
+	wrapper->base.renderWidth = renderWidth;
+	wrapper->base.renderHeight = renderHeight;
 }
 
 // TODO: Get it so the clear and render are separate. Allowing the drawing of the ui and the frames to match. As of right now we have to
 //  draw any Nuklear UIs every frame instead of every draw.
-void nk_xu_render( NuklearWrapper* xu )
+static void nk_xturos_render( NuklearWrapper* wrapper )
 {
 #if 1
 	Matrix4 ortho;
-	mat4_CreateOrthographicProjection( 0.0f, (float)( xu->renderWidth ), 0.0f, (float)( xu->renderHeight ), -1000.0f, 1000.0f, &ortho );
+	mat4_CreateOrthographicProjection( 0.0f, (float)( wrapper->base.renderWidth ), 0.0f, (float)( wrapper->base.renderHeight ), -1000.0f, 1000.0f, &ortho );
 
 	// global state
-	GL( glViewport( 0, 0, xu->renderWidth, xu->renderHeight ) );
+	GL( glViewport( 0, 0, wrapper->base.renderWidth, wrapper->base.renderHeight ) );
 	GL( glEnable( GL_BLEND ) );
 	GL( glBlendEquation( GL_FUNC_ADD ) );
 	GL( glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA ) );
@@ -326,20 +200,20 @@ void nk_xu_render( NuklearWrapper* xu )
 	GL( glEnable( GL_SCISSOR_TEST ) );
 	GL( glActiveTexture( GL_TEXTURE0 ) );
 
-	GL( glUseProgram( xu->platform.prog.programID ) );
-	GL( glUniform1i( xu->platform.prog.uniformLocs[1], 0 ) );
-	GL( glUniformMatrix4fv( xu->platform.prog.uniformLocs[0], 1, GL_FALSE, &( ortho.m[0] ) ) );
+	GL( glUseProgram( wrapper->xu.platform.prog.programID ) );
+	GL( glUniform1i( wrapper->xu.platform.prog.uniformLocs[1], 0 ) );
+	GL( glUniformMatrix4fv( wrapper->xu.platform.prog.uniformLocs[0], 1, GL_FALSE, &( ortho.m[0] ) ) );
 	{
 		// convert from command queue into draw list and render
-		const struct nk_draw_command *cmd = NULL;
+		const struct nk_draw_command* cmd = NULL;
 		void* vertices = NULL;
 		void* elements = NULL;
 		const nk_draw_index* offset = NULL;
 
 		// allocate vertex and element buffer
-		GL( glBindVertexArray( xu->platform.vao ) );
-		GL( glBindBuffer( GL_ARRAY_BUFFER, xu->platform.vbo ) );
-		GL( glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, xu->platform.ebo ) );
+		GL( glBindVertexArray( wrapper->xu.platform.vao ) );
+		GL( glBindBuffer( GL_ARRAY_BUFFER, wrapper->xu.platform.vbo ) );
+		GL( glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, wrapper->xu.platform.ebo ) );
 
 		GL( glBufferData( GL_ARRAY_BUFFER, MAX_VERTEX_MEMORY, NULL, GL_STREAM_DRAW ) );
 		GL( glBufferData( GL_ELEMENT_ARRAY_BUFFER, MAX_ELEMENT_MEMORY, NULL, GL_STREAM_DRAW ) );
@@ -368,21 +242,22 @@ void nk_xu_render( NuklearWrapper* xu )
 			config.circle_segment_count = 22;
 			config.arc_segment_count = 22;
 			config.curve_segment_count = 22;
-			config.tex_null = xu->nullTx;
+			config.tex_null = wrapper->base.nullTx;
 
 			// setup buffers to load vertices and elements
 			{
 				struct nk_buffer vertBfr, elemBfr;
 				nk_buffer_init_fixed( &vertBfr, vertices, (size_t)MAX_VERTEX_MEMORY );
 				nk_buffer_init_fixed( &elemBfr, elements, (size_t)MAX_ELEMENT_MEMORY );
-				nk_convert( &( xu->ctx ), &( xu->cmds ), &vertBfr, &elemBfr, &config );
+				nk_convert( &( wrapper->base.ctx ), &( wrapper->base.cmds ), &vertBfr, &elemBfr, &config );
 			}
 		}
 		GL( glUnmapBuffer( GL_ARRAY_BUFFER ) );
 		GL( glUnmapBuffer( GL_ELEMENT_ARRAY_BUFFER ) );
 
 		// iterate over and execute each draw command
-		nk_draw_foreach( cmd, &( xu->ctx ), &( xu->cmds ) ) {
+		nk_draw_foreach( cmd, &( wrapper->base.ctx ), &( wrapper->base.cmds ) )
+		{
 			if( cmd->elem_count == 0 ) continue;
 
 			PlatformTexture platformTexture;
@@ -390,7 +265,7 @@ void nk_xu_render( NuklearWrapper* xu )
 				GL( glBindTexture( GL_TEXTURE_2D, platformTexture.id ) );
 				glScissor(
 					(GLint)( cmd->clip_rect.x ),
-					(GLint)( ( xu->renderHeight - (GLint)( cmd->clip_rect.y + cmd->clip_rect.h ) ) ),
+					(GLint)( ( wrapper->base.renderHeight - (GLint)( cmd->clip_rect.y + cmd->clip_rect.h ) ) ),
 					(GLint)( cmd->clip_rect.w ),
 					(GLint)( cmd->clip_rect.h ) );
 
@@ -400,11 +275,11 @@ void nk_xu_render( NuklearWrapper* xu )
 #if 0 // for debugging rendering, TODO: make this work with the version of nuklear we're using
 #pragma warning(push)
 #pragma warning(disable: 4305)
-			for( unsigned short i = (unsigned short)offset; i < cmd->elem_count; i+=3 ) {
+			for( unsigned short i = (unsigned short)offset; i < cmd->elem_count; i += 3 ) {
 #pragma warning(pop)
 				uint16_t vIdx0 = ( (uint16_t*)elements )[i];
-				uint16_t vIdx1 = ( (uint16_t*)elements )[i+1];
-				uint16_t vIdx2 = ( (uint16_t*)elements )[i+2];
+				uint16_t vIdx1 = ( (uint16_t*)elements )[i + 1];
+				uint16_t vIdx2 = ( (uint16_t*)elements )[i + 2];
 
 				struct nk_draw_vertex vert0 = ( (struct nk_draw_vertex*)vertices )[vIdx0];
 				struct nk_draw_vertex vert1 = ( (struct nk_draw_vertex*)vertices )[vIdx1];
@@ -421,7 +296,7 @@ void nk_xu_render( NuklearWrapper* xu )
 				v2_2.y = (float)vert2.position.y;
 
 				Color clr;
-				
+
 				clr.r = (float)( vert0.col & 0xFF ) / ( 255.0f );
 				clr.g = (float)( ( vert0.col >> 8 ) & 0xFF ) / ( 255.0f );
 				clr.b = (float)( ( vert0.col >> 16 ) & 0xFF ) / ( 255.0f );
@@ -434,8 +309,9 @@ void nk_xu_render( NuklearWrapper* xu )
 #endif
 			offset += cmd->elem_count;
 		}
-		nk_clear( &( xu->ctx ) );
-		nk_buffer_clear( &( xu->cmds ) );
+		
+		nk_clear( &( wrapper->base.ctx ) );
+		nk_buffer_clear( &( wrapper->base.cmds ) );
 	}
 
 	GL( glUseProgram( 0 ) );
@@ -447,35 +323,35 @@ void nk_xu_render( NuklearWrapper* xu )
 #endif
 }
 
-void nk_xu_shutdown( NuklearWrapper* xu )
+static void nk_xturos_shutdown( NuklearWrapper* wrapper )
 {
-	nk_font_atlas_clear( &( xu->fontAtlas ) );
-	nk_free( &( xu->ctx ) );
+	nk_font_atlas_clear( &( wrapper->base.fontAtlas ) );
+	nk_free( &( wrapper->base.ctx ) );
 
 	// destroy the device stuff
-	shaders_Destroy( &( xu->platform.prog ), 1 );
-	img_Clean( xu->platform.fontImg );
-	GL( glDeleteBuffers( 1, &( xu->platform.vbo ) ) );
-	GL( glDeleteBuffers( 1, &( xu->platform.ebo ) ) );
+	shaders_Destroy( &( wrapper->xu.platform.prog ), 1 );
+	img_Clean( wrapper->xu.platform.fontImg );
+	GL( glDeleteBuffers( 1, &( wrapper->xu.platform.vbo ) ) );
+	GL( glDeleteBuffers( 1, &( wrapper->xu.platform.ebo ) ) );
+	
+	nk_buffer_free( &( wrapper->xu.base.cmds ) );
 
-	nk_buffer_free( &( xu->cmds ) );
-
-	memset( &xu, 0, sizeof( xu ) );
+	SDL_memset( wrapper, 0, sizeof( NuklearWrapper ) );
 }
 
-void nk_xu_clear( NuklearWrapper* xu )
+static void nk_xturos_clear( NuklearWrapper* wrapper )
 {
 	llog( LOG_DEBUG, "Manual clear" );
-	nk_clear( &( xu->ctx ) );
+	nk_clear( &( wrapper->base.ctx ) );
 }
 
-struct nk_image nk_xu_loadImage( const char* filePath, int* outWidth, int* outHeight )
+static struct nk_image nk_xturos_loadImage( NuklearWrapper* wrapper, const char* filePath, int* outWidth, int* outHeight )
 {
 	int id = img_Load( filePath, ST_DEFAULT );
-	
+
 	if( id == -1 ) {
 		llog( LOG_ERROR, "Unable to load image %s", filePath );
-		return nk_image_id( -1 );
+		return nk_image_id( INVALID_IMAGE_ID );
 	}
 
 	Vector2 size;
@@ -486,9 +362,69 @@ struct nk_image nk_xu_loadImage( const char* filePath, int* outWidth, int* outHe
 	return nk_image_id( id );
 }
 
-void nk_xu_unloadImage( struct nk_image* image )
+static void nk_xturos_unloadImage( NuklearWrapper* wrapper, struct nk_image* image )
 {
 	if( image == NULL ) return;
 
 	img_Clean( image->handle.id );
+}
+
+void nk_xturos_init( NuklearWrapper* wrapper )
+{
+	wrapper->base.type = NWT_XTUROS;
+
+	wrapper->base.handleEvent = nk_xturos_handleEvent;
+	wrapper->base.setRenderSize = nk_xturos_setRenderSize;
+	wrapper->base.render = nk_xturos_render;
+	wrapper->base.shutdown = nk_xturos_shutdown;
+	wrapper->base.clear = nk_xturos_clear;
+	wrapper->base.loadImage = nk_xturos_loadImage;
+	wrapper->base.unloadImage = nk_xturos_unloadImage;
+	wrapper->base.fontStashBegin = nk_xturos_fontStashBegin;
+	wrapper->base.fontStashEnd = nk_xturos_fontStashEnd;
+	
+	//  create the shaders, TODO: share this between contexts
+	ShaderDefinition shaderDefs[2];
+	ShaderProgramDefinition progDef;
+
+	shaderDefs[0].type = GL_VERTEX_SHADER;
+	shaderDefs[0].fileName = "Shaders/vertNuklear.glsl";
+	shaderDefs[0].shaderText = NULL;
+
+	shaderDefs[1].type = GL_FRAGMENT_SHADER;
+	shaderDefs[1].fileName = "Shaders/fragNuklear.glsl";
+	shaderDefs[1].shaderText = NULL;
+
+	progDef.vertexShader = 0;
+	progDef.fragmentShader = 1;
+	progDef.geometryShader = -1;
+
+	size_t numLoaded = shaders_Load( shaderDefs, sizeof( shaderDefs ) / sizeof( shaderDefs[0] ), &progDef, &( wrapper->xu.platform.prog ), 1 );
+	ASSERT( numLoaded != 0 );
+
+	GLsizei vertSize = sizeof( nk_xturos_vertex );
+	size_t vertPos = offsetof( nk_xturos_vertex, position );
+	size_t vertUV = offsetof( nk_xturos_vertex, uv );
+	size_t vertClr = offsetof( nk_xturos_vertex, col );
+
+	GL( glGenBuffers( 1, &( wrapper->xu.platform.vbo ) ) );
+	GL( glGenBuffers( 1, &( wrapper->xu.platform.ebo ) ) );
+	GL( glGenVertexArrays( 1, &( wrapper->xu.platform.vao ) ) );
+
+	GL( glBindVertexArray( wrapper->xu.platform.vao ) );
+	GL( glBindBuffer( GL_ARRAY_BUFFER, wrapper->xu.platform.vbo ) );
+	GL( glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, wrapper->xu.platform.ebo ) );
+
+	GL( glEnableVertexAttribArray( 0 ) ); // vert pos
+	GL( glEnableVertexAttribArray( 1 ) ); // vert uv
+	GL( glEnableVertexAttribArray( 2 ) ); // vert clr
+
+	GL( glVertexAttribPointer( 0, 2, GL_FLOAT, GL_FALSE, vertSize, (void*)vertPos ) );
+	GL( glVertexAttribPointer( 1, 2, GL_FLOAT, GL_FALSE, vertSize, (void*)vertUV ) );
+	GL( glVertexAttribPointer( 2, 4, GL_UNSIGNED_BYTE, GL_TRUE, vertSize, (void*)vertClr ) );
+
+	GL( glBindTexture( GL_TEXTURE_2D, 0 ) );
+	GL( glBindBuffer( GL_ARRAY_BUFFER, 0 ) );
+	GL( glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, 0 ) );
+	GL( glBindVertexArray( 0 ) );
 }

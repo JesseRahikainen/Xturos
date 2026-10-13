@@ -14,30 +14,30 @@ typedef void (*KeyResponse)(void);
 void input_ClearAllKeyBinds( void );
 
 // Clears all key bindings assocated with the passed in key code.
-void input_ClearKeyBinds( SDL_Keycode code );
+void input_ClearKeyBinds( SDL_Scancode code );
 
 // Clears all key bindings associated with the passed in response function.
 void input_ClearKeyResponse( KeyResponse response );
 
 // Binds a function response when a key is pressed down.
 //  Returns < 0 if there was a problem binding the key.
-int input_BindOnKeyPress( SDL_Keycode code, KeyResponse response );
+int input_BindOnKeyPress( SDL_Scancode code, KeyResponse response );
 int input_BindScriptOnKeyPress( SDL_Keycode code, const char* func );
 
 // Binds a function response when a key is released.
 //  Returns < 0 if there was a problem binding the key.
-int input_BindOnKeyRelease( SDL_Keycode code, KeyResponse response );
-int input_BindScriptOnKeyRelease( SDL_Keycode code, const char* func );
+int input_BindOnKeyRelease( SDL_Scancode code, KeyResponse response );
+int input_BindScriptOnKeyRelease( SDL_Scancode code, const char* func );
 
 // Binds function response when a key is pressed and released.
 //  Returns < 0 if there was a problem binding the key.
-int input_BindOnKey( SDL_Keycode code, KeyResponse onPressResponse, KeyResponse onReleaseResponse );
-int input_BindScriptOnKey( SDL_Keycode code, const char* onPressFunc, const char* onReleaseFunc );
+int input_BindOnKey( SDL_Scancode code, KeyResponse onPressResponse, KeyResponse onReleaseResponse );
+int input_BindScriptOnKey( SDL_Scancode code, const char* onPressFunc, const char* onReleaseFunc );
 
 // Gets the code associated with response function. Puts them into the keyCodes array (which should be no larger than maxKeyCodes).
 //  The rest of the array is filled with SDLK_UNKNOWN.
-void input_GetKeyPressBindings( KeyResponse response, SDL_Keycode* keyCodes, int maxKeyCodes );
-void input_GetKeyReleaseBindings( KeyResponse response, SDL_Keycode* keyCodes, int maxKeyCodes );
+void input_GetKeyPressBindings( KeyResponse response, SDL_Scancode* keyCodes, int maxKeyCodes );
+void input_GetKeyReleaseBindings( KeyResponse response, SDL_Scancode* keyCodes, int maxKeyCodes );
 
 /***** Mouse Input *****/
 // Sets up the coordinates for relative mouse position handling. Should be called after, and is only valid after, any changes to the render area or window size.

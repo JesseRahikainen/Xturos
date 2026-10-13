@@ -36,18 +36,24 @@ bool ecps_CreateProcess( ECPS* ecps,
 
 // run a process using the defined functions and components, is slower then ecsp_RunProcess( ), use primarily for prototyping
 //  or one off processes that you don't always need access to
-void ecps_RunCustomProcess( ECPS* ecps, PreProcFunc preProc, ProcFunc proc, PostProcFunc postProc, size_t numComponents, ... );
+void ecps_RunCustomProcess( ECPS* ecps, PreProcFunc preProc, ProcFunc proc, PostProcFunc postProc, void* extraData, size_t numComponents, ... );
 
 // run a process, must have been created with the associated entity-component-process system
-void ecps_RunProcess( ECPS* ecps, Process* process );
+void ecps_RunProcess( ECPS* ecps, Process* process, void* extraData );
 
-// creates an entity with the associated components, excepts the variable argument list to be
+// creates an entity with the associated components, expects the variable argument list to be
 //  interleaved { ComponentID id, void* compData } groupings
-//  the memory pointed to by compData is copied into the component specified by id for the
-//  new entity
+//  the memory pointed to by compData is copied into the component specified by id for the new entity
 //  returns the id of the entity
-//  the returned id is 0 if the creation fails
+//  return INVALID_ENTITY_ID if the creation fails
 EntityID ecps_CreateEntity( ECPS* ecps, size_t numComponents, ... );
+
+typedef struct {
+	void* data;
+	ComponentID id;
+} ComponentDataTypePair;
+// like ecps_CreateEntity() above, but allows passing in a list of pairs so we can determine the components at run time instead of compile time.
+EntityID ecps_CreateEntityByList( ECPS* ecps, size_t numComponents, ComponentDataTypePair* pairs );
 
 // finds the entity with the given id
 bool ecps_GetEntityByID( const ECPS* ecps, EntityID entityID, Entity* outEntity );
@@ -91,6 +97,8 @@ void ecps_DestroyEntityByID( ECPS* ecps, EntityID entityID );
 void ecps_DestroyAllEntities( ECPS* ecps );
 
 SerializeComponent ecps_GetComponentSerializationFunction( const ECPS* ecps, ComponentID componentID );
+
+bool ecps_DoesEntityExistByID( const ECPS* ecps, EntityID id );
 
 // debugging stuff
 void ecps_DumpEntityByID( ECPS* ecps, const EntityID id, const char* tag );

@@ -63,4 +63,18 @@ typedef struct {
 void infiniteListSelector_Init( InfiniteListSelector* selector, RandomGroup* rg, int invalidId );
 void infiniteListSelector_Choose( InfiniteListSelector* selector, int itemId, uint32_t itemWeight );
 
+#define SHUFFLE_ARRAY( a, type, iter, rand ) { \
+		for( size_t i##iter = 1; i##iter < ARRAY_SIZE( a ); ++i##iter ) { \
+			size_t swap = rand_GetArrayEntry( rand, i##iter + 1 ); \
+			type temp = a[i##iter]; a[i##iter] = a[swap]; a[swap] = temp; \
+		} \
+	}
+
+#define SHUFFLE_SB( a, type, rand ) { \
+		for( size_t i = 1; i < sb_Count( a ); ++i ) { \
+				size_t swap = rand_GetArrayEntry( rand, i + 1 ); \
+				type temp = a[i]; a[i] = a[swap]; a[swap] = temp; \
+		} \
+	}
+
 #endif // inclusion guard

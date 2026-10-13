@@ -57,4 +57,6 @@ EntityID idSet_GetFirstValidID( const IDSet* set );
 // Returns the first valid id after the passed in id, returns 0 if there is none.
 EntityID idSet_GetNextValidID( const IDSet* set, EntityID id );
 
+uint16_t idSet_GetMaxCount( const IDSet* set );
+
 #endif

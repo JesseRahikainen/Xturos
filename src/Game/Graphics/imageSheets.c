@@ -270,6 +270,8 @@ static void insertImage( char* filePath, stbrp_rect* rect, uint8_t* imageData, i
 		uint8_t* base = imageData + ( ( x + ( imgWidth * ( r + y ) ) ) * 4 );
 		SDL_memcpy( base, img.data + ( img.width * r * 4 ), 4 * img.width );
 	}
+
+	gfxUtil_ReleaseLoadedImage( &img );
 }
 
 static bool saveSpriteSheetDefinition( const char* fileName, SpriteSheetEntry* entries, size_t numEntries, RectSet* rectSets, size_t numRectSets )

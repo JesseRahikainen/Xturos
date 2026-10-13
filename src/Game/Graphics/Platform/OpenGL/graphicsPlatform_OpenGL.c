@@ -202,7 +202,7 @@ void gfxPlatform_DynamicSizeRender( float dt, float t,
 #endif
 
 	// editor and debugging ui stuff
-	nk_xu_render( &editorIMGUI );// #error this may leak memory?
+	nk_wrapper_Render( &editorIMGUI );// #error this may leak memory?
 
 #if !defined( __IPHONEOS__ ) && !defined( __ANDROID__ ) && !defined( __EMSCRIPTEN__ )
 	GL( glDisable( GL_MULTISAMPLE ) );

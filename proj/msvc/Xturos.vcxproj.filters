@@ -84,6 +84,9 @@
     <Filter Include="Source Files\Game\SharedScreens">
       <UniqueIdentifier>{c57c0218-42b4-4f05-9680-b42a4c3e8d57}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\Game\DebugWindow">
+      <UniqueIdentifier>{014f05ad-d27a-437a-86ff-2a7405caf071}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\Game\Graphics\graphics.h">
@@ -439,9 +442,6 @@
     </ClInclude>
     <ClInclude Include="..\..\src\Game\Game\testCollisionsState.h">
       <Filter>Source Files\Game\TestScreens</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Game\Game\optionsState.h">
-      <Filter>Source Files\Game\SharedStates</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Game\Game\testGamePadState.h">
       <Filter>Source Files\Game\TestScreens</Filter>
@@ -824,6 +824,15 @@
     <ClCompile Include="..\..\src\Game\System\serializer.c">
       <Filter>Source Files\System</Filter>
     </ClCompile>
+    <ClInclude Include="..\..\src\Game\Game\optionsState.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Game\Others\nuklear_sdl3_renderer.h">
+      <Filter>Source Files\Others</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Game\Game\DebugWindow\debugWindow.h">
+      <Filter>Source Files\Game\DebugWindow</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Text Include="..\..\readme.txt">
@@ -915,5 +924,16 @@
     <None Include="..\..\bin\data\Scripts\testScripting.lua">
       <Filter>Script Files</Filter>
     </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\src\Game\IMGUI\nuklearImpl.c">
+      <Filter>Source Files\IMGUI</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Game\IMGUI\nuklearWrapper.c">
+      <Filter>Source Files\IMGUI</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Game\Game\DebugWindow\debugWindow.c">
+      <Filter>Source Files\Game\DebugWindow</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

@@ -84,7 +84,7 @@ static void testScriptingState_ProcessEvents( SDL_Event* e )
 
 static void testScriptingState_Process( void )
 {
-	struct nk_context* ctx = &( inGameIMGUI.ctx );
+	struct nk_context* ctx = &( inGameIMGUI.base.ctx );
 	int renderWidth, renderHeight;
 	gfx_GetRenderSize( &renderWidth, &renderHeight );
 	struct nk_rect bounds = nk_rect( 0.0f, 0.0f, 200.0f, 200.0f );

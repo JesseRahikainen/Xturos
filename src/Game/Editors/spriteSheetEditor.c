@@ -137,7 +137,7 @@ void spriteSheetEditor_Hide( void )
 
 void spriteSheetEditor_IMGUIProcess( void )
 {
-	struct nk_context* ctx = &( editorIMGUI.ctx );
+	struct nk_context* ctx = &( editorIMGUI.base.ctx );
 	if(nk_begin( ctx, "Sprite Sheet", windowBounds, NK_WINDOW_MINIMIZABLE | NK_WINDOW_BORDER | NK_WINDOW_MOVABLE | NK_WINDOW_SCALABLE )) {
 		nk_menubar_begin( ctx ); {
 

@@ -76,7 +76,7 @@ typedef struct {
 } AnimEventHandler;
 
 typedef struct {
-	char* spriteSheetFile;
+	char* sbSpriteSheetFile;
 	float fps;
 	uint32_t durationFrames;
 	bool loops;

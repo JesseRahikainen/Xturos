@@ -398,18 +398,18 @@ ImageID img_Create( SDL_Surface* surface, ShaderType shaderType, const char* id 
 }
 
 // Cleans up an image at the specified index, trying to render with it after this won't work.
-void img_Clean( ImageID id )
+ImageID img_Clean( ImageID id )
 {
 	if( ( id == INVALID_IMAGE_ID ) ||
 		( ( images[id].size.v[0] == 0.0f ) && ( images[id].size.v[1] == 0.0f ) ) ||
 		( id >= MAX_IMAGES ) ||
 		( !( images[id].flags & IMGFLAG_IN_USE ) ) ) {
-		return;
+		return INVALID_IMAGE_ID;
 	}
 
 	if( !images[id].allowUnload ) {
 		llog( LOG_WARN, "Attempting to unload an image that is not unloadable." );
-		return;
+		return id;
 	}
 
 	// see if this is the last image using that texture
@@ -422,7 +422,6 @@ void img_Clean( ImageID id )
 
 	if( deleteTexture ) {
 		gfxPlatform_DeletePlatformTexture( images[id].textureObj );
-		
 	}
 	images[id].size = VEC2_ZERO;
 	images[id].flags = 0;
@@ -432,6 +431,8 @@ void img_Clean( ImageID id )
 	images[id].uvMax = VEC2_ZERO;
 	images[id].shaderType = ST_DEFAULT;
 	mem_Release( images[id].id );
+
+	return INVALID_IMAGE_ID;
 }
 
 // Finds the next unused package ID.
@@ -753,6 +754,12 @@ const char* img_GetImgStringID( ImageID imgID )
 	return images[imgID].id;
 }
 
+// Gets the default white box image
+ImageID img_GetDefaultWhiteBoxID( void )
+{
+	return img_GetExistingByStrID( "default_white_square" );
+}
+
 static void createRenderTransform( Vector2* pos, Vector2* scale, float rot, Vector2* offset, Matrix4* out )
 {
 	memcpy( out, &IDENTITY_MATRIX, sizeof( Matrix4 ) );
@@ -828,7 +835,8 @@ ImageRenderInstruction img_CreateDefaultRenderInstruction( void )
 
 ImageRenderInstruction img_CreateRenderInstruction_Pos( int imgID, uint32_t camFlags, const Vector2* pos, int8_t depth )
 {
-	ASSERT( pos != NULL );
+	ASSERT_AND_IF_NOT( pos != NULL ) return img_CreateDefaultRenderInstruction( );
+	ASSERT_AND_IF_NOT( img_IsValidImage( imgID ) ) return img_CreateDefaultRenderInstruction( );
 
 	ImageRenderInstruction ri;
 
@@ -844,14 +852,15 @@ ImageRenderInstruction img_CreateRenderInstruction_Pos( int imgID, uint32_t camF
 	ri.subSectionTopLeftNorm.x = ri.subSectionTopLeftNorm.y = 0.0f;
 	ri.subSectionBottomRightNorm.x = ri.subSectionBottomRightNorm.y = 1.0f;
 
-	mat3_CreateRenderTransform( pos, 0.0f, &VEC2_ZERO, &VEC2_ONE, &( ri.mat ) );
+	mat3_CreateRenderTransform( pos, 0.0f, &images[imgID].offset, &VEC2_ONE, &( ri.mat ) );
 
 	return ri;
 }
 
 ImageRenderInstruction img_CreateRenderInstruction_PosRot( int imgID, uint32_t camFlags, const Vector2* pos, float rotRad, int8_t depth )
 {
-	ASSERT( pos != NULL );
+	ASSERT_AND_IF_NOT( pos != NULL ) return img_CreateDefaultRenderInstruction( );
+	ASSERT_AND_IF_NOT( img_IsValidImage( imgID ) ) return img_CreateDefaultRenderInstruction( );
 
 	ImageRenderInstruction ri;
 
@@ -867,15 +876,16 @@ ImageRenderInstruction img_CreateRenderInstruction_PosRot( int imgID, uint32_t c
 	ri.subSectionTopLeftNorm.x = ri.subSectionTopLeftNorm.y = 0.0f;
 	ri.subSectionBottomRightNorm.x = ri.subSectionBottomRightNorm.y = 1.0f;
 
-	mat3_CreateRenderTransform( pos, rotRad, &VEC2_ZERO, &VEC2_ONE, &( ri.mat ) );
+	mat3_CreateRenderTransform( pos, rotRad, &images[imgID].offset, &VEC2_ONE, &( ri.mat ) );
 
 	return ri;
 }
 
 ImageRenderInstruction img_CreateRenderInstruction_PosVScale( int imgID, uint32_t camFlags, const Vector2* pos, const Vector2* scale, int8_t depth )
 {
-	ASSERT( pos != NULL );
-	ASSERT( scale != NULL );
+	ASSERT_AND_IF_NOT( pos != NULL ) return img_CreateDefaultRenderInstruction( );
+	ASSERT_AND_IF_NOT( scale != NULL ) return img_CreateDefaultRenderInstruction( );
+	ASSERT_AND_IF_NOT( img_IsValidImage( imgID ) ) return img_CreateDefaultRenderInstruction( );
 
 	ImageRenderInstruction ri;
 
@@ -891,7 +901,7 @@ ImageRenderInstruction img_CreateRenderInstruction_PosVScale( int imgID, uint32_
 	ri.subSectionTopLeftNorm.x = ri.subSectionTopLeftNorm.y = 0.0f;
 	ri.subSectionBottomRightNorm.x = ri.subSectionBottomRightNorm.y = 1.0f;
 
-	mat3_CreateRenderTransform( pos, 0.0f, &VEC2_ZERO, scale, &( ri.mat ) );
+	mat3_CreateRenderTransform( pos, 0.0f, &images[imgID].offset, scale, &( ri.mat ) );
 
 	return ri;
 }
@@ -980,7 +990,6 @@ bool img_SetRenderInstructionBorders( ImageRenderInstruction* instruction, uint3
 	ASSERT_AND_IF_NOT( top <= imgSize.h ) return false;
 	ASSERT_AND_IF_NOT( bottom <= imgSize.h ) return false;
 
-//#error TODO: Get this working with the actual rendering
 	instruction->subSectionTopLeftNorm.x = (float)left / imgSize.w;
 	instruction->subSectionTopLeftNorm.y = (float)top / imgSize.h;
 
@@ -992,7 +1001,8 @@ bool img_SetRenderInstructionBorders( ImageRenderInstruction* instruction, uint3
 
 void img_Render_Pos( ImageID imgID, uint32_t camFlags, int8_t depth, const Vector2* pos )
 {
-	ASSERT( pos != NULL );
+	ASSERT_AND_IF_NOT( pos != NULL );
+	ASSERT_AND_IF_NOT( img_IsValidImage( imgID ) ) return;
 
 	ImageRenderInstruction ri = img_CreateDefaultRenderInstruction( );
 
@@ -1000,15 +1010,16 @@ void img_Render_Pos( ImageID imgID, uint32_t camFlags, int8_t depth, const Vecto
 	ri.camFlags = camFlags;
 	ri.depth = depth;
 
-	mat3_CreateRenderTransform( pos, 0.0f, &VEC2_ZERO, &VEC2_ONE, &( ri.mat ) );
+	mat3_CreateRenderTransform( pos, 0.0f, &images[imgID].offset, &VEC2_ONE, &( ri.mat ) );
 
 	img_ImmediateRender( &ri );
 }
 
 void img_Render_PosClr( ImageID imgID, uint32_t camFlags, int8_t depth, const Vector2* pos, const Color* clr )
 {
-	ASSERT( pos != NULL );
-	ASSERT( clr != NULL );
+	ASSERT_AND_IF_NOT( pos != NULL ) return;
+	ASSERT_AND_IF_NOT( clr != NULL ) return;
+	ASSERT_AND_IF_NOT( img_IsValidImage( imgID ) ) return;
 
 	ImageRenderInstruction ri = img_CreateDefaultRenderInstruction( );
 
@@ -1017,14 +1028,15 @@ void img_Render_PosClr( ImageID imgID, uint32_t camFlags, int8_t depth, const Ve
 	ri.depth = depth;
 	ri.color = *clr;
 
-	mat3_CreateRenderTransform( pos, 0.0f, &VEC2_ZERO, &VEC2_ONE, &( ri.mat ) );
+	mat3_CreateRenderTransform( pos, 0.0f, &images[imgID].offset, &VEC2_ONE, &( ri.mat ) );
 
 	img_ImmediateRender( &ri );
 }
 
 void img_Render_PosRot( ImageID imgID, uint32_t camFlags, int8_t depth, const Vector2* pos, float rotRad )
 {
-	ASSERT( pos != NULL );
+	ASSERT_AND_IF_NOT( pos != NULL ) return;
+	ASSERT_AND_IF_NOT( img_IsValidImage( imgID ) ) return;
 
 	ImageRenderInstruction ri = img_CreateDefaultRenderInstruction( );
 
@@ -1032,15 +1044,16 @@ void img_Render_PosRot( ImageID imgID, uint32_t camFlags, int8_t depth, const Ve
 	ri.camFlags = camFlags;
 	ri.depth = depth;
 
-	mat3_CreateRenderTransform( pos, rotRad, &VEC2_ZERO, &VEC2_ONE, &( ri.mat ) );
+	mat3_CreateRenderTransform( pos, rotRad, &images[imgID].offset, &VEC2_ONE, &( ri.mat ) );
 
 	img_ImmediateRender( &ri );
 }
 
 void img_Render_PosRotClr( ImageID imgID, uint32_t camFlags, int8_t depth, const Vector2* pos, float rotRad, const Color* clr )
 {
-	ASSERT( pos != NULL );
-	ASSERT( clr != NULL );
+	ASSERT_AND_IF_NOT( pos != NULL ) return;
+	ASSERT_AND_IF_NOT( clr != NULL ) return;
+	ASSERT_AND_IF_NOT( img_IsValidImage( imgID ) ) return;
 
 	ImageRenderInstruction ri = img_CreateDefaultRenderInstruction( );
 
@@ -1049,15 +1062,16 @@ void img_Render_PosRotClr( ImageID imgID, uint32_t camFlags, int8_t depth, const
 	ri.depth = depth;
 	ri.color = ( *clr );
 
-	mat3_CreateRenderTransform( pos, rotRad, &VEC2_ZERO, &VEC2_ONE, &( ri.mat ) );
+	mat3_CreateRenderTransform( pos, rotRad, &images[imgID].offset, &VEC2_ONE, &( ri.mat ) );
 
 	img_ImmediateRender( &ri );
 }
 
 void img_Render_PosScaleV( ImageID imgID, uint32_t camFlags, int8_t depth, const Vector2* pos, const Vector2* scale )
 {
-	ASSERT( pos != NULL );
-	ASSERT( scale != NULL );
+	ASSERT_AND_IF_NOT( pos != NULL ) return;
+	ASSERT_AND_IF_NOT( scale != NULL ) return;
+	ASSERT_AND_IF_NOT( img_IsValidImage( imgID ) ) return;
 
 	ImageRenderInstruction ri = img_CreateDefaultRenderInstruction( );
 
@@ -1065,16 +1079,34 @@ void img_Render_PosScaleV( ImageID imgID, uint32_t camFlags, int8_t depth, const
 	ri.camFlags = camFlags;
 	ri.depth = depth;
 
-	mat3_CreateRenderTransform( pos, 0.0f, &VEC2_ZERO, scale, &( ri.mat ) );
+	mat3_CreateRenderTransform( pos, 0.0f, &images[imgID].offset, scale, &( ri.mat ) );
+
+	img_ImmediateRender( &ri );
+}
+
+void img_Render_PosRotScaleV( ImageID imgID, uint32_t camFlags, int8_t depth, const Vector2* pos, float rotRad, const Vector2* scale )
+{
+	ASSERT_AND_IF_NOT( pos != NULL ) return;
+	ASSERT_AND_IF_NOT( scale != NULL ) return;
+	ASSERT_AND_IF_NOT( img_IsValidImage( imgID ) ) return;
+
+	ImageRenderInstruction ri = img_CreateDefaultRenderInstruction( );
+
+	ri.imgID = imgID;
+	ri.camFlags = camFlags;
+	ri.depth = depth;
+
+	mat3_CreateRenderTransform( pos, rotRad, &images[imgID].offset, scale, &( ri.mat ) );
 
 	img_ImmediateRender( &ri );
 }
 
 void img_Render_PosScaleVClr( ImageID imgID, uint32_t camFlags, int8_t depth, const Vector2* pos, const Vector2* scale, const Color* clr )
 {
-	ASSERT( pos != NULL );
-	ASSERT( clr != NULL );
-	ASSERT( scale != NULL );
+	ASSERT_AND_IF_NOT( pos != NULL ) return;
+	ASSERT_AND_IF_NOT( clr != NULL ) return;
+	ASSERT_AND_IF_NOT( scale != NULL ) return;
+	ASSERT_AND_IF_NOT( img_IsValidImage( imgID ) ) return;
 
 	ImageRenderInstruction ri = img_CreateDefaultRenderInstruction( );
 
@@ -1083,16 +1115,17 @@ void img_Render_PosScaleVClr( ImageID imgID, uint32_t camFlags, int8_t depth, co
 	ri.depth = depth;
 	ri.color = ( *clr );
 
-	mat3_CreateRenderTransform( pos, 0.0f, &VEC2_ZERO, scale, &( ri.mat ) );
+	mat3_CreateRenderTransform( pos, 0.0f, &images[imgID].offset, scale, &( ri.mat ) );
 
 	img_ImmediateRender( &ri );
 }
 
 void img_Render_PosSizeVClr( ImageID imgID, uint32_t camFlags, int8_t depth, const Vector2* pos, const Vector2* size, const Color* clr )
 {
-	ASSERT( pos != NULL );
-	ASSERT( clr != NULL );
-	ASSERT( size != NULL );
+	ASSERT_AND_IF_NOT( pos != NULL ) return;
+	ASSERT_AND_IF_NOT( clr != NULL ) return;
+	ASSERT_AND_IF_NOT( size != NULL ) return;
+	ASSERT_AND_IF_NOT( img_IsValidImage( imgID ) ) return;
 
 	ImageRenderInstruction ri = img_CreateDefaultRenderInstruction( );
 
@@ -1104,15 +1137,16 @@ void img_Render_PosSizeVClr( ImageID imgID, uint32_t camFlags, int8_t depth, con
 	Vector2 scale;
 	img_GetDesiredScale( imgID, *size, &scale );
 
-	mat3_CreateRenderTransform( pos, 0.0f, &VEC2_ZERO, &scale, &( ri.mat ) );
+	mat3_CreateRenderTransform( pos, 0.0f, &images[imgID].offset, &scale, &( ri.mat ) );
 
 	img_ImmediateRender( &ri );
 }
 
 void img_Render_PosRotScaleClr( ImageID imgID, uint32_t camFlags, int8_t depth, const Vector2* pos, float rotRad, float scale, const Color* clr )
 {
-	ASSERT( pos != NULL );
-	ASSERT( clr != NULL );
+	ASSERT_AND_IF_NOT( pos != NULL ) return;
+	ASSERT_AND_IF_NOT( clr != NULL ) return;
+	ASSERT_AND_IF_NOT( img_IsValidImage( imgID ) ) return;
 
 	ImageRenderInstruction ri = img_CreateDefaultRenderInstruction( );
 
@@ -1122,7 +1156,7 @@ void img_Render_PosRotScaleClr( ImageID imgID, uint32_t camFlags, int8_t depth, 
 	ri.color = ( *clr );
 
 	Vector2 scaleVec = vec2( scale, scale );
-	mat3_CreateRenderTransform( pos, 0.0f, &VEC2_ZERO, &scaleVec, &( ri.mat ) );
+	mat3_CreateRenderTransform( pos, rotRad, &images[imgID].offset, &scaleVec, &( ri.mat ) );
 
 	img_ImmediateRender( &ri );
 }

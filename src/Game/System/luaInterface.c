@@ -377,7 +377,7 @@ static int lua_BindKeyPress( lua_State* ls )
 	LUA_GET_STRING( ls, funcName, p, error );
 	LUA_GET_INT( ls, luaKeyCode, p, error );
 
-	SDL_Keycode keyCode = (SDL_Keycode)luaKeyCode;
+	SDL_Scancode keyCode = (SDL_Scancode)luaKeyCode;
 
 	input_BindScriptOnKeyPress( keyCode, funcName );
 
@@ -392,7 +392,7 @@ static int lua_BindKeyRelease( lua_State* ls )
 	LUA_GET_STRING( ls, funcName, p, error );
 	LUA_GET_INT( ls, luaKeyCode, p, error );
 
-	SDL_Keycode keyCode = (SDL_Keycode)luaKeyCode;
+	SDL_Scancode keyCode = (SDL_Scancode)luaKeyCode;
 
 	input_BindScriptOnKeyRelease( keyCode, funcName );
 

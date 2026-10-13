@@ -41,7 +41,8 @@ ImageID img_CreateFromTexture( Texture* texture, ShaderType shaderType, const ch
 ImageID img_Create( SDL_Surface* surface, ShaderType shaderType, const char* id );
 
 // Cleans up an image at the specified index, trying to render with it after this won't work.
-void img_Clean( ImageID id );
+//  Returns INVALID_IMAGE_ID if there are no other instances of this image loaded, otherwise returns the passed in id.
+ImageID img_Clean( ImageID id );
 
 // Takes in an already loaded texture and some rectangles. I'ts assume the length of mins, maxes and retIDs equals count.
 //  Returns the package ID used to clean up later, returns -1 if there's a problem.
@@ -114,6 +115,9 @@ ImageID img_NextValidID( ImageID id );
 // Get the human readable id for the image.
 const char* img_GetImgStringID( ImageID imgID );
 
+// Gets the default white box image
+ImageID img_GetDefaultWhiteBoxID( void );
+
 // **************************************************************************************************************************************************************
 
 typedef struct {
@@ -145,6 +149,7 @@ void img_Render_PosRot( ImageID imgID, uint32_t camFlags, int8_t depth, const Ve
 void img_Render_PosRotClr( ImageID imgID, uint32_t camFlags, int8_t depth, const Vector2* pos, float rotRad, const Color* clr );
 void img_Render_PosScaleVClr( ImageID imgID, uint32_t camFlags, int8_t depth, const Vector2* pos, const Vector2* scale, const Color* clr );
 void img_Render_PosScaleV( ImageID imgID, uint32_t camFlags, int8_t depth, const Vector2* pos, const Vector2* scale );
+void img_Render_PosRotScaleV( ImageID imgID, uint32_t camFlags, int8_t depth, const Vector2* pos, float rotRad, const Vector2* scale );
 void img_Render_PosSizeVClr( ImageID imgID, uint32_t camFlags, int8_t depth, const Vector2* pos, const Vector2* size, const Color* clr );
 void img_Render_PosRotScaleClr( ImageID imgID, uint32_t camFlags, int8_t depth, const Vector2* pos, float rotRad, float scale, const Color* clr );
 

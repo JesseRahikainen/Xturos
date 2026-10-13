@@ -91,17 +91,17 @@ static EntityID createTestButton( Vector2 position, Vector2 size )
 #include "Utils/stretchyBuffer.h"
 
 static size_t buttonCount = 0;
-void countButtonsStart( ECPS* gameECPS )
+void countButtonsStart( ECPS* gameECPS, void* extraData )
 {
 	buttonCount = 0;
 }
 
-void countButtons( ECPS* gameECPS, const Entity* entity )
+void countButtons( ECPS* gameECPS, const Entity* entity, void* extraData )
 {
 	++buttonCount;
 }
 
-void rotateButtons( ECPS* gameECPS, const Entity* entity )
+void rotateButtons( ECPS* gameECPS, const Entity* entity, void* extraData )
 {
 	GCTransformData* tf;
 	if( !ecps_GetComponentFromEntity( entity, gcTransformCompID, &tf ) ) return;
@@ -141,14 +141,14 @@ static void testPointerResponseScreen_Enter( void )
 	ecps_GenerateSerializedECPS( &defaultECPS, &serializedECPS );
 
 	// make sure the number of buttons is correct
-	ecps_RunCustomProcess( &defaultECPS, countButtonsStart, countButtons, NULL, 1, gcGroupIDCompID );
+	ecps_RunCustomProcess( &defaultECPS, countButtonsStart, countButtons, NULL, NULL, 1, gcGroupIDCompID );
 	ASSERT( buttonCount == 4 );
 
 	// destroy all buttons
 	gp_DeleteAllOfGroup( &defaultECPS, 1 );
 
 	// make sure the number of buttons is correct
-	ecps_RunCustomProcess( &defaultECPS, countButtonsStart, countButtons, NULL, 1, gcGroupIDCompID );
+	ecps_RunCustomProcess( &defaultECPS, countButtonsStart, countButtons, NULL, NULL, 1, gcGroupIDCompID );
 	ASSERT( buttonCount == 0 );
 
 	// try saving out and loading in
@@ -170,7 +170,7 @@ static void testPointerResponseScreen_Enter( void )
 	ecps_CleanSerialized( &serializedECPS );
 
 	// make sure the number of buttons is correct
-	ecps_RunCustomProcess( &defaultECPS, countButtonsStart, countButtons, NULL, 1, gcGroupIDCompID );
+	ecps_RunCustomProcess( &defaultECPS, countButtonsStart, countButtons, NULL, NULL, 1, gcGroupIDCompID );
 	ASSERT( buttonCount == 8 );//*/
 }
 

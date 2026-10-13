@@ -18,36 +18,64 @@
 
 #include "nuklearHeader.h"
 
-typedef struct {
-	NuklearWrapper_Platform platform;
+typedef enum {
+	NWT_XTUROS
+} NuklearWrapperType;
 
+typedef union NuklearWrapper NuklearWrapper;
+
+typedef struct NuklearWrapperBase {
+	NuklearWrapperType type;
+
+	// shared data
 	SDL_Window* win;
-
 	struct nk_buffer cmds;
 	struct nk_draw_null_texture nullTx;
-
 	int renderWidth;
 	int renderHeight;
-
 	bool useRelativeMousePos;
-
 	struct nk_context ctx;
 	struct nk_font_atlas fontAtlas;
+
+	// wrapper type specific functions
+	void (*handleEvent)( NuklearWrapper* wrapper, SDL_Event* e );
+	void (*setRenderSize)( NuklearWrapper* wrapper, int renderWidth, int renderHeight );
+	void (*render)( NuklearWrapper* wrapper );
+	void (*shutdown)( NuklearWrapper* wrapper );
+	void (*clear)( NuklearWrapper* wrapper );
+	struct nk_image (*loadImage)( NuklearWrapper* wrapper, const char* filePath, int* outWidth, int* outHeight );
+	void (*unloadImage)( NuklearWrapper* wrapper, struct nk_image* image );
+	void (*fontStashBegin)( NuklearWrapper* wrapper, struct nk_font_atlas** atlas );
+	void (*fontStashEnd)( NuklearWrapper* wrapper, float fontHeight );
+} NuklearWrapperBase;
+
+typedef struct {
+	NuklearWrapperBase base;
+	NuklearWrapper_Platform platform;
+} NuklearWrapperXturos;
+
+typedef union NuklearWrapper {
+	NuklearWrapperBase base;
+	NuklearWrapperXturos xu;
 } NuklearWrapper;
 
 extern NuklearWrapper editorIMGUI;
 extern NuklearWrapper inGameIMGUI;
 
-void nk_xu_initMessageListeners( void );
-void nk_xu_init( NuklearWrapper* xu, SDL_Window* win, bool useRelativeMousePos, int renderWidth, int renderHeight );
-void nk_xu_fontStashBegin( NuklearWrapper* xu, struct nk_font_atlas** atlas );
-void nk_xu_fontStashEnd( NuklearWrapper* xu, float fontHeight );
-void nk_xu_handleEvent( NuklearWrapper* xu, SDL_Event* e );
-void nk_xu_setRenderSize( NuklearWrapper* xu, int renderWidth, int renderHeight );
-void nk_xu_render( NuklearWrapper* xu );
-void nk_xu_shutdown( NuklearWrapper* xu );
-void nk_xu_clear( NuklearWrapper* xu );
-struct nk_image nk_xu_loadImage( const char* filePath, int* outWidth, int* outHeight );
-void nk_xu_unloadImage( struct nk_image* image );
+void nk_xturos_init( NuklearWrapper* wrapper );
+
+void nk_wrapper_InitMessageListeners( void );
+void nk_wrapper_Init( NuklearWrapperType type, SDL_Window* win, bool useRelativeMousePos, int renderWidth, int renderHeight, NuklearWrapper* outWrapper );
+
+// will just call the wrappers function
+void nk_wrapper_HandleEvent( NuklearWrapper* wrapper, SDL_Event* e );
+void nk_wrapper_SetRenderSize( NuklearWrapper* wrapper, int renderWidth, int renderHeight );
+void nk_wrapper_Render( NuklearWrapper* wrapper );
+void nk_wrapper_Shutdown( NuklearWrapper* wrapper );
+void nk_wrapper_Clear( NuklearWrapper* wrapper );
+struct nk_image nk_wrapper_LoadImage( NuklearWrapper* wrapper, const char* filePath, int* outWidth, int* outHeight );
+void nk_wrapper_UnloadImage( NuklearWrapper* wrapper, struct nk_image* image );
+void nk_wrapper_FontStashBegin( NuklearWrapper* wrapper, struct nk_font_atlas** atlas );
+void nk_wrapper_FontStashEnd( NuklearWrapper* wrapper, float fontHeight );
 
 #endif

@@ -421,14 +421,14 @@ bool ecps_CreateProcess( ECPS* ecps,
 	return success;
 }
 
-static void internalRunProcess( ECPS* ecps, PreProcFunc preProc, ProcFunc proc, PostProcFunc postProc, ComponentBitFlags* compBitFlags )
+static void internalRunProcess( ECPS* ecps, PreProcFunc preProc, ProcFunc proc, PostProcFunc postProc, ComponentBitFlags* compBitFlags, void* extraData )
 {
 	ASSERT_AND_IF_NOT( ecps != NULL ) return;
 	ASSERT_AND_IF_NOT( ecps->isRunning ) return;
 
 	// then run the process, looping through all the entities
 	if( preProc != NULL ) {
-		preProc( ecps );
+		preProc( ecps, extraData );
 	}
 
 	ecps->isRunningProcess = true;
@@ -451,7 +451,7 @@ static void internalRunProcess( ECPS* ecps, PreProcFunc preProc, ProcFunc proc, 
 						entity.id = entityID;
 						entity.data = data;
 						entity.structure = &( pca->structure );
-						proc( ecps, &entity );
+						proc( ecps, &entity, extraData );
 					}
 					dataIdx += pca->entitySize;
 				}
@@ -461,7 +461,7 @@ static void internalRunProcess( ECPS* ecps, PreProcFunc preProc, ProcFunc proc, 
 	ecps->isRunningProcess = false;
 
 	if( postProc != NULL ) {
-		postProc( ecps );
+		postProc( ecps, extraData );
 	}
 
 	if( sb_Count( ecps->sbCommandBuffer ) > 0 ) {
@@ -502,7 +502,7 @@ static void internalRunProcess( ECPS* ecps, PreProcFunc preProc, ProcFunc proc, 
 
 // run a process using the defined functions and components, is slower then ecsp_RunProcess( ), use primarily for prototyping
 //  or one off processes that you don't always need access to
-void ecps_RunCustomProcess( ECPS* ecps, PreProcFunc preProc, ProcFunc proc, PostProcFunc postProc, size_t numComponents, ... )
+void ecps_RunCustomProcess( ECPS* ecps, PreProcFunc preProc, ProcFunc proc, PostProcFunc postProc, void* extraData, size_t numComponents, ... )
 {
 	ASSERT_AND_IF_NOT( ecps != NULL ) return;
 
@@ -519,19 +519,112 @@ void ecps_RunCustomProcess( ECPS* ecps, PreProcFunc preProc, ProcFunc proc, Post
 		return;
 	}
 
-	internalRunProcess( ecps, preProc, proc, postProc, &bitFlags );
+	internalRunProcess( ecps, preProc, proc, postProc, &bitFlags, extraData );
 }
 
 // run a process, must have been created with the associated entity-component-process system
-void ecps_RunProcess( ECPS* ecps, Process* process )
+void ecps_RunProcess( ECPS* ecps, Process* process, void* extraData )
 {
 	// verify the process is part of the entity-component-process system
 	ASSERT_AND_IF_NOT( ( ecps->id ) == ( process->ecpsID ) ) return;
 
-	internalRunProcess( ecps, process->preProc, process->proc, process->postProc, &( process->bitFlags ) );
+	internalRunProcess( ecps, process->preProc, process->proc, process->postProc, &( process->bitFlags ), extraData );
 }
 
-static void createEntityVA( ECPS* ecps, EntityID entityID, size_t numComponents, va_list va )
+static void createEntityByList( ECPS* ecps, EntityID entityID, size_t numComponents, ComponentDataTypePair* list )
+{
+	ComponentBitFlags entityBitFlags;
+
+	memset( &entityBitFlags, 0, sizeof( ComponentBitFlags ) );
+	for( size_t i = 0; i < numComponents; ++i ) {
+		ComponentID compID = list[i].id;
+		//ASSERT( ecps_ct_IsComponentTypeValid( &( ecps->componentTypes ), compID ) );
+		if( ecps_ct_IsComponentTypeValid( &( ecps->componentTypes ), compID ) ) {
+			ecps_cbf_SetFlagOn( &entityBitFlags, compID );
+		} else {
+			llog( LOG_DEBUG, "Creating an entity with invalid component at varg position: %i", i );
+		}
+	}
+
+	ecps_cbf_SetFlagOn( &entityBitFlags, sharedComponent_ID );
+	ecps_cbf_SetFlagOn( &entityBitFlags, sharedComponent_Enabled );
+
+	// find or create the packaged array for this entity
+	uint32_t pcaIdx = createOrFindPackagedArray( ecps, &entityBitFlags );
+
+	// add the entity to the list
+	size_t currOffset = allocateDataForEntity( ecps, pcaIdx );
+	uint8_t* baseData = (uint8_t*)( &( ecps->componentData.sbComponentArrays[pcaIdx].sbData[currOffset] ) );
+	( *(EntityID*)( baseData ) ) = entityID;
+	modifyEntityDirectoryEntry( ecps, entityID, pcaIdx, currOffset );
+
+	for( size_t i = 0; i < numComponents; ++i ) {
+		ComponentID compID = list[i].id;
+		void* compData = list[i].data;
+		if( ecps_ct_IsComponentTypeValid( &( ecps->componentTypes ), compID ) ) {
+			size_t compSize = ecps->componentTypes.sbTypes[compID].size;
+
+			if( compSize > 0 ) {
+				if( compData != NULL ) {
+					// have data, copy it
+					memcpy( &( baseData[ecps->componentData.sbComponentArrays[pcaIdx].structure.entries[compID].offset] ), compData, compSize );
+				} else {
+					// no data, zero it out
+					memset( &( baseData[ecps->componentData.sbComponentArrays[pcaIdx].structure.entries[compID].offset] ), 0, compSize );
+				}
+			}
+		}
+	}
+}
+
+static void pushCreateCommandByList( ECPS* ecps, EntityID entityID, size_t numComponents, ComponentDataTypePair* list )
+{
+	ASSERT( numComponents <= UINT32_MAX );
+
+	// first gather how much memory we'll need to allocate, should be slightly faster to do a 
+	//  single allocation than multiple
+	size_t totalSize = sizeof( CreateEntityCommand );
+	for( size_t i = 0; i < numComponents; ++i ) {
+		ComponentID compID = list[i].id;
+		totalSize += sizeof( ComponentID );
+		totalSize += ecps->componentTypes.sbTypes[compID].size;
+	}
+
+	// allocate the space
+	uint8_t* currMem = sb_Add( ecps->sbCommandBuffer, totalSize );
+
+	// now copy all the data over
+	//  first the command specific stuff
+	CreateEntityCommand cmd;
+	cmd.cmd = CMD_CREATE_ENTITY;
+	cmd.id = entityID;
+	cmd.numComps = (uint32_t)numComponents;
+	memcpy( currMem, &cmd, sizeof( CreateEntityCommand ) );
+	currMem += sizeof( CreateEntityCommand );
+
+	//  then the components and their data
+	for( size_t i = 0; i < numComponents; ++i ) {
+		ComponentID compID = list[i].id;
+		void* compData = list[i].data;
+
+		memcpy( currMem, &compID, sizeof( ComponentID ) );
+		currMem += sizeof( ComponentID );
+
+		size_t compSize = ecps->componentTypes.sbTypes[compID].size;
+		if( compSize > 0 ) {
+			if( compData != NULL ) {
+				// have data, copy it
+				memcpy( currMem, compData, compSize );
+			} else {
+				// no data, zero it out
+				memset( currMem, 0, compSize );
+			}
+		}
+		currMem += compSize;
+	}
+}
+
+/*static void createEntityVA( ECPS* ecps, EntityID entityID, size_t numComponents, va_list va )
 {
 	va_list list;
 
@@ -637,7 +730,7 @@ static void pushCreateCommand( ECPS* ecps, EntityID entityID, size_t numComponen
 			currMem += compSize;
 		}
 	} va_end( list );
-}
+}//*/
 
 // returns past end of command
 static uint8_t* runCreateCommand( ECPS* ecps, uint8_t* commandData )
@@ -685,28 +778,55 @@ static uint8_t* runCreateCommand( ECPS* ecps, uint8_t* commandData )
 
 // creates an entity with the associated components, expects the variable argument list to be
 //  interleaved { ComponentID id, void* compData } groupings
-//  the memory pointed to by compData is copied into the component specified by id for the
-//  new entity
+//  the memory pointed to by compData is copied into the component specified by id for the new entity
 //  returns the id of the entity
-//  the returned id is 0 if the creation fails
+//  return INVALID_ENTITY_ID if the creation fails
 EntityID ecps_CreateEntity( ECPS* ecps, size_t numComponents, ... )
 {
-	ASSERT( ecps != NULL );
-
-	EntityID entityID = idSet_ClaimID( &( ecps->idSet ) );
 	va_list list;
-
-	if( entityID == 0 ) {
-		return 0;
-	}
+	ComponentDataTypePair* datum = mem_Allocate( sizeof( ComponentDataTypePair ) * numComponents );
+	ASSERT_AND_IF_NOT( ( datum != NULL ) || ( numComponents == 0 ) ) return INVALID_ENTITY_ID;
 
 	va_start( list, numComponents ); {
-		if( ecps->isRunningProcess ) {
-			pushCreateCommand( ecps, entityID, numComponents, list );
-		} else {
-			createEntityVA( ecps, entityID, numComponents, list );
+		for( size_t i = 0; i < numComponents; ++i ) {
+			datum[i].id = va_arg( list, ComponentID );
+			datum[i].data = va_arg( list, void* );
 		}
 	} va_end( list );
+
+	EntityID id = ecps_CreateEntityByList( ecps, numComponents, datum );
+
+	mem_Release( datum );
+
+	return id;
+}
+
+// like ecps_CreateEntity() above, but allows passing in a list of pairs so we can determine the components at run time instead of compile time.
+EntityID ecps_CreateEntityByList( ECPS* ecps, size_t numComponents, ComponentDataTypePair* pairs )
+{
+	ASSERT_AND_IF_NOT( ecps != NULL ) return INVALID_ENTITY_ID;
+	ASSERT_AND_IF_NOT( ecps != NULL ) return INVALID_ENTITY_ID;
+
+#ifdef _DEBUG
+	// check to see if there are multiple copies of the same component type
+	for( size_t i = 0; i < numComponents; ++i ) {
+		for( size_t a = i + 1; a < numComponents; ++a ) {
+			ASSERT_AND_IF_NOT( pairs[i].id != pairs[a].id ) return INVALID_ENTITY_ID;
+		}
+	}
+#endif
+
+	EntityID entityID = idSet_ClaimID( &( ecps->idSet ) );
+
+	if( entityID == INVALID_ENTITY_ID ) {
+		return INVALID_ENTITY_ID;
+	}
+
+	if( ecps->isRunningProcess ) {
+		pushCreateCommandByList( ecps, entityID, numComponents, pairs );
+	} else {
+		createEntityByList( ecps, entityID, numComponents, pairs );
+	}
 
 	return entityID;
 }
@@ -1243,6 +1363,11 @@ SerializeComponent ecps_GetComponentSerializationFunction( const ECPS* ecps, Com
 		return NULL;
 	}
 	return ecps->componentTypes.sbTypes[componentID].serialize;
+}
+
+bool ecps_DoesEntityExistByID( const ECPS* ecps, EntityID id )
+{
+	return idSet_IsIDValid( &(ecps->idSet), id );
 }
 
 // list out the components of one entity

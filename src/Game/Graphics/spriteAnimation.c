@@ -142,7 +142,7 @@ SpriteAnimation spriteAnimation( )
 	newAnim.fps = 10;
 	newAnim.sbEvents = NULL;
 	newAnim.spriteSheetPackageID = -1;
-	newAnim.spriteSheetFile = NULL;
+	newAnim.sbSpriteSheetFile = NULL;
 	newAnim.loops = false;
 	newAnim.loadCount = 0;
 	return newAnim;
@@ -151,7 +151,7 @@ SpriteAnimation spriteAnimation( )
 bool sprAnim_LoadAssociatedData( SpriteAnimation* anim )
 {
 	// load the sprite sheet associated with the animation
-	anim->spriteSheetPackageID = img_LoadSpriteSheet( anim->spriteSheetFile, ST_DEFAULT, NULL );
+	anim->spriteSheetPackageID = img_LoadSpriteSheet( anim->sbSpriteSheetFile, ST_DEFAULT, NULL );
 	if( anim->spriteSheetPackageID < 0 ) {
 		return false;
 	}
@@ -175,8 +175,8 @@ void sprAnim_AddEvent( SpriteAnimation* anim, AnimEvent evt )
 
 void sprAnim_Clean( SpriteAnimation* anim )
 {
-	mem_Release( anim->spriteSheetFile );
-	anim->spriteSheetFile = NULL;
+	sb_Release( anim->sbSpriteSheetFile );
+	anim->sbSpriteSheetFile = NULL;
 	for( size_t i = 0; i < sb_Count( anim->sbEvents ); ++i ) {
 		if( anim->sbEvents[i].base.type == AET_SWITCH_IMAGE ) {
 			mem_Release( anim->sbEvents[i].switchImg.frameName );
@@ -338,17 +338,18 @@ uint32_t sprAnim_NextImageEvent( SpriteAnimation* anim, uint32_t startingFrame, 
 	return foundEvent;
 }
 
-bool sprAnim_Save( const char* fileName, SpriteAnimation* anim )
-{
+bool sprAnim_Save( const char* filePath, SpriteAnimation* anim )
+{;
 	bool done = false;
+	char* sbRelativeSpriteSheetPath = NULL;
 
-	ASSERT_AND_IF_NOT( fileName != NULL ) return false;
+	ASSERT_AND_IF_NOT( filePath != NULL ) return false;
 	ASSERT_AND_IF_NOT( anim != NULL ) return false;
-	ASSERT_AND_IF_NOT( anim->spriteSheetFile != NULL ) return false;
-	ASSERT_AND_IF_NOT( SDL_strlen( anim->spriteSheetFile ) > 0 ) return false;
+	ASSERT_AND_IF_NOT( anim->sbSpriteSheetFile != NULL ) return false;
+	ASSERT_AND_IF_NOT( SDL_strlen( anim->sbSpriteSheetFile ) > 0 ) return false;
 
 	cmp_ctx_t cmp;
-	SDL_IOStream* ioStream = openRWopsCMPFile( fileName, "wb", &cmp );
+	SDL_IOStream* ioStream = openRWopsCMPFile( filePath, "wb", &cmp );
 	if( ioStream == NULL ) {
 		return false;
 	}
@@ -360,7 +361,11 @@ bool sprAnim_Save( const char* fileName, SpriteAnimation* anim )
 	SERIALIZE_CHECK( s.flt( &s, "fps", &( anim->fps ) ), ioType, "fps", goto clean_up );
 	SERIALIZE_CHECK( s.u32( &s, "duration", &( anim->durationFrames ) ), ioType, "duration", goto clean_up );
 	SERIALIZE_CHECK( s.boolean( &s, "looping", &( anim->loops ) ), ioType, "looping", goto clean_up );
-	SERIALIZE_CHECK( s.cString( &s, "sheetFileName", &( anim->spriteSheetFile ) ), ioType, "sprite sheet file name", goto clean_up );
+
+	// want to make the sprite sheet file path relative to the path where we're saving out the animation
+	//  we've recieved an absolute file path, need to cut the file off the end
+	sbRelativeSpriteSheetPath = getRelativePathSB( filePath, anim->sbSpriteSheetFile, true );
+	SERIALIZE_CHECK( s.cString( &s, "sheetFileName", &( sbRelativeSpriteSheetPath ) ), ioType, "sprite sheet file name", goto clean_up );
 
 	uint32_t numEvents = (uint32_t)sb_Count( anim->sbEvents );
 	SERIALIZE_CHECK( s.arraySize( &s, "eventCount", &( numEvents ) ), ioType, "event count", goto clean_up );
@@ -398,14 +403,16 @@ bool sprAnim_Save( const char* fileName, SpriteAnimation* anim )
 	done = true;
 
 clean_up:
+	sb_Release( sbRelativeSpriteSheetPath );
+
 	if( !SDL_CloseIO( ioStream ) ) {
-		llog( LOG_ERROR, "Error closing file %s: %s", fileName, SDL_GetError( ) );
+		llog( LOG_ERROR, "Error closing file %s: %s", filePath, SDL_GetError( ) );
 		done = false;
 	}
 
 	if( !done ) {
 		// delete partially written out file
-		remove( fileName );
+		remove( filePath );
 	}
 	return done;
 }
@@ -413,6 +420,7 @@ clean_up:
 bool sprAnim_Load( const char* fileName, SpriteAnimation* anim )
 {
 	bool done = false;
+	char* relativePath = NULL;
 
 	ASSERT_AND_IF_NOT( fileName != NULL ) return false;
 	ASSERT_AND_IF_NOT( anim != NULL ) return false;
@@ -429,8 +437,10 @@ bool sprAnim_Load( const char* fileName, SpriteAnimation* anim )
 	SERIALIZE_CHECK( s.flt( &s, "fps", &( anim->fps ) ), ioType, "fps", goto clean_up );
 	SERIALIZE_CHECK( s.u32( &s, "duration", &( anim->durationFrames ) ), ioType, "duration", goto clean_up );
 	SERIALIZE_CHECK( s.boolean( &s, "looping", &( anim->loops ) ), ioType, "looping", goto clean_up );
-	SERIALIZE_CHECK( s.cString( &s, "sheetFileName", &( anim->spriteSheetFile ) ), ioType, "sprite sheet file name", goto clean_up );
 
+	SERIALIZE_CHECK( s.cString( &s, "sheetFileName", &( relativePath ) ), ioType, "sprite sheet file name", goto clean_up );
+	anim->sbSpriteSheetFile = getAbsolutePathSB( fileName, relativePath, true );
+	
 	// TODO: figure out how to do stretchy buffers with the new serialization
 	uint32_t numEvents;
 	SERIALIZE_CHECK( s.arraySize( &s, "eventCount", &( numEvents ) ), ioType, "event count", goto clean_up );
@@ -472,6 +482,8 @@ bool sprAnim_Load( const char* fileName, SpriteAnimation* anim )
 	done = true;
 
 clean_up:
+	mem_Release( relativePath );
+
 	if( !SDL_CloseIO( ioStream ) ) {
 		llog( LOG_ERROR, "Error closing file %s: %s", fileName, SDL_GetError( ) );
 		done = false;
@@ -479,8 +491,8 @@ clean_up:
 
 	if( !done ) {
 		// clean up partially loaded data
-		mem_Release( anim->spriteSheetFile );
-		anim->spriteSheetFile = NULL;
+		sb_Release( anim->sbSpriteSheetFile );
+		anim->sbSpriteSheetFile = NULL;
 		for( size_t i = 0; i < sb_Count( anim->sbEvents ); ++i ) {
 			if( anim->sbEvents[i].base.type == AET_SWITCH_IMAGE ) {
 				mem_Release( anim->sbEvents[i].switchImg.frameName );

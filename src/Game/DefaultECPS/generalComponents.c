@@ -14,10 +14,7 @@
 #include "Graphics/images.h"
 
 ComponentID gcTransformCompID = INVALID_COMPONENT_ID;
-ComponentID gcPosCompID = INVALID_COMPONENT_ID;
 ComponentID gcClrCompID = INVALID_COMPONENT_ID;
-ComponentID gcRotCompID = INVALID_COMPONENT_ID;
-ComponentID gcScaleCompID = INVALID_COMPONENT_ID;
 ComponentID gcSpriteCompID = INVALID_COMPONENT_ID;
 ComponentID gcStencilCompID = INVALID_COMPONENT_ID;
 ComponentID gc3x3SpriteCompID = INVALID_COMPONENT_ID;
@@ -49,6 +46,8 @@ static bool serializeGeneralCallback( Serializer* s, GeneralCallback* callback, 
 		SERIALIZE_CHECK( s->trackedECPSCallback( s, "sourceFuncID", &( callback->source.callback ) ), type, desc, return false );
 	} else if( callback->type == CBT_LUA ) {
 		SERIALIZE_CHECK( s->cString( s, "scriptFunc", &( callback->script.callback ) ), type, "scriptFunc", return false );
+	} else if( callback->type == CBT_NONE ) {
+		// nothing else to serialize
 	} else {
 		llog( LOG_ERROR, "Unknown callback type when saving %s for %s.", desc, type );
 		return false;
@@ -122,6 +121,9 @@ static bool serializeCollComp( Serializer* s, void* data )
 
 	SERIALIZE_CHECK( s->startStructure( s, "" ), "GCColliderData", "starting", return false );
 	SERIALIZE_ENUM( s, "GCColliderData", "callbackType", coll->base.type, enum ColliderType, return false );
+	SERIALIZE_CHECK( s->u32( s, "group", &( coll->base.group ) ), "GCColliderData", "group", return false );
+	SERIALIZE_CHECK( s->u32( s, "mask", &( coll->base.mask ) ), "GCColliderData", "mask", return false );
+	SERIALIZE_CHECK( clr_Serialize( s, "debugColor", &( coll->base.debugColor ) ), "GCColliderData", "debugColor", return false );
 	switch( coll->base.type ) {
 		case CT_AAB:
 			SERIALIZE_CHECK( vec2_Serialize( s, "halfDim", &( coll->aab.halfDim ) ), "GCColliderData", "halfDim", return false );
@@ -367,9 +369,9 @@ static bool serializeAnimatedSpriteComp( Serializer* s, void* data )
 //=====================================================================================================
 void gc_GetLerpedGlobalMatrix( ECPS* ecps, GCTransformData* tf, const Vector2* imageOffset, float t, Matrix3* outMat )
 {
-	ASSERT( tf != NULL );
-	ASSERT( outMat != NULL );
-	ASSERT( t >= 0.0f && t <= 1.0f );
+	ASSERT_AND_IF_NOT( tf != NULL ) return;
+	ASSERT_AND_IF_NOT( outMat != NULL ) return;
+	ASSERT_AND_IF_NOT( t >= 0.0f && t <= 1.0f ) return;
 
 	if( tf->lastMatVal == t ) {
 		( *outMat ) = tf->mat;
@@ -411,6 +413,44 @@ void gc_GetFutureGlobalMatrix( ECPS* ecps, GCTransformData* tf, const Vector2* i
 	gc_GetLerpedGlobalMatrix( ecps, tf, imageOffset, 1.0f, outMat );
 }
 
+void gc_GetCurrPosition( ECPS* ecps, GCTransformData* tf, Vector2* outPos )
+{
+	ASSERT_AND_IF_NOT( outPos != NULL ) return;
+	Matrix3 mat;
+	gc_GetCurrGlobalMatrix( ecps, tf, &VEC2_ZERO, &mat );
+	mat3_GetPosition( &mat, outPos );
+}
+
+void gc_GetFuturePosition( ECPS* ecps, GCTransformData* tf, Vector2* outPos )
+{
+	ASSERT_AND_IF_NOT( outPos != NULL ) return;
+	Matrix3 mat;
+	gc_GetFutureGlobalMatrix( ecps, tf, &VEC2_ZERO, &mat );
+	mat3_GetPosition( &mat, outPos );
+}
+
+bool gc_GetCurrPositionByID( ECPS* ecps, EntityID id, Vector2* outPos )
+{
+	ASSERT_AND_IF_NOT( outPos != NULL ) return false;
+	GCTransformData* tfData = NULL;
+	if( ecps_GetComponentFromEntityByID( ecps, id, gcTransformCompID, &tfData ) ) {
+		gc_GetCurrPosition( ecps, tfData, outPos );
+		return true;
+	}
+	return false;
+}
+
+bool gc_GetFuturePositionByID( ECPS* ecps, EntityID id, Vector2* outPos )
+{
+	ASSERT_AND_IF_NOT( outPos != NULL ) return false;
+	GCTransformData* tfData = NULL;
+	if( ecps_GetComponentFromEntityByID( ecps, id, gcTransformCompID, &tfData ) ) {
+		gc_GetFuturePosition( ecps, tfData, outPos );
+		return true;
+	}
+	return false;
+}
+
 static void detachInternal( ECPS* ecps, EntityID id, GCTransformData* tf, bool ignoreTreeOperations )
 {
 	if( tf->parentID == INVALID_ENTITY_ID ) {
@@ -438,10 +478,7 @@ static void detachInternal( ECPS* ecps, EntityID id, GCTransformData* tf, bool i
 			GCTransformData* currChildTf = NULL;
 			do {
 				ecps_GetComponentFromEntityByID( ecps, nextChild, gcTransformCompID, &currChildTf );
-				ASSERT_AND_IF_NOT( currChildTf != NULL )
-				{
-					return;
-				}
+				ASSERT_AND_IF_NOT( currChildTf != NULL ) return; // error, we shouldn't be finding mounted entities that don't have a transform component
 				nextChild = currChildTf->nextSiblingID;
 			} while( nextChild != id );
 			currChildTf->nextSiblingID = tf->nextSiblingID;
@@ -478,47 +515,47 @@ static bool isDescendantOf( ECPS* ecps, EntityID testID, GCTransformData* tf )
 // // retrieves the local transform stuff
 Vector2 gc_GetLocalPos( GCTransformData* tf )
 {
-	ASSERT( tf != NULL );
+	ASSERT_AND_IF_NOT( tf != NULL ) return VEC2_ZERO;
 	return tf->futureState.pos;
 }
 
 float gc_GetLocalRotRad( GCTransformData* tf )
 {
-	ASSERT( tf != NULL );
+	ASSERT_AND_IF_NOT( tf != NULL ) return 0.0f;
 	return tf->futureState.rotRad;
 }
 
 Vector2 gc_GetLocalScale( GCTransformData* tf )
 {
-	ASSERT( tf != NULL );
+	ASSERT_AND_IF_NOT( tf != NULL ) return VEC2_ZERO;
 	return tf->futureState.scale;
 }
 
 // sets the local transform stuff
 void gc_SetTransformLocalPos( GCTransformData* tf, Vector2 pos)
 {
-	ASSERT( tf != NULL );
+	ASSERT_AND_IF_NOT( tf != NULL ) return;
 	tf->futureState.pos = pos;
 	tf->lastMatVal = INFINITY;
 }
 
 void gc_SetTransformLocalRot( GCTransformData* tf, float rotRad )
 {
-	ASSERT( tf != NULL );
+	ASSERT_AND_IF_NOT( tf != NULL ) return;
 	tf->futureState.rotRad = rotRad;
 	tf->lastMatVal = INFINITY;
 }
 
 void gc_SetTransformLocalVectorScale( GCTransformData* tf, Vector2 scale )
 {
-	ASSERT( tf != NULL );
+	ASSERT_AND_IF_NOT( tf != NULL ) return;
 	tf->futureState.scale = scale;
 	tf->lastMatVal = INFINITY;
 }
 
 void gc_SetTransformLocalFloatScale( GCTransformData* tf, float scale )
 {
-	ASSERT( tf != NULL );
+	ASSERT_AND_IF_NOT( tf != NULL ) return;
 	tf->futureState.scale = vec2( scale, scale );
 	tf->lastMatVal = INFINITY;
 }
@@ -526,30 +563,30 @@ void gc_SetTransformLocalFloatScale( GCTransformData* tf, float scale )
 // adds an offset to the local transform stuff
 void gc_AdjustLocalPos( GCTransformData* tf, Vector2* adj)
 {
-	ASSERT( tf != NULL );
-	ASSERT( adj != NULL );
+	ASSERT_AND_IF_NOT( tf != NULL ) return;
+	ASSERT_AND_IF_NOT( adj != NULL ) return;
 	vec2_Add( &( tf->futureState.pos ), adj, &( tf->futureState.pos ) );
 	tf->lastMatVal = INFINITY;
 }
 
 void gc_AdjustLocalRot( GCTransformData* tf, float adjRad)
 {
-	ASSERT( tf != NULL );
+	ASSERT_AND_IF_NOT( tf != NULL ) return;
 	tf->futureState.rotRad = radianRotWrap( tf->futureState.rotRad + adjRad );
 	tf->lastMatVal = INFINITY;
 }
 
 void gc_AdjustLocalVectorScale( GCTransformData* tf, Vector2* adj )
 {
-	ASSERT( tf != NULL );
-	ASSERT( adj != NULL );
+	ASSERT_AND_IF_NOT( tf != NULL ) return;
+	ASSERT_AND_IF_NOT( adj != NULL ) return;
 	vec2_Add( &( tf->futureState.scale ), adj, &( tf->futureState.scale ) );
 	tf->lastMatVal = INFINITY;
 }
 
 void gc_AdjustLocalFloatScale( GCTransformData* tf, float adj )
 {
-	ASSERT( tf != NULL );
+	ASSERT_AND_IF_NOT( tf != NULL ) return;
 	tf->futureState.scale.x += adj;
 	tf->futureState.scale.y += adj;
 	tf->lastMatVal = INFINITY;
@@ -558,28 +595,28 @@ void gc_AdjustLocalFloatScale( GCTransformData* tf, float adj )
 // changes everything, making sure there is no lerping during the rendering
 void gc_TeleportToLocalPos( GCTransformData* tf, Vector2 pos )
 {
-	ASSERT( tf != NULL );
+	ASSERT_AND_IF_NOT( tf != NULL ) return;
 	tf->currState.pos = tf->futureState.pos = pos;
 	tf->lastMatVal = INFINITY;
 }
 
 void gc_TeleportToLocalRot( GCTransformData* tf, float rotRad )
 {
-	ASSERT( tf != NULL );
+	ASSERT_AND_IF_NOT( tf != NULL ) return;
 	tf->currState.rotRad = tf->futureState.rotRad = rotRad;
 	tf->lastMatVal = INFINITY;
 }
 
 void gc_TeleportToLocalVectorScale( GCTransformData* tf, Vector2 scale )
 {
-	ASSERT( tf != NULL );
+	ASSERT_AND_IF_NOT( tf != NULL ) return;
 	tf->currState.scale = tf->futureState.scale = scale;
 	tf->lastMatVal = INFINITY;
 }
 
 void gc_TeleportToLocalFloatScale( GCTransformData* tf, float scale )
 {
-	ASSERT( tf != NULL );
+	ASSERT_AND_IF_NOT( tf != NULL ) return;
 	tf->currState.scale = tf->futureState.scale = vec2( scale, scale );
 	tf->lastMatVal = INFINITY;
 }
@@ -635,6 +672,15 @@ void gc_MountEntity( ECPS* ecps, EntityID parentID, EntityID childID )
 	gc_GetFutureGlobalMatrix( ecps, parentTf, &VEC2_ZERO, &mat );
 	Matrix3 inverseMat;
 	bool success = mat3_Inverse( &mat, &inverseMat );
+	if( !success ) {
+		// couldn't generate the inverse, assume the scale is set in such a way that we can't generate it correctly
+		//  and just use the position
+		Vector2 pos;
+		mat3_GetPosition( &mat, &pos );
+		Matrix3 posMat;
+		mat3_CreateTransform( &pos, 0.0f, &VEC2_ONE, &posMat );
+		success = mat3_Inverse( &posMat, &inverseMat );
+	}
 	ASSERT_AND_IF_NOT( success ) {
 		return;
 	}
@@ -683,9 +729,88 @@ void gc_UnmountEntityFromParent( ECPS* ecps, EntityID id )
 
 	if( !ecps_GetComponentFromEntityByID( ecps, id, gcTransformCompID, &tf ) ) {
 		llog( LOG_DEBUG, "Unable to find component when unmounting." );
+		return;
 	}
 
 	detachInternal( ecps, id, tf, false );
+}
+
+static void internal_DestroyAllChildren( ECPS* ecps, EntityID id, bool destroyThisOne )
+{
+	if( id == INVALID_ENTITY_ID ) return;
+
+	GCTransformData* tf = NULL;
+
+	if( !ecps_GetComponentFromEntityByID( ecps, id, gcTransformCompID, &tf ) ) {
+		// no transform, just assume we want to destroy this
+		ecps_DestroyEntityByID( ecps, id );
+		return;
+	}
+
+	// responsible for notifying it's next sibling and first child that they also need to be destroyed
+	if( destroyThisOne && ( tf->nextSiblingID != INVALID_ENTITY_ID ) ) {
+		internal_DestroyAllChildren( ecps, tf->nextSiblingID, true );
+	}
+
+	if( tf->firstChildID != INVALID_ENTITY_ID ) {
+		internal_DestroyAllChildren( ecps, tf->firstChildID, true );
+	}
+
+	if( destroyThisOne ) {
+		ecps_DestroyEntityByID( ecps, id );
+	}
+}
+
+void gc_DestroySelfAndAllChildren( ECPS* ecps, EntityID id )
+{
+	internal_DestroyAllChildren( ecps, id, true );
+}
+
+void gc_DestroyAllChildren( ECPS* ecps, EntityID id )
+{
+	internal_DestroyAllChildren( ecps, id, false );
+}
+
+EntityID gc_GetRootMostEntity( ECPS* ecps, EntityID id )
+{
+	ASSERT_AND_IF_NOT( ecps != NULL ) return INVALID_ENTITY_ID;
+	if( id == INVALID_ENTITY_ID ) return INVALID_ENTITY_ID;
+
+	// the id sent in may be the collider id, so we'll have to go up and find the parent entity
+	GCTransformData* tfData = NULL;
+	do {
+		ecps_GetComponentFromEntityByID( ecps, id, gcTransformCompID, &tfData );
+		ASSERT_AND_IF_NOT( tfData != NULL ) return INVALID_ENTITY_ID; // all parent entities should have a transform component
+		if( tfData->parentID != INVALID_ENTITY_ID ) {
+			id = tfData->parentID;
+		}
+	} while( tfData->parentID != INVALID_ENTITY_ID );
+
+	return id;
+}
+
+static bool testChildrenForComponent( ECPS* ecps, EntityID testEntity, ComponentID testComponent, bool testThisOne )
+{
+	if( testEntity == INVALID_ENTITY_ID ) return false;
+
+	if( testThisOne && ecps_DoesEntityHaveComponentByID( ecps, testEntity, testComponent ) ) {
+		return true;
+	}
+
+	GCTransformData* tfData = NULL;
+	if( !ecps_GetComponentFromEntityByID( ecps, testEntity, gcTransformCompID, &tfData ) ) {
+		return false;
+	}
+
+	if( testChildrenForComponent( ecps, tfData->nextSiblingID, testComponent, true ) ) return true;
+	if( testChildrenForComponent( ecps, tfData->firstChildID, testComponent, true ) ) return true;
+
+	return false;
+}
+
+bool gc_DoesAnyChildHaveComponent( ECPS* ecps, EntityID rootEntity, ComponentID testComponent )
+{
+	return testChildrenForComponent( ecps, rootEntity, testComponent, false );
 }
 
 void gc_WatchEntity( ECPS* ecps, EntityID id )
@@ -701,28 +826,71 @@ void gc_UnWatchEntity( ECPS* ecps, EntityID id )
 	ecps_RemoveComponentFromEntityByID( ecps, id, gcWatchCompID );
 }
 
-void gc_ColliderDataToCollider( GCColliderData* colliderData, GCTransformData* tfData, Collider* outCollider )
+GCColliderData gc_ColliderToColliderData( const Collider* collider, uint32_t group, uint32_t mask, Color debugColor )
 {
-	ASSERT( colliderData != NULL );
-	ASSERT( outCollider != NULL );
+	GCColliderData data;
 
-	switch( colliderData->base.type ) {
+	data.base.type = collider->type;
+	data.base.group = group;
+	data.base.mask = mask;
+	data.base.debugColor = debugColor;
+	switch( collider->type ) {
+	case CT_DEACTIVATED:
+		// nothing to do here
+		break;
+	case CT_AAB:
+		data.aab.halfDim = collider->aabb.halfDim;
+		break;
+	case CT_CIRCLE:
+		data.circle.radius = collider->circle.radius;
+		break;
+	case CT_HALF_SPACE:
+		data.halfSpace.normal = collider->halfSpace.normal;
+		break;
+	default:
+		data.base.type = CT_DEACTIVATED;
+		ASSERT( false && "Invalid collider type." );
+		break;
+	}
+
+	return data;
+}
+
+void gc_ColliderDataToCollider( ECPS* ecps, const GCColliderData* colliderData, GCTransformData* tfData, Collider* outCollider )
+{
+	ASSERT_AND_IF_NOT( colliderData != NULL ) return;
+	ASSERT_AND_IF_NOT( outCollider != NULL ) return;
+
+	Matrix3 mat;
+	Vector2 pos;
+	float rotRad; // ignored
+	Vector2 scale;
+	gc_GetFutureGlobalMatrix( ecps, tfData, &VEC2_ZERO, &mat ); // have to make sure the transforms update correctly when attached to something
+	mat3_TransformDecompose( &mat, &pos, &rotRad, &scale );
+
+	enum ColliderType ct = colliderData->base.type;
+	// if the size would actually be 0 in any dimension then ignore the collider
+	if( FLT_EQ( scale.x, 0.0f ) || FLT_EQ( scale.y, 0.0f ) ) {
+		ct = CT_DEACTIVATED;
+	}
+
+	switch( ct ) {
 	case CT_DEACTIVATED:
 		outCollider->type = CT_DEACTIVATED;
 		break;
 	case CT_AAB:
 		outCollider->type = CT_AAB;
-		outCollider->aabb.halfDim = colliderData->aab.halfDim;
-		outCollider->aabb.center = tfData->futureState.pos;
+		vec2_HadamardProd( &colliderData->aab.halfDim, &scale, &outCollider->aabb.halfDim );
+		outCollider->aabb.center = pos;
 		break;
 	case CT_CIRCLE:
 		outCollider->type = CT_CIRCLE;
-		outCollider->circle.radius = colliderData->circle.radius;
-		outCollider->aabb.center = tfData->futureState.pos;
+		outCollider->circle.radius = colliderData->circle.radius * scale.x;
+		outCollider->aabb.center = pos;
 		break;
 	case CT_HALF_SPACE:
 		outCollider->type = CT_HALF_SPACE;
-		collision_CalculateHalfSpace( &(tfData->futureState.pos), &(colliderData->halfSpace.normal), outCollider );
+		collision_CalculateHalfSpace( &pos, &(colliderData->halfSpace.normal), outCollider );
 		break;
 	default:
 		ASSERT( false && "Invalid collider type." );
@@ -843,7 +1011,7 @@ GCTransformData gc_CreateTransformPosRotScale( Vector2 pos, float rotRad, Vector
 
 static void generalComponentHandleSwitchImg( void* data, ImageID imgID, const Vector2* offset )
 {
-	ASSERT( data != NULL );
+	ASSERT_AND_IF_NOT( data != NULL ) return;
 
 	AnimSpriteHandlerData* handlerData = (AnimSpriteHandlerData*)data;
 
@@ -939,15 +1107,17 @@ GeneralCallback createScriptCallback( const char* callback )
 
 void callGeneralCallback( GeneralCallback* callback, ECPS* ecps, Entity* entity )
 {
-	ASSERT( callback != NULL );
-	ASSERT( ecps != NULL );
-	ASSERT( entity != NULL );
+	ASSERT_AND_IF_NOT( callback != NULL ) return;
+	ASSERT_AND_IF_NOT( ecps != NULL ) return;
+	ASSERT_AND_IF_NOT( entity != NULL ) return;
 
 	if( callback->type == CBT_SOURCE ) {
 		if( callback->source.callback != NULL ) callback->source.callback( ecps, entity );
 	} else if( callback->type == CBT_LUA ) {
 		EntityID id = entity->id;
 		if( callback->script.callback != NULL ) xLua_CallLuaFunction( callback->script.callback, "i|", (int)id );
+	} else if( callback->type == CBT_NONE ) {
+		// nothing to do
 	} else {
 		llog( LOG_ERROR, "Unknown callback type." );
 	}
@@ -955,8 +1125,34 @@ void callGeneralCallback( GeneralCallback* callback, ECPS* ecps, Entity* entity 
 
 void cleanUpGeneralCallback( GeneralCallback* callback )
 {
-	ASSERT( callback != NULL );
+	ASSERT_AND_IF_NOT( callback != NULL ) return;
 	if( callback->type == CBT_LUA ) {
 		mem_Release( callback->script.callback );
 	}
+}
+
+GCVec2TweenData gc_SetupVec2Tween( float duration, Vector2 startVal, Vector2 endVal, float preDelay, float postDelay, EaseFunc ease )
+{
+	GCVec2TweenData tween;
+	tween.duration = duration;
+	tween.timePassed = 0.0f;
+	tween.startState = startVal;
+	tween.endState = endVal;
+	tween.preDelay = preDelay;
+	tween.postDelay = postDelay;
+	tween.easing = ease;
+	return tween;
+}
+
+GCFloatTweenData gc_SetupFloatTween( float duration, float startVal, float endVal, float preDelay, float postDelay, EaseFunc ease )
+{
+	GCFloatTweenData tween;
+	tween.duration = duration;
+	tween.timePassed = 0.0f;
+	tween.startState = startVal;
+	tween.endState = endVal;
+	tween.preDelay = preDelay;
+	tween.postDelay = postDelay;
+	tween.easing = ease;
+	return tween;
 }

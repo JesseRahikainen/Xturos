@@ -41,10 +41,10 @@ static void loadDialogIconImages( void )
 {
 	if( dialogTypeIconsLoaded ) return;
 
-	dialogTypeIcons[DT_MESSAGE] = nk_xu_loadImage( "Images/uiicons/information.png", NULL, NULL );
-	dialogTypeIcons[DT_CHOICE] = nk_xu_loadImage( "Images/uiicons/question.png", NULL, NULL );
-	dialogTypeIcons[DT_WARNING] = nk_xu_loadImage( "Images/uiicons/warning.png", NULL, NULL );
-	dialogTypeIcons[DT_ERROR] = nk_xu_loadImage( "Images/uiicons/error.png", NULL, NULL );
+	dialogTypeIcons[DT_MESSAGE] = nk_wrapper_LoadImage( &editorIMGUI, "Images/uiicons/information.png", NULL, NULL );
+	dialogTypeIcons[DT_CHOICE] = nk_wrapper_LoadImage( &editorIMGUI, "Images/uiicons/question.png", NULL, NULL );
+	dialogTypeIcons[DT_WARNING] = nk_wrapper_LoadImage( &editorIMGUI, "Images/uiicons/warning.png", NULL, NULL );
+	dialogTypeIcons[DT_ERROR] = nk_wrapper_LoadImage( &editorIMGUI, "Images/uiicons/error.png", NULL, NULL );
 
 	dialogTypeIconsLoaded = true;
 }
@@ -305,7 +305,7 @@ static void editorHubScreen_Process( void )
 	int width, height;
 	gfx_GetWindowSize( &width, &height );
 
-	struct nk_context* ctx = &( editorIMGUI.ctx );
+	struct nk_context* ctx = &( editorIMGUI.base.ctx );
 	const float BUTTON_HEIGHT = 37.0f;
 	float menuHeight = 85.0f + ( sb_Count( sbEditors ) * 44.0f );
 	menuHeight = MIN( height / 2.0f, menuHeight );

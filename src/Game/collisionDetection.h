@@ -15,7 +15,7 @@ enum ColliderType {
 	CT_CIRCLE,
 	CT_HALF_SPACE,
 	CT_LINE_SEGMENT,
-	CT_ORIENTED_BOX, // rotatable box, if it will never rotate prefer CT_AABB instead
+	CT_ORIENTED_BOX, // rotatable box, if it will never rotate prefer CT_AAB instead
 	NUM_COLLIDER_TYPES
 };
 
@@ -114,5 +114,7 @@ bool collision_LineSegmentCollision( Vector2* l0p0, Vector2* l0p1, Vector2* l1p0
 // Checks to see if the passed in point is inside the complex polygon defined by the list of points sbPolygon.
 //  sbPolygon must be a stretchy buffer.
 bool collision_IsPointInsideComplexPolygon( Vector2* pos, Vector2* polygon, size_t numPoints );
+
+bool collision_DoesContainPoint( const Collider* collider, Vector2* point );
 
 #endif

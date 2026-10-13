@@ -13,6 +13,57 @@
 #include "System/platformLog.h"
 #include "Utils/helpers.h"
 
+// just some functions filled with asserts to catch things like negative size, which won't work
+static void testValidAABCollider( Collider* collider )
+{
+	ASSERT_AND_IF_NOT( collider != NULL ) return;
+	ASSERT_AND_IF_NOT( collider->type == CT_AAB ) return;
+	ASSERT( collider->aabb.halfDim.x >= 0.0f );
+	ASSERT( collider->aabb.halfDim.y >= 0.0f );
+}
+
+static void testValidCircleCollider( Collider* collider )
+{
+	ASSERT_AND_IF_NOT( collider != NULL ) return;
+	ASSERT_AND_IF_NOT( collider->type == CT_CIRCLE ) return;
+	ASSERT( collider->circle.radius >= 0.0f );
+}
+
+static void testValidOrientedBoxCollider( Collider* collider )
+{
+	ASSERT_AND_IF_NOT( collider != NULL ) return;
+	ASSERT_AND_IF_NOT( collider->type == CT_ORIENTED_BOX ) return;
+	ASSERT( collider->box.halfDim.x >= 0.0f );
+	ASSERT( collider->box.halfDim.y >= 0.0f );
+	ASSERT( FLT_EQ( vec2_DotProduct( &collider->box.axes[0], &collider->box.axes[1] ), 0.0f ) );
+	ASSERT( FLT_EQ( vec2_MagSqrd( &collider->box.axes[0] ), 1.0f ) );
+	ASSERT( FLT_EQ( vec2_MagSqrd( &collider->box.axes[1] ), 1.0f ) );
+}
+
+static void testValidHalfSpaceCollider( Collider* collider )
+{
+	ASSERT_AND_IF_NOT( collider != NULL ) return;
+	ASSERT_AND_IF_NOT( collider->type == CT_HALF_SPACE ) return;
+	ASSERT( FLT_EQ( vec2_MagSqrd( &collider->halfSpace.normal ), 1.0f ) );
+}
+
+static void testValidNoCheckNeeded( Collider* collider ) {}
+
+typedef void (*ColliderValidityTest)( Collider* collider );
+static ColliderValidityTest colliderValidityTests[NUM_COLLIDER_TYPES] = { testValidAABCollider, testValidCircleCollider, testValidHalfSpaceCollider, testValidNoCheckNeeded, testValidOrientedBoxCollider };
+
+#ifdef _DEBUG
+static void testValidCollider( Collider* collider )
+{
+	ASSERT_AND_IF_NOT( collider != NULL ) return;
+	if( collider->type != CT_DEACTIVATED ) {
+		colliderValidityTests[collider->type]( collider );
+	}
+}
+#else
+static void testValidCollider( Collider* collider ) { }
+#endif
+
 // raycasting intersection functions
 static bool invalidRayCastType( Vector2* start, Vector2* dir, Collider* collider, float* t, Vector2* pt )
 {
@@ -83,11 +134,14 @@ static bool LineAABBTest( Vector2* start, Vector2* end, ColliderAAB* aabb, float
 
 static bool RayCastvAABB( Vector2* start, Vector2* dir, Collider* collider, float* t, Vector2* pt )
 {
+	testValidCollider( collider );
 	return LineAABBTest( start, dir, &(collider->aabb), FLT_MAX, 0.0f, t, pt );
 }
 
 static bool RayCastvCircle( Vector2* start, Vector2* dir, Collider* collider, float* t, Vector2* pt )
 {
+	testValidCollider( collider );
+
 	Vector2 startCircOrig;
 	float a, b, c, discr;
 
@@ -124,6 +178,8 @@ static bool RayCastvCircle( Vector2* start, Vector2* dir, Collider* collider, fl
 
 static bool RayCastvHalfSpace( Vector2* start, Vector2* dir, Collider* collider, float* t, Vector2* pt )
 {
+	testValidCollider( collider );
+
 	// if the ray starts inside the half space we'll consider the collision at the rays origin
 	float nDotA = vec2_DotProduct( &( collider->halfSpace.normal ), start );
 	float nDotDir = vec2_DotProduct( &( collider->halfSpace.normal ), dir );
@@ -139,12 +195,14 @@ static bool RayCastvHalfSpace( Vector2* start, Vector2* dir, Collider* collider,
 
 static bool RayCastvBox( Vector2* start, Vector2* dir, Collider* collider, float* t, Vector2* pt )
 {
+	testValidCollider( collider );
+
 	*pt = VEC2_ZERO;
 	Matrix3 mat = IDENTITY_MATRIX_3;
 	Matrix3 inverseMat;
 
-	mat3_SetColumn2( &mat, 0, &collider->box.axes[1] );
-	mat3_SetColumn2( &mat, 1, &collider->box.axes[2] );
+	mat3_SetColumn2( &mat, 0, &collider->box.axes[0] );
+	mat3_SetColumn2( &mat, 1, &collider->box.axes[1] );
 	mat3_SetColumn2( &mat, 2, &collider->box.center );
 
 	mat3_Inverse( &mat, &inverseMat );
@@ -183,6 +241,9 @@ static bool invalidCollision( Collider* primary, Collider* fixed, Vector2* outSe
 
 static bool AABBvHalfSpace( Collider* primary, Collider* fixed, Vector2* outSeparation )
 {
+	testValidCollider( primary );
+	testValidCollider( fixed );
+
 	// just test all the corners, the deepest one determines the separation
 	Vector2 corners[4];
 
@@ -231,6 +292,9 @@ static bool HalfSpacevAABB( Collider* primary, Collider* fixed, Vector2* outSepa
 
 static bool CirclevHalfSpace( Collider* primary, Collider* fixed, Vector2* outSeparation )
 {
+	testValidCollider( primary );
+	testValidCollider( fixed );
+
 	float dist = vec2_DotProduct( &( primary->circle.center ), &( fixed->halfSpace.normal ) ) - fixed->halfSpace.d;
 	if( dist > primary->circle.radius ) {
 		return false;
@@ -254,6 +318,9 @@ static bool HalfSpacevCircle( Collider* primary, Collider* fixed, Vector2* outSe
 
 static bool AABBvAABB( Collider* primary, Collider* fixed, Vector2* outSeparation )
 {
+	testValidCollider( primary );
+	testValidCollider( fixed );
+
 	Vector2 penetration;
 	Vector2 sumDim;
 	Vector2 diffDim;
@@ -290,6 +357,9 @@ static bool AABBvAABB( Collider* primary, Collider* fixed, Vector2* outSeparatio
 
 static bool CirclevAABB( Collider* primary, Collider* fixed, Vector2* outSeparation  )
 {
+	testValidCollider( primary );
+	testValidCollider( fixed );
+
 	float xPenetration;
 	float yPenetration;
 	Vector2 diff;
@@ -377,6 +447,9 @@ static bool AABBvCircle( Collider* primary, Collider* fixed, Vector2* outSeparat
 
 static bool CirclevCircle( Collider* primary, Collider* fixed, Vector2* outSeparation )
 {
+	testValidCollider( primary );
+	testValidCollider( fixed );
+
 	float radiiSum;
 	float dist;
 
@@ -400,6 +473,9 @@ static bool CirclevCircle( Collider* primary, Collider* fixed, Vector2* outSepar
 
 static bool AABBvLineSegment( Collider* primary, Collider* fixed, Vector2* outSeparation )
 {
+	testValidCollider( primary );
+	testValidCollider( fixed );
+
 	Vector2 collPt;
 	float t;
 
@@ -424,6 +500,9 @@ static bool LineSegmentvAABB( Collider* primary, Collider* fixed, Vector2* outSe
 
 static bool CirclevLineSegment( Collider* primary, Collider* fixed, Vector2* outSeparation )
 {
+	testValidCollider( primary );
+	testValidCollider( fixed );
+
 	Vector2 collPt;
 	float t;
 	Vector2 dir;
@@ -450,6 +529,9 @@ static bool LineSegmentvCircle( Collider* primary, Collider* fixed, Vector2* out
 
 static bool HalfSpacevLineSegment( Collider* primary, Collider* fixed, Vector2* outSeparation )
 {
+	testValidCollider( primary );
+	testValidCollider( fixed );
+
 	Vector2 collPt;
 	float t;
 	Vector2 dir;
@@ -553,6 +635,9 @@ bool collision_LineSegmentCollision( Vector2* l0p0, Vector2* l0p1, Vector2* l1p0
 // this will not currently detect collinear collisions between line segments
 static bool LineSegmentvLineSegment( Collider* primary, Collider* fixed, Vector2* outSeparation )
 {
+	testValidCollider( primary );
+	testValidCollider( fixed );
+
 	Vector2 collPt;
 	float t;
 	if( collision_LineSegmentCollision(
@@ -574,6 +659,9 @@ static bool LineSegmentvLineSegment( Collider* primary, Collider* fixed, Vector2
 
 static bool BoxvBox( Collider* primary, Collider* fixed, Vector2* outSeparation )
 {
+	testValidCollider( primary );
+	testValidCollider( fixed );
+
 	// since we're only doing 2d then we can just use SAT
 	ColliderBox* colliders[2] = { &primary->box, &fixed->box };
 
@@ -650,6 +738,9 @@ static bool AABBvBox( Collider* aabbPrimary, Collider* boxFixed, Vector2* outSep
 
 static bool CirclevBox( Collider* circlePrimary, Collider* boxFixed, Vector2* outSeparation )
 {
+	testValidCollider( circlePrimary );
+	testValidCollider( boxFixed );
+
 	// find point on box closest to circle
 	Vector2 d;
 	vec2_Subtract( &circlePrimary->circle.center, &boxFixed->box.center, &d );
@@ -694,6 +785,9 @@ static bool CirclevBox( Collider* circlePrimary, Collider* boxFixed, Vector2* ou
 
 static bool HalfSpacevBox( Collider* halfSpacePrimary, Collider* boxFixed, Vector2* outSeparation )
 {
+	testValidCollider( halfSpacePrimary );
+	testValidCollider( boxFixed );
+
 	// projects the box onto the plane normal, giving the half-length of the box on it
 	float radius =
 		boxFixed->box.halfDim.h * SDL_fabsf( vec2_DotProduct( &halfSpacePrimary->halfSpace.normal, &boxFixed->box.axes[0] ) ) +
@@ -709,6 +803,9 @@ static bool HalfSpacevBox( Collider* halfSpacePrimary, Collider* boxFixed, Vecto
 
 static bool LineSegmentvBox( Collider* lineSegmentPrimary, Collider* boxFixed, Vector2* outSeparation )
 {
+	testValidCollider( lineSegmentPrimary );
+	testValidCollider( boxFixed );
+
 	// project the line onto the box axes
 	Vector2 relativePoints[2];
 	float smallestSeparation = FLT_MAX;
@@ -967,6 +1064,8 @@ bool collision_RayCast( Vector2 start, Vector2 end, ColliderCollection collectio
 //  Returns a negative number if there were any problems.
 float collision_Distance( Collider* collider, Vector2* pos )
 {
+	testValidCollider( collider );
+
 	float dist = -1.0f;
 	
 	switch( collider->type ) {
@@ -1057,6 +1156,8 @@ float collision_GetOrientedBoxRadianRotation( const Collider* boxCollider )
 // Renders collision shapes.
 void collision_DebugDrawing( Collider* collision, unsigned int camFlags, Color color )
 {
+	testValidCollider( collision );
+
 	Vector2 size;
 	Vector2 position;
 
@@ -1155,4 +1256,21 @@ bool collision_IsPointInsideComplexPolygon( Vector2* pos, Vector2* polygon, size
 	}
 
 	return oddNodes;
+}
+
+bool collision_DoesContainPoint( const Collider* collider, Vector2* point )
+{
+	switch( collider->type ) {
+	case CT_AAB:
+	{
+		Vector2 diff;
+		vec2_Subtract( point, &collider->aabb.center, &diff );
+		bool inside = ( diff.x <= collider->aabb.halfDim.w ) && ( diff.x >= -collider->aabb.halfDim.w );
+		inside = inside && ( ( diff.y <= collider->aabb.halfDim.h ) && ( diff.y >= -collider->aabb.halfDim.h ) );
+		return inside;
+	}
+	default:
+		ASSERT_ALWAYS( "Unhandled collider type." );
+		return false;
+	}
 }

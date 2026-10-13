@@ -63,14 +63,14 @@ void gp_GeneralRender( ECPS* ecps, const Entity* entity, ComponentID tfCompID, C
 
 
 Process gpRenderProc;
-static void render( ECPS* ecps, const Entity* entity )
+static void render( ECPS* ecps, const Entity* entity, void* extraData )
 {
 	gp_GeneralRender( ecps, entity, gcTransformCompID, gcSpriteCompID, gcClrCompID, gcFloatVal0CompID, gcStencilCompID );
 }
 
 // ***** Render 3x3 Process
 Process gp3x3RenderProc;
-static void render3x3( ECPS* ecps, const Entity* entity )
+static void render3x3( ECPS* ecps, const Entity* entity, void* extraData )
 {
 	/*
 	* 0 1 2
@@ -193,7 +193,7 @@ static void render3x3( ECPS* ecps, const Entity* entity )
 // ***** Render Text Boxes Process
 // TODO: Get this working better
 Process gpTextRenderProc;
-static void renderText( ECPS* ecps, const Entity* entity )
+static void renderText( ECPS* ecps, const Entity* entity, void* extraData )
 {
 	GCTextData* txt = NULL;
 	GCTransformData* tf = NULL;
@@ -245,7 +245,7 @@ void gp_GeneralSwap( ECPS* epcs, const Entity* entity, ComponentID tfCompID, Com
 }
 
 Process gpRenderSwapProc;
-static void renderSwap( ECPS* ecps, const Entity* entity )
+static void renderSwap( ECPS* ecps, const Entity* entity, void* extraData )
 {
 	gp_GeneralSwap( ecps, entity, gcTransformCompID, gcClrCompID, gcFloatVal0CompID );
 }
@@ -282,7 +282,7 @@ static int32_t currChosenPriority = INT32_MIN;
 
 static EntityID prevChosenPointerResponseID = INVALID_ENTITY_ID;
 
-static void pointerResponseGetMouse( ECPS* ecps )
+static void pointerResponseGetMouse( ECPS* ecps, void* extraData )
 {
 	// need to get the mouse position, as well as seeing if we need to do any more processing for the mouse
 	Vector2 mouse2DPos;
@@ -309,7 +309,7 @@ static void pointerResponseGetMouse( ECPS* ecps )
 	currChosenPriority = INT32_MIN;
 }
 
-static void pointerResponseDetectState( ECPS* ecps, const Entity* entity )
+static void pointerResponseDetectState( ECPS* ecps, const Entity* entity, void* extraData )
 {
 	if( !pointerResponseMouseValid ) return;
 
@@ -436,7 +436,7 @@ static void pointerResponseFinalize_TouchScreen( ECPS* ecps )
 	pointerResponseMouseReleased = false;
 }
 
-static void pointerResponseFinalize_Mouse( ECPS* ecps )
+static void pointerResponseFinalize_Mouse( ECPS* ecps, void* extraData )
 {
 	/*
 	We have hover and clicked on as two separate state machines.
@@ -540,7 +540,7 @@ static void cleanUp( ECPS* ecps, Entity* entity )
 // ***** Draw PointerResponses for debugging
 Process gpDebugDrawPointerReponsesProc;
 #include "Graphics/debugRendering.h"
-static void drawPointerResponse( ECPS* ecps, const Entity* entity )
+static void drawPointerResponse( ECPS* ecps, const Entity* entity, void* extraData )
 {
 	GCPointerCollisionData* pointer = NULL;
 	GCTransformData* tf = NULL;
@@ -557,7 +557,7 @@ static void drawPointerResponse( ECPS* ecps, const Entity* entity )
 
 // ***** General tweening helper methods
 #include "System/gameTime.h"
-static bool runVec2Tween( GCVec2TweenData* tween, Vector2* out )
+static bool runVec2Tween( GCVec2TweenData* tween, Vector2* out, void* extraData )
 {
 	tween->timePassed += PHYSICS_DT;
 	float t = tween->timePassed / tween->duration;
@@ -572,7 +572,7 @@ static bool runVec2Tween( GCVec2TweenData* tween, Vector2* out )
 	return ( tween->timePassed >= tween->duration );
 }
 
-static bool runFloatTween( GCFloatTweenData* tween, float* out )
+static bool runFloatTween( GCFloatTweenData* tween, float* out, void* extraData )
 {
 	tween->timePassed += PHYSICS_DT;
 	float t = tween->timePassed / tween->duration;
@@ -589,7 +589,7 @@ static bool runFloatTween( GCFloatTweenData* tween, float* out )
 
 // ***** Position tweening
 Process gpPosTweenProc;
-static void posTweenUpdate( ECPS* ecps, const Entity* entity )
+static void posTweenUpdate( ECPS* ecps, const Entity* entity, void* extraData )
 {
 	GCTransformData* tf = NULL;
 	GCVec2TweenData* posTween = NULL;
@@ -597,7 +597,7 @@ static void posTweenUpdate( ECPS* ecps, const Entity* entity )
 	ecps_GetComponentFromEntity( entity, gcTransformCompID, &tf );
 	ecps_GetComponentFromEntity( entity, gcPosTweenCompID, &posTween );
 
-	if( runVec2Tween( posTween, &( tf->futureState.pos ) ) ) {
+	if( runVec2Tween( posTween, &( tf->futureState.pos ), extraData ) ) {
 		// done, remove
 		ecps_RemoveComponentFromEntityByID( ecps, entity->id, gcPosTweenCompID );
 	}
@@ -618,7 +618,7 @@ void gp_AddPosTween( ECPS* ecps, EntityID entity, float duration, Vector2 startP
 
 // ***** Scale tweening
 Process gpScaleTweenProc;
-static void scaleTweenUpdate( ECPS* ecps, const Entity* entity )
+static void scaleTweenUpdate( ECPS* ecps, const Entity* entity, void* extraData )
 {
 	GCTransformData* tf = NULL;
 	GCVec2TweenData* scaleTween = NULL;
@@ -626,7 +626,7 @@ static void scaleTweenUpdate( ECPS* ecps, const Entity* entity )
 	ecps_GetComponentFromEntity( entity, gcTransformCompID, &tf );
 	ecps_GetComponentFromEntity( entity, gcScaleTweenCompID, &scaleTween );
 
-	if( runVec2Tween( scaleTween, &( tf->futureState.scale ) ) ) {
+	if( runVec2Tween( scaleTween, &( tf->futureState.scale ), extraData ) ) {
 		// done, remove
 		ecps_RemoveComponentFromEntityByID( ecps, entity->id, gcScaleTweenCompID );
 	}
@@ -647,7 +647,7 @@ void gp_AddScaleTween( ECPS* ecps, EntityID entity, float duration, Vector2 star
 
 // ***** Alpha tweening
 Process gpAlphaTweenProc;
-static void alphaTweenUpdate( ECPS* ecps, const Entity* entity )
+static void alphaTweenUpdate( ECPS* ecps, const Entity* entity, void* extraData )
 {
 	GCColorData* clr = NULL;
 	GCFloatTweenData* alphaTween = NULL;
@@ -655,7 +655,7 @@ static void alphaTweenUpdate( ECPS* ecps, const Entity* entity )
 	ecps_GetComponentFromEntity( entity, gcClrCompID, &clr );
 	ecps_GetComponentFromEntity( entity, gcAlphaTweenCompID, &alphaTween );
 
-	if( runFloatTween( alphaTween, &( clr->futureClr.a ) ) ) {
+	if( runFloatTween( alphaTween, &( clr->futureClr.a ), extraData ) ) {
 		// done, remove
 		ecps_RemoveComponentFromEntityByID( ecps, entity->id, gcAlphaTweenCompID );
 	}
@@ -692,13 +692,13 @@ typedef struct CollisionEntry {
 static CollisionEntry* colliders = NULL;
 static ECPS* collisionECPS;
 
-static void clearColliders( ECPS* ecps )
+static void clearColliders( ECPS* ecps, void* extraData )
 {
 	sb_Clear( colliders );
 	collisionECPS = ecps;
 }
 
-static void addCollider( ECPS* ecps, const Entity* entity )
+static void addCollider( ECPS* ecps, const Entity* entity, void* extraData )
 {
 	GCColliderData* collData = NULL;
 	GCTransformData* tf = NULL;
@@ -708,7 +708,7 @@ static void addCollider( ECPS* ecps, const Entity* entity )
 
 	CollisionEntry newEntry;
 	newEntry.id = entity->id;
-	gc_ColliderDataToCollider( collData, tf, &(newEntry.coll) );
+	gc_ColliderDataToCollider( ecps, collData, tf, &(newEntry.coll) );
 	sb_Push( colliders, newEntry );
 }
 
@@ -742,7 +742,7 @@ void collisionResponse( size_t firstColliderIdx, size_t secondColliderIdx, Vecto
 	//if( collisionTestAndResponse( &eOne, &eTwo, firstCompID, secondCompID, exampleCollisionResponse ) ) return;
 }
 
-static void runCollisions( ECPS* ecps )
+static void runCollisions( ECPS* ecps, void* extraData )
 {
 	ColliderCollection coll;
 	coll.firstCollider = &colliders[0].coll;
@@ -753,7 +753,7 @@ static void runCollisions( ECPS* ecps )
 
 // ***** Short lived process
 Process gpShortLivedProc;
-static void shortLivedUpdate( ECPS* ecps, const Entity* entity )
+static void shortLivedUpdate( ECPS* ecps, const Entity* entity, void* extraData )
 {
 	GCShortLivedData* shortLived = NULL;
 
@@ -763,7 +763,7 @@ static void shortLivedUpdate( ECPS* ecps, const Entity* entity )
 	if( shortLived->timePassed >= shortLived->duration ) {
 		// done, destroy
 		callGeneralCallback( &shortLived->onDestroyedCallback, ecps, (Entity*)entity );
-		ecps_DestroyEntity( ecps, entity );
+		gc_DestroySelfAndAllChildren( ecps, entity->id );
 	}
 }
 
@@ -778,7 +778,7 @@ void gp_AddShortLived( ECPS* ecps, EntityID entity, float duration )
 
 // ***** Sprite animation process
 Process gpAnimSpriteProc;
-static void animSpriteUpdate( ECPS* ecps, const Entity* entity )
+static void animSpriteUpdate( ECPS* ecps, const Entity* entity, void* extraData )
 {
 	GCAnimatedSpriteData* anim = NULL;
 
@@ -798,7 +798,7 @@ static void animSpriteUpdate( ECPS* ecps, const Entity* entity )
 
 // ***** Follow mouse process
 Process gpFollowMouseProc;
-static void followMouseUpdate( ECPS* ecps, const Entity* entity )
+static void followMouseUpdate( ECPS* ecps, const Entity* entity, void* extraData )
 {
 	GCTransformData* tfData = NULL;
 	GCFollowMouseData* followData = NULL;
@@ -858,12 +858,12 @@ void gp_AddGroupIDToEntityAndChildren( ECPS* ecps, EntityID rootEntityID, uint32
 	}
 }
 
-static uint32_t deleteGroupID = SIZE_MAX;
-static void testAndDeleteEntity( ECPS* ecps, const Entity* entity )
+static void testAndDeleteEntity( ECPS* ecps, const Entity* entity, void* extraData )
 {
+	uint32_t* deleteGroupID = (uint32_t*)extraData;
 	GCGroupIDData* groupID = NULL;
 	ecps_GetComponentFromEntity( entity, gcGroupIDCompID, &groupID );
-	if(groupID->groupID == deleteGroupID) {
+	if(groupID->groupID == *deleteGroupID ) {
 		ecps_DestroyEntity( ecps, entity );
 	}
 }
@@ -871,8 +871,7 @@ static void testAndDeleteEntity( ECPS* ecps, const Entity* entity )
 void gp_DeleteAllOfGroup( ECPS* ecps, uint32_t groupID )
 {
 	// just use a custom process
-	deleteGroupID = groupID;
-	ecps_RunCustomProcess( ecps, NULL, testAndDeleteEntity, NULL, 1, gcGroupIDCompID );
+	ecps_RunCustomProcess( ecps, NULL, testAndDeleteEntity, NULL, &groupID, 1, gcGroupIDCompID );
 }
 
 // ***** Register the processes

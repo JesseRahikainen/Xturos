@@ -124,7 +124,6 @@ void mixerCallback_OLD( void* userdata, Uint8* streamData, int len )
 
 	int numSamples = ( len / WORKING_CHANNELS ) / SDL_AUDIO_BYTESIZE( WORKING_FORMAT );
 
-//#error sine wave isn't playing, not even calling this
 #if 0
 	int soundFreq = 440; // wave length
 	float step = 1.0f / WORKING_RATE;

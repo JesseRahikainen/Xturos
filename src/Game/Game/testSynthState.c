@@ -213,7 +213,7 @@ static void testSynthState_Process( void )
 	char slotLabelBuffer[32];
 	char pitchAdjBuffer[32];
 
-	struct nk_context* ctx = &( inGameIMGUI.ctx );
+	struct nk_context* ctx = &( inGameIMGUI.base.ctx );
 	int renderWidth, renderHeight;
 	gfx_GetRenderSize( &renderWidth, &renderHeight );
 	struct nk_rect windowBounds = { 0.0f, 0.0f, (float)renderWidth, (float)renderHeight };

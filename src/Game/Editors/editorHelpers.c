@@ -17,20 +17,6 @@
 #include "Utils/stretchyBuffer.h"
 #include "Graphics/imageSheets.h"
 
-#ifdef WIN32
-static void convertDirDividers( char** sbFilePath )
-{
-	for(size_t i = 0; i < sb_Count( *sbFilePath ); ++i) {
-		if(( *sbFilePath )[i] == '\\') ( *sbFilePath )[i] = '/';
-	}
-}
-#else
-static void convertDirDividers( char** sbFilePath )
-{
-	ASSERT( false && "Not supported on this platform." );
-}
-#endif
-
 static char* sbRootDirectory = NULL;
 static void getWorkingDirectory( void );
 
@@ -38,9 +24,17 @@ static void getWorkingDirectory( void );
 static void toLocalPath( char** sbFilePath )
 {
 	getWorkingDirectory( );
+	char* localPath = getRelativePathSB( sbRootDirectory, *sbFilePath, false );
+	sb_Release( *sbFilePath );
+	*sbFilePath = localPath;
 
-	ASSERT( sbRootDirectory != NULL );
-	ASSERT( sbFilePath != NULL );
+#if 0
+	char sep = '\\';
+
+	getWorkingDirectory( );
+
+	ASSERT_AND_IF_NOT( sbRootDirectory != NULL ) return;
+	ASSERT_AND_IF_NOT( sbFilePath != NULL ) return;
 
 	// create local copy of root directory
 	size_t rootPathSize = sb_Count( sbRootDirectory );
@@ -48,20 +42,16 @@ static void toLocalPath( char** sbFilePath )
 	sb_Add( sbRoot, rootPathSize );
 	memcpy( sbRoot, sbRootDirectory, rootPathSize );
 
-	// first replace all instances of '\\' with '/'
-	convertDirDividers( sbFilePath );
-
 	// now track forward along both the root directory string and the passed in file path
 	//  until they don't match, cut of everything before that, want to divide it up into
 	//  '/' chunks
 	size_t filePathSize = sb_Count( *sbFilePath );
 
-	const char* tokens = "/";
+	const char* tokens = "\\";
 
 	char* filePathTokSave = NULL;
 	char* filePathToken = SDL_strtok_r( *sbFilePath, tokens, &filePathTokSave );
 	
-
 	char* rootPathTokSave = NULL;
 	char* rootPathToken = SDL_strtok_r( sbRoot, tokens, &rootPathTokSave );
 
@@ -83,12 +73,12 @@ static void toLocalPath( char** sbFilePath )
 		rootPathToken = SDL_strtok_r( NULL, tokens, &rootPathTokSave );
 		sb_Push( sbLocalFilePath, '.' );
 		sb_Push( sbLocalFilePath, '.' );
-		sb_Push( sbLocalFilePath, '/' );
+		sb_Push( sbLocalFilePath, sep );
 	}
 
 	// grab the rest of the tokens from sbFilePath and append them to a new string
 	while(filePathToken != NULL) {
-		if(sbLocalFilePath != NULL) sb_Push( sbLocalFilePath, '/' );
+		if( ( sbLocalFilePath != NULL ) && ( sb_Last( sbLocalFilePath ) != sep ) ) sb_Push( sbLocalFilePath, sep );
 		size_t tokenLen = strlen( filePathToken );
 		char* strAddSpot = sb_Add( sbLocalFilePath, tokenLen );
 		memcpy( strAddSpot, filePathToken, sizeof( char ) * tokenLen );
@@ -104,6 +94,7 @@ static void toLocalPath( char** sbFilePath )
 
 	// clean up local file root
 	sb_Release( sbRoot );
+#endif
 }
 
 // returns the image id loaded
@@ -150,7 +141,7 @@ void sdlFileDialogCallback( void* userData, const char* const* fileList, int fil
 		if( callback != NULL ) {
 			// create a local copy of the string and make it local
 			char* copy = createStretchyStringCopy( *fileList );
-			toLocalPath( &copy );
+			//toLocalPath( &copy );
 			callback( copy );
 			sb_Release( copy );
 		}
@@ -199,7 +190,6 @@ static void getWorkingDirectory( void )
 		GetCurrentDirectory( MAX_PATH, testDirectory );
 
 		sbRootDirectory = wideCharToUTF8SB( testDirectory );
-		convertDirDividers( &sbRootDirectory );
 	}
 }
 #else

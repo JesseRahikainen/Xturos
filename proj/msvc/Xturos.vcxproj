@@ -353,6 +353,7 @@
     <ClInclude Include="..\..\src\Game\Editors\spriteSheetEditor.h" />
     <ClInclude Include="..\..\src\Game\gameState.h" />
     <ClInclude Include="..\..\src\Game\Game\bordersTestScreen.h" />
+    <ClInclude Include="..\..\src\Game\Game\DebugWindow\debugWindow.h" />
     <ClInclude Include="..\..\src\Game\Game\gameOfUrScreen.h" />
     <ClInclude Include="..\..\src\Game\Game\initialChoiceState.h" />
     <ClInclude Include="..\..\src\Game\Game\optionsState.h" />
@@ -432,6 +433,7 @@
     <ClInclude Include="..\..\src\Game\Others\lua-5.4.3\lvm.h" />
     <ClInclude Include="..\..\src\Game\Others\lua-5.4.3\lzio.h" />
     <ClInclude Include="..\..\src\Game\Others\nuklear.h" />
+    <ClInclude Include="..\..\src\Game\Others\nuklear_sdl3_renderer.h" />
     <ClInclude Include="..\..\src\Game\particles.h" />
     <ClInclude Include="..\..\src\Game\System\ECPS\ecps_componentDataType.h" />
     <ClInclude Include="..\..\src\Game\System\serializer.h" />
@@ -495,6 +497,7 @@
     <ClCompile Include="..\..\src\Game\Editors\spriteSheetEditor.c" />
     <ClCompile Include="..\..\src\Game\gameState.c" />
     <ClCompile Include="..\..\src\Game\Game\bordersTestScreen.c" />
+    <ClCompile Include="..\..\src\Game\Game\DebugWindow\debugWindow.c" />
     <ClCompile Include="..\..\src\Game\Game\gameOfUrScreen.c" />
     <ClCompile Include="..\..\src\Game\Game\initialChoiceState.c" />
     <ClCompile Include="..\..\src\Game\Game\optionsState.c" />
@@ -530,6 +533,8 @@
     <ClCompile Include="..\..\src\Game\Graphics\sprites.c" />
     <ClCompile Include="..\..\src\Game\Graphics\imageSheets.c" />
     <ClCompile Include="..\..\src\Game\Graphics\triRendering.c" />
+    <ClCompile Include="..\..\src\Game\IMGUI\nuklearImpl.c" />
+    <ClCompile Include="..\..\src\Game\IMGUI\nuklearWrapper.c" />
     <ClCompile Include="..\..\src\Game\IMGUI\Platform\OpenGL\nuklearWrapper_OpenGL.c" />
     <ClCompile Include="..\..\src\Game\Input\input.c" />
     <ClCompile Include="..\..\src\Game\main.c" />

@@ -111,7 +111,7 @@ void padComboBoxGetter( void* data, int idx, const char** outString )
 
 static void testGamePadState_Process( void )
 {
-	struct nk_context* ctx = &( inGameIMGUI.ctx );
+	struct nk_context* ctx = &( inGameIMGUI.base.ctx );
 	int renderWidth, renderHeight;
 	gfx_GetRenderSize( &renderWidth, &renderHeight );
 	struct nk_rect windowBounds = { 0, 0, (float)renderWidth, (float)renderHeight };

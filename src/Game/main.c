@@ -46,6 +46,7 @@
 #include "Game/testGamePadState.h"
 #include "Game/initialChoiceState.h"
 #include "Game/testScriptingState.h"
+#include "Game/DebugWindow/debugWindow.h"
 
 #include "System/memory.h"
 #include "System/systems.h"
@@ -185,15 +186,15 @@ void logOutput( void* userData, int category, SDL_LogPriority priority, const ch
 
 static void initIMGUI( NuklearWrapper* imgui, bool useRelativeMousePos, int width, int height, float fontHeight )
 {
-	nk_xu_init( imgui, sdlWindow, useRelativeMousePos, width, height );
+	nk_wrapper_Init( NWT_XTUROS, sdlWindow, useRelativeMousePos, width, height, imgui );
 
 	struct nk_font_atlas* fontAtlas;
-	nk_xu_fontStashBegin( imgui, &fontAtlas );
+	nk_wrapper_FontStashBegin( imgui, &fontAtlas );
 	// load fonts
 	struct nk_font *font = nk_font_atlas_add_from_file( fontAtlas, "./Fonts/Aileron-Regular.otf", fontHeight, 0 );
 	
-	nk_xu_fontStashEnd( imgui, fontHeight );
-	nk_style_set_font( &( imgui->ctx ), &( font->handle ) );
+	nk_wrapper_FontStashEnd( imgui, fontHeight );
+	nk_style_set_font( &( imgui->base.ctx ), &( font->handle ) );
 }
 
 int unalignedAccess( void )
@@ -420,7 +421,7 @@ int initEverything( void )
 	SDL_GetWindowSize( sdlWindow, &winWidth, &winHeight );
 	initIMGUI( &inGameIMGUI, true, renderWidth, renderHeight, 14.0f );
 	initIMGUI( &editorIMGUI, false, winWidth, winHeight, 24.0f );//18.0f );
-	nk_xu_initMessageListeners( );
+	nk_wrapper_InitMessageListeners( );
 	llog( LOG_INFO, "IMGUI successfully initialized" );
 
 	txt_Init( );
@@ -487,166 +488,273 @@ int handleIOSEvents( void* userData, SDL_Event* event )
     return 1;
 }
 
+// there isn't much of a reason beyond having the main window (where the game will played and such) and the debug window
+//  so we're not making it any more complicated than this, if we add a third or more window we'll need to extract out the
+//  window stuff into a separate section and make it a bit more abstract
+typedef enum {
+	IWT_UNKNOWN = 0,
+	IWT_MAIN = 0x01,
+	IWT_DEBUG = 0x02,
+	IWT_NO_TARGET = IWT_MAIN | IWT_DEBUG  // valid for anything
+} InputWindowTarget;
+
+InputWindowTarget eventWindowTarget( SDL_Event* evt )
+{
+	SDL_WindowID winID = SDL_GetWindowID( sdlWindow );
+	SDL_WindowID debugID = debugWindow_GetWindowID( );
+
+	// this is going to be a bit of a bitch because it'll be based on the individual type of the event
+	// 0 is the no valid window id, if it's this case 
+	SDL_WindowID foundID = 0;
+
+	// the valid event structures we can get the window id from:
+	//  SDL_WindowEvent, SDL_KeyboardEvent, SDL_TextEditingEvent, SDL_TextInputEvent, SDL_TextEditingCandidatesEvent, SDL_MouseMotionEvent, SDL_MouseButtonEvent,
+	//  SDL_MouseWheelEvent, SDL_TouchFingerEvent, SDL_DropEvent, SDL_PenProximityEvent, SDL_PenTouchEvent, SDL_PenButtonEvent, SDL_PenMotionEvent
+	//  SDL_PenAxisEvent, SDL_RenderEvent
+	SDL_EventType type = evt->type;
+	bool isWindowEvent = ( type == SDL_EVENT_WINDOW_SHOWN ) ||
+		( type == SDL_EVENT_WINDOW_HIDDEN ) ||
+		( type == SDL_EVENT_WINDOW_EXPOSED ) ||
+		( type == SDL_EVENT_WINDOW_MOVED ) ||
+		( type == SDL_EVENT_WINDOW_RESIZED ) ||
+		( type == SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED ) ||
+		( type == SDL_EVENT_WINDOW_METAL_VIEW_RESIZED ) ||
+		( type == SDL_EVENT_WINDOW_MINIMIZED ) ||
+		( type == SDL_EVENT_WINDOW_MAXIMIZED ) ||
+		( type == SDL_EVENT_WINDOW_RESTORED ) ||
+		( type == SDL_EVENT_WINDOW_MOUSE_ENTER ) ||
+		( type == SDL_EVENT_WINDOW_MOUSE_LEAVE ) ||
+		( type == SDL_EVENT_WINDOW_FOCUS_GAINED ) ||
+		( type == SDL_EVENT_WINDOW_FOCUS_LOST ) ||
+		( type == SDL_EVENT_WINDOW_CLOSE_REQUESTED ) ||
+		( type == SDL_EVENT_WINDOW_HIT_TEST ) ||
+		( type == SDL_EVENT_WINDOW_ICCPROF_CHANGED ) ||
+		( type == SDL_EVENT_WINDOW_DISPLAY_CHANGED ) ||
+		( type == SDL_EVENT_WINDOW_DISPLAY_SCALE_CHANGED ) ||
+		( type == SDL_EVENT_WINDOW_SAFE_AREA_CHANGED ) ||
+		( type == SDL_EVENT_WINDOW_OCCLUDED ) ||
+		( type == SDL_EVENT_WINDOW_ENTER_FULLSCREEN ) ||
+		( type == SDL_EVENT_WINDOW_LEAVE_FULLSCREEN ) ||
+		( type == SDL_EVENT_WINDOW_DESTROYED ) ||
+		( type == SDL_EVENT_WINDOW_HDR_STATE_CHANGED );
+	bool isKeyboardEvent = ( type == SDL_EVENT_KEY_DOWN ) || ( type == SDL_EVENT_KEY_UP );
+	bool isTextEditingEvent = type == SDL_EVENT_TEXT_EDITING;
+	bool isTextInputEvent = type == SDL_EVENT_TEXT_INPUT;
+	bool isTextEditingCandidatesEvent = type == SDL_EVENT_TEXT_EDITING_CANDIDATES;
+	bool isMouseMotionEvent = type == SDL_EVENT_MOUSE_MOTION;
+	bool isMouseButtonEvent = ( type == SDL_EVENT_MOUSE_BUTTON_DOWN ) || ( type == SDL_EVENT_MOUSE_BUTTON_UP );
+	bool isMouseWheelEvent = type == SDL_EVENT_MOUSE_WHEEL;
+	bool isFingerEvent = ( type == SDL_EVENT_FINGER_DOWN ) || ( type == SDL_EVENT_FINGER_UP ) ||
+		( type == SDL_EVENT_FINGER_MOTION ) || ( type == SDL_EVENT_FINGER_CANCELED );
+	bool isDropEvent = ( type == SDL_EVENT_DROP_FILE ) ||
+		( type == SDL_EVENT_DROP_TEXT ) ||
+		( type == SDL_EVENT_DROP_BEGIN ) ||
+		( type == SDL_EVENT_DROP_COMPLETE ) ||
+		( type == SDL_EVENT_DROP_POSITION );
+	bool isPenProximityEvent = ( type == SDL_EVENT_PEN_PROXIMITY_IN ) || ( type == SDL_EVENT_PEN_PROXIMITY_OUT );
+	bool isPenEvent = ( type == SDL_EVENT_PEN_DOWN ) || ( type == SDL_EVENT_PEN_UP );
+	bool isPenButtonEvent = ( type == SDL_EVENT_PEN_BUTTON_DOWN ) || ( type == SDL_EVENT_PEN_BUTTON_UP );
+	bool isPenMotionEvent = type == SDL_EVENT_PEN_MOTION;
+	bool isPenAxisEvent = type == SDL_EVENT_PEN_AXIS;
+	bool isRenderEvent = ( type == SDL_EVENT_RENDER_TARGETS_RESET ) ||
+		( type == SDL_EVENT_RENDER_DEVICE_RESET ) ||
+		( type == SDL_EVENT_RENDER_DEVICE_LOST );
+	
+	if( isWindowEvent ) { foundID = evt->window.windowID; }
+	else if( isKeyboardEvent ) { foundID = evt->key.windowID; }
+	else if( isTextEditingEvent ) { foundID = evt->edit.windowID; }
+	else if( isTextInputEvent ) { foundID = evt->text.windowID; }
+	else if( isTextEditingCandidatesEvent ) { foundID = evt->edit_candidates.windowID; }
+	else if( isMouseMotionEvent ) { foundID = evt->motion.windowID; }
+	else if( isMouseButtonEvent ) { foundID = evt->button.windowID; }
+	else if( isMouseWheelEvent ) { foundID = evt->wheel.windowID; }
+	else if( isFingerEvent ) { foundID = evt->tfinger.windowID; }
+	else if( isDropEvent ) { foundID = evt->drop.windowID; }
+	else if( isPenProximityEvent ) { foundID = evt->pproximity.windowID; }
+	else if( isPenEvent ) { foundID = evt->ptouch.windowID; }
+	else if( isPenButtonEvent ) { foundID = evt->pbutton.windowID; }
+	else if( isPenMotionEvent ) { foundID = evt->pmotion.windowID; }
+	else if( isPenAxisEvent ) { foundID = evt->paxis.windowID; }
+	else if( isRenderEvent ) { foundID = evt->render.windowID; }
+
+	// all non-caught events have no specified window and should be handled by everything possible
+	// SDL_UserEvent should be sent to everyone
+
+	if( foundID == 0 ) return IWT_NO_TARGET;
+	if( foundID == winID ) return IWT_MAIN;
+	if( foundID == debugID ) return IWT_DEBUG;
+	return IWT_UNKNOWN;
+}
+
+static void processMainWindowEvent( SDL_Event e, bool windowsEventsOnly )
+{
+	if( ( e.type >= SDL_EVENT_WINDOW_FIRST ) && ( e.type <= SDL_EVENT_WINDOW_LAST ) ) {
+		switch( e.type ) {
+		case SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED: {
+			// data1 == width, data2 == height
+			gfx_OnWindowResize( e.window.data1, e.window.data2 );
+			mb_BroadcastMessage( MSG_WINDOW_RESIZED, NULL );
+
+			if( paused ) {
+				forceDraw = true;
+			}
+		}
+		break;
+
+		// will want to handle these messages for pausing and unpausing the game when they lose focus
+		case SDL_EVENT_WINDOW_FOCUS_GAINED:
+			llog( LOG_DEBUG, "Gained focus" );
+			focused = true;
+			snd_SetFocus( true );
+			break;
+		case SDL_EVENT_WINDOW_FOCUS_LOST:
+			llog( LOG_DEBUG, "Lost focus" );
+			focused = false;
+			snd_SetFocus( false );
+			break;
+		}
+	}
+
+	if( e.type == SDL_EVENT_QUIT ) {
+		llog( LOG_DEBUG, "Quitting" );
+		running = false;
+	}
+
+	if( windowsEventsOnly ) {
+		return;
+	}
+
+	// special keys used only on the pc version, primarily for taking screenshots of scenes at different resolutions
+#if defined( WIN32 ) & defined( _DEBUG )
+	if( e.type == SDL_EVENT_KEY_DOWN ) {
+		if( e.key.key == SDLK_PRINTSCREEN ) {
+			// take a screen shot
+
+			time_t t = time( NULL );
+			struct tm tm = *localtime( &t );
+
+			// YYYYMMDDHHmmSS.png
+#define FORMAT "%.4i%.2i%.2i%.2i%.2i%.2i.png"
+			int size = snprintf( NULL, 0, FORMAT, tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour + 1, tm.tm_min + 1, tm.tm_sec );
+			char* fileName = mem_Allocate( size + 1 );
+			snprintf( fileName, size + 1, FORMAT, tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour + 1, tm.tm_min + 1, tm.tm_sec );
+#undef FORMAT
+			char* savePath = getSavePath( fileName );
+			gfxUtil_TakeScreenShot( savePath );
+			llog( LOG_DEBUG, "Screenshot taken %s", savePath );
+			mem_Release( fileName );
+			mem_Release( savePath );
+		}
+
+		if( e.key.key == SDLK_PAUSE ) {
+			// pause the game
+			paused = !paused;
+		}
+
+		// just testing toggling full screen
+		/*if( e.key.key == SDLK_PAGEUP ) {
+			int windowCount;
+			SDL_Window** windows = SDL_GetWindows( &windowCount );
+			{
+				int x = 0;
+			}
+			SDL_free( windows );
+
+			//bool isFullScreen = SDL_GetWindowFlags( window ) & SDL_WINDOW_FULLSCREEN;
+			//SDL_SetWindowFullscreen( window, !isFullScreen );
+
+			int numDisplays;
+			SDL_DisplayID* displays = SDL_GetDisplays( &numDisplays );
+			llog( LOG_DEBUG, "Found %i displays", numDisplays );
+			for( int i = 0; i < numDisplays; ++i ) {
+				int numModes = 0;
+				SDL_DisplayMode** modes = SDL_GetFullscreenDisplayModes( displays[i], &numModes );
+				llog( LOG_DEBUG, "Display %i has %i modes", displays[i], numModes );
+				for( int a = 0; a < numModes; ++a ) {
+					llog( LOG_DEBUG, "-- mode %i - %ix%i, pd: %f, refresh: %f", a, modes[a]->w, modes[a]->h, modes[a]->pixel_density, modes[a]->refresh_rate );
+				}
+				SDL_free( modes );
+			}
+			SDL_free( displays );
+
+
+			{
+				SDL_DisplayID* displays = SDL_GetDisplays( &numDisplays );
+				int numModes = 0;
+				SDL_DisplayMode** modes = SDL_GetFullscreenDisplayModes( displays[0], &numModes );
+
+				SDL_SetWindowFullscreenMode( sdlWindow, modes[0] );
+				bool isFullScreen = SDL_GetWindowFlags( sdlWindow ) & SDL_WINDOW_FULLSCREEN;
+				SDL_SetWindowFullscreen( sdlWindow, !isFullScreen );
+
+				SDL_free( modes );
+				SDL_free( displays );
+			}
+
+			// for selecting full screen mode we need to select the display we want it on (can enumerate them and let them select)
+			//  then what resolution they want for it, or given the resizing do we really need to? not really
+			// we just need to choose if it's full screen, full screen windowed, and if it's windowed a resolution which we can just have
+			//  a set list to choose from
+			// do we want to select the display when doing full screen? lets not for right now, means we don't have to query SDL for stuff,
+			// just have to send stuff to it
+
+			// we're just going to store the SDL_Window pointer somewhere we can access it globally
+		}//*/
+
+		// have the F# keys change the size of the window based on some predetermined values, useful when you need to take screen shots
+		int pressedFKey = -1;
+		if( e.key.key == SDLK_F1 ) pressedFKey = 0;
+		if( e.key.key == SDLK_F2 ) pressedFKey = 1;
+		if( e.key.key == SDLK_F3 ) pressedFKey = 2;
+		if( e.key.key == SDLK_F4 ) pressedFKey = 3;
+		if( e.key.key == SDLK_F5 ) pressedFKey = 4;
+		if( e.key.key == SDLK_F6 ) pressedFKey = 5;
+		if( e.key.key == SDLK_F7 ) pressedFKey = 6;
+		if( e.key.key == SDLK_F8 ) pressedFKey = 7;
+		if( e.key.key == SDLK_F9 ) pressedFKey = 8;
+		if( e.key.key == SDLK_F10 ) pressedFKey = 9;
+		if( e.key.key == SDLK_F11 ) pressedFKey = 10;
+		if( e.key.key == SDLK_F12 ) pressedFKey = 11;
+
+		if( pressedFKey != -1 ) {
+			if( e.key.mod & SDL_KMOD_CTRL ) {
+				pressedFKey += 12;
+			}
+
+			if( pressedFKey < ARRAY_SIZE( resolutions ) ) {
+				// switch resolution
+				bool swap = ( e.key.mod & SDL_KMOD_SHIFT ) != 0;
+				int width = swap ? resolutions[pressedFKey].height : resolutions[pressedFKey].width;
+				int height = swap ? resolutions[pressedFKey].width : resolutions[pressedFKey].height;
+				SDL_SetWindowSize( sdlWindow, width, height );
+			}
+		}
+	}
+#endif
+	sys_ProcessEvents( &e );
+	input_ProcessEvents( &e );
+	gsm_ProcessEvents( &globalFSM, &e );
+	nk_wrapper_HandleEvent( &editorIMGUI, &e );
+	nk_wrapper_HandleEvent( &inGameIMGUI, &e );
+}
+
 // input processing
 void processEvents( bool windowsEventsOnly )
 {
 	SDL_Event e;
-	nk_input_begin( &( editorIMGUI.ctx ) );
-	nk_input_begin( &( inGameIMGUI.ctx ) );
+	nk_input_begin( &( editorIMGUI.base.ctx ) );
+	nk_input_begin( &( inGameIMGUI.base.ctx ) );
+	debugWindow_PreProcessEvents( );
+
 	while( SDL_PollEvent( &e ) != 0 ) {
-		if( ( e.type >= SDL_EVENT_WINDOW_FIRST ) && ( e.type <= SDL_EVENT_WINDOW_LAST ) ) {
-			switch( e.type ) {
-			case SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED: {
-					// data1 == width, data2 == height
-					gfx_OnWindowResize( e.window.data1, e.window.data2 );
-					mb_BroadcastMessage( MSG_WINDOW_RESIZED, NULL );
-
-					if( paused ) {
-						forceDraw = true;
-					}
-				}
-				break;
-
-			// will want to handle these messages for pausing and unpausing the game when they lose focus
-			case SDL_EVENT_WINDOW_FOCUS_GAINED:
-				llog( LOG_DEBUG, "Gained focus" );
-				focused = true;
-				snd_SetFocus( true );
-				break;
-			case SDL_EVENT_WINDOW_FOCUS_LOST:
-				llog( LOG_DEBUG, "Lost focus" );
-				focused = false;
-				snd_SetFocus( false );
-				break;
-			}
-		}
-
-		if( e.type == SDL_EVENT_QUIT ) {
-			llog( LOG_DEBUG, "Quitting" );
-			running = false;
-		}
-
-		if( windowsEventsOnly ) {
-			continue;
-		}
-
-		// special keys used only on the pc version, primarily for taking screenshots of scenes at different resolutions
-#if defined( WIN32 ) & defined( _DEBUG )
-		if( e.type == SDL_EVENT_KEY_DOWN ) {
-			if( e.key.key == SDLK_PRINTSCREEN ) {
-				// take a screen shot
-
-				time_t t = time( NULL );
-				struct tm tm = *localtime( &t );
-
-				// YYYYMMDDHHmmSS.png
-#define FORMAT "%.4i%.2i%.2i%.2i%.2i%.2i.png"
-				int size = snprintf( NULL, 0, FORMAT, tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour + 1, tm.tm_min + 1, tm.tm_sec );
-				char* fileName = mem_Allocate( size + 1 );
-				snprintf( fileName, size + 1, FORMAT, tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour + 1, tm.tm_min + 1, tm.tm_sec );
-#undef FORMAT
-				char* savePath = getSavePath( fileName );
-				gfxUtil_TakeScreenShot( savePath );
-				llog( LOG_DEBUG, "Screenshot taken %s", savePath );
-				mem_Release( fileName );
-				mem_Release( savePath );
-			}
-
-			if( e.key.key == SDLK_PAUSE ) {
-				// pause the game
-				paused = !paused;
-			}
-
-			// just testing toggling full screen
-			/*if( e.key.key == SDLK_PAGEUP ) {
-				int windowCount;
-				SDL_Window** windows = SDL_GetWindows( &windowCount );
-				{
-					int x = 0;
-				}
-				SDL_free( windows );
-
-				//bool isFullScreen = SDL_GetWindowFlags( window ) & SDL_WINDOW_FULLSCREEN;
-				//SDL_SetWindowFullscreen( window, !isFullScreen );
-
-				int numDisplays;
-				SDL_DisplayID* displays = SDL_GetDisplays( &numDisplays );
-				llog( LOG_DEBUG, "Found %i displays", numDisplays );
-				for( int i = 0; i < numDisplays; ++i ) {
-					int numModes = 0;
-					SDL_DisplayMode** modes = SDL_GetFullscreenDisplayModes( displays[i], &numModes );
-					llog( LOG_DEBUG, "Display %i has %i modes", displays[i], numModes );
-					for( int a = 0; a < numModes; ++a ) {
-						llog( LOG_DEBUG, "-- mode %i - %ix%i, pd: %f, refresh: %f", a, modes[a]->w, modes[a]->h, modes[a]->pixel_density, modes[a]->refresh_rate );
-					}
-					SDL_free( modes );
-				}
-				SDL_free( displays );
-
-
-				{
-					SDL_DisplayID* displays = SDL_GetDisplays( &numDisplays );
-					int numModes = 0;
-					SDL_DisplayMode** modes = SDL_GetFullscreenDisplayModes( displays[0], &numModes );
-
-					SDL_SetWindowFullscreenMode( sdlWindow, modes[0] );
-					bool isFullScreen = SDL_GetWindowFlags( sdlWindow ) & SDL_WINDOW_FULLSCREEN;
-					SDL_SetWindowFullscreen( sdlWindow, !isFullScreen );
-
-					SDL_free( modes );
-					SDL_free( displays );
-				}
-
-				// for selecting full screen mode we need to select the display we want it on (can enumerate them and let them select)
-				//  then what resolution they want for it, or given the resizing do we really need to? not really
-				// we just need to choose if it's full screen, full screen windowed, and if it's windowed a resolution which we can just have
-				//  a set list to choose from
-				// do we want to select the display when doing full screen? lets not for right now, means we don't have to query SDL for stuff,
-				// just have to send stuff to it
-
-				// we're just going to store the SDL_Window pointer somewhere we can access it globally
-			}//*/
-
-			// have the F# keys change the size of the window based on some predetermined values, useful when you need to take screen shots
-			int pressedFKey = -1;
-			if( e.key.key == SDLK_F1 ) pressedFKey = 0;
-			if( e.key.key == SDLK_F2 ) pressedFKey = 1;
-			if( e.key.key == SDLK_F3 ) pressedFKey = 2;
-			if( e.key.key == SDLK_F4 ) pressedFKey = 3;
-			if( e.key.key == SDLK_F5 ) pressedFKey = 4;
-			if( e.key.key == SDLK_F6 ) pressedFKey = 5;
-			if( e.key.key == SDLK_F7 ) pressedFKey = 6;
-			if( e.key.key == SDLK_F8 ) pressedFKey = 7;
-			if( e.key.key == SDLK_F9 ) pressedFKey = 8;
-			if( e.key.key == SDLK_F10 ) pressedFKey = 9;
-			if( e.key.key == SDLK_F11 ) pressedFKey = 10;
-			if( e.key.key == SDLK_F12 ) pressedFKey = 11;
-
-			if( pressedFKey != -1 ) {
-				if( e.key.mod & SDL_KMOD_CTRL ) {
-					pressedFKey += 12;
-				}
-
-				if( pressedFKey < ARRAY_SIZE( resolutions ) ) {
-					// switch resolution
-					bool swap = ( e.key.mod & SDL_KMOD_SHIFT ) != 0;
-					int width = swap ? resolutions[pressedFKey].height : resolutions[pressedFKey].width;
-					int height = swap ? resolutions[pressedFKey].width : resolutions[pressedFKey].height;
-					SDL_SetWindowSize( sdlWindow, width, height );
-				}
-			}
-		}
-#endif
-
-		sys_ProcessEvents( &e );
-		input_ProcessEvents( &e );
-		gsm_ProcessEvents( &globalFSM, &e );
-		nk_xu_handleEvent( &editorIMGUI, &e );
-		nk_xu_handleEvent( &inGameIMGUI, &e );
+		InputWindowTarget target = eventWindowTarget( &e );
+		if( target & IWT_MAIN ) processMainWindowEvent( e, windowsEventsOnly );
+		if( target & IWT_DEBUG ) debugWindow_ProcessEvent( &e );
 	}
 
-	nk_input_end( &( editorIMGUI.ctx ) );
-	nk_input_end( &( inGameIMGUI.ctx ) );
+	nk_input_end( &( editorIMGUI.base.ctx ) );
+	nk_input_end( &( inGameIMGUI.base.ctx ) );
+	debugWindow_PostProcessEvents( );
 }
 
 static int skipEvents = 3;
@@ -688,6 +796,7 @@ void mainLoop( void* v )
 		{
 			if( !focused ) {
 				processEvents( true );
+				debugWindow_Update( );
 				return;
 			}
 
@@ -703,6 +812,8 @@ void mainLoop( void* v )
 			} else {
 				--skipEvents;
 			}
+
+			debugWindow_Update( );
 
 			// handle per frame update
 			sys_Process( );

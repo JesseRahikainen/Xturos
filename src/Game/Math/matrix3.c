@@ -351,8 +351,9 @@ Matrix3* mat3_CreateRenderTransform( const Vector2* pos, float rotRad, const Vec
 	out->m[4] = cosRot * scale->y;
 	out->m[5] = 0.0f;
 
-	out->m[6] = pos->x -( offset->y * sinRot ) + ( offset->x * cosRot );
-	out->m[7] = pos->y + ( offset->x * sinRot ) + ( offset->y * cosRot );
+	Vector2 scaledOffset = vec2( offset->x * scale->x, offset->y * scale->y );
+	out->m[6] = pos->x - ( scaledOffset.y * sinRot ) + ( scaledOffset.x * cosRot );
+	out->m[7] = pos->y + ( scaledOffset.x * sinRot ) + ( scaledOffset.y * cosRot );
 	out->m[8] = 1.0f;
 
 	return out;

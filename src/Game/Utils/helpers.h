@@ -66,6 +66,7 @@ size_t strlenNullTest( const char* str );
 // useful when we've gotten into a path we should never get into, just assert and let us know why
 #define ASSERT_ALWAYS( x ) SDL_assert( false && ( x ) );
 
+bool compareOnlyFileName( const char* filePathOne, const char* filePathTwo );
 char* extractFileName( const char* filePath );
 
 #if defined( WIN32 )
@@ -83,6 +84,16 @@ typedef struct {
 } xtUUID;
 xtUUID createRandomUUID( );
 char* printUUID( const xtUUID* uuid );
+
+// returns a stretchy buffer containing the full path
+//  ignoreAbsoluteEOS will cause the parsing to ignore the last part of the absolute base if it doesn't end with
+//  a separator and instead ends with a NULL, useful when you need to ignore a file name in a path
+char* getAbsolutePathSB( const char* absoluteBase, const char* relative, bool ignoreAbsoluteEOS );
+
+// returns a stretchy buffer containing the relative path
+//  from is expected to be a directory path
+// NOTE: this assumes you're passing in full paths
+char* getRelativePathSB( const char* from, const char* to, bool fromIsFile );
 
 // used for something that needs to be called before main() is called
 //  usage:
@@ -107,5 +118,8 @@ char* printUUID( const xtUUID* uuid );
 		    static void f(void) __attribute__((used, retain, constructor)); \
 			static void f(void)
 #endif
+
+
+void testPathFunctions( void );
 
 #endif // inclusion guard

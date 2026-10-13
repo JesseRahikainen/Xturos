@@ -46,7 +46,7 @@ static ComponentID selfDestructCompID = INVALID_COMPONENT_ID;
 static ComponentID spawningCompID = INVALID_COMPONENT_ID;
 
 static Process spawnProc;
-static void spawning( ECPS* ecps, const Entity* entity )
+static void spawning( ECPS* ecps, const Entity* entity, void* extraData )
 {
 	llog( LOG_DEBUG, " Spawning entities" );
 	EntityID entities[2] = { INVALID_ENTITY_ID, INVALID_ENTITY_ID };
@@ -71,7 +71,7 @@ static void spawning( ECPS* ecps, const Entity* entity )
 
 #define ATTACK_PERIOD 5
 static Process attackProc;
-static void attacking( ECPS* ecps, const Entity* entity )
+static void attacking( ECPS* ecps, const Entity* entity, void* extraData )
 {
 	AttackingData* attacking = NULL;
 	ecps_GetComponentFromEntity( entity, attackingCompID, &attacking );
@@ -97,7 +97,7 @@ static void attacking( ECPS* ecps, const Entity* entity )
 
 #define SELF_DESTRUCT_PERIOD 10
 static Process selfDestructProc;
-static void selfDestructing( ECPS* ecps, const Entity* entity )
+static void selfDestructing( ECPS* ecps, const Entity* entity, void* extraData )
 {
 	SelfDestructData* selfDestruct = NULL;
 	ecps_GetComponentFromEntity( entity, selfDestructCompID, &selfDestruct );

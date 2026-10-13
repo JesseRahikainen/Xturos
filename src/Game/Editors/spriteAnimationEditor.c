@@ -215,7 +215,6 @@ static void spriteSheetChosen( void* data )
 
 	if( newPackageID < 0 ) {
 		hub_CreateDialog( "Error Loading Sprite Sheet", "There was an error loading the sprite sheet. Check error log for more details.", DT_ERROR, 1, "OK", NULL );
-		mem_Release( data );
 		return;
 	}
 
@@ -223,9 +222,9 @@ static void spriteSheetChosen( void* data )
 	
 	// set the new data
 	editorSpriteAnimation.spriteSheetPackageID = newPackageID;
-	mem_Release( editorSpriteAnimation.spriteSheetFile );
-	editorSpriteAnimation.spriteSheetFile = filePath; // claiming the string for ourselves, release later
-	sbSpriteSheetImages = sbNewlyLoadedImages; 
+	sb_Release( editorSpriteAnimation.sbSpriteSheetFile );
+	editorSpriteAnimation.sbSpriteSheetFile = createStretchyStringCopy( filePath );
+	sbSpriteSheetImages = sbNewlyLoadedImages;
 
 	// update the images we can select from
 	sb_Clear( sbLoadedImageDisplays );
@@ -242,11 +241,19 @@ static void spriteSheetChosen( void* data )
 	}
 }
 
+static void spriteSheetMainThread( void* data )
+{
+	// doing this because we need to be able to clear up the memory allocated for the file path passed in
+	char* filePath = (char*)data;
+	spriteSheetChosen( (void*)filePath );
+	mem_Release( filePath );
+}
+
 static void spriteSheetChosenCallback( const char* filePath )
 {
 	// have to make sure we're calling stuff on the main thread because we're creating textures
 	char* filePathCopy = createStringCopy( filePath );
-	jq_AddMainThreadJob( spriteSheetChosen, filePathCopy );
+	jq_AddMainThreadJob( spriteSheetMainThread, filePathCopy );
 }
 
 static void chooseSpriteSheet( void )
@@ -257,7 +264,7 @@ static void chooseSpriteSheet( void )
 
 static void loadAndAssociateSpriteSheet( void )
 {
-	if( editorSpriteAnimation.spriteSheetFile != NULL ) {
+	if( editorSpriteAnimation.sbSpriteSheetFile != NULL ) {
 		hub_CreateDialog( "Overwrite Existing Sprite Sheet?",
 			"Loading a different sprite sheet will result in loss of currently assigned sprites. Do you wish to continue?",
 			DT_WARNING, 2,
@@ -371,9 +378,11 @@ static void loadCurrentAnimation( const char* filePath )
 		return;
 	}
 
-	if( ( editorSpriteAnimation.spriteSheetFile != NULL ) ) {
-		char* spriteSheetFileCopy = createStringCopy( editorSpriteAnimation.spriteSheetFile );
+	if( ( editorSpriteAnimation.sbSpriteSheetFile != NULL ) ) {
+		// we're releasing the sbSpriteSheetFile value before assigning it the new one, so we need a copy of it
+		char* spriteSheetFileCopy = createStringCopy( editorSpriteAnimation.sbSpriteSheetFile );
 		spriteSheetChosen( spriteSheetFileCopy );
+		mem_Release( spriteSheetFileCopy );
 	}
 
 	// hook up the images
@@ -426,9 +435,9 @@ static void newAnimation( void )
 
 static void loadUIImages( void )
 {
-	playNKImage = nk_xu_loadImage( "Images/uiicons/forward.png", NULL, NULL );
-	pauseNKImage = nk_xu_loadImage( "Images/uiicons/pause.png", NULL, NULL );
-	stopNKImage = nk_xu_loadImage( "Images/uiicons/stop.png", NULL, NULL );
+	playNKImage = nk_wrapper_LoadImage( &editorIMGUI, "Images/uiicons/forward.png", NULL, NULL );
+	pauseNKImage = nk_wrapper_LoadImage( &editorIMGUI, "Images/uiicons/pause.png", NULL, NULL );
+	stopNKImage = nk_wrapper_LoadImage( &editorIMGUI, "Images/uiicons/stop.png", NULL, NULL );
 }
 
 void spriteAnimationEditor_Init( void )
@@ -761,7 +770,7 @@ void spriteAnimationEditor_IMGUIProcess( void )
 {
 	overDisplay = false;
 	//llog( LOG_DEBUG, "Animation editor process" );
-	struct nk_context* ctx = &( editorIMGUI.ctx );
+	struct nk_context* ctx = &( editorIMGUI.base.ctx );
 	char titleBuffer[128] = "";
 	if( ( currentFileName == NULL ) || ( SDL_strlen( currentFileName ) <= 0 ) ) {
 		SDL_snprintf( titleBuffer, ARRAY_SIZE( titleBuffer ), "Sprite Animator ()" );
@@ -832,7 +841,7 @@ void spriteAnimationEditor_IMGUIProcess( void )
 
 					// associated sprite sheet
 					nk_label( ctx, "Sprite Sheet:", NK_TEXT_ALIGN_LEFT | NK_TEXT_ALIGN_MIDDLE );
-					nk_label( ctx, editorSpriteAnimation.spriteSheetFile == NULL ? "NONE SELECTED" : editorSpriteAnimation.spriteSheetFile, NK_TEXT_ALIGN_LEFT | NK_TEXT_ALIGN_MIDDLE );
+					nk_label( ctx, editorSpriteAnimation.sbSpriteSheetFile == NULL ? "NONE SELECTED" : editorSpriteAnimation.sbSpriteSheetFile, NK_TEXT_ALIGN_LEFT | NK_TEXT_ALIGN_MIDDLE );
 					if( nk_button_label( ctx, "Load different sprite sheet" ) ) {
 						loadAndAssociateSpriteSheet( );
 					}

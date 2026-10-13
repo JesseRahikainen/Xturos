@@ -104,9 +104,9 @@ struct ECPS {
 	bool isRunningProcess;
 };
 
-typedef void (*PreProcFunc)( ECPS* ecps );
-typedef void (*ProcFunc)( ECPS* ecps, const Entity* entity );
-typedef void (*PostProcFunc)( ECPS* ecps );
+typedef void (*PreProcFunc)( ECPS* ecps, void* extraData );
+typedef void (*ProcFunc)( ECPS* ecps, const Entity* entity, void* extraData );
+typedef void (*PostProcFunc)( ECPS* ecps, void* extraData );
 
 typedef struct {
 	uint32_t ecpsID;
