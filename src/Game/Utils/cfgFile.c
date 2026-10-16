@@ -75,7 +75,7 @@ void* cfg_OpenFile( const char* fileName )
 	char* token = strtok( fileText, delimiters );
 	CFGAttribute attr;
 
-	while( token != NULL ) {		
+	while( token != NULL ) {
 		// cut off white space, don't care about preserving memory
 		if( gettingAttrName ) {
 			if( SDL_strlen( token ) > ARRAY_SIZE( attr.attrName ) ) {
@@ -163,7 +163,7 @@ void cfg_CloseFile( void* cfgFile )
 }
 
 // Returns the index of the attribute given the name. Returns -1 if it isn't found.
-static int AttributeIndex( CFGFile* fileData, const char* attrName )
+static int attributeIndex( CFGFile* fileData, const char* attrName )
 {
 	int idx = -1;
 
@@ -231,12 +231,31 @@ static bool addNewAttribute( CFGFile* data, const char* attrName, const char* va
 	return true;
 }
 
+static bool setAttribute( void* cfgFile, const char* attrName, char* valueStr )
+{
+	ASSERT_AND_IF_NOT( cfgFile != NULL ) return false;
+	ASSERT_AND_IF_NOT( attrName != NULL ) return false;
+	ASSERT_AND_IF_NOT( valueStr != NULL ) return false;
+	
+	CFGFile* data = (CFGFile*)cfgFile;
+
+	int idx = attributeIndex( data, attrName );
+	bool success = true;
+	if( idx >= 0 ) {
+		SDL_strlcpy( data->sbAttributes[idx].value, valueStr, ARRAY_SIZE( data->sbAttributes[idx].value ) );
+	} else {
+		success = addNewAttribute( data, attrName, valueStr );
+	}
+
+	return success;
+}
+
 int cfg_GetInt( void* cfgFile, const char* attrName, int defaultVal )
 {
-	ASSERT( cfgFile != NULL );
+	ASSERT_AND_IF_NOT( cfgFile != NULL ) return defaultVal;
 
 	CFGFile* data = (CFGFile*)cfgFile;
-	int idx = AttributeIndex( data, attrName );
+	int idx = attributeIndex( data, attrName );
 	if( idx >= 0 ) {
 		return SDL_atoi( data->sbAttributes[idx].value );
 	}
@@ -245,31 +264,18 @@ int cfg_GetInt( void* cfgFile, const char* attrName, int defaultVal )
 
 bool cfg_SetInt( void* cfgFile, const char* attrName, int val )
 {
-	ASSERT_AND_IF_NOT( cfgFile != NULL ) return false;
-	ASSERT_AND_IF_NOT( attrName != NULL ) return false;
-
-	CFGFile* data = (CFGFile*)cfgFile;
-
 	char valueStr[VALUE_LEN];
 	SDL_snprintf( valueStr, ARRAY_SIZE( valueStr ), "%i", val );
 
-	int idx = AttributeIndex( data, attrName );
-	bool success = true;
-	if( idx >= 0 ) {
-		SDL_strlcpy( data->sbAttributes[idx].value, valueStr, ARRAY_SIZE( data->sbAttributes[idx].value ) );
-	} else {
-		success = addNewAttribute( data, attrName, valueStr );
-	}
-
-	return success;
+	return setAttribute( cfgFile, attrName, valueStr );
 }
 
 float cfg_GetFloat( void* cfgFile, const char* attrName, float defaultVal )
 {
-	ASSERT( cfgFile != NULL );
+	ASSERT_AND_IF_NOT( cfgFile != NULL ) return defaultVal;
 
 	CFGFile* data = (CFGFile*)cfgFile;
-	int idx = AttributeIndex( data, attrName );
+	int idx = attributeIndex( data, attrName );
 	if( idx >= 0 ) {
 		return (float)SDL_atof( data->sbAttributes[idx].value );
 	}
@@ -278,21 +284,32 @@ float cfg_GetFloat( void* cfgFile, const char* attrName, float defaultVal )
 
 bool cfg_SetFloat( void* cfgFile, const char* attrName, float val )
 {
-	ASSERT_AND_IF_NOT( cfgFile != NULL ) return false;
-	ASSERT_AND_IF_NOT( attrName != NULL ) return false;
-
-	CFGFile* data = (CFGFile*)cfgFile;
-
 	char valueStr[VALUE_LEN];
 	SDL_snprintf( valueStr, ARRAY_SIZE( valueStr ), "%f", val );
 
-	int idx = AttributeIndex( data, attrName );
-	bool success = true;
-	if( idx >= 0 ) {
-		SDL_strlcpy( data->sbAttributes[idx].value, valueStr, ARRAY_SIZE( data->sbAttributes[idx].value ) );
-	} else {
-		success = addNewAttribute( data, attrName, valueStr );
-	}
+	return setAttribute( cfgFile, attrName, valueStr );
+}
 
-	return success;
+bool cfg_GetBool( void* cfgFile, const char* attrName, bool defaultVal )
+{
+	ASSERT_AND_IF_NOT( cfgFile != NULL ) return defaultVal;
+
+	CFGFile* data = (CFGFile*)cfgFile;
+	int idx = attributeIndex( data, attrName );
+	if( idx >= 0 ) {
+		// handle cases users might want to enter into config files manually, anything that isn't true is false
+		bool val = ( SDL_strncmp( "1", data->sbAttributes[idx].value, VALUE_LEN ) == 0 ) ||
+			( SDL_strncasecmp( "true", data->sbAttributes[idx].value, VALUE_LEN ) == 0 ) ||
+			( SDL_strncasecmp( "t", data->sbAttributes[idx].value, VALUE_LEN ) == 0 );
+		return val;
+	}
+	return defaultVal;
+}
+
+bool cfg_SetBool( void* cfgFile, const char* attrName, bool val )
+{
+	char valueStr[VALUE_LEN];
+	SDL_snprintf( valueStr, ARRAY_SIZE( valueStr ), "%i", val );
+
+	return setAttribute( cfgFile, attrName, valueStr );
 }

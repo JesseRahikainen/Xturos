@@ -30,7 +30,6 @@ typedef struct {
 	CommandType cmd;
 	EntityID id;
 	uint32_t numComps;
-	//uint8_t* data;
 } CreateEntityCommand;
 
 typedef struct {
@@ -43,7 +42,6 @@ typedef struct {
 	CommandType cmd;
 	EntityID id;
 	ComponentID compID;
-	//uint8_t* data;
 } AddComponentCommand;
 
 typedef struct {
@@ -52,20 +50,10 @@ typedef struct {
 	ComponentID compID;
 } RemoveComponentCommand;
 
-typedef union {
-	CommandType cmd;
-	CreateEntityCommand create;
-	DestroyEntityCommand destroy;
-	AddComponentCommand add;
-	RemoveComponentCommand remove;
-} Command;
-
 static uint8_t* runCreateCommand( ECPS* ecps, uint8_t* commandData );
 static uint8_t* runAddComponentCommand( ECPS* ecps, uint8_t* commandData );
 static uint8_t* runRemoveComponentCommand( ECPS* ecps, uint8_t* commandData );
 static uint8_t* runDestroyEntityCommand( ECPS* ecps, uint8_t* commandData );
-
-//EntityIDSet idSet;
 
 // just a simple number to track whether processes were created with the associated system or not
 static uint32_t ecpsCurrID = 0;
@@ -489,7 +477,7 @@ static void internalRunProcess( ECPS* ecps, PreProcFunc preProc, ProcFunc proc, 
 				cmdBuffer = runRemoveComponentCommand( ecps, cmdBuffer );
 				break;
 			default:
-				ASSERT( false && "Invalid command" );
+				ASSERT_ALWAYS( "Invalid command" );
 				break;
 			}
 			//mem_Verify( );
